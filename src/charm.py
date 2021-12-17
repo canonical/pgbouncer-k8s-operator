@@ -1,104 +1,131 @@
 #!/usr/bin/env python3
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
-#
-# Learn more at: https://juju.is/docs/sdk
 
-"""Charm the service.
-
-Refer to the following post for a quick-start guide that will help you
-develop a new k8s charm using the Operator Framework:
-
-    https://discourse.charmhub.io/t/4208
-"""
+"""Charmed PgBouncer connection pooler."""
 
 import logging
 
 from ops.charm import CharmBase
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus
+from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
+from ops.pebble import Layer
 
 logger = logging.getLogger(__name__)
 
 
-class OperatorTemplateCharm(CharmBase):
-    """Charm the service."""
+class PgBouncerK8sCharm(CharmBase):
+    """An object representing charmed PgBouncer.
+
+    Could this run in the same pod as the postgres charm?
+    """
 
     _stored = StoredState()
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.framework.observe(self.on.httpbin_pebble_ready, self._on_httpbin_pebble_ready)
+
+        self._pgbouncer_service = "pgbouncer"
+        self._pgbouncer_user = "pgbouncer"
+
+        self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
-        self.framework.observe(self.on.fortune_action, self._on_fortune_action)
-        self._stored.set_default(things=[])
+        self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
-    def _on_httpbin_pebble_ready(self, event):
-        """Define and start a workload using the Pebble API.
+    def _on_install(self, _):
+        """On install hook.
 
-        TEMPLATE-TODO: change this example to suit your needs.
-        You'll need to specify the right entrypoint and environment
-        configuration for your specific workload. Tip: you can see the
-        standard entrypoint of an existing container using docker inspect
+        Considering the container should already have everything pgbouncer needs to run, this hook
+        only needs to replace the pgbouncer.ini and userlist.txt files with sensible defaults.
 
-        Learn more about Pebble layers at https://github.com/canonical/pebble
+        TODO replace static defaults with ones generated at runtime. userlist.txt could also be
+            replaced with a string.
         """
-        # Get a reference the container attribute on the PebbleReadyEvent
-        container = event.workload
-        # Define an initial Pebble layer configuration
-        pebble_layer = {
-            "summary": "httpbin layer",
-            "description": "pebble config layer for httpbin",
+        pgb_container = self.unit.get_container(self._pgbouncer_service)
+        try:
+            pgb_ini_path = self.model.resources.fetch("default-ini")
+        except ModelError:
+            self.unit.status = BlockedStatus(
+                "Unable to fetch default pgbouncer.ini file - please upload a valid file manually."
+            )
+            return
+
+        try:
+            userlist_path = self.model.resources.fetch("default-userlist")
+        except ModelError:
+            self.unit.status = BlockedStatus(
+                "Unable to fetch default userlist.txt file - please upload a valid file manually."
+            )
+            return
+
+        with open(pgb_ini_path, "r") as default_ini:
+            pgb_container.push(
+                "/etc/pgbouncer/pgbouncer.ini", default_ini, user=self._pgbouncer_user
+            )
+        with open(userlist_path, "r") as default_userlist:
+            pgb_container.push(
+                "/etc/pgbouncer/userlist.txt", default_userlist, user=self._pgbouncer_user
+            )
+
+    def _on_config_changed(self, _):
+        """Handle changes in configuration.
+
+        TODO Currently this hook immediately replaces any changes with the default pgbouncer
+            config. Update to merge new config options where necessary.
+        """
+        container = self.unit.get_container("pgbouncer")
+        layer = self._pgbouncer_layer()
+        if container.can_connect():
+            services = container.get_plan().to_dict().get("services", {})
+            if services != layer["services"]:
+                container.add_layer(self._pgbouncer_service, layer, combine=True)
+                logging.info("Added layer 'pgbouncer' to pebble plan")
+                container.restart(self._pgbouncer_service)
+                logging.info("restarted pgbouncer service")
+            self.unit.status = ActiveStatus()
+        else:
+            self.unit.status = WaitingStatus("waiting for pebble in pgbouncer workload container.")
+
+    def _pgbouncer_layer(self) -> Layer:
+        """Returns a default pebble config layer for the pgbouncer container."""
+        return {
+            "summary": "pgbouncer layer",
+            "description": "pebble config layer for pgbouncer",
             "services": {
-                "httpbin": {
-                    "override": "replace",
-                    "summary": "httpbin",
-                    "command": "gunicorn -b 0.0.0.0:80 httpbin:app -k gevent",
+                self._pgbouncer_service: {
+                    "summary": "pgbouncer service",
+                    "user": self._pgbouncer_user,
+                    "command": "pgbouncer /etc/pgbouncer/pgbouncer.ini",
                     "startup": "enabled",
-                    "environment": {"thing": self.model.config["thing"]},
+                    "override": "replace",
                 }
             },
         }
-        # Add intial Pebble config layer using the Pebble API
-        container.add_layer("httpbin", pebble_layer, combine=True)
-        # Autostart any services that were defined with startup: enabled
+
+    def _on_pgbouncer_pebble_ready(self, event):
+        """Define and start pgbouncer workload."""
+        container = event.workload
+        pebble_layer = self._pgbouncer_layer()
+        container.add_layer(self._pgbouncer_service, pebble_layer, combine=True)
         container.autostart()
-        # Learn more about statuses in the SDK docs:
-        # https://juju.is/docs/sdk/constructs#heading--statuses
         self.unit.status = ActiveStatus()
 
-    def _on_config_changed(self, _):
-        """Just an example to show how to deal with changed configuration.
+    def _on_update_ini_action(self, event):
+        """Action allowing a user to update pgbouncer.ini from a local file on the juju host.
 
-        TEMPLATE-TODO: change this example to suit your needs.
-        If you don't need to handle config, you can remove this method,
-        the hook created in __init__.py for it, the corresponding test,
-        and the config.py file.
-
-        Learn more about config at https://juju.is/docs/sdk/config
+        NB this function is an in-progress stub.
         """
-        current = self.config["thing"]
-        if current not in self._stored.things:
-            logger.debug("found a new thing: %r", current)
-            self._stored.things.append(current)
-
-    def _on_fortune_action(self, event):
-        """Just an example to show how to receive actions.
-
-        TEMPLATE-TODO: change this example to suit your needs.
-        If you don't need to handle actions, you can remove this method,
-        the hook created in __init__.py for it, the corresponding test,
-        and the actions.py file.
-
-        Learn more about actions at https://juju.is/docs/sdk/actions
-        """
-        fail = event.params["fail"]
-        if fail:
-            event.fail(fail)
-        else:
-            event.set_results({"fortune": "A bug in the code is worth two in the documentation."})
+        pgb_container = self.unit.get_container(self._pgbouncer_service)
+        # TODO get this from event
+        pgbouncer_ini = ""
+        logfile = pgb_container.push(
+            "/etc/pgbouncer/pgbouncer.ini", pgbouncer_ini, user=self._pgbouncer_user
+        )
+        # TODO update config
+        logger.info(logfile)
+        event.set_results({"result": "pushed pgbouncer.ini"})
 
 
 if __name__ == "__main__":
-    main(OperatorTemplateCharm)
+    main(PgBouncerK8sCharm)

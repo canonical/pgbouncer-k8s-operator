@@ -1,20 +1,20 @@
-# operator-template
+# PgBouncer Kubernetes Operator
 
 ## Description
 
-TODO: Describe your charm in a few paragraphs of Markdown
+The PgBouncer Kubernetes Operator deploys and operates the [PgBouncer](https://www.pgbouncer.org) lightweight connection pooler for PostgreSQL.
 
 ## Usage
 
-TODO: Provide high-level usage, such as required config or relations
+As this charm is not yet published, you need to follow the build and deploy instructions from [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Relations
 
-TODO: Provide any relations which are provided or required by your charm
+It's currently not implemented, but this charm will provide the pgbouncer service to the corresponding [postgresql-k8s-operator charm](https://github.com/canonical/postgresql-k8s-operator).
 
 ## OCI Images
 
-TODO: Include a link to the default image your charm uses
+This charm uses the canonical pgbouncer-container docker image, available here (currently in a PR): [https://github.com/canonical/pgbouncer-container](https://github.com/canonical/pgbouncer-container)
 
 ## Contributing
 
