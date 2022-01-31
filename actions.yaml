@@ -3,8 +3,17 @@
 
 # NB none of these actions are implemented yet.
 
-update-ini:
-  description: Updates pgbouncer.ini file to the filepath given from the "ini" variable. This overwrites the existing pgbouncer.ini.
-
 restart-pooler:
-  description: restarts pgbouncera application. NB this does not restart the container!
+  description: Restarts pgbouncer application. This does not restart the container!
+
+get-original-admin-password:
+  description: Retrieves the pgbouncer admin password, generated on startup. If not already completed, please update this password using the update-admin-password Juju Action.
+
+update-admin-password:
+  description: Updates the admin password.
+
+add-admin-user:
+  description: Adds a new pgbouncer user.
+
+get-userlist:
+  description: gets all the pgbouncer users

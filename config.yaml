@@ -2,7 +2,23 @@
 # See LICENSE file for licensing details.
 
 options:
-  placeholder:
-    default: "placeholder option"
-    description: "placeholder!"
+  pgb_databases:
+    default: "exampledb = host=pg-host port=5432 dbname=exampledb"
+    # TODO allow passing this in from a file - probably yaml
+    description: "multiline string containing database config (one per line)."
+    type: "string"
+
+  pgb_listen_port:
+    default: 6432
+    description: "Port on which PGBouncer listens for traffic"
+    type: "int"
+
+  pgb_listen_address:
+    default: "localhost"
+    description: "Address on which PGBouncer listens for traffic"
+    type: "string"
+
+  pgb_admin_users:
+    default: "juju-admin"
+    description: "A comma-separated list of admin users. A password will be generated for each user. Only generates `juju-admin` user by default"
     type: "string"

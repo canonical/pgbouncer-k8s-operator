@@ -20,14 +20,5 @@ resources:
     type: oci-image
     description: OCI image for pgbouncer
     # currently this uses a local pgbouncer container - update to use https://github.com/canonical/pgbouncer-container once it's available.
-    upstream-source: pgbouncer:0.4
-  default-ini:
-    type: file
-    filename: pgbouncer.ini
-    description: default pgbouncer.ini file, to use when initialising charms.
-    local-source: pgbouncer.ini
-  default-userlist:
-    type: file
-    filename: userlist.txt
-    description: default userlist.txt file, to use when initialising charms.
-    local-source: userlist.txt
+    upstream-source: pgbouncer:0.6
+    local-source: pgbouncer:0.6
