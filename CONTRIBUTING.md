@@ -52,8 +52,8 @@ charmcraft pack
 # Import container
 git clone https://github.com/canonical/pgbouncer-container.git
 # Build container locally, since it's not been exported anywhere yet.
-docker build . -t pgb:local
-docker save pgb:local -o pgb.tar
+docker build . -t pgbouncer:0.8
+docker save pgbouncer:0.8 -o pgb.tar
 # Import container file into microk8s container registry
 microk8s ctr image import pgb.tar
 
@@ -63,5 +63,5 @@ juju add-model dev
 juju model-config logging-config="<root>=INFO;unit=DEBUG"
 # Deploy the charm
 juju deploy ./template-operator_ubuntu-20.04-amd64.charm \
-    --resource pgbouncer-image=pgb:local \
+    --resource pgbouncer-image=pgbouncer:0.8
 ```

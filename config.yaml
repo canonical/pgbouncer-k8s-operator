@@ -4,7 +4,7 @@
 options:
   pgb_databases:
     default: "exampledb = host=pg-host port=5432 dbname=exampledb"
-    # TODO allow passing this in from a file - probably yaml
+    # TODO allow passing this in from a file
     description: "multiline string containing database config (one per line)."
     type: "string"
 

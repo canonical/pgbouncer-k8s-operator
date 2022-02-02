@@ -1,19 +1,38 @@
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-# NB none of these actions are implemented yet.
+reload-pgbouncer:
+  description: Reloads pgbouncer application. This does not restart the container.
 
-restart-pooler:
-  description: Restarts pgbouncer application. This does not restart the container!
-
-get-original-admin-password:
-  description: Retrieves the pgbouncer admin password, generated on startup. If not already completed, please update this password using the update-admin-password Juju Action.
-
-update-admin-password:
-  description: Updates the admin password.
-
-add-admin-user:
+add-user:
   description: Adds a new pgbouncer user.
+  params:
+    username:
+      type: string
+      description: The username of the given user. If a user exists by this name, this action will fail.
+    password:
+      type: string
+      description: The password of the given user
+  required: [username]
 
-get-userlist:
-  description: gets all the pgbouncer users
+remove-user:
+  description: Removes pgbouncer user.
+  params:
+    username:
+      type: string
+      description: The username of the given user. If a user exists by this name, this action will fail.
+  required: [username]
+
+update-password:
+  description: Updates password for a given user.
+  params:
+    username:
+      type: string
+      description: Username of an existing user
+    password:
+      type: string
+      description: The new password
+  required: [username, password]
+
+get-users:
+  description: Lists all pgbouncer users.

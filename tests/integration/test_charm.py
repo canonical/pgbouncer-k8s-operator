@@ -24,13 +24,3 @@ async def test_build_and_deploy(ops_test: OpsTest):
     }
     await ops_test.model.deploy(charm, resources=resources, application_name=APP_NAME)
     await ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000)
-
-
-async def test_pooler_online(ops_test: OpsTest):
-    """Test we can send & receive connections."""
-    pass
-
-
-async def test_postgres_relation(ops_test: OpsTest):
-    """Test relation to postgres charm."""
-    pass
