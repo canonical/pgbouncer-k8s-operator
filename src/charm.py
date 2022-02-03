@@ -7,6 +7,7 @@
 import logging
 import secrets
 import string
+from typing import Dict
 
 from ops.charm import CharmBase
 from ops.framework import StoredState
@@ -30,7 +31,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         self._pgbouncer_service = "pgbouncer"
         self._pgbouncer_user = "pgbouncer"
-        self._users = {}
 
         self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
@@ -45,16 +45,18 @@ class PgBouncerK8sCharm(CharmBase):
     def _on_install(self, _) -> None:
         """On install hook.
 
-        This initialises the juju-admin user with a random password, imports any other users in the
-        juju config, and pushes the necessary config files to the container.
+        This imports any users in the juju config, and pushes the necessary config files to the
+        container.
         """
-        self._import_users_from_config()
-        self._update_local_config()
+        users = self._update_users_from_config()
+        self._push_container_config(users)
 
     def _on_config_changed(self, _) -> None:
         """Handle changes in configuration."""
-        self._import_users_from_config()
-        self._update_local_config()
+        # Handle any user changes that may have been created through config.
+        users = self._get_userlist_from_container()
+        users = self._update_users_from_config(users=users)
+        self._push_container_config(users)
 
         container = self.unit.get_container(self._pgbouncer_service)
         layer = self._pgbouncer_layer()
@@ -99,22 +101,22 @@ class PgBouncerK8sCharm(CharmBase):
         container.autostart()
         self.unit.status = ActiveStatus()
 
-    def _update_local_config(self) -> None:
-        """Updates config files stored on pgbouncer container.
+    def _push_container_config(self, users) -> None:
+        """Updates config files stored on pgbouncer container and reloads application.
 
         Updates userlist.txt and pgbouncer.ini config files, reloading pgbouncer application once
         updated.
         """
-        self._push_userlist()
-        self._push_pgbouncer_ini(reload_pgbouncer=True)
+        self._push_userlist(users)
+        self._push_pgbouncer_ini(users, reload_pgbouncer=True)
 
-    def _push_pgbouncer_ini(self, reload_pgbouncer=False) -> None:
+    def _push_pgbouncer_ini(self, users={}, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
         TODO verify if pgbouncer has to restart to implement changes
         """
         pgb_container = self.unit.get_container(self._pgbouncer_service)
-        pgbouncer_ini = self._generate_pgbouncer_ini()
+        pgbouncer_ini = self._generate_pgbouncer_ini(users)
 
         try:
             # Check that we're not updating this file unnecessarily
@@ -137,7 +139,7 @@ class PgBouncerK8sCharm(CharmBase):
         if reload_pgbouncer:
             self._reload_pgbouncer()
 
-    def _generate_pgbouncer_ini(self) -> str:
+    def _generate_pgbouncer_ini(self, users=None) -> str:
         """Generate pgbouncer.ini from config.
 
         This is a basic stub method, and will be updated in future to generate more complex
@@ -148,6 +150,9 @@ class PgBouncerK8sCharm(CharmBase):
         likely to have changed.
         TODO evaluate other user types
         """
+        if users is None:
+            users = self._get_userlist_from_container()
+
         return f"""[databases]
 {self.config["pgb_databases"]}
 
@@ -158,30 +163,37 @@ auth_type = md5
 auth_file = userlist.txt
 logfile = pgbouncer.log
 pidfile = pgbouncer.pid
-admin_users = {",".join(self._users.keys())}"""
+admin_users = {",".join(users.keys())}"""
 
-    def _import_users_from_config(self) -> None:
+    def _update_users_from_config(self, users=None) -> Dict[str, str]:
         """Imports users from juju config and generates passwords when necessary.
 
         TODO it looks as though multiple types of user exist in pgbouncer config, such as
         stats_users - presumably the details for these users are also stored here. If there are
         users that aren't listed as either admin or stats-only users, would their information be
         available here also?
+        TODO If a charm admin adds a set of users through the config instead of through the
+        intended action, should these users be appended to the existing users, or overwrite them
+        entirely?
         """
-        self._users = {}
+        if users is None:
+            users = self._get_userlist_from_container()
         for admin_user in self.config["pgb_admin_users"].split(","):
             if admin_user.strip() == "":
                 continue
-            if admin_user not in self._users or self._users[admin_user] is None:
-                self._users[admin_user] = self._generate_password()
+            if admin_user not in users or users[admin_user] is None:
+                users[admin_user] = self._generate_password()
+        return users
 
-    def _push_userlist(self, reload_pgbouncer=False) -> None:
+    def _push_userlist(self, users=None, reload_pgbouncer=False) -> None:
         """Generate userlist.txt from the given userlist, and deploy it to the container.
 
         TODO verify if pgbouncer has to restart to implement changes
         """
         pgb_container = self.unit.get_container(self._pgbouncer_service)
-        userlist = self._generate_userlist()
+        if users is None:
+            users = self._get_userlist_from_container()
+        userlist = self._generate_userlist(users)
 
         try:
             # Check that we're not updating this file unnecessarily
@@ -204,17 +216,34 @@ admin_users = {",".join(self._users.keys())}"""
         if reload_pgbouncer:
             self._reload_pgbouncer()
 
-    def _generate_userlist(self) -> str:
+    def _generate_userlist(self, users: Dict[str, str]) -> str:
         """Generate userlist.txt from the given dictionary of usernames:passwords."""
-        return "\n".join(
-            [f'"{username}" "{password}"' for username, password in self._users.items()]
-        )
+        return "\n".join([f'"{username}" "{password}"' for username, password in users.items()])
+
+    def _get_userlist_from_container(self) -> Dict[str, str]:
+        """Parses local userlist for use in charm."""
+        pgb_container = self.unit.get_container(self._pgbouncer_service)
+        parsed_userlist = {}
+        try:
+            userlist = pgb_container.pull(USERLIST_PATH).read()
+        except FileNotFoundError:
+            # there is no existing userlist.txt file, so return nothing
+            return {}
+
+        if userlist.strip() == "":
+            return {}
+
+        for line in userlist.split("\n"):
+            username, password = line.replace('"', "").split(" ")
+            parsed_userlist[username] = password
+
+        return parsed_userlist
 
     def _generate_password(self) -> str:
         """Generates a secure password.
 
         Returns:
-           A random 24-character password string.
+            A random 24-character string of letters and numbers.
         """
         choices = string.ascii_letters + string.digits
         return "".join([secrets.choice(choices) for _ in range(24)])
@@ -224,6 +253,7 @@ admin_users = {",".join(self._users.keys())}"""
 
         Pgbouncer will not apply configuration changes without reloading, so this must be called
         after each time config files are changed.
+        TODO implement function stub
         """
         logger.info("reloading pgbouncer application")
         pass
@@ -236,27 +266,31 @@ admin_users = {",".join(self._users.keys())}"""
         """An action to update the password for a specific user.
 
         TODO implement password encryption at this stage, before anything is ever stored.
+        TODO verify passwords are valid
         """
         username = event.params["username"]
         password = event.params["password"]
-        if username not in self._users:
+        users = self._get_userlist_from_container()
+        if username not in users:
             event.set_results(
                 {
                     "result": f"user {username} does not exist - use the get-users action to list existing users."
                 }
             )
             return
-        self._users[username] = password
-        self._update_local_config()
+        users[username] = password
+        self._push_container_config(users=users)
         event.set_results({"result": f"password updated for user {username}"})
 
     def _on_add_user_action(self, event) -> None:
         """Event handler for add-user action.
 
         TODO implement password encryption at this stage, before anything is ever stored.
+        TODO verify passwords are valid
         """
+        users = self._get_userlist_from_container()
         username = event.params["username"]
-        if username in self._users:
+        if username in users:
             event.set_results({"result": f"user {username} already exists"})
             return
 
@@ -268,24 +302,28 @@ admin_users = {",".join(self._users.keys())}"""
                 "no password supplied when adding new user - a password will be randomly generated"
             )
 
-        self._users[username] = password
-        self._update_local_config()
+        users[username] = password
+        self._push_container_config(users=users)
+        logger.info(self.config["pgb_admin_users"])
+        logger.info(type(self.config["pgb_admin_users"]))
         event.set_results({"result": f"new user {username} added"})
 
     def _on_remove_user_action(self, event) -> None:
         """Event handler for remove-user action."""
+        users = self._get_userlist_from_container()
         username = event.params["username"]
-        if username not in self._users:
+        if username not in users:
             event.set_results({"result": f"user {username} does not exist"})
             return
 
-        del self._users[username]
-        self._update_local_config()
+        del users[username]
+        self._push_container_config(users=users)
         event.set_results({"result": f"user {username} removed"})
 
     def _on_get_users_action(self, event) -> None:
         """Event handler for get-users action."""
-        event.set_results({"result": " ".join(self._users.keys())})
+        users = self._get_userlist_from_container()
+        event.set_results({"result": " ".join(users.keys())})
 
 
 if __name__ == "__main__":

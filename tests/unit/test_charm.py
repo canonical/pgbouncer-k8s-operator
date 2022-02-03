@@ -35,7 +35,10 @@ class TestCharm(unittest.TestCase):
         self.assertEqual(ini, self.harness.charm._generate_pgbouncer_ini())
 
         userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual(userlist, self.harness.charm._generate_userlist())
+        # Since we can't access the password without reading from the userlist in the container,
+        # we assert the expected username and a password of length 24 are both in the userlist.
+        self.assertIn('"juju-admin" "', userlist)
+        self.assertEqual(len('"juju-admin" ""') + 24, len(userlist))
 
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
     def test_on_config_changed(self, _reload_pgbouncer):
@@ -85,7 +88,7 @@ class TestCharm(unittest.TestCase):
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
 
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
-    def test_update_local_config(self, _reload_pgbouncer):
+    def test_push_container_config(self, _reload_pgbouncer):
         self.harness.charm._on_install("mock_event")
 
         pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
@@ -94,14 +97,17 @@ class TestCharm(unittest.TestCase):
         self.assertEqual(initial_ini, self.harness.charm._generate_pgbouncer_ini())
 
         initial_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual(initial_userlist, self.harness.charm._generate_userlist())
+        # Since we can't access the password without reading from the userlist in the container,
+        # we assert the expected username and a password of length 24 are both in the userlist.
+        self.assertIn('"juju-admin" "', initial_userlist)
+        self.assertEqual(len('"juju-admin" ""') + 24, len(initial_userlist))
 
         self.harness.update_config(
             {
                 "pgb_databases": "updated_db",
                 "pgb_listen_port": "4444",
                 "pgb_listen_address": "8.8.8.8",
-                "pgb_admin_users": "test-admin,another_test_admin",
+                "pgb_admin_users": "test-admin,another-test-admin",
             }
         )
 
@@ -109,12 +115,16 @@ class TestCharm(unittest.TestCase):
         self.assertEqual(updated_ini, self.harness.charm._generate_pgbouncer_ini())
 
         updated_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual(updated_userlist, self.harness.charm._generate_userlist())
+        self.assertIn('"test-admin" "', updated_userlist)
+        self.assertIn('"another-test-admin" "', updated_userlist)
 
         self.assertNotEqual(initial_ini, updated_ini)
         self.assertNotEqual(initial_userlist, updated_userlist)
 
         _reload_pgbouncer.assert_called()
+
+    def test_parse_userlist(self):
+        pass
 
     def test_reload_pgbouncer(self):
         pass
@@ -122,15 +132,18 @@ class TestCharm(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
     def test_on_reload_pgbouncer_action(self, _reload_pgbouncer):
         self.harness.charm._on_reload_pgbouncer_action(Mock())
-        _reload_pgbouncer.assert_called()
         # TODO assert pgbouncer is running in the container
+        _reload_pgbouncer.assert_called()
 
     def test_on_update_password_action(self):
         self.harness.update_config({"pgb_admin_users": "test-admin"})
 
         pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
         initial_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual(initial_userlist, self.harness.charm._generate_userlist())
+        # Since we can't access the password without reading from the userlist in the container,
+        # we assert the expected username and a password of length 24 are both in the userlist.
+        self.assertIn('"test-admin" "', initial_userlist)
+        self.assertEqual(len('"test-admin" ""') + 24, len(initial_userlist))
 
         update_password_event = Mock(
             params={
@@ -144,7 +157,6 @@ class TestCharm(unittest.TestCase):
         self.assertDictEqual(result, {"result": "password updated for user test-admin"})
 
         updated_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual(updated_userlist, self.harness.charm._generate_userlist())
         self.assertEqual(updated_userlist, '"test-admin" "password"')
         self.assertNotEqual(updated_userlist, initial_userlist)
 
@@ -153,7 +165,10 @@ class TestCharm(unittest.TestCase):
 
         pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
         initial_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual(initial_userlist, self.harness.charm._generate_userlist())
+        # Since we can't access the password without reading from the userlist in the container,
+        # we assert the expected username and a password of length 24 are both in the userlist.
+        self.assertIn('"test-admin" "', initial_userlist)
+        self.assertEqual(len('"test-admin" ""') + 24, len(initial_userlist))
 
         nonexistent_user_event = Mock(
             params={
@@ -170,7 +185,8 @@ class TestCharm(unittest.TestCase):
                 "result": "user nonexistent-user does not exist - use the get-users action to list existing users."
             },
         )
-        self.assertEqual(initial_userlist, self.harness.charm._generate_userlist())
+        current_userlist = pgb_container.pull(USERLIST_PATH).read()
+        self.assertEqual(initial_userlist, current_userlist)
         self.assertNotEqual(initial_userlist, '"nonexistent-user" "password"')
 
     def test_on_add_user_action(self):
@@ -185,7 +201,7 @@ class TestCharm(unittest.TestCase):
         result = self.get_result(new_user_event)
         self.assertEqual(result, {"result": "new user new-user added"})
 
-        generated_password = self.harness.charm._users["new-user"]
+        generated_password = self.harness.charm._get_userlist_from_container()["new-user"]
         updated_userlist = pgb_container.pull(USERLIST_PATH).read()
         self.assertNotEqual(initial_userlist, updated_userlist)
         self.assertIn(f'"new-user" "{generated_password}"', updated_userlist)
@@ -264,7 +280,7 @@ class TestCharm(unittest.TestCase):
         results = self.get_result(get_users_event)
         self.assertEqual(results, {"result": "test1 test2 test3"})
         # for each password, assert it is not passed out in the results of this action.
-        for _, password in self.harness.charm._users.items():
+        for _, password in self.harness.charm._get_userlist_from_container().items():
             self.assertNotIn(password, results["result"])
 
     # UTILITIES

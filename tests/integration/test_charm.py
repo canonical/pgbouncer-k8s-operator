@@ -24,3 +24,13 @@ async def test_build_and_deploy(ops_test: OpsTest):
     }
     await ops_test.model.deploy(charm, resources=resources, application_name=APP_NAME)
     await ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000)
+
+
+async def test_actions(ops_test: OpsTest):
+    """Use all actions to verify they work ok."""
+    await ops_test.juju()
+
+
+async def test_user_management(ops_test: OpsTest):
+    # test user management through config and actions.
+    pass
