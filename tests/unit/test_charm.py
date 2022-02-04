@@ -18,7 +18,6 @@ USERLIST_PATH = "/etc/pgbouncer/userlist.txt"
 class TestCharm(unittest.TestCase):
     def setUp(self):
         self._pgbouncer_container = "pgbouncer"
-        self._peer_relation = "pgbouncer-replicas"
 
         self.harness = Harness(PgBouncerK8sCharm)
         self.addCleanup(self.harness.cleanup)
@@ -26,34 +25,40 @@ class TestCharm(unittest.TestCase):
 
     def test_on_install(self):
         self.harness.charm._on_install("mock_event")
+        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
 
         # Local config is tested more extensively in its own test below, but it's necessary that
         # some config is available after on_install hook.
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
-
         ini = pgb_container.pull(INI_PATH).read()
         self.assertEqual(ini, self.harness.charm._generate_pgbouncer_ini())
 
         userlist = pgb_container.pull(USERLIST_PATH).read()
         # Since we can't access the password without reading from the userlist in the container,
-        # we assert the expected username and a password of length 24 are both in the userlist.
+        # which is effectively what we're testing, we assert the expected username and a password
+        # of length 24 are both in the userlist.
         self.assertIn('"juju-admin" "', userlist)
         self.assertEqual(len('"juju-admin" ""') + 24, len(userlist))
 
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
     def test_on_config_changed(self, _reload_pgbouncer):
         self.harness.update_config()
-        initial_plan = self.harness.get_container_pebble_plan(self._pgbouncer_container).to_dict()
+        _reload_pgbouncer.assert_called()
 
-        self.harness.update_config({"pgb_databases": "db"})
+        initial_plan = self.harness.get_container_pebble_plan(self._pgbouncer_container).to_dict()
+        self.harness.update_config({"pgb_admin_users": "test-user"})
         updated_plan = self.harness.get_container_pebble_plan(self._pgbouncer_container).to_dict()
         self.assertNotEqual(initial_plan, updated_plan)
 
-        placeholder = updated_plan["services"]["pgbouncer"]["environment"]["PGB_DATABASES"]
-        self.assertEqual(placeholder, "db")
+        placeholder = updated_plan["services"]["pgbouncer"]["environment"]["PGB_ADMIN_USERS"]
+        self.assertEqual(placeholder, "test-user")
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
 
-        _reload_pgbouncer.assert_called()
+        # Test changing charm config propagates to container config files.
+        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
+        userlist = pgb_container.pull(USERLIST_PATH).read()
+        self.assertIn("test-user", userlist)
+        ini = pgb_container.pull(INI_PATH).read()
+        self.assertIn("test-user", ini)
 
     def test_on_pgbouncer_pebble_ready(self):
         initial_plan = self.harness.get_container_pebble_plan(self._pgbouncer_container)
@@ -87,47 +92,6 @@ class TestCharm(unittest.TestCase):
         self.assertTrue(service.is_running())
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
 
-    @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
-    def test_push_container_config(self, _reload_pgbouncer):
-        self.harness.charm._on_install("mock_event")
-
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
-
-        initial_ini = pgb_container.pull(INI_PATH).read()
-        self.assertEqual(initial_ini, self.harness.charm._generate_pgbouncer_ini())
-
-        initial_userlist = pgb_container.pull(USERLIST_PATH).read()
-        # Since we can't access the password without reading from the userlist in the container,
-        # we assert the expected username and a password of length 24 are both in the userlist.
-        self.assertIn('"juju-admin" "', initial_userlist)
-        self.assertEqual(len('"juju-admin" ""') + 24, len(initial_userlist))
-
-        self.harness.update_config(
-            {
-                "pgb_databases": "updated_db",
-                "pgb_listen_port": "4444",
-                "pgb_listen_address": "8.8.8.8",
-                "pgb_admin_users": "test-admin,another-test-admin",
-            }
-        )
-
-        updated_ini = pgb_container.pull(INI_PATH).read()
-        self.assertEqual(updated_ini, self.harness.charm._generate_pgbouncer_ini())
-
-        updated_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertIn('"test-admin" "', updated_userlist)
-        self.assertIn('"another-test-admin" "', updated_userlist)
-
-        self.assertNotEqual(initial_ini, updated_ini)
-        self.assertNotEqual(initial_userlist, updated_userlist)
-
-        _reload_pgbouncer.assert_called()
-
-    def test_parse_userlist(self):
-        pass
-
-    def test_reload_pgbouncer(self):
-        pass
 
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
     def test_on_reload_pgbouncer_action(self, _reload_pgbouncer):
@@ -282,6 +246,52 @@ class TestCharm(unittest.TestCase):
         # for each password, assert it is not passed out in the results of this action.
         for _, password in self.harness.charm._get_userlist_from_container().items():
             self.assertNotIn(password, results["result"])
+
+
+    @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
+    def test_push_container_config(self, _reload_pgbouncer):
+        self.harness.charm._on_install("mock_event")
+
+        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
+
+        initial_ini = pgb_container.pull(INI_PATH).read()
+        self.assertEqual(initial_ini, self.harness.charm._generate_pgbouncer_ini())
+
+        initial_userlist = pgb_container.pull(USERLIST_PATH).read()
+        # Since we can't access the password without reading from the userlist in the container,
+        # we assert the expected username and a password of length 24 are both in the userlist.
+        self.assertIn('"juju-admin" "', initial_userlist)
+        self.assertEqual(len('"juju-admin" ""') + 24, len(initial_userlist))
+
+        self.harness.update_config(
+            {
+                "pgb_databases": "updated_db",
+                "pgb_listen_port": "4444",
+                "pgb_listen_address": "8.8.8.8",
+                "pgb_admin_users": "test-admin,another-test-admin",
+            }
+        )
+
+        updated_ini = pgb_container.pull(INI_PATH).read()
+        self.assertEqual(updated_ini, self.harness.charm._generate_pgbouncer_ini())
+
+        updated_userlist = pgb_container.pull(USERLIST_PATH).read()
+        self.assertIn('"test-admin" "', updated_userlist)
+        self.assertIn('"another-test-admin" "', updated_userlist)
+
+        self.assertNotEqual(initial_ini, updated_ini)
+        self.assertNotEqual(initial_userlist, updated_userlist)
+
+        _reload_pgbouncer.assert_called()
+
+    def test_get_userlist_from_container(self):
+        self.harness.update_config({"pgb_admin_users": "test-admin"})
+        self.harness.charm._push_container_config(users={"test-admin": "pass"})
+        users = self.harness.charm._get_userlist_from_container()
+        self.assertDictEqual(users, {"test-admin": "pass"})
+
+    def test_reload_pgbouncer(self):
+        pass
 
     # UTILITIES
 
