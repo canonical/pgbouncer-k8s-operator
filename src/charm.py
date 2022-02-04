@@ -207,8 +207,9 @@ class PgBouncerK8sCharm(CharmBase):
         """
         if users is None:
             users = self._get_userlist_from_container()
+        else:
+            self._push_userlist(users)
 
-        self._push_userlist(users)
         self._push_pgbouncer_ini(users, reload_pgbouncer=True)
 
     def _push_pgbouncer_ini(self, users=None, reload_pgbouncer=False) -> None:
@@ -344,8 +345,6 @@ admin_users = {",".join(users.keys())}"""
 
         for admin_user in self.config["pgb_admin_users"].split(","):
             # TODO add username validation
-            if admin_user.strip() == "":
-                continue
             if admin_user not in users or users[admin_user] is None:
                 users[admin_user] = self._generate_password()
         return users
