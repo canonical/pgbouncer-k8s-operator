@@ -13,7 +13,7 @@ add-user:
     password:
       type: string
       description: The password of the given user
-  required: [username]
+  required: [username, password]
 
 remove-user:
   description: Removes pgbouncer user.
@@ -23,8 +23,8 @@ remove-user:
       description: The username of the given user. If a user exists by this name, this action will fail.
   required: [username]
 
-update-password:
-  description: Updates password for a given user.
+change-password:
+  description: Changes password for a given user.
   params:
     username:
       type: string

@@ -37,7 +37,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
         self.framework.observe(self.on.reload_pgbouncer_action, self._on_reload_pgbouncer_action)
-        self.framework.observe(self.on.update_password_action, self._on_update_password_action)
+        self.framework.observe(self.on.change_password_action, self._on_change_password_action)
         self.framework.observe(self.on.add_user_action, self._on_add_user_action)
         self.framework.observe(self.on.remove_user_action, self._on_remove_user_action)
         self.framework.observe(self.on.get_users_action, self._on_get_users_action)
@@ -52,7 +52,7 @@ class PgBouncerK8sCharm(CharmBase):
         This imports any users from the juju config, and pushes the necessary config files to the
         container.
         """
-        users = self._get_users_from_charm_config()
+        users = self._get_users_from_charm_config(users={})
         self._push_container_config(users)
 
     def _on_config_changed(self, _) -> None:
@@ -64,16 +64,18 @@ class PgBouncerK8sCharm(CharmBase):
 
         container = self.unit.get_container(self._pgbouncer_service)
         layer = self._pgbouncer_layer()
-        if container.can_connect():
-            services = container.get_plan().to_dict().get("services", {})
-            if services != layer["services"]:
-                container.add_layer(self._pgbouncer_service, layer, combine=True)
-                logging.info("Added layer 'pgbouncer' to pebble plan")
-                container.restart(self._pgbouncer_service)
-                logging.info("restarted pgbouncer service")
-            self.unit.status = ActiveStatus()
-        else:
+
+        if not container.can_connect():
             self.unit.status = WaitingStatus("waiting for pebble in pgbouncer workload container.")
+            return
+
+        services = container.get_plan().to_dict().get("services", {})
+        if services != layer["services"]:
+            container.add_layer(self._pgbouncer_service, layer, combine=True)
+            logging.info("Added layer 'pgbouncer' to pebble plan")
+            container.restart(self._pgbouncer_service)
+            logging.info("restarted pgbouncer service")
+        self.unit.status = ActiveStatus()
 
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container."""
@@ -117,7 +119,7 @@ class PgBouncerK8sCharm(CharmBase):
         self._reload_pgbouncer()
         event.set_results({"result": "pgbouncer has restarted"})
 
-    def _on_update_password_action(self, event) -> None:
+    def _on_change_password_action(self, event) -> None:
         """An action to update the password for a specific user.
 
         TODO implement password encryption at this stage, before anything is stored.
@@ -149,15 +151,7 @@ class PgBouncerK8sCharm(CharmBase):
             event.set_results({"result": f"user {username} already exists"})
             return
 
-        try:
-            password = event.params["password"]
-        except KeyError:
-            logger.info(
-                f"no password supplied when adding new user {username} - a password will be randomly generated"
-            )
-            password = self._generate_password()
-
-        users[username] = password
+        users[username] = event.params["password"]
         self._push_container_config(users=users)
         event.set_results({"result": f"new user {username} added"})
 
@@ -326,7 +320,7 @@ admin_users = {",".join(users.keys())}"""
         """
         return "\n".join([f'"{username}" "{password}"' for username, password in users.items()])
 
-    def _get_users_from_charm_config(self, users=None) -> Dict[str, str]:
+    def _get_users_from_charm_config(self, users: Dict[str, str]) -> Dict[str, str]:
         """Imports users from charm config and generates passwords when necessary.
 
         TODO it looks as though multiple types of user exist in pgbouncer config, such as
@@ -340,9 +334,6 @@ admin_users = {",".join(users.keys())}"""
             the `users` dictionary, with usernames from charm config and corresponding generated
             passwords appended.
         """
-        if users is None:
-            users = self._get_userlist_from_container()
-
         for admin_user in self.config["pgb_admin_users"].split(","):
             # TODO add username validation
             if admin_user not in users or users[admin_user] is None:
@@ -357,13 +348,17 @@ admin_users = {",".join(users.keys())}"""
             users: a dictionary of usernames and passwords
         """
         pgb_container = self.unit.get_container(self._pgbouncer_service)
-        parsed_userlist = {}
+        if not pgb_container.can_connect():
+            logger.info("userlist not accessible from container, cannot connect.")
+            return {}
+
         try:
             userlist = pgb_container.pull(USERLIST_PATH).read()
         except FileNotFoundError:
             # there is no existing userlist.txt file, so return nothing
             return {}
 
+        parsed_userlist = {}
         for line in userlist.split("\n"):
             username, password = line.replace('"', "").split(" ")
             parsed_userlist[username] = password

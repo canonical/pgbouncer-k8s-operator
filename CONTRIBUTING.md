@@ -62,6 +62,6 @@ juju add-model dev
 # Enable DEBUG logging
 juju model-config logging-config="<root>=INFO;unit=DEBUG"
 # Deploy the charm
-juju deploy ./template-operator_ubuntu-20.04-amd64.charm \
+juju deploy ./pgbouncer-k8s-operator_ubuntu-20.04-amd64.charm \
     --resource pgbouncer-image=pgbouncer:0.8
 ```

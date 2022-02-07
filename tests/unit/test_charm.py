@@ -98,7 +98,7 @@ class TestCharm(unittest.TestCase):
         # TODO assert pgbouncer is running in the container
         _reload_pgbouncer.assert_called()
 
-    def test_on_update_password_action(self):
+    def test_on_change_password_action(self):
         self.harness.update_config({"pgb_admin_users": "test-admin"})
 
         pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
@@ -108,22 +108,22 @@ class TestCharm(unittest.TestCase):
         self.assertIn('"test-admin" "', initial_userlist)
         self.assertEqual(len('"test-admin" ""') + 24, len(initial_userlist))
 
-        update_password_event = Mock(
+        change_password_event = Mock(
             params={
                 "username": "test-admin",
                 "password": "password",
             }
         )
-        self.harness.charm._on_update_password_action(update_password_event)
+        self.harness.charm._on_change_password_action(change_password_event)
 
-        result = self.get_result(update_password_event)
+        result = self.get_result(change_password_event)
         self.assertDictEqual(result, {"result": "password updated for user test-admin"})
 
         updated_userlist = pgb_container.pull(USERLIST_PATH).read()
         self.assertEqual(updated_userlist, '"test-admin" "password"')
         self.assertNotEqual(updated_userlist, initial_userlist)
 
-    def test_on_update_password_action_nonexistent_user(self):
+    def test_on_change_password_action_nonexistent_user(self):
         self.harness.update_config({"pgb_admin_users": "test-admin"})
 
         pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
@@ -139,7 +139,7 @@ class TestCharm(unittest.TestCase):
                 "password": "password",
             }
         )
-        self.harness.charm._on_update_password_action(nonexistent_user_event)
+        self.harness.charm._on_change_password_action(nonexistent_user_event)
 
         result = self.get_result(nonexistent_user_event)
         self.assertDictEqual(
@@ -153,23 +153,6 @@ class TestCharm(unittest.TestCase):
         self.assertNotEqual(initial_userlist, '"nonexistent-user" "password"')
 
     def test_on_add_user_action(self):
-        self.harness.update_config({"pgb_admin_users": "existing-user"})
-
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
-        initial_userlist = pgb_container.pull(USERLIST_PATH).read()
-
-        new_user_event = Mock(params={"username": "new-user"})
-
-        self.harness.charm._on_add_user_action(new_user_event)
-        result = self.get_result(new_user_event)
-        self.assertEqual(result, {"result": "new user new-user added"})
-
-        generated_password = self.harness.charm._get_userlist_from_container()["new-user"]
-        updated_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertNotEqual(initial_userlist, updated_userlist)
-        self.assertIn(f'"new-user" "{generated_password}"', updated_userlist)
-
-    def test_on_add_user_action_with_password(self):
         self.harness.update_config({"pgb_admin_users": "existing-user"})
 
         pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
