@@ -24,7 +24,7 @@ class TestCharm(unittest.TestCase):
         self.harness.begin()
 
     def test_on_install(self):
-        self.harness.charm._on_install("mock_event")
+        self.harness.charm.on.install.emit()
         pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
 
         # Local config is tested more extensively in its own test below, but it's necessary that
@@ -34,8 +34,8 @@ class TestCharm(unittest.TestCase):
 
         userlist = pgb_container.pull(USERLIST_PATH).read()
         # Since we can't access the password without reading from the userlist in the container,
-        # which is effectively what we're testing, we assert the expected username and a password
-        # of length 24 are both in the userlist.
+        # which is effectively what we're testing, we assert the default username and a password of
+        # length 24 are both in the userlist file.
         self.assertIn('"juju-admin" "', userlist)
         self.assertEqual(len('"juju-admin" ""') + 24, len(userlist))
 
@@ -262,11 +262,10 @@ class TestCharm(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
     def test_push_pgbouncer_ini(self, _reload_pgbouncer):
         self.harness.charm._push_userlist({"test-user": "pw"})
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
-
         self.harness.charm._push_pgbouncer_ini(users=None, reload_pgbouncer=True)
         _reload_pgbouncer.assert_called()
 
+        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
         ini = pgb_container.pull(INI_PATH).read()
         self.assertIn("test-user", ini)
 
@@ -288,6 +287,10 @@ class TestCharm(unittest.TestCase):
         self.harness.charm._push_container_config(users={"test-admin": "pass"})
         users = self.harness.charm._get_userlist_from_container()
         self.assertDictEqual(users, {"test-admin": "pass"})
+
+        self.harness.charm._push_container_config(users={})
+        empty_users = self.harness.charm._get_userlist_from_container()
+        self.assertDictEqual(empty_users, {})
 
     def test_reload_pgbouncer(self):
         pass

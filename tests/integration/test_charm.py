@@ -35,10 +35,23 @@ async def test_build_and_deploy(ops_test: OpsTest):
 
 
 async def test_user_management(ops_test: OpsTest):
-    """Test user management through config and actions."""
+    """Test user management through config and actions.
+
+    We complete the following steps, verifying each action has the expected output:
+    - Create a user through `pgb_admin_users` config variable
+    - Assert a password has been generated for that user
+    - Change this user's password
+    - Add a new user through the `add-user` action
+    - Check we have all three expected users, using the `get-users` action
+    - Verify the users are represented in the userlist file as we expect
+    - Remove the created users in preparation for the next test, and check that they have been
+      removed using the `get-users` action
+    """
     await ops_test.model.applications[APP_NAME].set_config({"pgb_admin_users": "test1"})
 
     unit = ops_test.model.applications[APP_NAME].units[0]
+
+    # TODO check test1 password has been generated.
 
     action = await unit.run_action("change-password", username="test1", password="pw1")
     action = await action.wait()

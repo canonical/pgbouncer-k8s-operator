@@ -355,11 +355,14 @@ admin_users = {",".join(users.keys())}"""
         try:
             userlist = pgb_container.pull(USERLIST_PATH).read()
         except FileNotFoundError:
-            # there is no existing userlist.txt file, so return nothing
+            # There is no existing userlist.txt file, so return an empty dict
             return {}
 
         parsed_userlist = {}
         for line in userlist.split("\n"):
+            if line.strip() == "":
+                continue
+            # Userlist is formatted "{username}" "{password}""
             username, password = line.replace('"', "").split(" ")
             parsed_userlist[username] = password
 
