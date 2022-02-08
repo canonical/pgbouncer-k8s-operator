@@ -39,19 +39,17 @@ async def test_user_management(ops_test: OpsTest):
 
     We complete the following steps, verifying each action has the expected output:
     - Create a user through `pgb_admin_users` config variable
-    - Assert a password has been generated for that user
     - Change this user's password
     - Add a new user through the `add-user` action
     - Check we have all three expected users, using the `get-users` action
-    - Verify the users are represented in the userlist file as we expect
     - Remove the created users in preparation for the next test, and check that they have been
       removed using the `get-users` action
+
+    TODO examine userlist.txt directly to ensure changes are implemented as expected.
     """
     await ops_test.model.applications[APP_NAME].set_config({"pgb_admin_users": "test1"})
 
     unit = ops_test.model.applications[APP_NAME].units[0]
-
-    # TODO check test1 password has been generated.
 
     action = await unit.run_action("change-password", username="test1", password="pw1")
     action = await action.wait()
@@ -64,16 +62,8 @@ async def test_user_management(ops_test: OpsTest):
     action = await unit.run_action("get-users")
     action = await action.wait()
     # juju-admin is the default user defined in config.yaml, test1 added in config, test2 added
-    # using action
+    # using the `add-user` action
     assert action.results["result"] == "juju-admin test1 test2"
-
-    # TODO assert hashes of pw1 and pw2 are in the password file. In future, use these users and
-    # passwords to do something that requires the authentication.
-
-    # container = unit.get_container("pgbouncer")
-    # userlist = container.pull(USERLIST_PATH).read()
-    # assert "test1" in userlist
-    # assert "test2" in userlist
 
     # teardown users before next test
     action = await unit.run_action("remove-user", username="test1")

@@ -4,6 +4,7 @@
 
 """Charmed PgBouncer connection pooler."""
 
+import hashlib
 import logging
 import secrets
 import string
@@ -126,7 +127,6 @@ class PgBouncerK8sCharm(CharmBase):
         TODO verify passwords are valid
         """
         username = event.params["username"]
-        password = event.params["password"]
         users = self._get_userlist_from_container()
         if username not in users:
             event.set_results(
@@ -135,7 +135,8 @@ class PgBouncerK8sCharm(CharmBase):
                 }
             )
             return
-        users[username] = password
+        hash = hashlib.md5(event.params["password"].encode())
+        users[username] = hash.hexdigest()
         self._push_container_config(users=users)
         event.set_results({"result": f"password updated for user {username}"})
 
@@ -151,7 +152,8 @@ class PgBouncerK8sCharm(CharmBase):
             event.set_results({"result": f"user {username} already exists"})
             return
 
-        users[username] = event.params["password"]
+        hash = hashlib.md5(event.params["password"].encode())
+        users[username] = hash.hexdigest()
         self._push_container_config(users=users)
         event.set_results({"result": f"new user {username} added"})
 
@@ -337,19 +339,21 @@ admin_users = {",".join(users.keys())}"""
         for admin_user in self.config["pgb_admin_users"].split(","):
             # TODO add username validation
             if admin_user not in users or users[admin_user] is None:
-                users[admin_user] = self._generate_password()
+                hash = hashlib.md5(self._generate_password().encode())
+                users[admin_user] = hash.hexdigest()
         return users
 
     def _get_userlist_from_container(self) -> Dict[str, str]:
         """Parses container userlist to a dict, for use in charm.
 
         This parses the userlist.txt stored on the container into a dictionary of strings
+
         Returns:
             users: a dictionary of usernames and passwords
         """
         pgb_container = self.unit.get_container(self._pgbouncer_service)
         if not pgb_container.can_connect():
-            logger.info("userlist not accessible from container, cannot connect.")
+            logger.info("pgbouncer container not accessible, cannot access userlist")
             return {}
 
         try:

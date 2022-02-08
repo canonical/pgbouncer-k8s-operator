@@ -35,9 +35,9 @@ class TestCharm(unittest.TestCase):
         userlist = pgb_container.pull(USERLIST_PATH).read()
         # Since we can't access the password without reading from the userlist in the container,
         # which is effectively what we're testing, we assert the default username and a password of
-        # length 24 are both in the userlist file.
+        # length 32 are both in the userlist file.
         self.assertIn('"juju-admin" "', userlist)
-        self.assertEqual(len('"juju-admin" ""') + 24, len(userlist))
+        self.assertEqual(len('"juju-admin" ""') + 32, len(userlist))
 
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
     def test_on_config_changed(self, _reload_pgbouncer):
@@ -104,9 +104,9 @@ class TestCharm(unittest.TestCase):
         pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
         initial_userlist = pgb_container.pull(USERLIST_PATH).read()
         # Since we can't access the password without reading from the userlist in the container,
-        # we assert the expected username and a password of length 24 are both in the userlist.
+        # we assert the expected username and a password of length 32 are both in the userlist.
         self.assertIn('"test-admin" "', initial_userlist)
-        self.assertEqual(len('"test-admin" ""') + 24, len(initial_userlist))
+        self.assertEqual(len('"test-admin" ""') + 32, len(initial_userlist))
 
         change_password_event = Mock(
             params={
@@ -120,8 +120,10 @@ class TestCharm(unittest.TestCase):
         self.assertDictEqual(result, {"result": "password updated for user test-admin"})
 
         updated_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual(updated_userlist, '"test-admin" "password"')
+        # Assert password is correctly hashed.
+        self.assertEqual(updated_userlist, '"test-admin" "5f4dcc3b5aa765d61d8327deb882cf99"')
         self.assertNotEqual(updated_userlist, initial_userlist)
+        self.assertNotEqual(initial_userlist, '"test-admin" "password"')
 
     def test_on_change_password_action_nonexistent_user(self):
         self.harness.update_config({"pgb_admin_users": "test-admin"})
@@ -129,9 +131,9 @@ class TestCharm(unittest.TestCase):
         pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
         initial_userlist = pgb_container.pull(USERLIST_PATH).read()
         # Since we can't access the password without reading from the userlist in the container,
-        # we assert the expected username and a password of length 24 are both in the userlist.
+        # we assert the expected username and a password of length 32 are both in the userlist.
         self.assertIn('"test-admin" "', initial_userlist)
-        self.assertEqual(len('"test-admin" ""') + 24, len(initial_userlist))
+        self.assertEqual(len('"test-admin" ""') + 32, len(initial_userlist))
 
         nonexistent_user_event = Mock(
             params={
@@ -150,7 +152,9 @@ class TestCharm(unittest.TestCase):
         )
         current_userlist = pgb_container.pull(USERLIST_PATH).read()
         self.assertEqual(initial_userlist, current_userlist)
-        self.assertNotEqual(initial_userlist, '"nonexistent-user" "password"')
+        self.assertNotEqual(
+            initial_userlist, '"nonexistent-user" "5f4dcc3b5aa765d61d8327deb882cf99"'
+        )
 
     def test_on_add_user_action(self):
         self.harness.update_config({"pgb_admin_users": "existing-user"})
@@ -170,7 +174,9 @@ class TestCharm(unittest.TestCase):
 
         updated_userlist = pgb_container.pull(USERLIST_PATH).read()
         self.assertNotEqual(initial_userlist, updated_userlist)
-        self.assertIn('"new-user" "password"', updated_userlist)
+        # check password is hashed
+        self.assertIn('"new-user" "5f4dcc3b5aa765d61d8327deb882cf99"', updated_userlist)
+        self.assertNotIn('"new-user" "password"', updated_userlist)
 
     def test_on_add_existing_user_action(self):
         self.harness.update_config({"pgb_admin_users": "existing-user"})
