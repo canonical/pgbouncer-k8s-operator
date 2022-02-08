@@ -12,7 +12,7 @@ this operator.
   or [Discourse](https://discourse.charmhub.io/).
 - Familiarising yourself with the [Charmed Operator Framework](https://juju.is/docs/sdk) library
   will help you a lot when working on new features or bug fixes.
-- All enhancements require review before being merged. Code review typically examines
+- All enhancements require at least 2 approving reviews before being merged. Code review typically examines
   - code quality
   - test coverage
   - user experience for Juju administrators this charm.
@@ -65,3 +65,7 @@ juju model-config logging-config="<root>=INFO;unit=DEBUG"
 juju deploy ./pgbouncer-k8s-operator_ubuntu-20.04-amd64.charm \
     --resource pgbouncer-image=pgbouncer:0.8
 ```
+
+## Canonical Contributor Agreement
+
+Canonical welcomes contributions to the Charmed PGBouncer Operator. Please check out our [contributor agreement](https://ubuntu.com/legal/contributors) if you're interested in contributing to the solution.

@@ -24,7 +24,16 @@ The following relations provide support for the [LMA charm bundle](https://juju.
 
 ## OCI Images
 
-This charm uses the canonical pgbouncer-container docker image, available here: [https://github.com/canonical/pgbouncer-container](https://github.com/canonical/pgbouncer-container). As this container has not been uploaded anywhere, **you will need to build this image locally before use**, following the instructions in [CONTRIBUTING.md]([CONTRIBUTING.md](https://github.com/canonical/pgbouncer-k8s-operator/CONTRIBUTING.md)).
+This charm uses the canonical pgbouncer-container docker image, available here: [https://github.com/canonical/pgbouncer-container](https://github.com/canonical/pgbouncer-container). As this container has not been uploaded anywhere, **you will need to build this image locally and import it into your container registry before use**, following the instructions in [CONTRIBUTING.md]([CONTRIBUTING.md](https://github.com/canonical/pgbouncer-k8s-operator/CONTRIBUTING.md)).
+
+## License
+
+The Charmed PgBouncer Operator is free software, distributed under the Apache Software License, version 2.0. See [LICENSE](https://github.com/canonical/pgbouncer-k8s-operator/blob/main/LICENSE) for more information.
+
+## Security
+
+Security issues in the Charmed PgBouncer Operator can be reported through [LaunchPad](https://wiki.ubuntu.com/DebuggingSecurity#How%20to%20File). Please do not file GitHub issues about security issues.
+
 
 ## Contributing
 
