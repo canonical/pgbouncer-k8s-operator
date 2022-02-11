@@ -8,13 +8,36 @@ The PgBouncer Kubernetes Operator deploys and operates the [PgBouncer](https://w
 
 As this charm is not yet published, you need to follow the build and deploy instructions from [CONTRIBUTING.md](https://github.com/canonical/pgbouncer-k8s-operator/CONTRIBUTING.md).
 
+## Actions
+
+- `reload-pgbouncer`
+  - Reloads the pgbouncer application.
+  - Currently only implemented as a stub.
+- `add-user`
+  - Adds a new pgbouncer user.
+  - Params:
+    - username
+    - password
+- `remove-user`
+  - Removes an existing pgbouncer user.
+  - Params:
+    - username
+- `change-password`
+  - Updates the password for a given pgbouncer user.
+  - Params:
+    - username
+    - password
+- `get-users`
+  - Lists the existing pgbouncer users.
+
 ## Relations
 
-#### Planned
-- `db:[pgsql](https://github.com/canonical/ops-lib-pgsql/)`
-- `db-admin:[pgsql](https://github.com/canonical/ops-lib-pgsql/)`
-- `backend-db-admin:[pgsql](https://github.com/canonical/ops-lib-pgsql/)`
-  - Provides a relaton to the corresponding [postgresql-k8s-operator charm](https://github.com/canonical/postgresql-k8s-operator).
+### Planned
+
+- `db:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)
+- `db-admin:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)
+- `backend-db-admin:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)
+  - Provides a relation to the corresponding [postgresql-k8s-operator charm](https://github.com/canonical/postgresql-k8s-operator).
 
 The following relations provide support for the [LMA charm bundle](https://juju.is/docs/lma2), our expected observability stack.
 
@@ -24,7 +47,7 @@ The following relations provide support for the [LMA charm bundle](https://juju.
 
 ## OCI Images
 
-This charm uses the canonical pgbouncer-container docker image, available here: [https://github.com/canonical/pgbouncer-container](https://github.com/canonical/pgbouncer-container). As this container has not been uploaded anywhere, **you will need to build this image locally and import it into your container registry before use**, following the instructions in [CONTRIBUTING.md]([CONTRIBUTING.md](https://github.com/canonical/pgbouncer-k8s-operator/CONTRIBUTING.md)).
+This charm uses the canonical pgbouncer-container docker image, available [here](https://github.com/canonical/pgbouncer-container). As this container has not been uploaded anywhere, **you will need to build this image locally and import it into your container registry before use**, following the instructions in [CONTRIBUTING.md]([CONTRIBUTING.md](https://github.com/canonical/pgbouncer-k8s-operator/CONTRIBUTING.md)).
 
 ## License
 
@@ -33,7 +56,6 @@ The Charmed PgBouncer Operator is free software, distributed under the Apache So
 ## Security
 
 Security issues in the Charmed PgBouncer Operator can be reported through [LaunchPad](https://wiki.ubuntu.com/DebuggingSecurity#How%20to%20File). Please do not file GitHub issues about security issues.
-
 
 ## Contributing
 

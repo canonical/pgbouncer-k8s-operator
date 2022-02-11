@@ -95,7 +95,7 @@ class TestCharm(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
     def test_on_reload_pgbouncer_action(self, _reload_pgbouncer):
         self.harness.charm._on_reload_pgbouncer_action(Mock())
-        # TODO assert pgbouncer is running in the container
+        # TODO assert pgbouncer is running in the container once service handling is implemented
         _reload_pgbouncer.assert_called()
 
     def test_on_change_password_action(self):
@@ -298,10 +298,9 @@ class TestCharm(unittest.TestCase):
         empty_users = self.harness.charm._get_userlist_from_container()
         self.assertDictEqual(empty_users, {})
 
-    def test_reload_pgbouncer(self):
-        pass
-
-    # UTILITIES
+    # ===========
+    #  UTILITIES
+    # ===========
 
     def get_result(self, event):
         """Get the intended result from a mocked event.
