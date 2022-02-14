@@ -2,6 +2,7 @@
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+import hashlib
 import logging
 from pathlib import Path
 
@@ -44,13 +45,16 @@ async def test_user_management(ops_test: OpsTest):
     - Check we have all three expected users, using the `get-users` action
     - Remove the created users in preparation for the next test, and check that they have been
       removed using the `get-users` action
-
-    TODO examine userlist.txt directly to ensure changes are implemented as expected.
     """
     await ops_test.model.applications[APP_NAME].set_config({"pgb_admin_users": "test1"})
+    await ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000)
+
+    # check test1 and juju-admin users have generated and hashed passwords
+    userlist = await get_userlist_from_container(ops_test)
+    assert "juju-admin" in userlist
+    assert "test1" in userlist
 
     unit = ops_test.model.applications[APP_NAME].units[0]
-
     action = await unit.run_action("change-password", username="test1", password="pw1")
     action = await action.wait()
     assert action.results["result"] == "password updated for user test1"
@@ -61,9 +65,15 @@ async def test_user_management(ops_test: OpsTest):
 
     action = await unit.run_action("get-users")
     action = await action.wait()
-    # juju-admin is the default user defined in config.yaml, test1 added in config, test2 added
-    # using the `add-user` action
+    # juju-admin is the default user defined in config.yaml
     assert action.results["result"] == "juju-admin test1 test2"
+
+    # Assert passwords are correct, with expected md5 hashing. This also verifies userlist.txt is
+    # correctly formatted, with double quotes surrounding usernames and hashed passwords.
+    userlist = await get_userlist_from_container(ops_test)
+    assert "juju-admin" in userlist
+    assert f'"test1" "{hashlib.md5("pw1".encode()).hexdigest()}"' in userlist
+    assert f'"test2" "{hashlib.md5("pw2".encode()).hexdigest()}"' in userlist
 
     # teardown users before next test
     action = await unit.run_action("remove-user", username="test1")
@@ -77,3 +87,28 @@ async def test_user_management(ops_test: OpsTest):
     action = await unit.run_action("get-users")
     action = await action.wait()
     assert action.results["result"] == "juju-admin"
+
+    # Assert juju-admin in userlist, and test1 and test2 have been removed.
+    userlist = await get_userlist_from_container(ops_test)
+    assert "juju-admin" in userlist
+    assert "test1" not in userlist
+    assert "test2" not in userlist
+
+
+async def get_userlist_from_container(ops_test):
+    """Helper function to get userlist.txt from pgbouncer container.
+
+    ops_test.scp_from() doesn't seem to work on k8s charms, and we don't particularly want to save
+    the file locally anyway, so instead we run `cat` over ssh.
+    """
+    userlist = await ops_test.run(
+        "juju",
+        "ssh",
+        "--container",
+        "pgbouncer",
+        f"{APP_NAME}/0",
+        "cat",
+        f"{USERLIST_PATH}",
+    )
+    return userlist[1]
+
