@@ -58,21 +58,20 @@ class PgBouncerK8sCharm(CharmBase):
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
+        container = self.unit.get_container(self._pgbouncer_container)
+        if not container.can_connect():
+            self.unit.status = WaitingStatus(
+                f"waiting for {self._pgbouncer_container} workload container."
+            )
+            event.defer()
+            return
+
         # Handle any user changes that may have been created through charm config.
         users = self._get_userlist_from_container()
         users = self._get_users_from_charm_config(users)
         self._push_container_config(users)
 
-        container = self.unit.get_container(self._pgbouncer_container)
         layer = self._pgbouncer_layer()
-
-        if not container.can_connect():
-            self.unit.status = WaitingStatus(
-                f"waiting for {self._pgbouncer_container} in pgbouncer workload container."
-            )
-            event.defer()
-            return
-
         services = container.get_plan().to_dict().get("services", {})
         if services != layer["services"]:
             container.add_layer(self._pgbouncer_container, layer, combine=True)
