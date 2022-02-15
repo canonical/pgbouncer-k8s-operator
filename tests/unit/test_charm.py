@@ -6,7 +6,7 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from ops.model import ActiveStatus
+from ops.model import ActiveStatus, WaitingStatus
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
@@ -59,6 +59,16 @@ class TestCharm(unittest.TestCase):
         self.assertIn("test-user", userlist)
         ini = pgb_container.pull(INI_PATH).read()
         self.assertIn("test-user", ini)
+
+    @patch("ops.model.Container.can_connect", return_value=False)
+    @patch("ops.charm.ConfigChangedEvent.defer")
+    def test_on_config_changed_container_cant_connect(self, can_connect, defer):
+        self.harness.update_config({"pgb_listen_port": "5555"})
+        self.assertEqual(
+            self.harness.model.unit.status,
+            WaitingStatus("waiting for pgbouncer workload container."),
+        )
+        defer.assert_called()
 
     def test_on_pgbouncer_pebble_ready(self):
         initial_plan = self.harness.get_container_pebble_plan(self._pgbouncer_container)

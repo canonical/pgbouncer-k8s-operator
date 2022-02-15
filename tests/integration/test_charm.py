@@ -99,7 +99,7 @@ async def get_userlist_from_container(ops_test):
     """Helper function to get userlist.txt from pgbouncer container.
 
     ops_test.scp_from() doesn't seem to work on k8s charms, and we don't particularly want to save
-    the file locally anyway, so instead we run `cat` over ssh.
+    the file locally anyway, so instead we run `cat` over ssh and return the output.
     """
     userlist = await ops_test.run(
         "juju",
@@ -111,4 +111,3 @@ async def get_userlist_from_container(ops_test):
         f"{USERLIST_PATH}",
     )
     return userlist[1]
-
