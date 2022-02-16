@@ -255,7 +255,7 @@ class PgBouncerK8sCharm(CharmBase):
         if reload_pgbouncer:
             self._reload_pgbouncer()
 
-    def _generate_pgbouncer_ini(self, users=None) -> str:
+    def _generate_pgbouncer_ini(self, users: Dict=None) -> str:
         """Generate pgbouncer.ini from config.
 
         This is a basic stub method, and will be updated in future to generate more complex
@@ -281,7 +281,7 @@ logfile = pgbouncer.log
 pidfile = pgbouncer.pid
 admin_users = {",".join(users.keys())}"""
 
-    def _push_userlist(self, users=None, reload_pgbouncer=False) -> None:
+    def _push_userlist(self, users: Dict=None, reload_pgbouncer: bool=False) -> None:
         """Generate userlist.txt from the given userlist dict, and deploy it to the container.
 
         Args:
