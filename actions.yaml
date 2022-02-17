@@ -16,11 +16,11 @@ add-user:
   required: [username, password]
 
 remove-user:
-  description: Removes pgbouncer user.
+  description: Removes pgbouncer user. NB this can only remove users added through the `add-user` action; users added using the charm config must be removed from the config, and through this action.
   params:
     username:
       type: string
-      description: The username of the given user. If a user exists by this name, this action will fail.
+      description: The username of the given user. If a user by this name does not exist, this action will fail.
   required: [username]
 
 change-password:

@@ -71,6 +71,8 @@ class PgBouncerK8sCharm(CharmBase):
         users = self._get_users_from_charm_config(users)
         self._push_container_config(users)
 
+        # Create an updated pebble layer for the pgbouncer container, and apply it if there are
+        # any changes.
         layer = self._pgbouncer_layer()
         services = container.get_plan().to_dict().get("services", {})
         if services != layer["services"]:
@@ -133,16 +135,17 @@ class PgBouncerK8sCharm(CharmBase):
                 will be modified, and a "password" parameter, defining the new password.
         """
         username = event.params["username"]
+        # Get users from pgbouncer container and check that the given username doesn't exist.
         users = self._get_userlist_from_container()
-        if username not in users:
+        if username not in users.keys():
             event.set_results(
                 {
                     "result": f"user {username} does not exist - use the get-users action to list existing users."
                 }
             )
             return
-        password = hashlib.md5(event.params["password"].encode())
-        users[username] = password.hexdigest()
+
+        users[username] = self._hash(event.params["password"])
         self._push_container_config(users=users)
         event.set_results({"result": f"password updated for user {username}"})
 
@@ -155,37 +158,37 @@ class PgBouncerK8sCharm(CharmBase):
             event: ActionEvent containing a "username" parameter, defining the user to be added,
                 and a "password" parameter, defining the user's password.
         """
-        users = self._get_userlist_from_container()
         username = event.params["username"]
-        if username in users:
+        # Get users from pgbouncer container and check that the given username doesn't exist.
+        users = self._get_userlist_from_container()
+        if username in users.keys():
             event.set_results({"result": f"user {username} already exists"})
             return
 
-        password = hashlib.md5(event.params["password"].encode())
-        users[username] = password.hexdigest()
+        users[username] = self._hash(event.params["password"])
         self._push_container_config(users)
         event.set_results({"result": f"new user {username} added"})
 
     def _on_remove_user_action(self, event: ActionEvent) -> None:
         """Event handler for remove-user action.
 
-        TODO This only removes the user from userlist.txt, and not from the juju config. Do we need
-        to keep a list of users that have been deleted so they aren't re-added when the config
-        updates? The password is updated, so the user is inaccessible, but it's still messy. The
-        other option is to entirely remove user management from the charm config, since we can't
-        edit that from charm code. Passwords still have to be configured manually using the action,
-        and we can't add users to the charm config, so using the config isn't a perfect solution.
-        This should use Juju Secrets once available.
+        As of now, this only removes the user from userlist.txt, and not the juju config.
+        Therefore, users defined in the juju config are reinstated with a generated password next
+        time userlist.txt is generated from local config, causing the user to persist. It remains
+        inaccessible due to the new password. To remove this user, it must also be removed from
+        the config.
 
         Args:
             event: ActionEvent containing a "username" parameter, defining the user to be removed.
         """
-        users = self._get_userlist_from_container()
         username = event.params["username"]
+        # Get users from pgbouncer container and check that the given username doesn't exist.
+        users = self._get_userlist_from_container()
         if username not in users:
             event.set_results({"result": f"user {username} does not exist"})
             return
 
+        # Remove user from local userlist variable and render updated userlist.txt to container
         del users[username]
         self._push_container_config(users=users)
         event.set_results({"result": f"user {username} removed"})
@@ -255,7 +258,7 @@ class PgBouncerK8sCharm(CharmBase):
         if reload_pgbouncer:
             self._reload_pgbouncer()
 
-    def _generate_pgbouncer_ini(self, users: Dict=None) -> str:
+    def _generate_pgbouncer_ini(self, users: Dict = None) -> str:
         """Generate pgbouncer.ini from config.
 
         This is a basic stub method, and will be updated in future to generate more complex
@@ -281,7 +284,7 @@ logfile = pgbouncer.log
 pidfile = pgbouncer.pid
 admin_users = {",".join(users.keys())}"""
 
-    def _push_userlist(self, users: Dict=None, reload_pgbouncer: bool=False) -> None:
+    def _push_userlist(self, users: Dict = None, reload_pgbouncer: bool = False) -> None:
         """Generate userlist.txt from the given userlist dict, and deploy it to the container.
 
         Args:
@@ -341,14 +344,14 @@ admin_users = {",".join(users.keys())}"""
         """
         for admin_user in self.config["pgb_admin_users"].split(","):
             if admin_user not in users or users[admin_user] is None:
-                password = hashlib.md5(self._generate_password().encode())
-                users[admin_user] = password.hexdigest()
+                users[admin_user] = self._hash(self._generate_password())
         return users
 
     def _get_userlist_from_container(self) -> Dict[str, str]:
-        """Parses container userlist to a dict, for use in charm.
+        """Parses container userlist to a dict.
 
-        This parses the userlist.txt stored on the container into a dictionary of strings
+        This parses the userlist.txt stored on the container into a dictionary of strings, where
+        the users are the keys and hashed passwords are the values.
 
         Returns:
             users: a dictionary of usernames and passwords
@@ -382,6 +385,13 @@ admin_users = {",".join(users.keys())}"""
         """
         choices = string.ascii_letters + string.digits
         return "".join([secrets.choice(choices) for _ in range(24)])
+
+    def _hash(self, string: str) -> str:
+        """Returns a hash of the given string.
+
+        Currently only implements md5
+        """
+        return hashlib.md5(string.encode()).hexdigest()
 
     # =================================================
     #  PgBouncer service management / health functions
