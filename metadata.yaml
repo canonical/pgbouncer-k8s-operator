@@ -1,25 +1,24 @@
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-# For a complete list of supported options, see:
-# https://discourse.charmhub.io/t/charm-metadata-v2/3674/15
-name: operator-template
+name: pgbouncer-k8s-operator
 display-name: |
-  TEMPLATE-TODO: fill out a display name for the Charmcraft store
+  PgBouncer Kubernetes Operator
 description: |
-  TEMPLATE-TODO: fill out the charm's description
+  Lightweight connection pooler for PostgreSQL.
 summary: |
-  TEMPLATE-TODO: fill out the charm's summary
+  The aim of pgbouncer is to lower the performance impact of opening new connections to PostgreSQL. For more information, see https://www.pgbouncer.org/usage.html
+maintainers:
+  "Will Fitch <will.fitch@canonical.com>"
 
-# TEMPLATE-TODO: replace with containers for your workload (delete for non-k8s)
 containers:
-  httpbin:
-    resource: httpbin-image
+  pgbouncer:
+    resource: pgbouncer-image
 
-# TEMPLATE-TODO: each container defined above must specify an oci-image resource
 resources:
-  httpbin-image:
+  pgbouncer-image:
     type: oci-image
-    description: OCI image for httpbin (kennethreitz/httpbin)
-    # Included for simplicity in integration tests
-    upstream-source: kennethreitz/httpbin
+    description: OCI image for pgbouncer
+    # currently this uses a local build of https://github.com/canonical/pgbouncer-container - see CONTRIBUTING.md for instructions.
+    upstream-source: pgbouncer:0.8
+    local-source: pgbouncer:0.8

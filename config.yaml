@@ -1,14 +1,23 @@
 # Copyright 2021 Canonical Ltd.
 # See LICENSE file for licensing details.
-#
-# TEMPLATE-TODO: change this example to suit your needs.
-# If you don't need a config, you can remove the file entirely.
-# It ties in to the example _on_config_changed handler in src/charm.py
-#
-# Learn more about config at: https://juju.is/docs/sdk/config
 
 options:
-  thing:
-    default: 🎁
-    description: A thing used by the charm.
-    type: string
+  pgb_databases:
+    default: "exampledb = host=pg-host port=5432 dbname=exampledb"
+    description: "multiline string containing database config (one per line)."
+    type: "string"
+
+  pgb_listen_port:
+    default: 6432
+    description: "Port on which PGBouncer listens for traffic"
+    type: "int"
+
+  pgb_listen_address:
+    default: "localhost"
+    description: "Address on which PGBouncer listens for traffic"
+    type: "string"
+
+  pgb_admin_users:
+    default: "juju-admin"
+    description: "A comma-separated list of admin users. A password will be generated for each user. Only generates `juju-admin` user by default"
+    type: "string"
