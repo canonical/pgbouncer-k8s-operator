@@ -34,7 +34,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          repository: 'canonical/postgresql-patroni-container'
+          repository: 'canonical/pgbouncer-container'
           ref: 'v0.1.0'
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -47,7 +47,7 @@ jobs:
           # Do not publish the image.
           push: false
           # Set the tag to retrieve the image in Deploy tests.
-          tags: postgresql-patroni
+          tags: pgbouncer
           outputs: type=docker,dest=/tmp/image.tar
       - name: Upload image to be used in integration tests
         uses: actions/upload-artifact@v2
