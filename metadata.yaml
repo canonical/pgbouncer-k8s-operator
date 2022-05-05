@@ -8,6 +8,12 @@ description: |
   Lightweight connection pooler for PostgreSQL.
 summary: |
   The aim of pgbouncer is to lower the performance impact of opening new connections to PostgreSQL. For more information, see https://www.pgbouncer.org/usage.html
+website: |
+  https://www.pgbouncer.org/
+source: |
+  https://github.com/canonical/pgbouncer-operator
+issues: |
+  https://github.com/canonical/pgbouncer-operator/issues
 maintainers:
   "Will Fitch <will.fitch@canonical.com>"
 
