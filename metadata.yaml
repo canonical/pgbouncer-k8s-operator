@@ -8,6 +8,12 @@ description: |
   Lightweight connection pooler for PostgreSQL.
 summary: |
   The aim of pgbouncer is to lower the performance impact of opening new connections to PostgreSQL. For more information, see https://www.pgbouncer.org/usage.html
+website: |
+  https://www.pgbouncer.org/
+source: |
+  https://github.com/canonical/pgbouncer-operator
+issues: |
+  https://github.com/canonical/pgbouncer-operator/issues
 maintainers:
   "Will Fitch <will.fitch@canonical.com>"
 
@@ -19,6 +25,7 @@ resources:
   pgbouncer-image:
     type: oci-image
     description: OCI image for pgbouncer
-    # currently this uses a local build of https://github.com/canonical/pgbouncer-container - see CONTRIBUTING.md for instructions.
+    # currently this uses a local build of https://github.com/canonical/pgbouncer-container - see
+    # CONTRIBUTING.md for instructions.
     upstream-source: pgbouncer:0.8
     local-source: pgbouncer:0.8
