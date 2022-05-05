@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2021 Canonical Ltd.
+# Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Charmed PgBouncer connection pooler."""
@@ -10,6 +10,7 @@ import secrets
 import string
 from typing import Dict
 
+from charms.pgbouncer_operator.v0 import pgb
 from ops.charm import ActionEvent, CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
@@ -18,8 +19,11 @@ from ops.pebble import Layer
 
 logger = logging.getLogger(__name__)
 
-INI_PATH = "/etc/pgbouncer/pgbouncer.ini"
-USERLIST_PATH = "/etc/pgbouncer/userlist.txt"
+PGB = "pgbouncer"
+PGB_USER = PGB
+PGB_DIR = "/etc/pgbouncer"
+INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
+USERLIST_PATH = f"{PGB_DIR}/userlist.txt"
 
 
 class PgBouncerK8sCharm(CharmBase):
@@ -29,9 +33,6 @@ class PgBouncerK8sCharm(CharmBase):
 
     def __init__(self, *args):
         super().__init__(*args)
-
-        self._pgbouncer_container = "pgbouncer"
-        self._pgbouncer_user = "pgbouncer"
 
         self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
@@ -58,10 +59,10 @@ class PgBouncerK8sCharm(CharmBase):
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
-        container = self.unit.get_container(self._pgbouncer_container)
+        container = self.unit.get_container(PGB)
         if not container.can_connect():
             self.unit.status = WaitingStatus(
-                f"waiting for {self._pgbouncer_container} workload container."
+                f"waiting for pgbouncer workload container."
             )
             event.defer()
             return
@@ -76,21 +77,27 @@ class PgBouncerK8sCharm(CharmBase):
         layer = self._pgbouncer_layer()
         services = container.get_plan().to_dict().get("services", {})
         if services != layer["services"]:
-            container.add_layer(self._pgbouncer_container, layer, combine=True)
-            logging.info(f"Added layer '{self._pgbouncer_container}' to pebble plan")
-            container.restart(self._pgbouncer_container)
-            logging.info(f"restarted {self._pgbouncer_container} service")
+            container.add_layer(PGB, layer, combine=True)
+            logging.info(f"Added layer 'pgbouncer' to pebble plan")
+            container.restart(PGB)
+            logging.info(f"restarted {PGB} service")
         self.unit.status = ActiveStatus()
 
     def _pgbouncer_layer(self) -> Layer:
-        """Returns a default pebble config layer for the pgbouncer container."""
+        """Returns a default pebble config layer for the pgbouncer container.
+
+        TODO auto-generate multiple pgbouncer services to make use of available cpu cores on unit.
+
+        Returns:
+            A pebble configuration layer for charm services.
+        """
         return {
             "summary": "pgbouncer layer",
             "description": "pebble config layer for pgbouncer",
             "services": {
-                self._pgbouncer_container: {
+                PGB: {
                     "summary": "pgbouncer service",
-                    "user": self._pgbouncer_user,
+                    "user": PGB_USER,
                     "command": f"pgbouncer {INI_PATH}",
                     "startup": "enabled",
                     "override": "replace",
@@ -108,7 +115,7 @@ class PgBouncerK8sCharm(CharmBase):
         """Define and start pgbouncer workload."""
         container = event.workload
         pebble_layer = self._pgbouncer_layer()
-        container.add_layer(self._pgbouncer_container, pebble_layer, combine=True)
+        container.add_layer(PGB, pebble_layer, combine=True)
         container.autostart()
         self.unit.status = ActiveStatus()
 
@@ -234,7 +241,7 @@ class PgBouncerK8sCharm(CharmBase):
         if users is None:
             users = self._get_userlist_from_container()
 
-        pgb_container = self.unit.get_container(self._pgbouncer_container)
+        pgb_container = self.unit.get_container(PGB)
         pgbouncer_ini = self._generate_pgbouncer_ini(users)
 
         try:
@@ -249,7 +256,7 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_container.push(
             INI_PATH,
             pgbouncer_ini,
-            user=self._pgbouncer_user,
+            user=PGB_USER,
             permissions=0o600,
             make_dirs=True,
         )
@@ -272,17 +279,11 @@ class PgBouncerK8sCharm(CharmBase):
         if users is None:
             users = self._get_userlist_from_container()
 
-        return f"""[databases]
-{self.config["pgb_databases"]}
-
-[pgbouncer]
-listen_port = {self.config["pgb_listen_port"]}
-listen_addr = {self.config["pgb_listen_address"]}
-auth_type = md5
-auth_file = userlist.txt
-logfile = pgbouncer.log
-pidfile = pgbouncer.pid
-admin_users = {",".join(users.keys())}"""
+        cfg = pgb.PgbConfig(pgb.DEFAULT_CONFIG)
+        cfg[PGB]["admin_users"] = ",".join(users.keys())
+        cfg[PGB]["listen_port"] = str(self.config["pgb_listen_port"])
+        cfg[PGB]["listen_addr"] = self.config["pgb_listen_address"]
+        return cfg.render()
 
     def _push_userlist(self, users: Dict = None, reload_pgbouncer: bool = False) -> None:
         """Generate userlist.txt from the given userlist dict, and deploy it to the container.
@@ -294,10 +295,10 @@ admin_users = {",".join(users.keys())}"""
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
         """
-        pgb_container = self.unit.get_container(self._pgbouncer_container)
+        pgb_container = self.unit.get_container(PGB)
         if users is None:
             users = self._get_userlist_from_container()
-        userlist = self._generate_userlist(users)
+        userlist = pgb.generate_userlist(users)
 
         try:
             # Check that we're not updating this file unnecessarily
@@ -311,7 +312,7 @@ admin_users = {",".join(users.keys())}"""
         pgb_container.push(
             USERLIST_PATH,
             userlist,
-            user=self._pgbouncer_user,
+            user=PGB_USER,
             permissions=0o600,
             make_dirs=True,
         )
@@ -319,17 +320,6 @@ admin_users = {",".join(users.keys())}"""
 
         if reload_pgbouncer:
             self._reload_pgbouncer()
-
-    def _generate_userlist(self, users: Dict[str, str]) -> str:
-        """Generate userlist.txt from the given dictionary of usernames:passwords.
-
-        Args:
-            users: a dictionary of usernames and passwords
-        Returns:
-            A multiline string, containing each pair of usernames and passwords separated by a
-            space, one pair per line.
-        """
-        return "\n".join([f'"{username}" "{password}"' for username, password in users.items()])
 
     def _get_users_from_charm_config(self, users: Dict[str, str] = {}) -> Dict[str, str]:
         """Imports users from charm config and generates passwords when necessary.
@@ -344,7 +334,7 @@ admin_users = {",".join(users.keys())}"""
         """
         for admin_user in self.config["pgb_admin_users"].split(","):
             if admin_user not in users or users[admin_user] is None:
-                users[admin_user] = self._hash(self._generate_password())
+                users[admin_user] = self._hash(pgb.generate_password())
         return users
 
     def _get_userlist_from_container(self) -> Dict[str, str]:
@@ -356,7 +346,7 @@ admin_users = {",".join(users.keys())}"""
         Returns:
             users: a dictionary of usernames and passwords
         """
-        pgb_container = self.unit.get_container(self._pgbouncer_container)
+        pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
             logger.info("pgbouncer container not accessible, cannot access userlist")
             return {}
@@ -366,25 +356,7 @@ admin_users = {",".join(users.keys())}"""
         except FileNotFoundError:
             # There is no existing userlist.txt file, so return an empty dict
             return {}
-
-        parsed_userlist = {}
-        for line in userlist.split("\n"):
-            if line.strip() == "":
-                continue
-            # Userlist is formatted "{username}" "{password}""
-            username, password = line.replace('"', "").split(" ")
-            parsed_userlist[username] = password
-
-        return parsed_userlist
-
-    def _generate_password(self) -> str:
-        """Generates a secure password.
-
-        Returns:
-            A random 24-character string of letters and numbers.
-        """
-        choices = string.ascii_letters + string.digits
-        return "".join([secrets.choice(choices) for _ in range(24)])
+        return pgb.parse_userlist(userlist)
 
     def _hash(self, string: str) -> str:
         """Returns a hash of the given string.

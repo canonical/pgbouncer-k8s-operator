@@ -1,4 +1,4 @@
-# Copyright 2021 Canonical Ltd.
+# Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 #
 # Learn more about testing at: https://juju.is/docs/sdk/testing
@@ -11,8 +11,9 @@ from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
 
-INI_PATH = "/etc/pgbouncer/pgbouncer.ini"
-USERLIST_PATH = "/etc/pgbouncer/userlist.txt"
+PGB_DIR = "/etc/pgbouncer"
+INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
+USERLIST_PATH = f"{PGB_DIR}/userlist.txt"
 
 
 class TestCharm(unittest.TestCase):

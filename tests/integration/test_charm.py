@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2021 Canonical Ltd.
+# Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 import hashlib
@@ -15,8 +15,9 @@ logger = logging.getLogger(__name__)
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 APP_NAME = METADATA["name"]
 
-INI_PATH = "/etc/pgbouncer/pgbouncer.ini"
-USERLIST_PATH = "/etc/pgbouncer/userlist.txt"
+PGB_DIR = "/etc/pgbouncer"
+INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
+USERLIST_PATH = f"{PGB_DIR}/userlist.txt"
 
 
 @pytest.mark.abort_on_fail
