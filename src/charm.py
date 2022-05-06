@@ -39,10 +39,6 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
         self.framework.observe(self.on.reload_pgbouncer_action, self._on_reload_pgbouncer_action)
-        self.framework.observe(self.on.change_password_action, self._on_change_password_action)
-        self.framework.observe(self.on.add_user_action, self._on_add_user_action)
-        self.framework.observe(self.on.remove_user_action, self._on_remove_user_action)
-        self.framework.observe(self.on.get_users_action, self._on_get_users_action)
 
     # =======================
     #  Charm Lifecycle Hooks
@@ -131,82 +127,6 @@ class PgBouncerK8sCharm(CharmBase):
         """
         self._reload_pgbouncer()
         event.set_results({"result": "pgbouncer application has restarted"})
-
-    def _on_change_password_action(self, event: ActionEvent) -> None:
-        """An action to update the password for a specific user.
-
-        Currently passwords are hashed using md5.
-
-        Args:
-            event: ActionEvent containing a "username" parameter, defining the user whose password
-                will be modified, and a "password" parameter, defining the new password.
-        """
-        username = event.params["username"]
-        # Get users from pgbouncer container and check that the given username doesn't exist.
-        users = self._get_userlist_from_container()
-        if username not in users.keys():
-            event.set_results(
-                {
-                    "result": f"user {username} does not exist - use the get-users action to list existing users."
-                }
-            )
-            return
-
-        users[username] = self._hash(event.params["password"])
-        self._push_container_config(users=users)
-        event.set_results({"result": f"password updated for user {username}"})
-
-    def _on_add_user_action(self, event: ActionEvent) -> None:
-        """Event handler for add-user action.
-
-        Currently passwords are hashed using md5.
-
-        Args:
-            event: ActionEvent containing a "username" parameter, defining the user to be added,
-                and a "password" parameter, defining the user's password.
-        """
-        username = event.params["username"]
-        # Get users from pgbouncer container and check that the given username doesn't exist.
-        users = self._get_userlist_from_container()
-        if username in users.keys():
-            event.set_results({"result": f"user {username} already exists"})
-            return
-
-        users[username] = self._hash(event.params["password"])
-        self._push_container_config(users)
-        event.set_results({"result": f"new user {username} added"})
-
-    def _on_remove_user_action(self, event: ActionEvent) -> None:
-        """Event handler for remove-user action.
-
-        As of now, this only removes the user from userlist.txt, and not the juju config.
-        Therefore, users defined in the juju config are reinstated with a generated password next
-        time userlist.txt is generated from local config, causing the user to persist. It remains
-        inaccessible due to the new password. To remove this user, it must also be removed from
-        the config.
-
-        Args:
-            event: ActionEvent containing a "username" parameter, defining the user to be removed.
-        """
-        username = event.params["username"]
-        # Get users from pgbouncer container and check that the given username doesn't exist.
-        users = self._get_userlist_from_container()
-        if username not in users:
-            event.set_results({"result": f"user {username} does not exist"})
-            return
-
-        # Remove user from local userlist variable and render updated userlist.txt to container
-        del users[username]
-        self._push_container_config(users=users)
-        event.set_results({"result": f"user {username} removed"})
-
-    def _on_get_users_action(self, event: ActionEvent) -> None:
-        """Event handler for get-users action.
-
-        Prints a space-separated list of existing usernames from pgbouncer.ini
-        """
-        users = self._get_userlist_from_container()
-        event.set_results({"result": " ".join(users.keys())})
 
     # ===================================
     #  User management support functions
