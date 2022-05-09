@@ -14,7 +14,7 @@ from ops.charm import ActionEvent, CharmBase, ConfigChangedEvent, PebbleReadyEve
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, WaitingStatus
-from ops.pebble import Layer, ConnectionError
+from ops.pebble import ConnectionError, Layer
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class PgBouncerK8sCharm(CharmBase):
         config files that are essential for pgbouncer to run.
         """
         users = self._get_users_from_charm_config()
-        #self._push_container_config(users)
+        self._push_container_config(users)
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
@@ -242,7 +242,7 @@ class PgBouncerK8sCharm(CharmBase):
             if pgb_container.pull(INI_PATH).read() == pgbouncer_ini:
                 logger.info("updated config does not modify existing pgbouncer config")
                 return
-        except (FileNotFoundError,ConnectionError):
+        except (FileNotFoundError, ConnectionError):
             # There is no existing pgbouncer.ini file, so carry on and add one.
             pass
 
@@ -304,7 +304,7 @@ admin_users = {",".join(users.keys())}"""
             if pgb_container.pull(USERLIST_PATH).read() == userlist:
                 logger.info("updated userlist does not modify existing pgbouncer userlist")
                 return
-        except (FileNotFoundError,ConnectionError):
+        except (FileNotFoundError, ConnectionError):
             # there is no existing userlist.txt file, so carry on and add one.
             pass
 
