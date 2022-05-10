@@ -11,9 +11,9 @@ summary: |
 website: |
   https://www.pgbouncer.org/
 source: |
-  https://github.com/canonical/pgbouncer-operator
+  https://github.com/canonical/pgbouncer-k8s-operator
 issues: |
-  https://github.com/canonical/pgbouncer-operator/issues
+  https://github.com/canonical/pgbouncer-k8s-operator/issues
 maintainers:
   "Will Fitch <will.fitch@canonical.com>"
 
