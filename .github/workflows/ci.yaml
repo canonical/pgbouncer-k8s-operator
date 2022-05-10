@@ -47,7 +47,7 @@ jobs:
           # Do not publish the image.
           push: false
           # Set the tag to retrieve the image in Deploy tests.
-          tags: pgbouncer
+          tags: pgbouncer:latest
           outputs: type=docker,dest=/tmp/image.tar
       - name: Upload image to be used in integration tests
         uses: actions/upload-artifact@v2
