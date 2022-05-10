@@ -11,8 +11,9 @@ from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
 
-INI_PATH = "/etc/pgbouncer/pgbouncer.ini"
-USERLIST_PATH = "/etc/pgbouncer/userlist.txt"
+PGB_DIR = "/etc/pgbouncer"
+INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
+USERLIST_PATH = f"{PGB_DIR}/userlist.txt"
 
 
 class TestCharm(unittest.TestCase):
@@ -79,7 +80,7 @@ class TestCharm(unittest.TestCase):
                 "pgbouncer": {
                     "summary": "pgbouncer service",
                     "user": "pgbouncer",
-                    "command": "pgbouncer /etc/pgbouncer/pgbouncer.ini",
+                    "command": f"pgbouncer {INI_PATH}",
                     "startup": "enabled",
                     "override": "replace",
                     "environment": {
@@ -107,143 +108,6 @@ class TestCharm(unittest.TestCase):
         self.harness.charm._on_reload_pgbouncer_action(Mock())
         # TODO assert pgbouncer is running in the container once service handling is implemented
         _reload_pgbouncer.assert_called()
-
-    def test_on_change_password_action(self):
-        self.harness.update_config({"pgb_admin_users": "test-admin"})
-
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
-        initial_userlist = pgb_container.pull(USERLIST_PATH).read()
-        # Since we can't access the password without reading from the userlist in the container,
-        # we assert the expected username and a password of length 32 are both in the userlist.
-        self.assertIn('"test-admin" "', initial_userlist)
-        self.assertEqual(len('"test-admin" ""') + 32, len(initial_userlist))
-
-        change_password_event = Mock(
-            params={
-                "username": "test-admin",
-                "password": "password",
-            }
-        )
-        self.harness.charm._on_change_password_action(change_password_event)
-
-        result = self.get_result(change_password_event)
-        self.assertDictEqual(result, {"result": "password updated for user test-admin"})
-
-        updated_userlist = pgb_container.pull(USERLIST_PATH).read()
-        # Assert password is correctly hashed.
-        self.assertEqual(updated_userlist, '"test-admin" "5f4dcc3b5aa765d61d8327deb882cf99"')
-        self.assertNotEqual(updated_userlist, initial_userlist)
-        self.assertNotEqual(initial_userlist, '"test-admin" "password"')
-
-    def test_on_change_password_action_nonexistent_user(self):
-        self.harness.update_config({"pgb_admin_users": "test-admin"})
-
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
-        initial_userlist = pgb_container.pull(USERLIST_PATH).read()
-        # Since we can't access the password without reading from the userlist in the container,
-        # we assert the expected username and a password of length 32 are both in the userlist.
-        self.assertIn('"test-admin" "', initial_userlist)
-        self.assertEqual(len('"test-admin" ""') + 32, len(initial_userlist))
-
-        nonexistent_user_event = Mock(
-            params={
-                "username": "nonexistent-user",
-                "password": "password",
-            }
-        )
-        self.harness.charm._on_change_password_action(nonexistent_user_event)
-
-        result = self.get_result(nonexistent_user_event)
-        self.assertDictEqual(
-            result,
-            {
-                "result": "user nonexistent-user does not exist - use the get-users action to list existing users."
-            },
-        )
-        current_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual(initial_userlist, current_userlist)
-        self.assertNotEqual(
-            initial_userlist, '"nonexistent-user" "5f4dcc3b5aa765d61d8327deb882cf99"'
-        )
-
-    def test_on_add_user_action(self):
-        self.harness.update_config({"pgb_admin_users": "existing-user"})
-
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
-        initial_userlist = pgb_container.pull(USERLIST_PATH).read()
-
-        new_user_event = Mock(
-            params={
-                "username": "new-user",
-                "password": "password",
-            }
-        )
-        self.harness.charm._on_add_user_action(new_user_event)
-        result = self.get_result(new_user_event)
-        self.assertEqual(result, {"result": "new user new-user added"})
-
-        updated_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertNotEqual(initial_userlist, updated_userlist)
-        # check password is hashed
-        self.assertIn('"new-user" "5f4dcc3b5aa765d61d8327deb882cf99"', updated_userlist)
-        self.assertNotIn('"new-user" "password"', updated_userlist)
-
-    def test_on_add_existing_user_action(self):
-        self.harness.update_config({"pgb_admin_users": "existing-user"})
-
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
-        initial_userlist = pgb_container.pull(USERLIST_PATH).read()
-
-        existing_user_event = Mock(params={"username": "existing-user"})
-
-        self.harness.charm._on_add_user_action(existing_user_event)
-        result = self.get_result(existing_user_event)
-        self.assertEqual(result, {"result": "user existing-user already exists"})
-
-        updated_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual(initial_userlist, updated_userlist)
-
-    def test_on_remove_user_action(self):
-        self.harness.update_config({"pgb_admin_users": "existing-user"})
-
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
-        initial_userlist = pgb_container.pull(USERLIST_PATH).read()
-
-        remove_user_event = Mock(params={"username": "existing-user"})
-
-        self.harness.charm._on_remove_user_action(remove_user_event)
-        result = self.get_result(remove_user_event)
-        self.assertEqual(result, {"result": "user existing-user removed"})
-
-        updated_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertNotEqual(initial_userlist, updated_userlist)
-        self.assertNotIn('"existing-user"', updated_userlist)
-
-    def test_on_remove_nonexistent_user_action(self):
-        self.harness.update_config({"pgb_admin_users": "existing-user"})
-
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
-        initial_userlist = pgb_container.pull(USERLIST_PATH).read()
-
-        remove_user_event = Mock(params={"username": "nonexistent-user"})
-
-        self.harness.charm._on_remove_user_action(remove_user_event)
-        result = self.get_result(remove_user_event)
-        self.assertEqual(result, {"result": "user nonexistent-user does not exist"})
-
-        updated_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual(initial_userlist, updated_userlist)
-
-    def test_on_get_users_action(self):
-        self.harness.update_config({"pgb_admin_users": "test1,test2,test3"})
-        get_users_event = Mock()
-
-        self.harness.charm._on_get_users_action(get_users_event)
-        results = self.get_result(get_users_event)
-        self.assertEqual(results, {"result": "test1 test2 test3"})
-        # for each password, assert it is not passed out in the results of this action.
-        for _, password in self.harness.charm._get_userlist_from_container().items():
-            self.assertNotIn(password, results["result"])
 
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
     def test_push_container_config(self, _reload_pgbouncer):
