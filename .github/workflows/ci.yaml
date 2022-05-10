@@ -62,6 +62,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Setup operator environment
+      # This part sets the model name to "testing" (used in test run and logdump)
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: microk8s
