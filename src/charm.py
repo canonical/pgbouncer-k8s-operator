@@ -163,7 +163,7 @@ class PgBouncerK8sCharm(CharmBase):
             if pgb_container.pull(INI_PATH).read() == pgbouncer_ini:
                 logger.info("updated config does not modify existing pgbouncer config")
                 return
-        except (FileNotFoundError, ConnectionError):
+        except FileNotFoundError:
             # There is no existing pgbouncer.ini file, so carry on and add one.
             pass
 
@@ -225,7 +225,7 @@ admin_users = {",".join(users.keys())}"""
             if pgb_container.pull(USERLIST_PATH).read() == userlist:
                 logger.info("updated userlist does not modify existing pgbouncer userlist")
                 return
-        except (FileNotFoundError, ConnectionError):
+        except FileNotFoundError:
             # there is no existing userlist.txt file, so carry on and add one.
             pass
 
