@@ -27,8 +27,8 @@ This setup is required for testing and deploying this charm. These instructions 
 # Import container
 git clone https://github.com/canonical/pgbouncer-container.git
 # Build container locally, since it's not been exported anywhere yet.
-docker build . -t pgbouncer:latest
-docker save pgbouncer:latest -o pgb.tar
+docker build . -t pgbouncer:local
+docker save pgbouncer:local -o pgb.tar
 # Import container file into microk8s container registry
 microk8s ctr image import pgb.tar
 
