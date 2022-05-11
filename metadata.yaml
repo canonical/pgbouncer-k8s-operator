@@ -1,4 +1,4 @@
-# Copyright 2021 Canonical Ltd.
+# Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 name: pgbouncer-k8s-operator
@@ -8,6 +8,12 @@ description: |
   Lightweight connection pooler for PostgreSQL.
 summary: |
   The aim of pgbouncer is to lower the performance impact of opening new connections to PostgreSQL. For more information, see https://www.pgbouncer.org/usage.html
+website: |
+  https://www.pgbouncer.org/
+source: |
+  https://github.com/canonical/pgbouncer-k8s-operator
+issues: |
+  https://github.com/canonical/pgbouncer-k8s-operator/issues
 maintainers:
   "Will Fitch <will.fitch@canonical.com>"
 
@@ -20,5 +26,5 @@ resources:
     type: oci-image
     description: OCI image for pgbouncer
     # currently this uses a local build of https://github.com/canonical/pgbouncer-container - see CONTRIBUTING.md for instructions.
-    upstream-source: pgbouncer:0.8
-    local-source: pgbouncer:0.8
+    upstream-source: pgbouncer:local
+    local-source: pgbouncer:local
