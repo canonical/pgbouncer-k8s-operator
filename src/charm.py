@@ -14,7 +14,7 @@ from ops.charm import ActionEvent, CharmBase, ConfigChangedEvent, PebbleReadyEve
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, WaitingStatus
-from ops.pebble import ConnectionError, Layer
+from ops.pebble import Layer
 
 logger = logging.getLogger(__name__)
 
