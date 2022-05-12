@@ -3,36 +3,3 @@
 
 reload-pgbouncer:
   description: Reloads pgbouncer application. This does not restart the container.
-
-add-user:
-  description: Adds a new pgbouncer user.
-  params:
-    username:
-      type: string
-      description: The username of the given user. If a user exists by this name, this action will fail.
-    password:
-      type: string
-      description: The password of the given user
-  required: [username, password]
-
-remove-user:
-  description: Removes pgbouncer user. NB this can only remove users added through the `add-user` action; users added using the charm config must be removed from the config, and through this action.
-  params:
-    username:
-      type: string
-      description: The username of the given user. If a user by this name does not exist, this action will fail.
-  required: [username]
-
-change-password:
-  description: Changes password for a given user.
-  params:
-    username:
-      type: string
-      description: Username of an existing user
-    password:
-      type: string
-      description: The new password
-  required: [username, password]
-
-get-users:
-  description: Lists all pgbouncer users.

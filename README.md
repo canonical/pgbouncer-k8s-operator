@@ -13,22 +13,6 @@ As this charm is not yet published, you need to follow the build and deploy inst
 - `reload-pgbouncer`
   - Reloads the pgbouncer application.
   - Currently only implemented as a stub.
-- `add-user`
-  - Adds a new pgbouncer user.
-  - Params:
-    - username
-    - password
-- `remove-user`
-  - Removes an existing pgbouncer user.
-  - Params:
-    - username
-- `change-password`
-  - Updates the password for a given pgbouncer user.
-  - Params:
-    - username
-    - password
-- `get-users`
-  - Lists the existing pgbouncer users.
 
 ## Relations
 

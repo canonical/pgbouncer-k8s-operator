@@ -11,9 +11,9 @@ summary: |
 website: |
   https://www.pgbouncer.org/
 source: |
-  https://github.com/canonical/pgbouncer-operator
+  https://github.com/canonical/pgbouncer-k8s-operator
 issues: |
-  https://github.com/canonical/pgbouncer-operator/issues
+  https://github.com/canonical/pgbouncer-k8s-operator/issues
 maintainers:
   "Will Fitch <will.fitch@canonical.com>"
 
@@ -25,7 +25,6 @@ resources:
   pgbouncer-image:
     type: oci-image
     description: OCI image for pgbouncer
-    # currently this uses a local build of https://github.com/canonical/pgbouncer-container - see
-    # CONTRIBUTING.md for instructions.
-    upstream-source: pgbouncer:0.8
-    local-source: pgbouncer:0.8
+    # currently this uses a local build of https://github.com/canonical/pgbouncer-container - see CONTRIBUTING.md for instructions.
+    upstream-source: pgbouncer:local
+    local-source: pgbouncer:local
