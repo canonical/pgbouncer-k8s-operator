@@ -50,30 +50,28 @@ class PgBouncerK8sCharm(CharmBase):
         config files that are essential for pgbouncer to run.
         """
         # Initialise pgbouncer.ini config files from defaults set in charm lib.
-        ini = pgb.PgbConfig(pgb.DEFAULT_CONFIG)
-        self._render_pgb_config(ini)
+        config = pgb.PgbConfig(pgb.DEFAULT_CONFIG)
+        self._render_pgb_config(config)
 
         # Initialise userlist, generating passwords for initial users. All config files use the
         # same userlist, so we only need one.
-        self._render_userlist(pgb.initialise_userlist_from_ini(ini))
+        self._render_userlist(pgb.initialise_userlist_from_ini(config))
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
         container = self.unit.get_container(PGB)
         if not container.can_connect():
-            self.unit.status = WaitingStatus(
-                "waiting for pgbouncer workload container."
-            )
+            self.unit.status = WaitingStatus("waiting for pgbouncer workload container.")
             event.defer()
             return
 
         config = self._read_pgb_config()
         config["pgbouncer"]["pool_mode"] = self.config["pool_mode"]
-
         config.set_max_db_connection_derivatives(
             self.config["max_db_connections"],
             self._cores,
         )
+        self._render_pgb_config(config)
 
         # Create an updated pebble layer for the pgbouncer container, and apply it if there are
         # any changes.
@@ -81,7 +79,7 @@ class PgBouncerK8sCharm(CharmBase):
         services = container.get_plan().to_dict().get("services", {})
         if services != layer["services"]:
             container.add_layer(PGB, layer, combine=True)
-            logging.info(f"Added layer 'pgbouncer' to pebble plan")
+            logging.info("Added layer 'pgbouncer' to pebble plan")
             container.restart(PGB)
             logging.info(f"restarted {PGB} service")
         self.unit.status = ActiveStatus()
@@ -124,7 +122,7 @@ class PgBouncerK8sCharm(CharmBase):
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
         Args:
-            pgbouncer_ini: PgbConfig object containing pgbouncer config.
+            config: PgbConfig object containing pgbouncer config.
             reload_pgbouncer: A boolean defining whether or not to reload the pgbouncer application
                 in the container. When config files are updated, pgbouncer must be restarted for
                 the changes to take effect. However, these config updates can be done in batches,
@@ -156,16 +154,16 @@ class PgBouncerK8sCharm(CharmBase):
             PgbConfig object containing pgbouncer config.
         """
         try:
-            userlist = self._read_file(INI_PATH)
+            config = self._read_file(INI_PATH)
         except FileNotFoundError:
             logger.error("pgbouncer config not found")
-        return pgb.PgbConfig(userlist)
+        return pgb.PgbConfig(config)
 
     def _render_userlist(self, userlist: Dict, reload_pgbouncer: bool = False) -> None:
         """Generate userlist.txt from the given userlist dict, and deploy it to the container.
 
         Args:
-            users: a dictionary of usernames and passwords
+            userlist: a dictionary of usernames and passwords
             reload_pgbouncer: A boolean defining whether or not to reload the pgbouncer application
                 in the container. When config files are updated, pgbouncer must be restarted for
                 the changes to take effect. However, these config updates can be done in batches,
@@ -226,8 +224,10 @@ class PgBouncerK8sCharm(CharmBase):
 
         Args:
             filepath: the filepath to be read
+
         Returns:
             A string containing the file located at the given filepath.
+
         Raises:
             FileNotFoundError: if there is no file at the given path.
         """
