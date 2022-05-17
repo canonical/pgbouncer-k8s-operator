@@ -156,7 +156,7 @@ class PgBouncerK8sCharm(CharmBase):
         try:
             config = self._read_file(INI_PATH)
             return pgb.PgbConfig(config)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             logger.error("pgbouncer config not found")
 
     def _render_userlist(self, userlist: Dict, reload_pgbouncer: bool = False) -> None:
