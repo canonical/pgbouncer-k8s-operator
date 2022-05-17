@@ -214,7 +214,9 @@ class PgBouncerK8sCharm(CharmBase):
 
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
-            self.unit.status = WaitingStatus("unable to restart pgbouncer - container not connected.")
+            self.unit.status = WaitingStatus(
+                "unable to restart pgbouncer - container not connected."
+            )
             return
         pgb_container.restart(PGB)
 
