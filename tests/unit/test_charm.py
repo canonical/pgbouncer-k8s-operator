@@ -38,9 +38,11 @@ class TestCharm(unittest.TestCase):
     )
     @patch("ops.model.Container.restart")
     def test_on_config_changed(self, _restart, _read):
+        self.harness.update_config()
+
         mock_cores = 1
         self.harness.charm._cores = mock_cores
-        max_db_connections = 44
+        max_db_connections = 535
 
         # create default config object and modify it as we expect in the hook.
         test_config = pgb.PgbConfig(pgb.DEFAULT_CONFIG)
@@ -50,15 +52,12 @@ class TestCharm(unittest.TestCase):
             pgb_instances=mock_cores,
         )
 
-        initial_plan = self.harness.get_container_pebble_plan(PGB).to_dict()
         self.harness.update_config(
             {
                 "pool_mode": "transaction",
                 "max_db_connections": max_db_connections,
             }
         )
-        updated_plan = self.harness.get_container_pebble_plan(PGB).to_dict()
-        self.assertNotEqual(initial_plan, updated_plan)
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
         _restart.assert_called()
 
@@ -101,9 +100,18 @@ class TestCharm(unittest.TestCase):
         self.assertTrue(service.is_running())
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
 
+    @patch("ops.model.Container.can_connect", return_value=False)
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
-    def test_render_pgb_config(self, _reload_pgbouncer):
+    def test_render_pgb_config(self, _reload_pgbouncer, _can_connect):
         cfg = pgb.PgbConfig(pgb.DEFAULT_CONFIG)
+
+        # Assert we exit early if _can_connect returns false
+        _can_connect.return_value = False
+        self.harness.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        self.assertIsInstance(self.harness.charm.unit.status, WaitingStatus)
+        _reload_pgbouncer.assert_not_called()
+
+        _can_connect.return_value = True
         self.harness.charm._render_pgb_config(cfg, reload_pgbouncer=True)
         _reload_pgbouncer.assert_called()
 
@@ -117,8 +125,18 @@ class TestCharm(unittest.TestCase):
         read_cfg = self.harness.charm._read_pgb_config()
         self.assertDictEqual(dict(read_cfg), dict(test_cfg))
 
+    @patch("ops.model.Container.can_connect")
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
-    def test_render_userlist(self, _reload_pgbouncer):
+    def test_render_userlist(self, _reload_pgbouncer, _can_connect):
+        cfg = pgb.PgbConfig(pgb.DEFAULT_CONFIG)
+
+        # Assert we exit early if _can_connect returns false
+        _can_connect.return_value = False
+        self.harness.charm._render_userlist(cfg, reload_pgbouncer=True)
+        self.assertIsInstance(self.harness.charm.unit.status, WaitingStatus)
+        _reload_pgbouncer.assert_not_called()
+
+        _can_connect.return_value = True
         pgb_container = self.harness.model.unit.get_container(PGB)
         self.harness.charm._render_userlist({"test-user": "pw"}, reload_pgbouncer=True)
         _reload_pgbouncer.assert_called()
@@ -131,14 +149,14 @@ class TestCharm(unittest.TestCase):
         users = self.harness.charm._read_userlist()
         self.assertDictEqual(users, {"test-admin": "pass"})
 
-    # ===========
-    #  UTILITIES
-    # ===========
+    @patch("ops.model.Container.can_connect", return_value=False)
+    @patch("ops.model.Container.restart")
+    def test_reload_pgbouncer(self, _restart, _can_connect):
+        self.harness.charm._reload_pgbouncer()
+        self.assertIsInstance(self.harness.charm.unit.status, WaitingStatus)
+        _restart.assert_not_called()
 
-    def get_result(self, event):
-        """Get the intended result from a mocked event.
-
-        Effectively this gets whatever is passed into `event.set_results()`, given that event is
-        actually a `Mock` object.
-        """
-        return dict(event.method_calls[0][1][0])
+        _can_connect.return_value = True
+        self.harness.charm._reload_pgbouncer()
+        self.assertIsInstance(self.harness.charm.unit.status, ActiveStatus)
+        _restart.assert_called_once()

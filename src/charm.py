@@ -155,9 +155,9 @@ class PgBouncerK8sCharm(CharmBase):
         """
         try:
             config = self._read_file(INI_PATH)
-        except FileNotFoundError:
+            return pgb.PgbConfig(config)
+        except FileNotFoundError as e:
             logger.error("pgbouncer config not found")
-        return pgb.PgbConfig(config)
 
     def _render_userlist(self, userlist: Dict, reload_pgbouncer: bool = False) -> None:
         """Generate userlist.txt from the given userlist dict, and deploy it to the container.
@@ -199,9 +199,9 @@ class PgBouncerK8sCharm(CharmBase):
         """
         try:
             userlist = self._read_file(USERLIST_PATH)
+            return pgb.parse_userlist(userlist)
         except FileNotFoundError:
             logger.error("userlist not found")
-        return pgb.parse_userlist(userlist)
 
     def _reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
@@ -211,8 +211,13 @@ class PgBouncerK8sCharm(CharmBase):
         """
         self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
         logger.info("reloading pgbouncer application")
+
         pgb_container = self.unit.get_container(PGB)
+        if not pgb_container.can_connect():
+            self.unit.status = WaitingStatus("unable to restart pgbouncer - container not connected.")
+            return
         pgb_container.restart(PGB)
+
         self.unit.status = ActiveStatus("PgBouncer Reloaded")
 
     # =====================
