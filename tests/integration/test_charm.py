@@ -14,10 +14,6 @@ logger = logging.getLogger(__name__)
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 APP_NAME = METADATA["name"]
 
-PGB_DIR = "/etc/pgbouncer"
-INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
-USERLIST_PATH = f"{PGB_DIR}/userlist.txt"
-
 
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test: OpsTest):
@@ -30,6 +26,5 @@ async def test_build_and_deploy(ops_test: OpsTest):
         charm,
         resources=resources,
         application_name=APP_NAME,
-        config={"pgb_admin_users": "juju-admin"},
     )
     await ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000)

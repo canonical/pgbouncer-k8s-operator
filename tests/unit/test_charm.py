@@ -83,12 +83,6 @@ class TestCharm(unittest.TestCase):
                     "command": f"pgbouncer {INI_PATH}",
                     "startup": "enabled",
                     "override": "replace",
-                    "environment": {
-                        "PGB_DATABASES": "exampledb = host=pg-host port=5432 dbname=exampledb",
-                        "PGB_LISTEN_PORT": 6432,
-                        "PGB_LISTEN_ADDRESS": "localhost",
-                        "PGB_ADMIN_USERS": "juju-admin",
-                    },
                 }
             },
         }
@@ -116,11 +110,11 @@ class TestCharm(unittest.TestCase):
         pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
 
         # Ensure pushing container config with no users copies users from userlist to pgbouncer.ini
-        self.harness.charm._push_userlist({"test1": "pw"})
+        self.harness.charm._render_userlist({"test1": "pw"})
         initial_ini = pgb_container.pull(INI_PATH).read()
         initial_userlist = pgb_container.pull(USERLIST_PATH).read()
 
-        self.harness.charm._push_container_config()
+        self.harness.charm._render_container_config()
         updated_userlist = pgb_container.pull(USERLIST_PATH).read()
         self.assertEqual(initial_userlist, updated_userlist)
 
@@ -129,7 +123,7 @@ class TestCharm(unittest.TestCase):
         self.assertIn("test1", updated_ini)
 
         # Pushing container config with user dict should update both config files.
-        self.harness.charm._push_container_config({"test2": "pw"})
+        self.harness.charm._render_container_config({"test2": "pw"})
         updated_userlist2 = pgb_container.pull(USERLIST_PATH).read()
         self.assertNotEqual(updated_userlist, updated_userlist2)
         self.assertEqual(updated_userlist2, '"test2" "pw"')
@@ -141,8 +135,8 @@ class TestCharm(unittest.TestCase):
 
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
     def test_push_pgbouncer_ini(self, _reload_pgbouncer):
-        self.harness.charm._push_userlist({"test-user": "pw"})
-        self.harness.charm._push_pgbouncer_ini(users=None, reload_pgbouncer=True)
+        self.harness.charm._render_userlist({"test-user": "pw"})
+        self.harness.charm._render_pgb_config(users=None, reload_pgbouncer=True)
         _reload_pgbouncer.assert_called()
 
         pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
@@ -151,25 +145,25 @@ class TestCharm(unittest.TestCase):
 
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
     def test_push_userlist(self, _reload_pgbouncer):
-        self.harness.charm._push_userlist({"initial-user": "pw"})
+        self.harness.charm._render_userlist({"initial-user": "pw"})
         pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
 
-        self.harness.charm._push_userlist(users={"test-user": "pw"}, reload_pgbouncer=True)
+        self.harness.charm._render_userlist(users={"test-user": "pw"}, reload_pgbouncer=True)
         _reload_pgbouncer.assert_called()
 
         userlist = pgb_container.pull(USERLIST_PATH).read()
         self.assertEqual('"test-user" "pw"', userlist)
 
-        self.harness.charm._push_userlist(users=None, reload_pgbouncer=True)
+        self.harness.charm._render_userlist(users=None, reload_pgbouncer=True)
 
     def test_get_userlist_from_container(self):
         self.harness.update_config({"pgb_admin_users": "test-admin"})
-        self.harness.charm._push_container_config(users={"test-admin": "pass"})
-        users = self.harness.charm._get_userlist_from_container()
+        self.harness.charm._render_container_config(users={"test-admin": "pass"})
+        users = self.harness.charm._read_userlist()
         self.assertDictEqual(users, {"test-admin": "pass"})
 
-        self.harness.charm._push_container_config(users={})
-        empty_users = self.harness.charm._get_userlist_from_container()
+        self.harness.charm._render_container_config(users={})
+        empty_users = self.harness.charm._read_userlist()
         self.assertDictEqual(empty_users, {})
 
     # ===========
