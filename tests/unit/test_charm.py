@@ -4,7 +4,7 @@
 # Learn more about testing at: https://juju.is/docs/sdk/testing
 
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from charms.pgbouncer_operator.v0 import pgb
 from ops.model import ActiveStatus, WaitingStatus
@@ -33,7 +33,9 @@ class TestCharm(unittest.TestCase):
         self.assertEqual('"juju-admin" "pw"', userlist)
         _gen_pw.assert_called_once()
 
-    @patch("charm.PgBouncerK8sCharm._read_pgb_config", return_value=pgb.PgbConfig(pgb.DEFAULT_CONFIG))
+    @patch(
+        "charm.PgBouncerK8sCharm._read_pgb_config", return_value=pgb.PgbConfig(pgb.DEFAULT_CONFIG)
+    )
     @patch("ops.model.Container.restart")
     def test_on_config_changed(self, _restart, _read):
         mock_cores = 1
