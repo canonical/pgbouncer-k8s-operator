@@ -188,21 +188,6 @@ class PgBouncerK8sCharm(CharmBase):
         if reload_pgbouncer:
             self._reload_pgbouncer()
 
-    def _read_userlist(self) -> Dict[str, str]:
-        """Parses container userlist to a dict.
-
-        This parses the userlist.txt stored on the container into a dictionary of strings, where
-        the users are the keys and hashed passwords are the values.
-
-        Returns:
-            a dictionary of usernames and passwords
-        """
-        try:
-            userlist = self._read_file(USERLIST_PATH)
-            return pgb.parse_userlist(userlist)
-        except FileNotFoundError:
-            logger.error("userlist not found")
-
     def _reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
 
@@ -211,15 +196,8 @@ class PgBouncerK8sCharm(CharmBase):
         """
         self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
         logger.info("reloading pgbouncer application")
-
         pgb_container = self.unit.get_container(PGB)
-        if not pgb_container.can_connect():
-            self.unit.status = WaitingStatus(
-                "unable to restart pgbouncer - container not connected."
-            )
-            return
         pgb_container.restart(PGB)
-
         self.unit.status = ActiveStatus("PgBouncer Reloaded")
 
     # =====================
@@ -239,8 +217,8 @@ class PgBouncerK8sCharm(CharmBase):
             FileNotFoundError: if there is no file at the given path.
         """
         pgb_container = self.unit.get_container(PGB)
-        inaccessible = f"pgbouncer container not accessible, cannot find {filepath}"
         if not pgb_container.can_connect():
+            inaccessible = f"pgbouncer container not accessible, cannot find {filepath}"
             logger.info(inaccessible)
             raise FileNotFoundError(inaccessible)
 

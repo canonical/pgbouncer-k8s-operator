@@ -144,19 +144,8 @@ class TestCharm(unittest.TestCase):
         userlist = pgb_container.pull(USERLIST_PATH).read()
         self.assertEqual('"test-user" "pw"', userlist)
 
-    def test_read_userlist(self):
-        self.harness.charm._render_userlist(userlist={"test-admin": "pass"})
-        users = self.harness.charm._read_userlist()
-        self.assertDictEqual(users, {"test-admin": "pass"})
-
-    @patch("ops.model.Container.can_connect", return_value=False)
     @patch("ops.model.Container.restart")
-    def test_reload_pgbouncer(self, _restart, _can_connect):
-        self.harness.charm._reload_pgbouncer()
-        self.assertIsInstance(self.harness.charm.unit.status, WaitingStatus)
-        _restart.assert_not_called()
-
-        _can_connect.return_value = True
+    def test_reload_pgbouncer(self, _restart):
         self.harness.charm._reload_pgbouncer()
         self.assertIsInstance(self.harness.charm.unit.status, ActiveStatus)
         _restart.assert_called_once()
