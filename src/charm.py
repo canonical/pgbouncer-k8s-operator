@@ -139,7 +139,7 @@ class PgBouncerK8sCharm(CharmBase):
             INI_PATH,
             config.render(),
             user=PG_USER,
-            permissions=0o777,
+            permissions=0o600,
             make_dirs=True,
         )
         logging.info("pushed new pgbouncer.ini config file to pgbouncer container")
@@ -180,7 +180,7 @@ class PgBouncerK8sCharm(CharmBase):
             USERLIST_PATH,
             pgb.generate_userlist(userlist),
             user=PG_USER,
-            permissions=0o777,
+            permissions=0o600,
             make_dirs=True,
         )
         logging.info("pushed new userlist to pgbouncer container")
