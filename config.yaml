@@ -2,22 +2,53 @@
 # See LICENSE file for licensing details.
 
 options:
-  pgb_databases:
-    default: "exampledb = host=pg-host port=5432 dbname=exampledb"
-    description: "multiline string containing database config (one per line)."
-    type: "string"
+  pool_mode:
+    default: session
+    description: |
+      Specifies when a server connection can be reused by other clients. Can
+      be one of the following values:
 
-  pgb_listen_port:
-    default: 6432
-    description: "Port on which PGBouncer listens for traffic"
-    type: "int"
+      session
+      Server is released back to pool after client disconnects. Default.
 
-  pgb_listen_address:
-    default: "localhost"
-    description: "Address on which PGBouncer listens for traffic"
-    type: "string"
+      transaction
+      Server is released back to pool after transaction finishes.
 
-  pgb_admin_users:
-    default: "juju-admin"
-    description: "A comma-separated list of admin users. A password will be generated for each user. Only generates `juju-admin` user by default"
-    type: "string"
+      statement
+      Server is released back to pool after query finishes. Transactions
+      spanning multiple statements are disallowed in this mode.
+    type: string
+
+  max_db_connections:
+    default: 100
+    description: |
+      Do not allow more than this many server connections per database
+      (regardless of user). This considers the PgBouncer database that the
+      client has connected to, not the PostgreSQL database of the outgoing
+      connection.
+
+      Note that when you hit the limit, closing a client connection to one pool
+      will not immediately allow a server connection to be established for
+      another pool, because the server connection for the first pool is still
+      open. Once the server connection closes (due to idle timeout), a new
+      server connection will immediately be opened for the waiting pool.
+
+      This is used to calculate the following pgbouncer.ini config options,
+      which are documented in the pgbouncer config docs here:
+      https://www.pgbouncer.org/config.html.
+
+      - Firstly, the number of pgbouncer instances is calculated based on the
+        number of CPU cores in the current deployment.
+      - effective DB connections = max_db_connections / pgbouncer instances
+      - default_pool_size = effective connections / 2
+      - min_pool_size = effective connections / 4
+      - reserve_pool_size = effective connections / 4
+
+      If max_db_connections is set to 0, the derivatives are set thusly, based
+      on pgbouncer defaults:
+      - default_pool_size = 20
+      - min_pool_size = 10
+      - reserve_pool_size = 10
+
+      0 = unlimited.
+    type: int

@@ -4,67 +4,72 @@
 # Learn more about testing at: https://juju.is/docs/sdk/testing
 
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
+from charms.pgbouncer_operator.v0 import pgb
 from ops.model import ActiveStatus, WaitingStatus
 from ops.testing import Harness
 
-from charm import PgBouncerK8sCharm
-
-PGB_DIR = "/etc/pgbouncer"
-INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
-USERLIST_PATH = f"{PGB_DIR}/userlist.txt"
+from charm import INI_PATH, PGB, USERLIST_PATH, PgBouncerK8sCharm
 
 
 class TestCharm(unittest.TestCase):
     def setUp(self):
-        self._pgbouncer_container = "pgbouncer"
-
         self.harness = Harness(PgBouncerK8sCharm)
         self.addCleanup(self.harness.cleanup)
         self.harness.begin()
 
-    def test_on_install(self):
+    @patch("charms.pgbouncer_operator.v0.pgb.generate_password", return_value="pw")
+    def test_on_install(self, _gen_pw):
         self.harness.charm.on.install.emit()
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
+        pgb_container = self.harness.model.unit.get_container(PGB)
 
-        # Local config is tested more extensively in its own test below, but it's necessary that
-        # some config is available after on_install hook.
+        # assert config is set to default - it gets updated in the config-changed hook fired later
         ini = pgb_container.pull(INI_PATH).read()
-        self.assertEqual(ini, self.harness.charm._generate_pgbouncer_ini())
+        self.assertEqual(ini, pgb.PgbConfig(pgb.DEFAULT_CONFIG).render())
 
+        # Assert userlist is created with the generated password
         userlist = pgb_container.pull(USERLIST_PATH).read()
-        # Since we can't access the password without reading from the userlist in the container,
-        # which is effectively what we're testing, we assert the default username and a password of
-        # length 32 are both in the userlist file.
-        self.assertIn('"juju-admin" "', userlist)
-        self.assertEqual(len('"juju-admin" ""') + 32, len(userlist))
+        self.assertEqual('"juju-admin" "pw"', userlist)
+        _gen_pw.assert_called_once()
 
-    @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
-    def test_on_config_changed(self, _reload_pgbouncer):
+    @patch(
+        "charm.PgBouncerK8sCharm._read_pgb_config", return_value=pgb.PgbConfig(pgb.DEFAULT_CONFIG)
+    )
+    @patch("ops.model.Container.restart")
+    def test_on_config_changed(self, _restart, _read):
         self.harness.update_config()
-        _reload_pgbouncer.assert_called()
 
-        initial_plan = self.harness.get_container_pebble_plan(self._pgbouncer_container).to_dict()
-        self.harness.update_config({"pgb_admin_users": "test-user"})
-        updated_plan = self.harness.get_container_pebble_plan(self._pgbouncer_container).to_dict()
-        self.assertNotEqual(initial_plan, updated_plan)
+        mock_cores = 1
+        self.harness.charm._cores = mock_cores
+        max_db_connections = 535
 
-        placeholder = updated_plan["services"]["pgbouncer"]["environment"]["PGB_ADMIN_USERS"]
-        self.assertEqual(placeholder, "test-user")
+        # create default config object and modify it as we expect in the hook.
+        test_config = pgb.PgbConfig(pgb.DEFAULT_CONFIG)
+        test_config["pgbouncer"]["pool_mode"] = "transaction"
+        test_config.set_max_db_connection_derivatives(
+            max_db_connections=max_db_connections,
+            pgb_instances=mock_cores,
+        )
+
+        self.harness.update_config(
+            {
+                "pool_mode": "transaction",
+                "max_db_connections": max_db_connections,
+            }
+        )
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
+        _restart.assert_called()
 
-        # Test changing charm config propagates to container config files.
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
-        userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertIn("test-user", userlist)
-        ini = pgb_container.pull(INI_PATH).read()
-        self.assertIn("test-user", ini)
+        # Test changing charm config propagates to container config file.
+        pgb_container = self.harness.model.unit.get_container(PGB)
+        container_config = pgb_container.pull(INI_PATH).read()
+        self.assertEqual(container_config, test_config.render())
 
     @patch("ops.model.Container.can_connect", return_value=False)
     @patch("ops.charm.ConfigChangedEvent.defer")
     def test_on_config_changed_container_cant_connect(self, can_connect, defer):
-        self.harness.update_config({"pgb_listen_port": "5555"})
+        self.harness.update_config()
         self.assertEqual(
             self.harness.model.unit.status,
             WaitingStatus("waiting for pgbouncer workload container."),
@@ -72,114 +77,75 @@ class TestCharm(unittest.TestCase):
         defer.assert_called()
 
     def test_on_pgbouncer_pebble_ready(self):
-        initial_plan = self.harness.get_container_pebble_plan(self._pgbouncer_container)
+        initial_plan = self.harness.get_container_pebble_plan(PGB)
         self.assertEqual(initial_plan.to_yaml(), "{}\n")
 
         expected_plan = {
             "services": {
-                "pgbouncer": {
+                PGB: {
                     "summary": "pgbouncer service",
-                    "user": "pgbouncer",
+                    "user": "postgres",
                     "command": f"pgbouncer {INI_PATH}",
                     "startup": "enabled",
                     "override": "replace",
-                    "environment": {
-                        "PGB_DATABASES": "exampledb = host=pg-host port=5432 dbname=exampledb",
-                        "PGB_LISTEN_PORT": 6432,
-                        "PGB_LISTEN_ADDRESS": "localhost",
-                        "PGB_ADMIN_USERS": "juju-admin",
-                    },
                 }
             },
         }
-        container = self.harness.model.unit.get_container(self._pgbouncer_container)
+        container = self.harness.model.unit.get_container(PGB)
         self.harness.charm.on.pgbouncer_pebble_ready.emit(container)
-        updated_plan = self.harness.get_container_pebble_plan(self._pgbouncer_container).to_dict()
+        updated_plan = self.harness.get_container_pebble_plan(PGB).to_dict()
         self.assertEqual(expected_plan, updated_plan)
 
-        service = self.harness.model.unit.get_container(self._pgbouncer_container).get_service(
-            "pgbouncer"
-        )
+        service = self.harness.model.unit.get_container(PGB).get_service(PGB)
         self.assertTrue(service.is_running())
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
 
+    @patch("ops.model.Container.can_connect", return_value=False)
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
-    def test_on_reload_pgbouncer_action(self, _reload_pgbouncer):
-        self.harness.charm._on_reload_pgbouncer_action(Mock())
-        # TODO assert pgbouncer is running in the container once service handling is implemented
+    def test_render_pgb_config(self, _reload_pgbouncer, _can_connect):
+        cfg = pgb.PgbConfig(pgb.DEFAULT_CONFIG)
+
+        # Assert we exit early if _can_connect returns false
+        _can_connect.return_value = False
+        self.harness.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        self.assertIsInstance(self.harness.charm.unit.status, WaitingStatus)
+        _reload_pgbouncer.assert_not_called()
+
+        _can_connect.return_value = True
+        self.harness.charm._render_pgb_config(cfg, reload_pgbouncer=True)
         _reload_pgbouncer.assert_called()
 
-    @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
-    def test_push_container_config(self, _reload_pgbouncer):
-        self.harness.charm._on_install("mock_event")
-
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
-
-        # Ensure pushing container config with no users copies users from userlist to pgbouncer.ini
-        self.harness.charm._push_userlist({"test1": "pw"})
-        initial_ini = pgb_container.pull(INI_PATH).read()
-        initial_userlist = pgb_container.pull(USERLIST_PATH).read()
-
-        self.harness.charm._push_container_config()
-        updated_userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual(initial_userlist, updated_userlist)
-
-        updated_ini = pgb_container.pull(INI_PATH).read()
-        self.assertNotEqual(initial_ini, updated_ini)
-        self.assertIn("test1", updated_ini)
-
-        # Pushing container config with user dict should update both config files.
-        self.harness.charm._push_container_config({"test2": "pw"})
-        updated_userlist2 = pgb_container.pull(USERLIST_PATH).read()
-        self.assertNotEqual(updated_userlist, updated_userlist2)
-        self.assertEqual(updated_userlist2, '"test2" "pw"')
-
-        updated_ini2 = pgb_container.pull(INI_PATH).read()
-        self.assertIn("test2", updated_ini2)
-
-        _reload_pgbouncer.assert_called()
-
-    @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
-    def test_push_pgbouncer_ini(self, _reload_pgbouncer):
-        self.harness.charm._push_userlist({"test-user": "pw"})
-        self.harness.charm._push_pgbouncer_ini(users=None, reload_pgbouncer=True)
-        _reload_pgbouncer.assert_called()
-
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
+        pgb_container = self.harness.model.unit.get_container(PGB)
         ini = pgb_container.pull(INI_PATH).read()
-        self.assertIn("test-user", ini)
+        self.assertEqual(cfg.render(), ini)
 
+    def test_read_pgb_config(self):
+        test_cfg = pgb.PgbConfig(pgb.DEFAULT_CONFIG)
+        self.harness.charm._render_pgb_config(test_cfg)
+        read_cfg = self.harness.charm._read_pgb_config()
+        self.assertDictEqual(dict(read_cfg), dict(test_cfg))
+
+    @patch("ops.model.Container.can_connect")
     @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
-    def test_push_userlist(self, _reload_pgbouncer):
-        self.harness.charm._push_userlist({"initial-user": "pw"})
-        pgb_container = self.harness.model.unit.get_container(self._pgbouncer_container)
+    def test_render_userlist(self, _reload_pgbouncer, _can_connect):
+        cfg = pgb.PgbConfig(pgb.DEFAULT_CONFIG)
 
-        self.harness.charm._push_userlist(users={"test-user": "pw"}, reload_pgbouncer=True)
+        # Assert we exit early if _can_connect returns false
+        _can_connect.return_value = False
+        self.harness.charm._render_userlist(cfg, reload_pgbouncer=True)
+        self.assertIsInstance(self.harness.charm.unit.status, WaitingStatus)
+        _reload_pgbouncer.assert_not_called()
+
+        _can_connect.return_value = True
+        pgb_container = self.harness.model.unit.get_container(PGB)
+        self.harness.charm._render_userlist({"test-user": "pw"}, reload_pgbouncer=True)
         _reload_pgbouncer.assert_called()
 
         userlist = pgb_container.pull(USERLIST_PATH).read()
         self.assertEqual('"test-user" "pw"', userlist)
 
-        self.harness.charm._push_userlist(users=None, reload_pgbouncer=True)
-
-    def test_get_userlist_from_container(self):
-        self.harness.update_config({"pgb_admin_users": "test-admin"})
-        self.harness.charm._push_container_config(users={"test-admin": "pass"})
-        users = self.harness.charm._get_userlist_from_container()
-        self.assertDictEqual(users, {"test-admin": "pass"})
-
-        self.harness.charm._push_container_config(users={})
-        empty_users = self.harness.charm._get_userlist_from_container()
-        self.assertDictEqual(empty_users, {})
-
-    # ===========
-    #  UTILITIES
-    # ===========
-
-    def get_result(self, event):
-        """Get the intended result from a mocked event.
-
-        Effectively this gets whatever is passed into `event.set_results()`, given that event is
-        actually a `Mock` object.
-        """
-        return dict(event.method_calls[0][1][0])
+    @patch("ops.model.Container.restart")
+    def test_reload_pgbouncer(self, _restart):
+        self.harness.charm._reload_pgbouncer()
+        self.assertIsInstance(self.harness.charm.unit.status, ActiveStatus)
+        _restart.assert_called_once()

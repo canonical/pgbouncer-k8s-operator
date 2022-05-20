@@ -1,5 +1,0 @@
-# Copyright 2022 Canonical Ltd.
-# See LICENSE file for licensing details.
-
-reload-pgbouncer:
-  description: Reloads pgbouncer application. This does not restart the container.
