@@ -27,19 +27,26 @@ import string
 from collections.abc import MutableMapping
 from configparser import ConfigParser, ParsingError
 from copy import deepcopy
-from typing import Dict
+from typing import Dict, Union
 
 logger = logging.getLogger(__name__)
 
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
+PORT_MAX = 49151  # Maximum valid port number before we get into ephemeral ports
+
 DEFAULT_CONFIG = {
     "databases": {},
     "pgbouncer": {
+        "listen_port": "6432",
         "logfile": f"{PGB_DIR}/pgbouncer.log",
         "pidfile": f"{PGB_DIR}/pgbouncer.pid",
         "admin_users": ["juju-admin"],
+        "auth_file": f"{PGB_DIR}/userlist.txt",
+        "user": "postgres",
         "max_client_conn": "10000",
         "ignore_startup_parameters": "extra_float_digits",
+        "so_reuseport": "1",
+        "unix_socket_dir": PGB_DIR,
     },
 }
 
@@ -56,13 +63,26 @@ class PgbConfig(MutableMapping):
     users_section = "users"
     user_types = ["admin_users", "stats_users"]
 
-    def __init__(self, config=None, *args, **kwargs):
+    def __init__(
+        self,
+        config: Union[str, dict, "PgbConfig"] = None,
+        *args,
+        **kwargs,
+    ):
+        """Constructor.
+
+        Args:
+            config: an existing config. Can be passed in as a string, dict, or PgbConfig object.
+                pgb.DEFAULT_CONFIG can be used here as a default dict.
+        """
         self.__dict__.update(*args, **kwargs)
 
         if isinstance(config, str):
             self.read_string(config)
         elif isinstance(config, dict):
             self.read_dict(config)
+        elif isinstance(config, PgbConfig):
+            self.read_dict(deepcopy(config))
 
     def __delitem__(self, key: str):
         """Deletes item from internal mapping."""
@@ -124,6 +144,9 @@ class PgbConfig(MutableMapping):
         In a pgbouncer.ini file, certain values are represented by more complex data structures,
         which are themselves represented as delimited strings. This method parses these strings
         into more usable python objects.
+
+        Raises:
+            PgbConfig.ConfigParsingError: raised when [databases] section is not available
         """
         db = PgbConfig.db_section
         users = PgbConfig.users_section
@@ -205,7 +228,13 @@ class PgbConfig(MutableMapping):
         return output
 
     def validate(self):
-        """Validates that this will provide a valid pgbouncer.ini config when rendered."""
+        """Validates that this object will provide a valid pgbouncer.ini config when rendered.
+
+        Raises:
+            PgbConfig.ConfigParsingError:
+                - when necessary config sections [databases] and [pgbouncer] are not present.
+                - when necessary "logfile" and "pidfile" config values are not present.
+        """
         db = self.db_section
 
         # Ensure the config contains the bare minimum it needs to be valid
@@ -236,6 +265,11 @@ class PgbConfig(MutableMapping):
 
         Args:
             string: the string to be validated
+        Raises:
+            PgbConfig.ConfigParsingError when database names are invalid. This can occur when
+                database names use the reserved "pgbouncer" database name, and when database names
+                do not quote invalid characters (anything that isn't alphanumeric, hyphens, or
+                underscores).
         """
         # Check dbnames don't use the reserved "pgbouncer" database name
         if string == "pgbouncer":
@@ -296,10 +330,17 @@ class PgbConfig(MutableMapping):
         self[pgb]["min_pool_size"] = str(math.ceil(effective_db_connections / 4))
         self[pgb]["reserve_pool_size"] = str(math.ceil(effective_db_connections / 4))
 
+    def add_dbs_to_config(dbs):
+        pass
+
     class ConfigParsingError(ParsingError):
         """Error raised when parsing config fails."""
-
         pass
+
+    class PgbConfigError(Exception):
+        """Generic Pgbouncer config error"""
+        pass
+
 
 
 def generate_password() -> str:
