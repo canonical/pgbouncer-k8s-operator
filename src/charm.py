@@ -16,6 +16,9 @@ from ops.main import main
 from ops.model import ActiveStatus, MaintenanceStatus, WaitingStatus
 from ops.pebble import Layer
 
+from relations.backend_db_admin import RELATION_ID as LEGACY_BACKEND_RELATION_ID
+from relations.backend_db_admin import BackendDbAdminRequires
+
 logger = logging.getLogger(__name__)
 
 PGB = "pgbouncer"
@@ -36,6 +39,8 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
+
+        self.legacy_backend_relation = BackendDbAdminRequires(self)
 
         self._cores = os.cpu_count()
 

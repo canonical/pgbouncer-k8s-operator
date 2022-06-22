@@ -53,7 +53,6 @@ async def test_create_backend_db_admin_legacy_relation_slowtest(ops_test: OpsTes
     # TODO test with the following command:
     # psql --host=10.101.233.51 --port=6432 --username=jujuadmin_pgbouncer-operator --password --dbname=pgbouncer-operator
 
-
     # connection_string = pgb.parse_dict_to_kv_string(cfg['databases']['pg_master'])
     # with psycopg2.connect(
     #     f"{connection_string} connect_timeout=1"
@@ -71,6 +70,7 @@ async def test_create_backend_db_admin_legacy_relation_slowtest(ops_test: OpsTes
     #     )
     #     records = cursor.fetchall()
     #     assert "pgbouncer-operator" in records
+
 
 async def test_backend_db_admin_legacy_relation_scaling_slowtest(ops_test: OpsTest):
     """Test that the pgbouncer config accurately reflects postgres replication changes.

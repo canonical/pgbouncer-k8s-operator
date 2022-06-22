@@ -128,7 +128,7 @@ class BackendDbAdminRequires(Object):
             if db[:21] == STANDBY_PREFIX and db not in standby_names:
                 del dbs[db]
 
-        self.charm._render_service_configs(cfg, reload_pgbouncer=True)
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
     def _on_relation_departed(self, departed_event: RelationDepartedEvent):
         """Handle backend-db-admin-relation-departed event.
@@ -159,4 +159,4 @@ class BackendDbAdminRequires(Object):
         for idx, _ in enumerate(standbys):
             cfg["databases"].pop(f"{STANDBY_PREFIX}{idx}", None)
 
-        self.charm._render_service_configs(cfg, reload_pgbouncer=True)
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
