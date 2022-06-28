@@ -25,7 +25,9 @@ class TestBackendDbAdmin(unittest.TestCase):
 
         self.relation = self.harness.charm.legacy_backend_relation
 
-    @patch("charm.PgBouncerK8sCharm._read_pgb_config", return_value=pgb.PgbConfig(pgb.DEFAULT_CONFIG))
+    @patch(
+        "charm.PgBouncerK8sCharm._read_pgb_config", return_value=pgb.PgbConfig(pgb.DEFAULT_CONFIG)
+    )
     @patch("charm.PgBouncerK8sCharm._render_pgb_config")
     def test_on_relation_changed(self, _render, _read):
         """This test exists to check the basics for how the config is expected to change.
@@ -58,7 +60,9 @@ class TestBackendDbAdmin(unittest.TestCase):
         self.assertEqual(expected_cfg.render(), rendered_cfg.render())
         self.assertNotIn(f"{STANDBY_PREFIX}0", rendered_cfg.keys())
 
-    @patch("charm.PgBouncerK8sCharm._read_pgb_config", return_value=pgb.PgbConfig(pgb.DEFAULT_CONFIG))
+    @patch(
+        "charm.PgBouncerK8sCharm._read_pgb_config", return_value=pgb.PgbConfig(pgb.DEFAULT_CONFIG)
+    )
     @patch("charm.PgBouncerK8sCharm._render_pgb_config")
     def test_on_relation_departed(self, _render, _read):
         """This test exists to check the basics for how the config is expected to change.

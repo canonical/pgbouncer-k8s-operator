@@ -64,9 +64,16 @@ Example with 1 postgresql instance:
 """
 
 import logging
+from typing import List
 
 from charms.pgbouncer_operator.v0 import pgb
-from ops.charm import CharmBase, RelationChangedEvent, RelationDepartedEvent
+from charms.pgbouncer_operator.v0.pgb import PgbConfig
+from ops.charm import (
+    CharmBase,
+    RelationBrokenEvent,
+    RelationChangedEvent,
+    RelationDepartedEvent,
+)
 from ops.framework import Object
 from ops.model import Unit
 
@@ -82,6 +89,7 @@ class BackendDbAdminRequires(Object):
     Hook events observed:
         - relation-changed
         - relation-departed
+        - relation-broken
     """
 
     def __init__(self, charm: CharmBase):
@@ -89,6 +97,7 @@ class BackendDbAdminRequires(Object):
 
         self.framework.observe(charm.on[RELATION_ID].relation_changed, self._on_relation_changed)
         self.framework.observe(charm.on[RELATION_ID].relation_departed, self._on_relation_departed)
+        self.framework.observe(charm.on[RELATION_ID].relation_broken, self._on_relation_broken)
 
         self.charm = charm
 
@@ -99,26 +108,62 @@ class BackendDbAdminRequires(Object):
         into the pgbouncer.ini config, removing redundant standby information along the way.
         """
         logger.info("database change detected - updating config")
-        logger.info(
+        logger.warning(
             "DEPRECATION WARNING - backend-db-admin is a legacy relation, and will be deprecated in a future release. "
         )
 
-        event_data = change_event.relation.data
-        pg_data = event_data[change_event.unit]
+        postgres_data = change_event.relation.data[change_event.unit]
 
         cfg = self.charm._read_pgb_config()
         dbs = cfg["databases"]
 
-        # Test that relation data contains everything we need
-        if pg_data.get("master"):
-            dbs["pg_master"] = pgb.parse_kv_string_to_dict(pg_data.get("master"))
+        if postgres_data.get("master"):
+            dbs["pg_master"] = pgb.parse_kv_string_to_dict(postgres_data.get("master"))
+        else:
+            logger.info("waiting for postgres charm to correctly populate relation data")
+            change_event.defer()
+            return
 
-        # update standbys
-        standbys_str = pg_data.get("standbys")
-        standby_data = standbys_str.split("\n") if standbys_str else []
+        standbys_str = postgres_data.get("standbys")
+        standbys = standbys_str.split("\n") if standbys_str else []
+
+        self._update_standbys(cfg, standbys)
+
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+
+    def _on_relation_departed(self, departed_event: RelationDepartedEvent):
+        """Handle backend-db-admin-relation-departed event.
+
+        Removes unit information from pgbouncer config when a unit is removed.
+        """
+        logger.info("backend database removed - updating config")
+        logger.warning(
+            "DEPRECATION WARNING - backend-db-admin is a legacy relation, and will be deprecated in a future release. "
+        )
+
+        cfg = self.charm._read_pgb_config()
+
+        # Iterate through relation data to get the postgresql unit. Relation data keys are one Unit
+        # and one Application for each side of the relation.
+        event_data = {}
+        for relation_entity, entity_data in departed_event.relation.data.items():
+            if isinstance(relation_entity, Unit) and relation_entity is not self.charm.unit:
+                event_data = entity_data
+                break
+
+        standbys = event_data.get("standbys")
+        standbys = standbys.split("\n") if standbys else []
+
+        self._update_standbys(cfg, standbys)
+
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+
+    def _update_standbys(self, cfg: PgbConfig, standbys: List[str]):
+        """Updates standby list to match new relation data."""
+        dbs = cfg["databases"]
+
         standby_names = []
-
-        for idx, standby in enumerate(standby_data):
+        for idx, standby in enumerate(standbys):
             standby_name = f"{STANDBY_PREFIX}{idx}"
             standby_names.append(standby_name)
             dbs[standby_name] = pgb.parse_kv_string_to_dict(standby)
@@ -128,35 +173,26 @@ class BackendDbAdminRequires(Object):
             if db[:21] == STANDBY_PREFIX and db not in standby_names:
                 del dbs[db]
 
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        return cfg
 
-    def _on_relation_departed(self, departed_event: RelationDepartedEvent):
-        """Handle backend-db-admin-relation-departed event.
+    def _on_relation_broken(self, broken_event: RelationBrokenEvent):
+        """Handle backend-db-admin-relation-broken event.
 
-        Removes master and standby information from pgbouncer config when backend-db-admin relation
-        is removed.
+        Removes all traces of this relation from pgbouncer config.
         """
         logger.info("backend database removed - updating config")
-        logger.info(
+        logger.warning(
             "DEPRECATION WARNING - backend-db-admin is a legacy relation, and will be deprecated in a future release. "
         )
 
         cfg = self.charm._read_pgb_config()
-        cfg["databases"].pop("pg_master", None)
+        dbs = cfg["databases"]
 
-        # Get postgres leader unit from relation data through iteration. Using departed_event.unit
-        # appears to pick a unit at random, and relation data is not copied over to
-        # departed_event.app, so we do this instead.
-        event_data = {}
-        for key, value in departed_event.relation.data.items():
-            if isinstance(key, Unit) and key is not self.charm.unit:
-                event_data = value
-                break
+        dbs.pop("pg_master", None)
 
-        standbys = event_data.get("standbys")
-        standbys = standbys.split("\n") if standbys else []
-
-        for idx, _ in enumerate(standbys):
-            cfg["databases"].pop(f"{STANDBY_PREFIX}{idx}", None)
+        for db in list(dbs.keys()):
+            # Remove all standbys
+            if db[:21] == STANDBY_PREFIX:
+                del dbs[db]
 
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
