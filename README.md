@@ -8,12 +8,6 @@ The PgBouncer Kubernetes Operator deploys and operates the [PgBouncer](https://w
 
 As this charm is not yet published, you need to follow the build and deploy instructions from [CONTRIBUTING.md](https://github.com/canonical/pgbouncer-k8s-operator/CONTRIBUTING.md).
 
-## Actions
-
-- `reload-pgbouncer`
-  - Reloads the pgbouncer application.
-  - Currently only implemented as a stub.
-
 ## Relations
 
 ### Planned
@@ -21,7 +15,12 @@ As this charm is not yet published, you need to follow the build and deploy inst
 - `db:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)
 - `db-admin:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)
 - `backend-db-admin:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)
-  - Provides a relation to the corresponding [postgresql-k8s-operator charm](https://github.com/canonical/postgresql-k8s-operator).
+  - Provides a relation to the corresponding [postgresql-k8s-operator charm](https://github.com/canonical/postgresql-k8s-operator), as well as all charms using this legacy relation.
+  - This relation expects the following data from provider charms:
+    - `master` field, for the primary postgresql unit.
+    - `standbys` field, a \n-delimited list of standby data.
+  - This legacy relation uses the unfortunate `master` term for postgresql primaries.
+  - This relation is to be deprecated in future.
 
 The following relations provide support for the [LMA charm bundle](https://juju.is/docs/lma2), our expected observability stack.
 

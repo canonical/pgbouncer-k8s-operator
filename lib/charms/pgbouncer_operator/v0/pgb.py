@@ -27,19 +27,25 @@ import string
 from collections.abc import MutableMapping
 from configparser import ConfigParser, ParsingError
 from copy import deepcopy
-from typing import Dict
+from typing import Dict, Union
 
 logger = logging.getLogger(__name__)
 
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
+
 DEFAULT_CONFIG = {
     "databases": {},
     "pgbouncer": {
+        "listen_port": "6432",
         "logfile": f"{PGB_DIR}/pgbouncer.log",
         "pidfile": f"{PGB_DIR}/pgbouncer.pid",
         "admin_users": ["juju-admin"],
+        "auth_file": f"{PGB_DIR}/userlist.txt",
+        "user": "postgres",
         "max_client_conn": "10000",
         "ignore_startup_parameters": "extra_float_digits",
+        "so_reuseport": "1",
+        "unix_socket_dir": PGB_DIR,
     },
 }
 
@@ -56,12 +62,23 @@ class PgbConfig(MutableMapping):
     users_section = "users"
     user_types = ["admin_users", "stats_users"]
 
-    def __init__(self, config=None, *args, **kwargs):
+    def __init__(
+        self,
+        config: Union[str, dict, "PgbConfig"] = None,
+        *args,
+        **kwargs,
+    ):
+        """Constructor.
+
+        Args:
+            config: an existing config. Can be passed in as a string, dict, or PgbConfig object.
+                pgb.DEFAULT_CONFIG can be used here as a default dict.
+        """
         self.__dict__.update(*args, **kwargs)
 
         if isinstance(config, str):
             self.read_string(config)
-        elif isinstance(config, dict):
+        elif isinstance(config, (dict, PgbConfig)):
             self.read_dict(config)
 
     def __delitem__(self, key: str):
@@ -124,6 +141,9 @@ class PgbConfig(MutableMapping):
         In a pgbouncer.ini file, certain values are represented by more complex data structures,
         which are themselves represented as delimited strings. This method parses these strings
         into more usable python objects.
+
+        Raises:
+            PgbConfig.ConfigParsingError: raised when [databases] section is not available
         """
         db = PgbConfig.db_section
         users = PgbConfig.users_section
@@ -131,13 +151,13 @@ class PgbConfig(MutableMapping):
 
         try:
             for name, cfg_string in self[db].items():
-                self[db][name] = self._parse_string_to_dict(cfg_string)
+                self[db][name] = parse_kv_string_to_dict(cfg_string)
         except KeyError as err:
             raise PgbConfig.ConfigParsingError(source=str(err))
 
         try:
             for name, cfg_string in self[users].items():
-                self[users][name] = self._parse_string_to_dict(cfg_string)
+                self[users][name] = parse_kv_string_to_dict(cfg_string)
         except KeyError:
             # [users] section is not compulsory, so continue.
             pass
@@ -148,31 +168,6 @@ class PgbConfig(MutableMapping):
             except KeyError:
                 # user type fields are not compulsory, so continue
                 pass
-
-    def _parse_string_to_dict(self, string: str) -> Dict[str, str]:
-        """Parses space-separated key=value pairs into a python dict.
-
-        Args:
-            string: a string containing a set of key=value pairs, joined with = characters and
-                separated with spaces
-        Returns:
-            A dict containing the key-value pairs represented as strings.
-        """
-        parsed_dict = {}
-        for kv_pair in string.split(" "):
-            key, value = kv_pair.split("=")
-            parsed_dict[key] = value
-        return parsed_dict
-
-    def _parse_dict_to_string(self, dictionary: Dict[str, str]) -> str:
-        """Helper function to encode a python dict into a pgbouncer-readable string.
-
-        Args:
-            dictionary: A dict containing the key-value pairs represented as strings.
-        Returns: a string containing a set of key=value pairs, joined with = characters and
-                separated with spaces
-        """
-        return " ".join([f"{key}={value}" for key, value in dictionary.items()])
 
     def render(self) -> str:
         """Returns a valid pgbouncer.ini file as a string.
@@ -187,7 +182,7 @@ class PgbConfig(MutableMapping):
         for section, subdict in output_dict.items():
             for option, config_value in subdict.items():
                 if isinstance(config_value, dict):
-                    output_dict[section][option] = self._parse_dict_to_string(config_value)
+                    output_dict[section][option] = parse_dict_to_kv_string(config_value)
                 elif isinstance(config_value, list):
                     output_dict[section][option] = ",".join(config_value)
 
@@ -205,7 +200,13 @@ class PgbConfig(MutableMapping):
         return output
 
     def validate(self):
-        """Validates that this will provide a valid pgbouncer.ini config when rendered."""
+        """Validates that this object will provide a valid pgbouncer.ini config when rendered.
+
+        Raises:
+            PgbConfig.ConfigParsingError:
+                - when necessary config sections [databases] and [pgbouncer] are not present.
+                - when necessary "logfile" and "pidfile" config values are not present.
+        """
         db = self.db_section
 
         # Ensure the config contains the bare minimum it needs to be valid
@@ -236,6 +237,11 @@ class PgbConfig(MutableMapping):
 
         Args:
             string: the string to be validated
+        Raises:
+            PgbConfig.ConfigParsingError when database names are invalid. This can occur when
+                database names use the reserved "pgbouncer" database name, and when database names
+                do not quote invalid characters (anything that isn't alphanumeric, hyphens, or
+                underscores).
         """
         # Check dbnames don't use the reserved "pgbouncer" database name
         if string == "pgbouncer":
@@ -300,6 +306,40 @@ class PgbConfig(MutableMapping):
         """Error raised when parsing config fails."""
 
         pass
+
+    class PgbConfigError(Exception):
+        """Generic Pgbouncer config error."""
+
+        pass
+
+
+def parse_kv_string_to_dict(string: str) -> Dict[str, str]:
+    """Parses space-separated key=value pairs into a python dict.
+
+    TODO this could make use of pgconnstr, but that requires that this charm lib has a dependency.
+
+    Args:
+        string: a string containing a set of key=value pairs, joined with = characters and
+            separated with spaces
+    Returns:
+        A dict containing the key-value pairs represented as strings.
+    """
+    parsed_dict = {}
+    for kv_pair in string.split(" "):
+        key, value = kv_pair.split("=")
+        parsed_dict[key] = value
+    return parsed_dict
+
+
+def parse_dict_to_kv_string(dictionary: Dict[str, str]) -> str:
+    """Helper function to encode a python dict into a pgbouncer-readable string.
+
+    Args:
+        dictionary: A dict containing the key-value pairs represented as strings.
+    Returns: a string containing a set of key=value pairs, joined with = characters and
+            separated with spaces
+    """
+    return " ".join([f"{key}={value}" for key, value in dictionary.items()])
 
 
 def generate_password() -> str:

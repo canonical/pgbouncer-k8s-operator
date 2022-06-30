@@ -28,3 +28,22 @@ resources:
     # currently this uses a local build of https://github.com/canonical/pgbouncer-container - see CONTRIBUTING.md for instructions.
     upstream-source: pgbouncer:local
     local-source: pgbouncer:local
+
+peers:
+  pgbouncer-replicas:
+    interface: pgbouncer-replicas
+
+provides:
+  # Legacy relations - these will be deprecated in a future release
+  db:
+    interface: pgsql
+    optional: true
+  db-admin:
+    interface: pgsql
+    optional: true
+
+requires:
+  # Legacy relations - these will be deprecated in a future release
+  backend-db-admin:
+    interface: pgsql
+    optional: true
