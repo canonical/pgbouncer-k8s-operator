@@ -16,7 +16,6 @@ from ops.main import main
 from ops.model import ActiveStatus, MaintenanceStatus, WaitingStatus
 from ops.pebble import Layer
 
-from relations.backend_db_admin import RELATION_ID as LEGACY_BACKEND_RELATION_ID
 from relations.backend_db_admin import BackendDbAdminRequires
 
 logger = logging.getLogger(__name__)
