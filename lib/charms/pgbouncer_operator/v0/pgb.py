@@ -32,7 +32,6 @@ from typing import Dict, Union
 logger = logging.getLogger(__name__)
 
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
-PORT_MAX = 49151  # Maximum valid port number before we get into ephemeral ports
 
 DEFAULT_CONFIG = {
     "databases": {},
@@ -79,9 +78,7 @@ class PgbConfig(MutableMapping):
 
         if isinstance(config, str):
             self.read_string(config)
-        elif isinstance(config, dict):
-            self.read_dict(config)
-        elif isinstance(config, PgbConfig):
+        elif isinstance(config, (dict, PgbConfig)):
             self.read_dict(config)
 
     def __delitem__(self, key: str):
