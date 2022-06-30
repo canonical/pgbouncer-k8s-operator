@@ -136,7 +136,8 @@ class BackendDbAdminRequires(Object):
 
         Removes unit information from pgbouncer config when a unit is removed.
 
-        TODO evaluate if this is necessary.
+        TODO since the relation-changed hook updates master and standbys, is this hook still
+        relevant? Experiment once integration tests are implemented.
         """
         logger.info("backend database removed - updating config")
         logger.warning(
@@ -172,7 +173,7 @@ class BackendDbAdminRequires(Object):
 
         # Remove old standby information
         for db in list(dbs.keys()):
-            if db[:len(STANDBY_PREFIX)] == STANDBY_PREFIX and db not in standby_names:
+            if db[: len(STANDBY_PREFIX)] == STANDBY_PREFIX and db not in standby_names:
                 del dbs[db]
 
         return cfg
@@ -194,7 +195,7 @@ class BackendDbAdminRequires(Object):
 
         for db in list(dbs.keys()):
             # Remove all standbys
-            if db[:len(STANDBY_PREFIX)] == STANDBY_PREFIX:
+            if db[: len(STANDBY_PREFIX)] == STANDBY_PREFIX:
                 del dbs[db]
 
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
