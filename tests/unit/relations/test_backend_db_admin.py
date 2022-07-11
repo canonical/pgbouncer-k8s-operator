@@ -16,7 +16,7 @@ TEST_UNIT = {
     "standbys": "host=standby1 port=1 dbname=testdatabase",
 }
 
-
+@unittest.skip
 class TestBackendDbAdmin(unittest.TestCase):
     def setUp(self):
         self.harness = Harness(PgBouncerK8sCharm)
@@ -24,6 +24,7 @@ class TestBackendDbAdmin(unittest.TestCase):
         self.harness.begin()
 
         self.relation = self.harness.charm.legacy_backend_relation
+
 
     @patch(
         "charm.PgBouncerK8sCharm._read_pgb_config", return_value=pgb.PgbConfig(pgb.DEFAULT_CONFIG)

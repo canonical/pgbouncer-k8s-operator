@@ -11,7 +11,7 @@ from typing import Dict
 
 from charms.pgbouncer_operator.v0 import pgb
 from charms.pgbouncer_operator.v0.pgb import PgbConfig
-from charms.postgresql.v0.postgresql_helpers import (
+from charms.postgresql_k8s.v0.postgresql import (
     PostgreSQL,
     PostgreSQLCreateUserError,
     PostgreSQLDeleteUserError,
@@ -19,11 +19,16 @@ from charms.postgresql.v0.postgresql_helpers import (
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus, MaintenanceStatus, WaitingStatus, BlockedStatus, Relation
+from ops.model import (
+    ActiveStatus,
+    BlockedStatus,
+    MaintenanceStatus,
+    Relation,
+    WaitingStatus,
+)
 from ops.pebble import Layer
 
-from relations.backend_db_admin import BackendDbAdminRequires
-from relations.backend_database_admin import RELATION_NAME as BACKEND_RELATION_ID
+from relations.backend_database_admin import RELATION_NAME as BACKEND_RELATION_NAME
 from relations.backend_database_admin import BackendDatabaseAdminRequires
 
 logger = logging.getLogger(__name__)
@@ -47,8 +52,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
-        self.legacy_backend_relation = BackendDbAdminRequires(self)
-        self.backend_relation = BackendDatabaseAdminRequires(self)
+        self.backend = BackendDatabaseAdminRequires(self)
 
         self._cores = os.cpu_count()
 
@@ -361,7 +365,7 @@ class PgBouncerK8sCharm(CharmBase):
         Returns:
             Relation object for the backend relation.
         """
-        backend_relation = self.model.get_relation(BACKEND_RELATION_ID)
+        backend_relation = self.model.get_relation(BACKEND_RELATION_NAME)
         if not backend_relation:
             return None
         else:
@@ -381,7 +385,6 @@ class PgBouncerK8sCharm(CharmBase):
         database = backend_data.get("database")
 
         return PostgreSQL(host=host, user=user, password=password, database=database)
-
 
 
 if __name__ == "__main__":

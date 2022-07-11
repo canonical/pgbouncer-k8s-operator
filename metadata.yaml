@@ -43,7 +43,6 @@ provides:
     optional: true
 
 requires:
-  # Legacy relations - these will be deprecated in a future release
-  backend-db-admin:
+  backend-database-admin:
     interface: pgsql
     optional: true
