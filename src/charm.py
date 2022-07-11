@@ -10,13 +10,21 @@ import os
 from typing import Dict
 
 from charms.pgbouncer_operator.v0 import pgb
+from charms.pgbouncer_operator.v0.pgb import PgbConfig
+from charms.postgresql.v0.postgresql_helpers import (
+    PostgreSQL,
+    PostgreSQLCreateUserError,
+    PostgreSQLDeleteUserError,
+)
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus, MaintenanceStatus, WaitingStatus
+from ops.model import ActiveStatus, MaintenanceStatus, WaitingStatus, BlockedStatus, Relation
 from ops.pebble import Layer
 
 from relations.backend_db_admin import BackendDbAdminRequires
+from relations.backend_database_admin import RELATION_NAME as BACKEND_RELATION_ID
+from relations.backend_database_admin import BackendDatabaseAdminRequires
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +48,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
         self.legacy_backend_relation = BackendDbAdminRequires(self)
+        self.backend_relation = BackendDatabaseAdminRequires(self)
 
         self._cores = os.cpu_count()
 
@@ -109,6 +118,20 @@ class PgBouncerK8sCharm(CharmBase):
                 }
             },
         }
+
+    def _on_update_status(self, _) -> None:
+        """Update Status hook.
+
+        Uses systemd status to verify pgbouncer is running.
+        """
+        # TODO check if status is actually running
+        if self.backend_relation:
+            # All is well, set ActiveStatus
+            self.unit.status = ActiveStatus()
+        else:
+            # If we don't have any backend, this charm doesn't serve a purpose, and therefore
+            # should be related to one or removed.
+            self.unit.status = BlockedStatus("waiting for backend database relation")
 
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Define and start pgbouncer workload."""
@@ -204,6 +227,105 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_container.restart(PGB)
         self.unit.status = ActiveStatus("PgBouncer Reloaded")
 
+    def add_user(
+        self,
+        user: str,
+        password: str = None,
+        admin: bool = False,
+        stats: bool = False,
+        cfg: PgbConfig = None,
+        reload_pgbouncer: bool = False,
+        render_cfg: bool = False,
+    ):
+        """Adds a user.
+
+        Users are added to userlist.txt and pgbouncer.ini config files, and to the backend postgres
+        database if it exists.
+
+        Args:
+            user: the username for the intended user
+            password: intended password for the user
+            admin: whether or not the user has admin permissions
+            stats: whether or not the user has stats permissions
+            cfg: A pgb.PgbConfig object that can be used to minimise writes and restarts. Modified
+                during this method.
+            reload_pgbouncer: whether or not to restart pgbouncer after changing config. Must be
+                restarted for changes to take effect.
+            render_cfg: whether or not to render config
+        """
+        if not cfg:
+            cfg = self._read_pgb_config()
+        userlist = self._read_userlist()
+
+        # Userlist is key-value dict of users and passwords.
+        if not password:
+            password = pgb.generate_password()
+
+        # Return early if user and password are already set to the correct values
+        if userlist.get(user) == password:
+            return
+
+        try:
+            if self.backend_postgres is not None:
+                self.backend_postgres.create_user(user, password, admin)
+            else:
+                raise PostgreSQLCreateUserError
+        except PostgreSQLCreateUserError:
+            logger.error(f"failed to create postgres user {user} - exiting")
+            self.unit.status = BlockedStatus(f"failed to create user {user}")
+            return
+
+        userlist[user] = password
+
+        if admin and user not in cfg[PGB]["admin_users"]:
+            cfg[PGB]["admin_users"].append(user)
+        if stats and user not in cfg[PGB]["stats_users"]:
+            cfg[PGB]["stats_users"].append(user)
+
+        self._render_userlist(userlist)
+        if render_cfg:
+            self._render_service_configs(cfg, reload_pgbouncer)
+
+    def remove_user(
+        self,
+        user: str,
+        cfg: PgbConfig = None,
+        reload_pgbouncer: bool = False,
+        render_cfg: bool = False,
+    ):
+        """Removes a user from config files.
+
+        Args:
+            user: the username for the intended user.
+            cfg: A pgb.PgbConfig object that can be used to minimise writes and restarts. Modified
+                during this method.
+            reload_pgbouncer: whether or not to restart pgbouncer after changing config. Must be
+                restarted for changes to take effect.
+            render_cfg: whether or not to render config
+        """
+        if not cfg:
+            cfg = self._read_pgb_config()
+
+        try:
+            if self.backend_postgres is not None:
+                self.backend_postgres.delete_user(user)
+        except PostgreSQLDeleteUserError:
+            logger.error(f"failed to delete postgres user {user} - exiting")
+            self.unit.status = BlockedStatus(f"failed to delete user {user}")
+            return
+
+        userlist = self._read_userlist()
+        if user in userlist.keys():
+            del userlist[user]
+            self._render_userlist(userlist)
+
+        if user in cfg[PGB]["admin_users"]:
+            cfg[PGB]["admin_users"].remove(user)
+        if user in cfg[PGB]["stats_users"]:
+            cfg[PGB]["stats_users"].remove(user)
+        if render_cfg:
+            self._render_service_configs(cfg, reload_pgbouncer)
+
     # =====================
     #  K8s Charm Utilities
     # =====================
@@ -231,6 +353,35 @@ class PgBouncerK8sCharm(CharmBase):
         except FileNotFoundError as e:
             raise e
         return file_contents
+
+    @property
+    def backend_relation(self) -> Relation:
+        """Returns the relation to the postgresql backend.
+
+        Returns:
+            Relation object for the backend relation.
+        """
+        backend_relation = self.model.get_relation(BACKEND_RELATION_ID)
+        if not backend_relation:
+            return None
+        else:
+            return backend_relation
+
+    @property
+    def backend_postgres(self) -> PostgreSQL:
+        """Returns PostgreSQL representation of backend database, as defined in relation."""
+        backend_relation = self.backend_relation
+        if not backend_relation:
+            return None
+
+        backend_data = backend_relation.data[self.app]
+        host = backend_data.get("host")
+        user = backend_data.get("user")
+        password = backend_data.get("password")
+        database = backend_data.get("database")
+
+        return PostgreSQL(host=host, user=user, password=password, database=database)
+
 
 
 if __name__ == "__main__":
