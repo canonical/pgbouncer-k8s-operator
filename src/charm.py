@@ -288,7 +288,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         self._render_userlist(userlist)
         if render_cfg:
-            self._render_service_configs(cfg, reload_pgbouncer)
+            self._render_pgb_config(cfg, reload_pgbouncer)
 
     def remove_user(
         self,
@@ -309,6 +309,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         if not cfg:
             cfg = self._read_pgb_config()
+            render_cfg = True
 
         try:
             if self.backend_postgres is not None:
@@ -328,7 +329,7 @@ class PgBouncerK8sCharm(CharmBase):
         if user in cfg[PGB]["stats_users"]:
             cfg[PGB]["stats_users"].remove(user)
         if render_cfg:
-            self._render_service_configs(cfg, reload_pgbouncer)
+            self._render_pgb_config(cfg, reload_pgbouncer)
 
     # =====================
     #  K8s Charm Utilities

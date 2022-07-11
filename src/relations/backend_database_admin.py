@@ -66,12 +66,19 @@ class BackendDatabaseAdminRequires(Object):
         self.framework.observe(charm.on[RELATION_NAME].relation_broken, self._on_relation_broken)
 
     def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
+        cfg = self.charm._read_pgb_config()
+        user = self.generate_username(event, event.relation)
+        password = pgb.generate_password()
+        # TODO write these data to the databag
 
-        config_file = self._render_app_config_file(
-            event.username,
-            event.password,
-            event.endpoints,
-        )
+        self.charm.blah
+        self.charm.
+
+        self.charm.add_user(user, password=password, admin=True, cfg=cfg, reload_pgbouncer=True, render_cfg=True)
+
+    def generate_username(self, event, app_name):
+        """Generates a username for this relation."""
+        return f"{self.relation_name}_{event.relation.id}_{app_name}".replace('-', '_')
 
     def _on_endpoints_changed(self, event: DatabaseEndpointsChangedEvent):
         """Handle DatabaseRequires.database_endpoints_changed event.
@@ -80,6 +87,8 @@ class BackendDatabaseAdminRequires(Object):
         updating the main postgres replica. This hook updates the locations of each database
         stored on this backend.
         """
+        # TODO I want to keep track of how this changes, but if there's a default handler I'm happy
+        # to use that
 
     def _on_read_only_endpoints_changed(self, event: DatabaseReadOnlyEndpointsChangedEvent):
         """Handle DatabaseRequires.database_readonly_endpoints_changed event.
@@ -88,9 +97,13 @@ class BackendDatabaseAdminRequires(Object):
         updating the spare readonly postgres replicas. This hook updates the locations of each
         database stored on these backend units.
         """
+        # TODO I want to keep track of how this changes, but if there's a default handler I'm happy
+        # to use that
 
     def _on_relation_broken(self, broken_event: RelationBrokenEvent):
         """Handle backend-db-admin-relation-broken event.
 
         Removes all traces of this relation from pgbouncer config.
         """
+        user = broken_event.relation.data[self.charm.app].get("username")
+        self.charm.remove_user(user, reload_pgbouncer=True)
