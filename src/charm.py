@@ -219,6 +219,10 @@ class PgBouncerK8sCharm(CharmBase):
         if reload_pgbouncer:
             self._reload_pgbouncer()
 
+    def _read_userlist(self) -> Dict[str, str]:
+        """Reads userlist.txt into a dictionary of strings."""
+        return pgb.parse_userlist(self._read_file(USERLIST_PATH))
+
     def _reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
 
