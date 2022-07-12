@@ -13,28 +13,13 @@ TODO add examples
 """
 
 import logging
-from typing import List
 
 from charms.data_platform_libs.v0.database_requires import (
     DatabaseCreatedEvent,
     DatabaseRequires,
 )
-from charms.pgbouncer_operator.v0 import pgb
-from charms.pgbouncer_operator.v0.pgb import PgbConfig
-from ops.charm import (
-    CharmBase,
-    RelationBrokenEvent,
-    RelationChangedEvent,
-    RelationDepartedEvent,
-)
+from ops.charm import CharmBase, RelationBrokenEvent
 from ops.framework import Object
-from ops.model import Application, Unit
-
-from lib.charms.data_platform_libs.v0.database_requires import (
-    DatabaseCreatedEvent,
-    DatabaseEndpointsChangedEvent,
-    DatabaseReadOnlyEndpointsChangedEvent,
-)
 
 logger = logging.getLogger(__name__)
 RELATION_NAME = "backend-database-admin"

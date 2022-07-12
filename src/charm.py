@@ -67,7 +67,7 @@ class PgBouncerK8sCharm(CharmBase):
         config files that are essential for pgbouncer to run.
         """
         # Initialise pgbouncer.ini config files from defaults set in charm lib.
-        config = pgb.PgbConfig(pgb.DEFAULT_CONFIG)
+        config = PgbConfig(pgb.DEFAULT_CONFIG)
         self._render_pgb_config(config)
 
         # Initialise userlist, generating passwords for initial users. All config files use the
@@ -149,7 +149,7 @@ class PgBouncerK8sCharm(CharmBase):
     #  PgBouncer-Specific Utilities
     # ===================================
 
-    def _render_pgb_config(self, config: pgb.PgbConfig, reload_pgbouncer=False) -> None:
+    def _render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
         Args:
@@ -178,7 +178,7 @@ class PgBouncerK8sCharm(CharmBase):
         if reload_pgbouncer:
             self._reload_pgbouncer()
 
-    def _read_pgb_config(self) -> pgb.PgbConfig:
+    def _read_pgb_config(self) -> PgbConfig:
         """Get config object from pgbouncer.ini file stored on container.
 
         Returns:
@@ -186,7 +186,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         try:
             config = self._read_file(INI_PATH)
-            return pgb.PgbConfig(config)
+            return PgbConfig(config)
         except FileNotFoundError:
             logger.error("pgbouncer config not found")
 
@@ -255,7 +255,7 @@ class PgBouncerK8sCharm(CharmBase):
             password: intended password for the user
             admin: whether or not the user has admin permissions
             stats: whether or not the user has stats permissions
-            cfg: A pgb.PgbConfig object that can be used to minimise writes and restarts. Modified
+            cfg: A PgbConfig object that can be used to minimise writes and restarts. Modified
                 during this method.
             reload_pgbouncer: whether or not to restart pgbouncer after changing config. Must be
                 restarted for changes to take effect.
@@ -305,7 +305,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         Args:
             user: the username for the intended user.
-            cfg: A pgb.PgbConfig object that can be used to minimise writes and restarts. Modified
+            cfg: A PgbConfig object that can be used to minimise writes and restarts. Modified
                 during this method.
             reload_pgbouncer: whether or not to restart pgbouncer after changing config. Must be
                 restarted for changes to take effect.
