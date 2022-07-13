@@ -25,9 +25,7 @@ resources:
   pgbouncer-image:
     type: oci-image
     description: OCI image for pgbouncer
-    # currently this uses a local build of https://github.com/canonical/pgbouncer-container - see CONTRIBUTING.md for instructions.
-    upstream-source: pgbouncer:local
-    local-source: pgbouncer:local
+    upstream-source: dataplatformoci/pgbouncer:latest
 
 peers:
   pgbouncer-replicas:
