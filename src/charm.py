@@ -120,6 +120,12 @@ class PgBouncerK8sCharm(CharmBase):
         """Define and start pgbouncer workload."""
         container = event.workload
         pebble_layer = self._pgbouncer_layer()
+
+        if not container.exists(INI_PATH):
+            logger.debug("pgbouncer config not found, waiting for config to be rendered.")
+            event.defer()
+            return
+
         container.add_layer(PGB, pebble_layer, combine=True)
         container.autostart()
         self.unit.status = ActiveStatus()
