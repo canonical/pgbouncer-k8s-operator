@@ -26,7 +26,7 @@ jobs:
         run: python3 -m pip install tox
       - name: Run tests
         run: tox -e unit
-    # This job is needed until the OCI image is published to ROCKS.
+  # This job is needed until the OCI image is published to ROCKS.
   build-oci-image:
     name: Build OCI image for integration tests
     runs-on: ubuntu-latest
