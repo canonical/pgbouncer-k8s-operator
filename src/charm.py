@@ -11,11 +11,7 @@ from typing import Dict
 
 from charms.pgbouncer_operator.v0 import pgb
 from charms.pgbouncer_operator.v0.pgb import PgbConfig
-from charms.postgresql_k8s.v0.postgresql import (
-    PostgreSQL,
-    PostgreSQLCreateUserError,
-    PostgreSQLDeleteUserError,
-)
+from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
@@ -189,6 +185,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         Returns:
             PgbConfig object containing pgbouncer config.
+
         Raises:
             FileNotFoundError when the config at INI_PATH isn't available, such as if this is
             called before the charm has finished installing.
