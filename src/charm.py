@@ -69,19 +69,19 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
-        config = self._read_pgb_config()
+        try:
+            config = self._read_pgb_config()
+        except FileNotFoundError:
+            logger.debug("pgbouncer config not rendered yet.")
+            event.defer()
+            return
         config["pgbouncer"]["pool_mode"] = self.config["pool_mode"]
         config.set_max_db_connection_derivatives(
             self.config["max_db_connections"],
             self._cores,
         )
 
-        try:
-            self._render_pgb_config(config)
-        except FileNotFoundError:
-            logger.debug("pgbouncer config not rendered yet.")
-            event.defer()
-            return
+        self._render_pgb_config(config)
 
         # Create an updated pebble layer for the pgbouncer container, and apply it if there are
         # any changes.
