@@ -130,7 +130,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         Uses systemd status to verify pgbouncer is running.
         """
-        # TODO check if status is actually running
         if self.backend_relation:
             # All is well, set ActiveStatus
             self.unit.status = ActiveStatus()
