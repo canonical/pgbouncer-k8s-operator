@@ -10,6 +10,8 @@ As this charm is not yet published, you need to follow the build and deploy inst
 
 ## Relations
 
+- backend-database-admin:`postgresql-client`
+
 ### Planned
 
 - `db:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)

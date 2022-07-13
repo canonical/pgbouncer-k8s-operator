@@ -24,14 +24,6 @@ this operator.
 This setup is required for testing and deploying this charm. These instructions are written assuming you're using microk8s as your juju substrate. Instructions for setting this up can be found [here](https://juju.is/docs/olm/microk8s). If you're using a different substrate, update these instructions accordingly.
 
 ```shell
-# Import container
-git clone https://github.com/canonical/pgbouncer-container.git
-# Build container locally, since it's not been exported anywhere yet.
-docker build . -t pgbouncer:local
-docker save pgbouncer:local -o pgb.tar
-# Import container file into microk8s container registry
-microk8s ctr image import pgb.tar
-
 # Create a model
 juju add-model dev
 # Enable DEBUG logging
@@ -64,7 +56,7 @@ charmcraft pack
 
 ```bash
 juju deploy ./pgbouncer-k8s-operator_ubuntu-20.04-amd64.charm \
-    --resource pgbouncer-image=pgbouncer:local
+    --resource pgbouncer-image=pgbouncer:latest
 ```
 
 ## Canonical Contributor Agreement

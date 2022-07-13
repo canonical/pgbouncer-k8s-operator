@@ -235,6 +235,7 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_container.restart(PGB)
         self.unit.status = ActiveStatus("PgBouncer Reloaded")
 
+    # TODO add_user_to_config and add_backend_user are different functions!
     def add_user(
         self,
         user: str,
@@ -383,8 +384,8 @@ class PgBouncerK8sCharm(CharmBase):
         if not backend_relation:
             return None
 
-        backend_data = backend_relation.data[self.app]
-        host = backend_data.get("host")
+        backend_data = backend_relation.data[backend_relation.app]
+        host = backend_data.get("endpoints")
         user = backend_data.get("user")
         password = backend_data.get("password")
         database = backend_data.get("database")

@@ -34,9 +34,7 @@ class TestCharm(unittest.TestCase):
         self.assertEqual('"juju-admin" "pw"', userlist)
         _gen_pw.assert_called_once()
 
-    @patch(
-        "charm.PgBouncerK8sCharm._read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG)
-    )
+    @patch("charm.PgBouncerK8sCharm._read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("ops.model.Container.restart")
     def test_on_config_changed(self, _restart, _read):
         self.harness.update_config()
@@ -230,4 +228,3 @@ class TestCharm(unittest.TestCase):
         _backend.delete_user.assert_called()
         _render_userlist.assert_called_with({})
         _render_cfg.assert_called_with(cfg, True)
-
