@@ -14,7 +14,7 @@ TEST_UNIT = {
 }
 
 
-class TestBackendDbAdmin(unittest.TestCase):
+class TestBackendDatabaseRelation(unittest.TestCase):
     def setUp(self):
         self.harness = Harness(PgBouncerK8sCharm)
         self.addCleanup(self.harness.cleanup)

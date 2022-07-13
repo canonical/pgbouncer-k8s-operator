@@ -24,8 +24,8 @@ from ops.model import (
 )
 from ops.pebble import Layer, PathError
 
-from relations.backend import RELATION_NAME as BACKEND_RELATION_NAME
-from relations.backend import BackendRequires
+from relations.backend_database import RELATION_NAME as BACKEND_RELATION_NAME
+from relations.backend_database import BackendDatabaseRequires
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
-        self.backend = BackendRequires(self)
+        self.backend = BackendDatabaseRequires(self)
 
         self._cores = os.cpu_count()
 

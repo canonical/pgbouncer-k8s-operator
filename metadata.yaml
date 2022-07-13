@@ -41,6 +41,6 @@ provides:
     optional: true
 
 requires:
-  backend:
+  backend-database:
     interface: postgresql-client
     optional: false
