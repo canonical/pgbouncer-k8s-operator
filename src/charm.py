@@ -26,7 +26,7 @@ from ops.model import (
     Relation,
     WaitingStatus,
 )
-from ops.pebble import Layer
+from ops.pebble import Layer, PathError
 
 from relations.backend_database_admin import RELATION_NAME as BACKEND_RELATION_NAME
 from relations.backend_database_admin import BackendDatabaseAdminRequires
@@ -82,7 +82,13 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
-        config = self._read_pgb_config()
+        try:
+            config = self.read_pgb_config()
+        except FileNotFoundError:
+            self.unit.status = WaitingStatus("waiting for pgbouncer install hook to finish")
+            event.defer()
+            return
+
         config["pgbouncer"]["pool_mode"] = self.config["pool_mode"]
         config.set_max_db_connection_derivatives(
             self.config["max_db_connections"],
@@ -178,17 +184,16 @@ class PgBouncerK8sCharm(CharmBase):
         if reload_pgbouncer:
             self._reload_pgbouncer()
 
-    def _read_pgb_config(self) -> PgbConfig:
+    def read_pgb_config(self) -> PgbConfig:
         """Get config object from pgbouncer.ini file stored on container.
 
         Returns:
             PgbConfig object containing pgbouncer config.
+        Raises:
+            FileNotFoundError when the config at INI_PATH isn't available, such as if this is
+            called before the charm has finished installing.
         """
-        try:
-            config = self._read_file(INI_PATH)
-            return PgbConfig(config)
-        except FileNotFoundError:
-            logger.error("pgbouncer config not found")
+        return PgbConfig(self._read_file(INI_PATH))
 
     def _render_userlist(self, userlist: Dict, reload_pgbouncer: bool = False) -> None:
         """Generate userlist.txt from the given userlist dict, and deploy it to the container.
@@ -235,36 +240,36 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_container.restart(PGB)
         self.unit.status = ActiveStatus("PgBouncer Reloaded")
 
-    # TODO add_user_to_config and add_backend_user are different functions!
     def add_user(
         self,
         user: str,
+        cfg: PgbConfig,
         password: str = None,
         admin: bool = False,
         stats: bool = False,
-        cfg: PgbConfig = None,
         reload_pgbouncer: bool = False,
         render_cfg: bool = False,
     ):
         """Adds a user.
 
-        Users are added to userlist.txt and pgbouncer.ini config files, and to the backend postgres
-        database if it exists.
+        Users are added to userlist.txt and pgbouncer.ini config files
 
         Args:
             user: the username for the intended user
+            cfg: A PgbConfig object. Modified during this method.
             password: intended password for the user
             admin: whether or not the user has admin permissions
             stats: whether or not the user has stats permissions
-            cfg: A PgbConfig object that can be used to minimise writes and restarts. Modified
-                during this method.
             reload_pgbouncer: whether or not to restart pgbouncer after changing config. Must be
                 restarted for changes to take effect.
             render_cfg: whether or not to render config
+        Returns False if user cannot be created.
         """
-        if not cfg:
-            cfg = self._read_pgb_config()
-        userlist = self._read_userlist()
+        try:
+            userlist = self._read_userlist()
+        except FileNotFoundError:
+            logger.error(f"failed to create postgres user {user} - config files not initialised")
+            return False
 
         # Userlist is key-value dict of users and passwords.
         if not password:
@@ -274,6 +279,28 @@ class PgBouncerK8sCharm(CharmBase):
         if userlist.get(user) == password:
             return
 
+        userlist[user] = password
+
+        if admin and (user not in cfg[PGB]["admin_users"]):
+            cfg[PGB]["admin_users"].append(user)
+        if stats and (user not in cfg[PGB]["stats_users"]):
+            cfg[PGB]["stats_users"].append(user)
+
+        self._render_userlist(userlist)
+        if render_cfg:
+            self._render_pgb_config(cfg, reload_pgbouncer)
+
+    def add_user_to_backend(self, user: str, password: str, admin: bool):
+        """Adds user to the backend postgres database if it exists.
+
+        Args:
+            user: username for the user
+            password: password for the intended user
+            admin: a boolean describing whether or not the user should be a postgres superuser.
+
+        Returns:
+            False if user creation fails.
+        """
         try:
             if self.backend_postgres is not None:
                 self.backend_postgres.create_user(user, password, admin)
@@ -282,23 +309,12 @@ class PgBouncerK8sCharm(CharmBase):
         except PostgreSQLCreateUserError:
             logger.error(f"failed to create postgres user {user} - exiting")
             self.unit.status = BlockedStatus(f"failed to create user {user}")
-            return
-
-        userlist[user] = password
-
-        if admin and user not in cfg[PGB]["admin_users"]:
-            cfg[PGB]["admin_users"].append(user)
-        if stats and user not in cfg[PGB]["stats_users"]:
-            cfg[PGB]["stats_users"].append(user)
-
-        self._render_userlist(userlist)
-        if render_cfg:
-            self._render_pgb_config(cfg, reload_pgbouncer)
+            return False
 
     def remove_user(
         self,
         user: str,
-        cfg: PgbConfig = None,
+        cfg: PgbConfig,
         reload_pgbouncer: bool = False,
         render_cfg: bool = False,
     ):
@@ -306,25 +322,20 @@ class PgBouncerK8sCharm(CharmBase):
 
         Args:
             user: the username for the intended user.
-            cfg: A PgbConfig object that can be used to minimise writes and restarts. Modified
-                during this method.
+            cfg: A PgbConfig object. Modified during this method.
             reload_pgbouncer: whether or not to restart pgbouncer after changing config. Must be
                 restarted for changes to take effect.
             render_cfg: whether or not to render config
+
+        Returns:
+            False if user creation fails.
         """
-        if not cfg:
-            cfg = self._read_pgb_config()
-            render_cfg = True
-
         try:
-            if self.backend_postgres is not None:
-                self.backend_postgres.delete_user(user)
-        except PostgreSQLDeleteUserError:
-            logger.error(f"failed to delete postgres user {user} - exiting")
-            self.unit.status = BlockedStatus(f"failed to delete user {user}")
-            return
+            userlist = self._read_userlist()
+        except FileNotFoundError:
+            logger.error(f"failed to delete postgres user {user} - config files not initialised")
+            return False
 
-        userlist = self._read_userlist()
         if user in userlist.keys():
             del userlist[user]
             self._render_userlist(userlist)
@@ -335,6 +346,27 @@ class PgBouncerK8sCharm(CharmBase):
             cfg[PGB]["stats_users"].remove(user)
         if render_cfg:
             self._render_pgb_config(cfg, reload_pgbouncer)
+
+    def remove_user_from_backend(self, user: str, password: str, admin: bool):
+        """Adds user to the backend postgres database if it exists.
+
+        Args:
+            user: username for the user
+            password: password for the intended user
+            admin: a boolean describing whether or not the user should be a postgres superuser.
+
+        Returns:
+            False if user creation fails.
+        """
+        try:
+            if self.backend_postgres is not None:
+                self.backend_postgres.delete_user(user, if_exists=True)
+            else:
+                raise PostgreSQLDeleteUserError
+        except PostgreSQLDeleteUserError:
+            logger.error(f"failed to delete postgres user {user} - exiting")
+            self.unit.status = BlockedStatus(f"failed to delete user {user}")
+            return False
 
     # =====================
     #  K8s Charm Utilities
@@ -362,6 +394,8 @@ class PgBouncerK8sCharm(CharmBase):
             file_contents = pgb_container.pull(filepath).read()
         except FileNotFoundError as e:
             raise e
+        except PathError as e:
+            raise FileNotFoundError(str(e))
         return file_contents
 
     @property

@@ -23,22 +23,30 @@ class TestBackendDbAdmin(unittest.TestCase):
         self.charm = self.harness.charm
         self.relation = self.charm.backend_relation
 
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config")
     @patch("charm.PgBouncerK8sCharm.add_user")
-    def test_on_database_created(self, _add_user):
+    def test_on_database_created(self, _add_user, _cfg):
         mock_event = MagicMock()
-        user = "new-user"
-        password = "new-user-password"
-        mock_event.relation.data = {self.charm.app: {"username": user, "password": password}}
+        mock_event.username = "new-user"
+        mock_event.password = "new-user-password"
+
         self.charm.backend._on_database_created(mock_event)
+
         _add_user.assert_called_with(
-            user, password=password, admin=True, reload_pgbouncer=True, render_cfg=True
+            user=mock_event.username,
+            cfg=_cfg.return_value,
+            password=mock_event.password,
+            admin=True,
+            reload_pgbouncer=True,
+            render_cfg=True,
         )
 
+    @patch("charm.PgBouncerK8sCharm.backend_postgres")
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config")
     @patch("charm.PgBouncerK8sCharm.remove_user")
-    def test_relation_broken(self, _remove_user):
+    def test_relation_broken(self, _remove_user, _cfg, _backend):
         mock_event = MagicMock()
         user = "broken-user"
-        password = "broken-user-password"
-        mock_event.relation.data = {self.charm.app: {"username": user, "password": password}}
+        _backend.user = user
         self.charm.backend._on_relation_broken(mock_event)
-        _remove_user.assert_called_with(user, reload_pgbouncer=True, render_cfg=True)
+        _remove_user.assert_called_with(user, cfg=_cfg.return_value, reload_pgbouncer=True, render_cfg=True)

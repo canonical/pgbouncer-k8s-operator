@@ -34,7 +34,7 @@ class TestCharm(unittest.TestCase):
         self.assertEqual('"juju-admin" "pw"', userlist)
         _gen_pw.assert_called_once()
 
-    @patch("charm.PgBouncerK8sCharm._read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("ops.model.Container.restart")
     def test_on_config_changed(self, _restart, _read):
         self.harness.update_config()
@@ -118,10 +118,10 @@ class TestCharm(unittest.TestCase):
         ini = pgb_container.pull(INI_PATH).read()
         self.assertEqual(cfg.render(), ini)
 
-    def test_read_pgb_config(self):
+    def testread_pgb_config(self):
         test_cfg = PgbConfig(DEFAULT_CONFIG)
         self.charm._render_pgb_config(test_cfg)
-        read_cfg = self.charm._read_pgb_config()
+        read_cfg = self.charm.read_pgb_config()
         self.assertDictEqual(dict(read_cfg), dict(test_cfg))
 
     @patch("ops.model.Container.can_connect")
@@ -149,26 +149,23 @@ class TestCharm(unittest.TestCase):
         self.assertIsInstance(self.charm.unit.status, ActiveStatus)
         _restart.assert_called_once()
 
-    @patch("charm.PgBouncerK8sCharm.backend_postgres", return_value=None)
     @patch("charms.pgbouncer_operator.v0.pgb.generate_password", return_value="default-pass")
     @patch("charm.PgBouncerK8sCharm._read_userlist", return_value={})
-    @patch("charm.PgBouncerK8sCharm._read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm._render_userlist")
     @patch("charm.PgBouncerK8sCharm._render_pgb_config")
-    def test_add_user(
-        self, _render_cfg, _render_userlist, _read_cfg, _read_userlist, _gen_pw, _backend
-    ):
+    def test_add_user(self, _render_cfg, _render_userlist, _read_cfg, _read_userlist, _gen_pw):
         default_admins = DEFAULT_CONFIG[PGB]["admin_users"]
         default_stats = DEFAULT_CONFIG[PGB]["stats_users"]
+        cfg = PgbConfig(DEFAULT_CONFIG)
 
         # If user already exists, assert we aren't recreating them.
         _read_userlist.return_value = {"test-user": "test-pass"}
-        self.charm.add_user(user="test-user", password="test-pass")
+        self.charm.add_user(user="test-user", cfg=cfg, password="test-pass")
         _render_userlist.assert_not_called()
         _read_userlist.reset_mock()
 
         # Test defaults
-        cfg = PgbConfig(DEFAULT_CONFIG)
         self.charm.add_user(user="test-user", cfg=cfg)
         _render_userlist.assert_called_with({"test-user": "default-pass"})
         _render_cfg.assert_not_called()
@@ -193,7 +190,6 @@ class TestCharm(unittest.TestCase):
         assert max_cfg[PGB].get("admin_users") == default_admins + ["max-test"]
         assert max_cfg[PGB].get("stats_users") == default_stats + ["max-test"]
         _render_cfg.assert_called_with(max_cfg, True)
-        _backend.create_user.assert_called()
 
         # Test we can't duplicate stats or admin users
         self.charm.add_user(
@@ -202,12 +198,11 @@ class TestCharm(unittest.TestCase):
         assert max_cfg[PGB].get("admin_users") == default_admins + ["max-test"]
         assert max_cfg[PGB].get("stats_users") == default_stats + ["max-test"]
 
-    @patch("charm.PgBouncerK8sCharm.backend_postgres")
     @patch("charm.PgBouncerK8sCharm._read_userlist", return_value={"test_user": ""})
-    @patch("charm.PgBouncerK8sCharm._read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm._render_userlist")
     @patch("charm.PgBouncerK8sCharm._render_pgb_config")
-    def test_remove_user(self, _render_cfg, _render_userlist, _read_cfg, _read_userlist, _backend):
+    def test_remove_user(self, _render_cfg, _render_userlist, _read_cfg, _read_userlist):
         user = "test_user"
         cfg = PgbConfig(DEFAULT_CONFIG)
         cfg[PGB]["admin_users"].append(user)
@@ -225,6 +220,5 @@ class TestCharm(unittest.TestCase):
         self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
         assert user not in cfg[PGB]["admin_users"]
         assert user not in cfg[PGB]["stats_users"]
-        _backend.delete_user.assert_called()
         _render_userlist.assert_called_with({})
         _render_cfg.assert_called_with(cfg, True)
