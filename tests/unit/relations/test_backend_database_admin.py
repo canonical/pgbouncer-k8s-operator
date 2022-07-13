@@ -45,8 +45,9 @@ class TestBackendDbAdmin(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.read_pgb_config")
     @patch("charm.PgBouncerK8sCharm.remove_user")
     def test_relation_broken(self, _remove_user, _cfg, _backend):
-        mock_event = MagicMock()
-        user = "broken-user"
-        _backend.user = user
-        self.charm.backend._on_relation_broken(mock_event)
-        _remove_user.assert_called_with(user, cfg=_cfg.return_value, reload_pgbouncer=True, render_cfg=True)
+        _backend.user = "broken-user"
+        self.charm.backend._on_relation_broken(MagicMock())
+
+        _remove_user.assert_called_with(
+            _backend.user, cfg=_cfg.return_value, reload_pgbouncer=True, render_cfg=True
+        )

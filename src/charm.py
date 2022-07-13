@@ -290,27 +290,6 @@ class PgBouncerK8sCharm(CharmBase):
         if render_cfg:
             self._render_pgb_config(cfg, reload_pgbouncer)
 
-    def add_user_to_backend(self, user: str, password: str, admin: bool):
-        """Adds user to the backend postgres database if it exists.
-
-        Args:
-            user: username for the user
-            password: password for the intended user
-            admin: a boolean describing whether or not the user should be a postgres superuser.
-
-        Returns:
-            False if user creation fails.
-        """
-        try:
-            if self.backend_postgres is not None:
-                self.backend_postgres.create_user(user, password, admin)
-            else:
-                raise PostgreSQLCreateUserError
-        except PostgreSQLCreateUserError:
-            logger.error(f"failed to create postgres user {user} - exiting")
-            self.unit.status = BlockedStatus(f"failed to create user {user}")
-            return False
-
     def remove_user(
         self,
         user: str,
@@ -346,27 +325,6 @@ class PgBouncerK8sCharm(CharmBase):
             cfg[PGB]["stats_users"].remove(user)
         if render_cfg:
             self._render_pgb_config(cfg, reload_pgbouncer)
-
-    def remove_user_from_backend(self, user: str, password: str, admin: bool):
-        """Adds user to the backend postgres database if it exists.
-
-        Args:
-            user: username for the user
-            password: password for the intended user
-            admin: a boolean describing whether or not the user should be a postgres superuser.
-
-        Returns:
-            False if user creation fails.
-        """
-        try:
-            if self.backend_postgres is not None:
-                self.backend_postgres.delete_user(user, if_exists=True)
-            else:
-                raise PostgreSQLDeleteUserError
-        except PostgreSQLDeleteUserError:
-            logger.error(f"failed to delete postgres user {user} - exiting")
-            self.unit.status = BlockedStatus(f"failed to delete user {user}")
-            return False
 
     # =====================
     #  K8s Charm Utilities
