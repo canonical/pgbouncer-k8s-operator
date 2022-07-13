@@ -14,7 +14,7 @@ from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, MaintenanceStatus, WaitingStatus
-from ops.pebble import Layer
+from ops.pebble import Layer, PathError
 
 from relations.backend_db_admin import BackendDbAdminRequires
 
@@ -71,7 +71,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         try:
             config = self._read_pgb_config()
-        except FileNotFoundError:
+        except (FileNotFoundError, PathError):
             logger.debug("pgbouncer config not rendered yet.")
             event.defer()
             return
@@ -166,8 +166,9 @@ class PgBouncerK8sCharm(CharmBase):
         try:
             config = self._read_file(INI_PATH)
             return pgb.PgbConfig(config)
-        except FileNotFoundError:
+        except (FileNotFoundError, PathError) as e:
             logger.error("pgbouncer config not found")
+            raise e
 
     def _render_userlist(self, userlist: Dict, reload_pgbouncer: bool = False) -> None:
         """Generate userlist.txt from the given userlist dict, and deploy it to the container.
