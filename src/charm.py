@@ -128,14 +128,12 @@ class PgBouncerK8sCharm(CharmBase):
     def _on_update_status(self, _) -> None:
         """Update Status hook.
 
-        Uses systemd status to verify pgbouncer is running.
+        Sets BlockedStatus if we have no backend database; if we can't connect to a backend, this
+        charm serves no purpose.
+
+        TODO verify pgbouncer is actually running in this hook
         """
-        if self.backend_relation:
-            # All is well, set ActiveStatus
-            self.unit.status = ActiveStatus()
-        else:
-            # If we don't have any backend, this charm doesn't serve a purpose, and therefore
-            # should be related to one or removed.
+        if not self.backend_relation:
             self.unit.status = BlockedStatus("waiting for backend database relation")
 
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
@@ -236,6 +234,10 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_container.restart(PGB)
         self.unit.status = ActiveStatus("PgBouncer Reloaded")
 
+    # =================
+    #  User Management
+    # =================
+
     def add_user(
         self,
         user: str,
@@ -259,13 +261,11 @@ class PgBouncerK8sCharm(CharmBase):
             reload_pgbouncer: whether or not to restart pgbouncer after changing config. Must be
                 restarted for changes to take effect.
             render_cfg: whether or not to render config
-        Returns False if user cannot be created.
+
+        Raises:
+            FileNotFoundError when userlist cannot be found.
         """
-        try:
-            userlist = self._read_userlist()
-        except FileNotFoundError:
-            logger.error(f"failed to create postgres user {user} - config files not initialised")
-            return False
+        userlist = self._read_userlist()
 
         # Userlist is key-value dict of users and passwords.
         if not password:
@@ -302,14 +302,10 @@ class PgBouncerK8sCharm(CharmBase):
                 restarted for changes to take effect.
             render_cfg: whether or not to render config
 
-        Returns:
-            False if user creation fails.
+        Raises:
+            FileNotFoundError when userlist can't be found.
         """
-        try:
-            userlist = self._read_userlist()
-        except FileNotFoundError:
-            logger.error(f"failed to delete postgres user {user} - config files not initialised")
-            return False
+        userlist = self._read_userlist()
 
         if user in userlist.keys():
             del userlist[user]
@@ -319,6 +315,7 @@ class PgBouncerK8sCharm(CharmBase):
             cfg[PGB]["admin_users"].remove(user)
         if user in cfg[PGB]["stats_users"]:
             cfg[PGB]["stats_users"].remove(user)
+
         if render_cfg:
             self._render_pgb_config(cfg, reload_pgbouncer)
 
