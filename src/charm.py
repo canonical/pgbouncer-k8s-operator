@@ -10,7 +10,7 @@ import os
 from typing import Dict
 
 from charms.pgbouncer_operator.v0 import pgb
-from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
+from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, MaintenanceStatus, WaitingStatus
@@ -47,12 +47,20 @@ class PgBouncerK8sCharm(CharmBase):
     #  Charm Lifecycle Hooks
     # =======================
 
-    def _on_install(self, _) -> None:
+    def _on_install(self, event: InstallEvent) -> None:
         """On install hook.
 
         This imports any users from the juju config, and initialises userlist and pgbouncer.ini
         config files that are essential for pgbouncer to run.
         """
+        container = self.unit.get_container(PGB)
+        if not container.can_connect():
+            logger.debug(
+                "pgbouncer config could not be rendered, waiting for container to be available."
+            )
+            event.defer()
+            return
+
         # Initialise pgbouncer.ini config files from defaults set in charm lib.
         config = pgb.PgbConfig(pgb.DEFAULT_CONFIG)
         self._render_pgb_config(config)
