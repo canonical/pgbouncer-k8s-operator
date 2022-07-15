@@ -15,10 +15,17 @@ from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus, MaintenanceStatus, WaitingStatus
+from ops.model import (
+    ActiveStatus,
+    BlockedStatus,
+    MaintenanceStatus,
+    Relation,
+    WaitingStatus,
+)
 from ops.pebble import Layer, PathError
 
-from relations.backend_db_admin import BackendDbAdminRequires
+from relations.backend_database import RELATION_NAME as BACKEND_RELATION_NAME
+from relations.backend_database import BackendDatabaseRequires
 
 logger = logging.getLogger(__name__)
 
@@ -72,12 +79,12 @@ class PgBouncerK8sCharm(CharmBase):
             return
 
         try:
-            config = self._read_pgb_config()
-        except (FileNotFoundError, PathError):
-            logger.debug("pgbouncer config not rendered yet.")
+            config = self.read_pgb_config()
+        except FileNotFoundError:
+            self.unit.status = WaitingStatus("waiting for pgbouncer install hook to finish")
             event.defer()
             return
-        
+
         config["pgbouncer"]["pool_mode"] = self.config["pool_mode"]
         config.set_max_db_connection_derivatives(
             self.config["max_db_connections"],
