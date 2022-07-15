@@ -10,17 +10,14 @@ As this charm is not yet published, you need to follow the build and deploy inst
 
 ## Relations
 
+- `backend:postgresql-client`
+  - Provides a relation to the corresponding [postgresql-k8s-operator charm](https://github.com/canonical/postgresql-k8s-operator).
+  - Makes use of the [data-platform-libs DatabaseRequires library](https://github.com/canonical/data-platform-libs/blob/main/lib/charms/data_platform_libs/v0/database_provides.py).
+
 ### Planned
 
 - `db:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)
 - `db-admin:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)
-- `backend-db-admin:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)
-  - Provides a relation to the corresponding [postgresql-k8s-operator charm](https://github.com/canonical/postgresql-k8s-operator), as well as all charms using this legacy relation.
-  - This relation expects the following data from provider charms:
-    - `master` field, for the primary postgresql unit.
-    - `standbys` field, a \n-delimited list of standby data.
-  - This legacy relation uses the unfortunate `master` term for postgresql primaries.
-  - This relation is to be deprecated in future.
 
 The following relations provide support for the [LMA charm bundle](https://juju.is/docs/lma2), our expected observability stack.
 

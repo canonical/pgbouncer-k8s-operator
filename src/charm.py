@@ -10,6 +10,8 @@ import os
 from typing import Dict
 
 from charms.pgbouncer_operator.v0 import pgb
+from charms.pgbouncer_operator.v0.pgb import PgbConfig
+from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
@@ -39,7 +41,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
-        self.legacy_backend_relation = BackendDbAdminRequires(self)
+        self.backend = BackendDatabaseRequires(self)
 
         self._cores = os.cpu_count()
 
@@ -54,7 +56,7 @@ class PgBouncerK8sCharm(CharmBase):
         config files that are essential for pgbouncer to run.
         """
         # Initialise pgbouncer.ini config files from defaults set in charm lib.
-        config = pgb.PgbConfig(pgb.DEFAULT_CONFIG)
+        config = PgbConfig(pgb.DEFAULT_CONFIG)
         self._render_pgb_config(config)
 
         # Initialise userlist, generating passwords for initial users. All config files use the
@@ -75,6 +77,7 @@ class PgBouncerK8sCharm(CharmBase):
             logger.debug("pgbouncer config not rendered yet.")
             event.defer()
             return
+        
         config["pgbouncer"]["pool_mode"] = self.config["pool_mode"]
         config.set_max_db_connection_derivatives(
             self.config["max_db_connections"],
@@ -116,6 +119,17 @@ class PgBouncerK8sCharm(CharmBase):
             },
         }
 
+    def _on_update_status(self, _) -> None:
+        """Update Status hook.
+
+        Sets BlockedStatus if we have no backend database; if we can't connect to a backend, this
+        charm serves no purpose.
+
+        TODO verify pgbouncer is actually running in this hook
+        """
+        if not self.backend_relation:
+            self.unit.status = BlockedStatus("waiting for backend database relation")
+
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Define and start pgbouncer workload."""
         container = event.workload
@@ -134,7 +148,7 @@ class PgBouncerK8sCharm(CharmBase):
     #  PgBouncer-Specific Utilities
     # ===================================
 
-    def _render_pgb_config(self, config: pgb.PgbConfig, reload_pgbouncer=False) -> None:
+    def _render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
         Args:
@@ -163,11 +177,15 @@ class PgBouncerK8sCharm(CharmBase):
         if reload_pgbouncer:
             self._reload_pgbouncer()
 
-    def _read_pgb_config(self) -> pgb.PgbConfig:
+    def read_pgb_config(self) -> PgbConfig:
         """Get config object from pgbouncer.ini file stored on container.
 
         Returns:
             PgbConfig object containing pgbouncer config.
+
+        Raises:
+            FileNotFoundError when the config at INI_PATH isn't available, such as if this is
+            called before the charm has finished installing.
         """
         try:
             config = self._read_file(INI_PATH)
@@ -205,6 +223,10 @@ class PgBouncerK8sCharm(CharmBase):
         if reload_pgbouncer:
             self._reload_pgbouncer()
 
+    def _read_userlist(self) -> Dict[str, str]:
+        """Reads userlist.txt into a dictionary of strings."""
+        return pgb.parse_userlist(self._read_file(USERLIST_PATH))
+
     def _reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
 
@@ -216,6 +238,91 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_container = self.unit.get_container(PGB)
         pgb_container.restart(PGB)
         self.unit.status = ActiveStatus("PgBouncer Reloaded")
+
+    # =================
+    #  User Management
+    # =================
+
+    def add_user(
+        self,
+        user: str,
+        cfg: PgbConfig,
+        password: str = None,
+        admin: bool = False,
+        stats: bool = False,
+        reload_pgbouncer: bool = False,
+        render_cfg: bool = False,
+    ):
+        """Adds a user.
+
+        Users are added to userlist.txt and pgbouncer.ini config files
+
+        Args:
+            user: the username for the intended user
+            cfg: A PgbConfig object. Modified during this method.
+            password: intended password for the user
+            admin: whether or not the user has admin permissions
+            stats: whether or not the user has stats permissions
+            reload_pgbouncer: whether or not to restart pgbouncer after changing config. Must be
+                restarted for changes to take effect.
+            render_cfg: whether or not to render config
+
+        Raises:
+            FileNotFoundError when userlist cannot be found.
+        """
+        userlist = self._read_userlist()
+
+        # Userlist is key-value dict of users and passwords.
+        if not password:
+            password = pgb.generate_password()
+
+        # Return early if user and password are already set to the correct values
+        if userlist.get(user) == password:
+            return
+
+        userlist[user] = password
+
+        if admin and (user not in cfg[PGB]["admin_users"]):
+            cfg[PGB]["admin_users"].append(user)
+        if stats and (user not in cfg[PGB]["stats_users"]):
+            cfg[PGB]["stats_users"].append(user)
+
+        self._render_userlist(userlist)
+        if render_cfg:
+            self._render_pgb_config(cfg, reload_pgbouncer)
+
+    def remove_user(
+        self,
+        user: str,
+        cfg: PgbConfig,
+        reload_pgbouncer: bool = False,
+        render_cfg: bool = False,
+    ):
+        """Removes a user from config files.
+
+        Args:
+            user: the username for the intended user.
+            cfg: A PgbConfig object. Modified during this method.
+            reload_pgbouncer: whether or not to restart pgbouncer after changing config. Must be
+                restarted for changes to take effect.
+            render_cfg: whether or not to render config
+
+        Raises:
+            FileNotFoundError when userlist can't be found.
+        """
+        userlist = self._read_userlist()
+
+        if user in userlist.keys():
+            del userlist[user]
+            self._render_userlist(userlist)
+
+        if user in cfg[PGB]["admin_users"]:
+            cfg[PGB]["admin_users"].remove(user)
+        if user in cfg[PGB]["stats_users"]:
+            cfg[PGB]["stats_users"].remove(user)
+
+        if render_cfg:
+            self._render_pgb_config(cfg, reload_pgbouncer)
 
     # =====================
     #  K8s Charm Utilities
@@ -243,7 +350,37 @@ class PgBouncerK8sCharm(CharmBase):
             file_contents = pgb_container.pull(filepath).read()
         except FileNotFoundError as e:
             raise e
+        except PathError as e:
+            raise FileNotFoundError(str(e))
         return file_contents
+
+    @property
+    def backend_relation(self) -> Relation:
+        """Returns the relation to the postgresql backend.
+
+        Returns:
+            Relation object for the backend relation.
+        """
+        backend_relation = self.model.get_relation(BACKEND_RELATION_NAME)
+        if not backend_relation:
+            return None
+        else:
+            return backend_relation
+
+    @property
+    def backend_postgres(self) -> PostgreSQL:
+        """Returns PostgreSQL representation of backend database, as defined in relation."""
+        backend_relation = self.backend_relation
+        if not backend_relation:
+            return None
+
+        backend_data = backend_relation.data[backend_relation.app]
+        host = backend_data.get("endpoints")
+        user = backend_data.get("user")
+        password = backend_data.get("password")
+        database = backend_data.get("database")
+
+        return PostgreSQL(host=host, user=user, password=password, database=database)
 
 
 if __name__ == "__main__":

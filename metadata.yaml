@@ -41,7 +41,6 @@ provides:
     optional: true
 
 requires:
-  # Legacy relations - these will be deprecated in a future release
-  backend-db-admin:
-    interface: pgsql
-    optional: true
+  backend-database:
+    interface: postgresql-client
+    optional: false
