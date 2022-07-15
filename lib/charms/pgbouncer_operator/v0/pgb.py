@@ -40,6 +40,7 @@ DEFAULT_CONFIG = {
         "logfile": f"{PGB_DIR}/pgbouncer.log",
         "pidfile": f"{PGB_DIR}/pgbouncer.pid",
         "admin_users": ["juju-admin"],
+        "stats_users": ["juju-admin"],
         "auth_file": f"{PGB_DIR}/userlist.txt",
         "user": "postgres",
         "max_client_conn": "10000",
