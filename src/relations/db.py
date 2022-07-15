@@ -144,8 +144,8 @@ class DbProvides(Object):
         password = pgb_app_databag.get("password", pgb.generate_password())
 
         # Get data about primary unit for databags and charm config.
-        master_host = self.charm.backend_postgres.host
-        master_port = self.charm.backend_postgres.port
+        master_host = self.charm.backend_postgres.host.split(":")[0]
+        master_port = self.charm.backend_postgres.host.split(":")[1]
         primary = {
             "host": master_host,
             "dbname": database,
@@ -210,22 +210,12 @@ class DbProvides(Object):
         standbys = []
 
         for read_only_endpoint in self.charm.backend_relation.get("read-only-endpoints").split(","):
-
-
-        for standby_name, standby_data in dict(dbs).items():
-            # skip everything that's not a postgres standby, as defined by the backend-db-admin
-            # relation
-            # TODO get standbys from backend relation
-            if standby_name[:STANDBY_PREFIX_LEN] != BACKEND_STANDBY_PREFIX:
-                continue
-
-            standby_idx = standby_name[STANDBY_PREFIX_LEN:]
             standby = {
-                "host": standby_data["host"],
+                "host": read_only_endpoint.split(":")[0],
                 "dbname": database,
-                "port": standby_data["port"],
+                "port": read_only_endpoint.split(":")[1],
             }
-            dbs[f"{database}_standby_{standby_idx}"] = deepcopy(standby)
+            dbs[f"{database}_standby"] = deepcopy(standby)
 
             standby.update(
                 {
