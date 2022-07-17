@@ -76,6 +76,8 @@ class TestCharm(unittest.TestCase):
         defer.assert_called()
 
     def test_on_pgbouncer_pebble_ready(self):
+        # emit on install to ensure config file render
+        self.harness.charm.on.install.emit()
         initial_plan = self.harness.get_container_pebble_plan(PGB)
         self.assertEqual(initial_plan.to_yaml(), "{}\n")
 
