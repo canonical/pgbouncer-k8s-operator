@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from ops.testing import Harness
 
@@ -37,7 +37,7 @@ class TestDb(unittest.TestCase):
         assert self.charm.legacy_db_admin_relation.relation_name == "db-admin"
         assert self.charm.legacy_db_admin_relation.admin is True
 
-    @patch("charm.PgBouncerCharm._read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("ops.charm.EventBase.defer")
     @patch("relations.db.DbProvides.get_external_units", return_value=[MagicMock()])
     def test_on_relation_changed_early_returns(self, _get_units, _defer, _read_cfg):
@@ -65,18 +65,18 @@ class TestDb(unittest.TestCase):
         self.db_relation._on_relation_changed(mock_event)
         _defer.assert_called_once()
 
-    @patch("charm.PgBouncerCharm.backend_postgres")
-    @patch("charm.PgBouncerCharm._read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("relations.db.DbProvides.get_external_units", return_value=[MagicMock()])
     @patch("relations.db.DbProvides.get_allowed_units", return_value="test_allowed_unit")
     @patch("relations.db.DbProvides.get_allowed_subnets", return_value="test_allowed_subnet")
-    @patch("relations.db.DbProvides._get_postgres_standbys", return_value="test_postgres_standbys")
+    @patch("relations.db.DbProvides._get_standbys", return_value="test_postgres_standbys")
     @patch("charms.pgbouncer_operator.v0.pgb.generate_password", return_value="test_pass")
     @patch("relations.db.DbProvides.generate_username", return_value="test_user")
     @patch("ops.charm.EventBase.defer")
     @patch("relations.db.DbProvides._get_state", return_value="test-state")
-    @patch("charm.PgBouncerCharm.add_user")
-    @patch("charm.PgBouncerCharm._render_service_configs")
+    @patch("charm.PgBouncerK8sCharm.add_user")
+    @patch("charm.PgBouncerK8sCharm._render_pgb_config")
     def test_instantiate_new_relation_on_relation_changed(
         self,
         _render_cfg,
@@ -155,15 +155,15 @@ class TestDb(unittest.TestCase):
         )
         _render_cfg.assert_called_with(_read_cfg.return_value, reload_pgbouncer=True)
 
-    @patch("charm.PgBouncerCharm.backend_postgres")
-    @patch("charm.PgBouncerCharm._read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("relations.db.DbProvides.get_external_units", return_value=[MagicMock()])
     @patch("relations.db.DbProvides.get_allowed_units", return_value="test_allowed_unit")
     @patch("relations.db.DbProvides.get_allowed_subnets", return_value="test_allowed_subnet")
-    @patch("relations.db.DbProvides._get_postgres_standbys", return_value="test-postgres-standbys")
+    @patch("relations.db.DbProvides._get_standbys", return_value="test-postgres-standbys")
     @patch("relations.db.DbProvides._get_state", return_value="test-state")
-    @patch("charm.PgBouncerCharm.add_user")
-    @patch("charm.PgBouncerCharm._render_service_configs")
+    @patch("charm.PgBouncerK8sCharm.add_user")
+    @patch("charm.PgBouncerK8sCharm._render_pgb_config")
     def test_update_existing_relation_on_relation_changed(
         self,
         _render_cfg,
@@ -244,15 +244,15 @@ class TestDb(unittest.TestCase):
         )
         _render_cfg.assert_called_with(_read_cfg.return_value, reload_pgbouncer=True)
 
-    @patch("charm.PgBouncerCharm.backend_postgres")
-    @patch("charm.PgBouncerCharm._read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("relations.db.DbProvides.get_external_units", return_value=[MagicMock()])
     @patch("relations.db.DbProvides.get_allowed_units", return_value="test_allowed_unit")
     @patch("relations.db.DbProvides.get_allowed_subnets", return_value="test_allowed_subnet")
-    @patch("relations.db.DbProvides._get_postgres_standbys", return_value="test-postgres-standbys")
+    @patch("relations.db.DbProvides._get_standbys", return_value="test-postgres-standbys")
     @patch("relations.db.DbProvides._get_state", return_value="test-state")
-    @patch("charm.PgBouncerCharm.add_user")
-    @patch("charm.PgBouncerCharm._render_service_configs")
+    @patch("charm.PgBouncerK8sCharm.add_user")
+    @patch("charm.PgBouncerK8sCharm._render_pgb_config")
     def test_admin_user_generated_with_correct_admin_permissions(
         self,
         _render_cfg,
@@ -293,34 +293,18 @@ class TestDb(unittest.TestCase):
             user, password, admin=True, cfg=_read_cfg.return_value, render_cfg=False
         )
 
-    def test_get_postgres_standbys(self):
+    @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
+    def test_get_standbys(self, backend):
+        backend.return_value = {"read-only-endpoints": "host1:port1,host2:port2"}
         cfg = PgbConfig(DEFAULT_CONFIG)
-        cfg["databases"]["not_a_standby"] = {"dbname": "not_a_standby"}
-        cfg["databases"]["pg_master"] = {"dbname": "pg_master", "host": "test"}
-        cfg["databases"][BACKEND_STANDBY_PREFIX] = {
-            "dbname": BACKEND_STANDBY_PREFIX,
-            "host": "standby_host",
-            "port": "standby_port",
-        }
-        cfg["databases"][f"{BACKEND_STANDBY_PREFIX}0"] = {
-            "dbname": f"{BACKEND_STANDBY_PREFIX}0",
-            "host": "standby_host",
-            "port": "standby_port",
-        }
-        cfg["databases"][f"not_a_standby{BACKEND_STANDBY_PREFIX}"] = {
-            "dbname": f"not_a_standby{BACKEND_STANDBY_PREFIX}",
-            "host": "test",
-            "port": "port_test",
-        }
-
         app = "app_name"
         db_name = "db_name"
         user = "user"
         pw = "pw"
         standbys = self.db_relation._get_standbys(cfg, app, db_name, user, pw)
+        import logging
 
-        assert "not_a_standby" not in standbys
-        assert "pg_master" not in standbys
+        logging.error(standbys)
 
         standby_list = standbys.split(", ")
         assert len(standby_list) == 2
@@ -328,18 +312,18 @@ class TestDb(unittest.TestCase):
         for standby in standby_list:
             standby_dict = parse_kv_string_to_dict(standby)
             assert standby_dict.get("dbname") == db_name
-            assert standby_dict.get("host") == "standby_host"
-            assert standby_dict.get("port") == "standby_port"
             assert standby_dict.get("user") == user
             assert standby_dict.get("password") == pw
             assert standby_dict.get("fallback_application_name") == app
+            assert "host" in standby_dict.get("host")
+            assert "port" in standby_dict.get("port")
 
     @patch("relations.db.DbProvides.get_allowed_units", return_value="test_string")
     def test_on_relation_departed(self, _get_units):
         mock_event = MagicMock()
         mock_event.relation.data = {
-            self.charm.app: {"allowed-units": "blah"},
-            self.charm.unit: {"allowed-units": "blahh"},
+            self.charm.app: {"allowed-units": "app"},
+            self.charm.unit: {"allowed-units": "unit"},
         }
         self.db_relation._on_relation_departed(mock_event)
 
@@ -352,9 +336,9 @@ class TestDb(unittest.TestCase):
         self.assertDictEqual(app_databag, expected_app_databag)
         self.assertDictEqual(unit_databag, expected_unit_databag)
 
-    @patch("charm.PgBouncerCharm._read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
-    @patch("charm.PgBouncerCharm.remove_user")
-    @patch("charm.PgBouncerCharm._render_service_configs")
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.remove_user")
+    @patch("charm.PgBouncerK8sCharm._render_pgb_config")
     def test_on_relation_broken(self, _render, _remove_user, _read):
         """Test that all traces of the given app are removed from pgb config, including user."""
         test_dbname = "test_db"

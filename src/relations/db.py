@@ -34,7 +34,10 @@ from copy import deepcopy
 from typing import Iterable
 
 from charms.pgbouncer_operator.v0 import pgb
-from charms.postgresql_k8s.v0.postgresql import PostgreSQLCreateDatabaseError
+from charms.postgresql_k8s.v0.postgresql import (
+    PostgreSQLCreateDatabaseError,
+    PostgreSQLCreateUserError,
+)
 from ops.charm import (
     CharmBase,
     RelationBrokenEvent,
@@ -104,7 +107,7 @@ class DbProvides(Object):
             f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
         )
 
-        cfg = self.charm._read_pgb_config()
+        cfg = self.charm.read_pgb_config()
         dbs = cfg["databases"]
 
         relation_data = change_event.relation.data
@@ -137,6 +140,7 @@ class DbProvides(Object):
             logger.warning("No database name provided")
             change_event.defer()
             return
+
         # TODO consider replacing database/user sanitisation with sql.Identifier()
         database = database.replace("-", "_")
         user = pgb_app_databag.get("user", self.generate_username(change_event, external_app_name))
@@ -172,11 +176,17 @@ class DbProvides(Object):
 
         # Write config data to charm filesystem
         self.charm.add_user(user, password, admin=self.admin, cfg=cfg, render_cfg=False)
-        self.charm._render_service_configs(cfg, reload_pgbouncer=True)
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         try:
             self.charm.backend_postgres.create_database(database, user)
         except PostgreSQLCreateDatabaseError:
+            logger.error(f"failed to create database {database} for {self.relation_name}")
+            return
+
+        try:
+            self.charm.backend_postgres.create_user(user, password, admin=self.admin)
+        except PostgreSQLCreateUserError:
             logger.error(f"failed to create database {database} for {self.relation_name}")
             return
 
@@ -193,7 +203,7 @@ class DbProvides(Object):
                 "user": user,
                 "password": password,
                 "database": database,
-                "state": self._get_state(standbys)
+                "state": self._get_state(standbys),
             }
             # TODO reevaluate if roles are necessary
             if roles:
@@ -202,14 +212,16 @@ class DbProvides(Object):
 
     def generate_username(self, event, app_name):
         """Generates a username for this relation."""
-        return f"{self.relation_name}_{event.relation.id}_{app_name}".replace('-', '_')
+        return f"{self.relation_name}_{event.relation.id}_{app_name}".replace("-", "_")
 
     def _get_standbys(self, cfg, app_name, database, user, password):
         dbs = cfg["databases"]
 
         standbys = []
 
-        for read_only_endpoint in self.charm.backend_relation.get("read-only-endpoints").split(","):
+        for read_only_endpoint in self.charm.backend_relation.get("read-only-endpoints").split(
+            ","
+        ):
             standby = {
                 "host": read_only_endpoint.split(":")[0],
                 "dbname": database,
@@ -270,7 +282,7 @@ class DbProvides(Object):
         """
         app_databag = broken_event.relation.data[self.charm.app]
 
-        cfg = self.charm._read_pgb_config()
+        cfg = self.charm.read_pgb_config()
         dbs = cfg["databases"]
         user = app_databag["user"]
         database = app_databag["database"]
@@ -281,7 +293,7 @@ class DbProvides(Object):
                 del dbs[db]
 
         self.charm.remove_user(user, cfg=cfg, render_cfg=False)
-        self.charm._render_service_configs(cfg, reload_pgbouncer=True)
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
     def get_allowed_subnets(self, relation: Relation) -> str:
         """Gets the allowed subnets from this relation."""

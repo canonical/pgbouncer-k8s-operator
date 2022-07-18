@@ -50,7 +50,8 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
         self.backend = BackendDatabaseRequires(self)
-        self.legacy_db_relation = DbProvides(self)
+        self.legacy_db_relation = DbProvides(self, admin=False)
+        self.legacy_db_admin_relation = DbProvides(self, admin=True)
 
         self._cores = os.cpu_count()
 
