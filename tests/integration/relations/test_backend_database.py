@@ -34,18 +34,20 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
             application_name=APP_NAME,
         ),
         # Edge 5 is the new postgres charm
-        ops_test.model.deploy(POSTGRESQL, channel="edge", trust=True, num_units=3),
+        ops_test.model.deploy(POSTGRESQL, channel="edge", trust=True, num_units=2),
+    )
+    await asyncio.gather(
+        ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000),
+        ops_test.model.wait_for_idle(
+            apps=[POSTGRESQL], status="active", timeout=1000, wait_for_exact_units=2
+        ),
     )
 
     relation = await ops_test.model.relate(
         f"{APP_NAME}:backend-database", f"{POSTGRESQL}:database"
     )
-    await asyncio.gather(
-        ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000),
-        ops_test.model.wait_for_idle(
-            apps=[POSTGRESQL], status="active", timeout=1000, wait_for_exact_units=3
-        ),
-    )
+    ops_test.model.wait_for_idle(apps=[APP_NAME, POSTGRESQL], status="active", timeout=1000),
+
 
     unit = ops_test.model.units[f"{APP_NAME}/0"]
     cfg = await get_cfg(unit)
@@ -70,7 +72,7 @@ async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
     await asyncio.gather(
         ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000),
         ops_test.model.wait_for_idle(
-            apps=[POSTGRESQL], status="active", timeout=1000, wait_for_exact_units=3
+            apps=[POSTGRESQL], status="active", timeout=1000, wait_for_exact_units=2
         ),
     )
 
