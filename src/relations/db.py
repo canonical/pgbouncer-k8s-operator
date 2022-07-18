@@ -34,7 +34,7 @@ from copy import deepcopy
 from typing import Iterable
 
 from charms.pgbouncer_operator.v0 import pgb
-from charms.postgresql.v0.postgresql_helpers import PostgreSQLCreateDatabaseError
+from charms.postgresql_k8s.v0.postgresql import PostgreSQLCreateDatabaseError
 from ops.charm import (
     CharmBase,
     RelationBrokenEvent,

@@ -372,7 +372,9 @@ class PgBouncerK8sCharm(CharmBase):
             return None
 
         backend_data = backend_relation.data[backend_relation.app]
-        host = backend_data.get("endpoints")
+        # TODO might need to split endpoints list into individual values.
+        # TODO find somewhere to store ports.
+        host = backend_data.get("endpoints").split(":")[0]
         user = backend_data.get("user")
         password = backend_data.get("password")
         database = backend_data.get("database")

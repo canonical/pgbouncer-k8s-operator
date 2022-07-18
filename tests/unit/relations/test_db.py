@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, patch
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
-from constants import BACKEND_STANDBY_PREFIX
 from lib.charms.pgbouncer_operator.v0.pgb import (
     DEFAULT_CONFIG,
     PgbConfig,
