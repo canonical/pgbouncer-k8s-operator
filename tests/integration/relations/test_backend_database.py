@@ -57,16 +57,3 @@ async def test_backend_db_admin_legacy_relation_remove_relation(ops_test: OpsTes
         ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000),
     )
 
-
-@pytest.mark.relations
-async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
-    await ops_test.model.relate(f"{APP_NAME}:backend-database", f"{POSTGRESQL}:database")
-    await asyncio.gather(
-        ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000),
-        ops_test.model.wait_for_idle(
-            apps=[POSTGRESQL], status="active", timeout=1000, wait_for_exact_units=3
-        ),
-    )
-
-    ops_test.model.applications[POSTGRESQL].remove()
-    await ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000)
