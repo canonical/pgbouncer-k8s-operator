@@ -45,6 +45,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 "finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"
             ),
         )
+
         await asyncio.gather(
             ops_test.model.wait_for_idle(
                 apps=[PG],
@@ -59,18 +60,21 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 timeout=1000,
             ),
         )
-        await ops_test.model.add_relation(f"{PGB}:backend-database", f"{PG}:database"),
+        backend_relation_id = await ops_test.model.relate(f"{PGB}:backend-database", f"{PG}:database"),
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB], status="active", timeout=1000
         )
+        backend_relation = next(rel for rel in ops_test.model.relations if rel.id == backend_relation_id)
+        username = backend_relation.data[backend_relation.app].get("username")
+        password = backend_relation.data[backend_relation.app].get("password")
 
         relation_id = (await ops_test.model.relate(f"{PGB}:db", f"{FINOS_WALTZ}:db"),)
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, FINOS_WALTZ], status="active", timeout=1000
         )
-        await check_database_creation(ops_test, "waltz")
+        await check_database_creation(ops_test, "waltz", username, password)
         finos_waltz_users = [f"relation_id_{relation_id}"]
-        await check_database_users_existence(ops_test, finos_waltz_users, [])
+        await check_database_users_existence(ops_test, finos_waltz_users, [], username, password)
 
         await ops_test.model.deploy(
             "finos-waltz-k8s", application_name=ANOTHER_FINOS_WALTZ, channel="edge"
@@ -84,10 +88,10 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         another_relation_id = (await ops_test.model.relate(f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db"),)
         # In this case, the database name is the same as in the first deployment
         # because it's a fixed value in Finos Waltz charm.
-        await check_database_creation(ops_test, "waltz")
+        await check_database_creation(ops_test, "waltz", username, password)
         another_finos_waltz_users = [f"relation_id_{another_relation_id}"]
         await check_database_users_existence(
-            ops_test, finos_waltz_users + another_finos_waltz_users, []
+            ops_test, finos_waltz_users + another_finos_waltz_users, [], username, password
         )
 
         # Scale down the second deployment of Finos Waltz and confirm that the first deployment
@@ -98,7 +102,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
 
         another_finos_waltz_users = []
         await check_database_users_existence(
-            ops_test, finos_waltz_users, another_finos_waltz_users
+            ops_test, finos_waltz_users, another_finos_waltz_users, username, password
         )
 
         # Remove the first deployment of Finos Waltz.
