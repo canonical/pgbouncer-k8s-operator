@@ -163,10 +163,14 @@ class TestDb(unittest.TestCase):
     @patch("relations.db.DbProvides._get_standbys", return_value="test-postgres-standbys")
     @patch("relations.db.DbProvides._get_state", return_value="test-state")
     @patch("charm.PgBouncerK8sCharm.add_user")
+    @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_user")
+    @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_database")
     @patch("charm.PgBouncerK8sCharm._render_pgb_config")
     def test_update_existing_relation_on_relation_changed(
         self,
         _render_cfg,
+        _create_database,
+        _create_user,
         _add_user,
         _state,
         _standbys,

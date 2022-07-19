@@ -3,7 +3,8 @@
 
 """Postgres db relation hooks & helpers.
 
-This relation uses the pgsql interface.
+This relation uses the pgsql interface, omitting roles and extensions as they are unsupported in
+the new postgres charm.
 
 Some example relation data is below. All values are examples, generated in a running test instance.
 ┏━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
@@ -97,7 +98,7 @@ class DbProvides(Object):
             return
 
         if not self.charm.backend_relation:
-            # We can't relate an app to the backend database without backend relation
+            # We can't relate an app to the backend database without a backend postgres relation
             logger.warning("waiting for backend-database relation")
             change_event.defer()
             return
@@ -167,27 +168,15 @@ class DbProvides(Object):
         # Get data about standby units for databags and charm config.
         standbys = self._get_standbys(cfg, external_app_name, database, user, password)
 
-        # Get postgres roles if they exist
-        roles = set(
-            role.strip()
-            for role in relation_data[external_unit].get("roles", "").split(",")
-            if role.strip()
-        )
-
         # Write config data to charm filesystem
         self.charm.add_user(user, password, admin=self.admin, cfg=cfg, render_cfg=False)
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         try:
             self.charm.backend_postgres.create_database(database, user)
-        except PostgreSQLCreateDatabaseError:
-            logger.error(f"failed to create database {database} for {self.relation_name}")
-            return
-
-        try:
             self.charm.backend_postgres.create_user(user, password, admin=self.admin)
-        except PostgreSQLCreateUserError:
-            logger.error(f"failed to create database {database} for {self.relation_name}")
+        except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
+            logger.error(f"failed to create database or user for {self.relation_name}")
             return
 
         # Populate databags
@@ -205,9 +194,6 @@ class DbProvides(Object):
                 "database": database,
                 "state": self._get_state(standbys),
             }
-            # TODO reevaluate if roles are necessary
-            if roles:
-                updates["roles"] = ",".join(roles)
             databag.update(updates)
 
     def generate_username(self, event, app_name):
@@ -289,6 +275,7 @@ class DbProvides(Object):
 
         del dbs[database]
         for db in list(dbs.keys()):
+            # TODO find a smarter way to delete standbys
             if f"{database}_standby_" in dbs[db]["dbname"]:
                 del dbs[db]
 
