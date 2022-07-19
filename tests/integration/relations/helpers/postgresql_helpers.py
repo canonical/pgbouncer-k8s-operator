@@ -8,6 +8,7 @@ from typing import List
 import psycopg2
 import yaml
 from pytest_operator.plugin import OpsTest
+from tests.integration.relations.helpers.helpers import get_backend_relation
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 DATABASE_APP_NAME = METADATA["name"]
@@ -17,8 +18,6 @@ async def check_database_users_existence(
     ops_test: OpsTest,
     users_that_should_exist: List[str],
     users_that_should_not_exist: List[str],
-    pg_user,
-    pg_user_password,
 ) -> None:
     """Checks that applications users exist in the database.
 
@@ -26,17 +25,19 @@ async def check_database_users_existence(
         ops_test: The ops test framework
         users_that_should_exist: List of users that should exist in the database
         users_that_should_not_exist: List of users that should not exist in the database
-        pg_user: an admin user that can access the database
-        pg_user_password: password for `pg_user`
     """
     unit = ops_test.model.applications[DATABASE_APP_NAME].units[0]
     unit_address = await get_unit_address(ops_test, unit.name)
 
+    backend_rel = get_backend_relation(ops_test)
+    user = backend_rel.data[backend_rel.app].get("username")
+    pw = backend_rel.data[backend_rel.app].get("password")
+
     # Retrieve all users in the database.
     output = await execute_query_on_unit(
         unit_address,
-        pg_user,
-        pg_user_password,
+        user,
+        pw,
         "SELECT usename FROM pg_catalog.pg_user;",
     )
 
@@ -50,7 +51,7 @@ async def check_database_users_existence(
 
 
 async def check_database_creation(
-    ops_test: OpsTest, database: str, user: str, password: str
+    ops_test: OpsTest, database: str
 ) -> None:
     """Checks that database and tables are successfully created for the application.
 
@@ -60,14 +61,19 @@ async def check_database_creation(
         user: an admin user that can access the database
         password: password for `user`
     """
+    backend_rel = get_backend_relation(ops_test)
+    user = backend_rel.data[backend_rel.app].get("username")
+    pw = backend_rel.data[backend_rel.app].get("password")
+
     for unit in ops_test.model.applications[DATABASE_APP_NAME].units:
         unit_address = await get_unit_address(ops_test, unit.name)
+
 
         # Ensure database exists in PostgreSQL.
         output = await execute_query_on_unit(
             unit_address,
             user,
-            password,
+            pw,
             "SELECT datname FROM pg_database;",
         )
         assert database in output
@@ -75,7 +81,8 @@ async def check_database_creation(
         # Ensure that application tables exist in the database
         output = await execute_query_on_unit(
             unit_address,
-            password,
+            user,
+            pw,
             "SELECT table_name FROM information_schema.tables;",
             database=database,
         )
