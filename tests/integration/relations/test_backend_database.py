@@ -23,7 +23,6 @@ RELATION = "backend-database"
 
 
 @pytest.mark.abort_on_fail
-@pytest.mark.relations
 async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
@@ -53,7 +52,6 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
     await ops_test.model.wait_for_idle(apps=[APP_NAME, PG], status="active", timeout=1000),
 
 
-@pytest.mark.relations
 async def test_backend_db_admin_legacy_relation_remove_relation(ops_test: OpsTest):
     # Remove relation but keep pg application because we're going to need it for future tests.
     await ops_test.model.applications[PG].remove_relation(
@@ -65,7 +63,6 @@ async def test_backend_db_admin_legacy_relation_remove_relation(ops_test: OpsTes
     )
 
 
-@pytest.mark.relations
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
     await ops_test.model.relate(f"{APP_NAME}:{RELATION}", f"{PG}:database")
     await asyncio.gather(
