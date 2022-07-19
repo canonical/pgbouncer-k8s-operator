@@ -195,10 +195,6 @@ class TestDb(unittest.TestCase):
         # set up mocks
         master_host = "test-host"
         master_port = "test-port"
-        _read_cfg.return_value["databases"]["pg_master"] = {
-            "host": master_host,
-            "port": master_port,
-        }
         _read_cfg.return_value["databases"]["test_db"] = {
             "host": "test-host",
             "dbname": "external_test_unit",
@@ -224,6 +220,11 @@ class TestDb(unittest.TestCase):
 
         relation_data[external_unit] = {}
         external_unit.app.name = "external_test_unit"
+
+
+        _backend_postgres.return_value = PostgreSQL(
+            host=f"{master_host}:{master_port}", user=user, password=password, database=database
+        )
 
         # Call the function
         self.db_relation._on_relation_changed(mock_event)
