@@ -39,14 +39,9 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
     await asyncio.gather(
         # Add relations
         ops_test.model.add_relation(f"{PGB}:db", f"{PSQL}:db"),
-        ops_test.model.add_relation(f"{PGB}:backend-db-admin", f"{PG}:db-admin"),
+        ops_test.model.add_relation(f"{PGB}:backend-database", f"{PG}:database"),
     )
     await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
-
-    unit = ops_test.model.units["pgbouncer-operator/0"]
-    cfg = await helpers.get_cfg(unit)
-    assert "pg_master" in cfg["databases"].keys()
-    assert "cli" in cfg["databases"].keys()
 
     ops_test.model.applications[PGB].get_relation()
 
@@ -74,18 +69,6 @@ async def test_add_replicas(ops_test: OpsTest):
         ),
         ops_test.model.wait_for_idle(apps=[PGB], status="active"),
     )
-    unit = ops_test.model.units["pgbouncer-operator/0"]
-    cfg = await helpers.get_cfg(unit)
-    expected_databases = [
-        "pg_master",
-        "pgb_postgres_standby_0",
-        "pgb_postgres_standby_1",
-        "cli",
-        "cli_standby_0",
-        "cli_standby_1",
-    ]
-    for database in expected_databases:
-        assert database in cfg["databases"].keys()
 
 
 @pytest.mark.legacy_relations
@@ -128,10 +111,6 @@ async def test_remove_db_leader(ops_test: OpsTest):
             timeout=1000,
         ),
     )
-    unit = ops_test.model.units["pgbouncer-operator/0"]
-    cfg = await helpers.get_cfg(unit)
-    assert "pg_master" in cfg["databases"].keys()
-    assert "cli" in cfg["databases"].keys()
 
 
 @pytest.mark.legacy_relations
@@ -143,11 +122,6 @@ async def test_remove_backend_leader(ops_test: OpsTest):
         ),
         ops_test.model.wait_for_idle(apps=[PGB, PSQL], status="active", timeout=1000),
     )
-    # TODO verify that config switches cli over to new leader
-    unit = ops_test.model.units["pgbouncer-operator/0"]
-    cfg = await helpers.get_cfg(unit)
-    assert "pg_master" in cfg["databases"].keys()
-    assert "cli" in cfg["databases"].keys()
 
 
 @pytest.mark.legacy_relations
@@ -155,12 +129,6 @@ async def test_remove_db_legacy_relation(ops_test: OpsTest):
     """Test that removing relations still works ok."""
     await ops_test.model.applications[PGB].remove_relation(f"{PGB}:db", f"{PSQL}:db")
     await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
-
-    unit = ops_test.model.units["pgbouncer-operator/0"]
-    cfg = await helpers.get_cfg(unit)
-    assert "pg_master" in cfg["databases"].keys()
-    assert "cli" not in cfg["databases"].keys()
-    # NB databases and users are left in the postgres charm
 
 
 @pytest.mark.legacy_relations
