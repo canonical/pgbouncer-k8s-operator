@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
+from charms.pgbouncer_operator.v0 import pgb
 
 from tests.integration.relations.helpers.postgresql_helpers import (
     check_database_creation,
@@ -64,16 +65,18 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB], status="active", timeout=1000
         )
-        backend_relation = next(rel for rel in ops_test.model.relations if rel.id == backend_relation_id)
-        username = backend_relation.data[backend_relation.app].get("username")
-        password = backend_relation.data[backend_relation.app].get("password")
 
-        relation_id = (await ops_test.model.relate(f"{PGB}:db", f"{FINOS_WALTZ}:db"),)
+        get_userlist = await ops_test.juju("ssh" , "--container", "pgbouncer", "pgbouncer-k8s-operator/0", "cat", f"{pgb.PGB_DIR}/userlist.txt")
+        userlist = pgb.parse_userlist(get_userlist[1])
+        username = f"relation_id_{backend_relation_id}"
+        password = userlist[username]
+
+        frontend_relation_id = (await ops_test.model.relate(f"{PGB}:db", f"{FINOS_WALTZ}:db"),)
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, FINOS_WALTZ], status="active", timeout=1000
         )
         await check_database_creation(ops_test, "waltz", username, password)
-        finos_waltz_users = [f"relation_id_{relation_id}"]
+        finos_waltz_users = [f"relation_id_{frontend_relation_id}"]
         await check_database_users_existence(ops_test, finos_waltz_users, [], username, password)
 
         await ops_test.model.deploy(
