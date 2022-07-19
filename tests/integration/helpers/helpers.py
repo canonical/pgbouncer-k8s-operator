@@ -23,7 +23,7 @@ async def cat_from(unit, path: str) -> str:
     Returns:
         the entire content of the file.
     """
-    action = await unit.run(f"cat {path}")
+    action = await unit.machine.run(f"cat {path}")
     return action.results.get("Stdout", None)
 
 

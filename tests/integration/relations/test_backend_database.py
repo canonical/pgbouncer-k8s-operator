@@ -9,7 +9,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers.helpers import get_cfg
+from tests.integration.helpers.helpers import get_cfg, cat_from
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,7 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
+
     await asyncio.gather(
         ops_test.model.deploy(
             charm,
@@ -43,15 +44,10 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
         ),
     )
 
-    relation = await ops_test.model.relate(
+    await ops_test.model.relate(
         f"{APP_NAME}:backend-database", f"{POSTGRESQL}:database"
     )
     ops_test.model.wait_for_idle(apps=[APP_NAME, POSTGRESQL], status="active", timeout=1000),
-
-    unit = ops_test.model.units[f"{APP_NAME}/0"]
-    cfg = await get_cfg(unit)
-    logging.error(cfg.render())
-    assert f"relation_id_{relation.id}" in cfg["pgbouncer"]["admin_users"]
 
 
 @pytest.mark.relations

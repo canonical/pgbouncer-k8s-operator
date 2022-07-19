@@ -9,6 +9,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
+from tests.integration.helpers.helpers import get_cfg, cat_from
 logger = logging.getLogger(__name__)
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
