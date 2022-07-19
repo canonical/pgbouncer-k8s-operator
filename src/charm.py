@@ -198,7 +198,7 @@ class PgBouncerK8sCharm(CharmBase):
         try:
             config = self._read_file(INI_PATH)
             return pgb.PgbConfig(config)
-        except (FileNotFoundError, PathError) as e:
+        except FileNotFoundError as e:
             logger.error("pgbouncer config not found")
             raise e
 
