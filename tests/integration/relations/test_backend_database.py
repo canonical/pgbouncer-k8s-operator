@@ -9,7 +9,10 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.relations.helpers.helpers import new_relation_joined, relation_exited
+from tests.integration.relations.helpers.helpers import (
+    new_relation_joined,
+    relation_exited,
+)
 
 logger = logging.getLogger(__name__)
 

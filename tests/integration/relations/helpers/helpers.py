@@ -12,5 +12,6 @@ async def new_relation_joined(ops_test: OpsTest, endpoint_one: str, endpoint_two
             return True
     return False
 
+
 async def relation_exited(ops_test: OpsTest, relation_name) -> bool:
     return relation_name not in ops_test.model.relations.keys()
