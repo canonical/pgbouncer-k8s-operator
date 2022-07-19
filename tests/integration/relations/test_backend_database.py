@@ -19,7 +19,7 @@ POSTGRESQL = "postgresql-k8s"
 
 
 @pytest.mark.abort_on_fail
-@pytest.mark.legacy_relations
+@pytest.mark.relations
 async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
@@ -34,12 +34,12 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
             application_name=APP_NAME,
         ),
         # Edge 5 is the new postgres charm
-        ops_test.model.deploy(POSTGRESQL, channel="edge", trust=True, num_units=2),
+        ops_test.model.deploy(POSTGRESQL, channel="edge", trust=True, num_units=3),
     )
     await asyncio.gather(
         ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000),
         ops_test.model.wait_for_idle(
-            apps=[POSTGRESQL], status="active", timeout=1000, wait_for_exact_units=2
+            apps=[POSTGRESQL], status="active", timeout=1000, wait_for_exact_units=3
         ),
     )
 
@@ -50,14 +50,15 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
 
     unit = ops_test.model.units[f"{APP_NAME}/0"]
     cfg = await get_cfg(unit)
+    logging.error(cfg.render())
     assert f"relation_id_{relation.id}" in cfg["pgbouncer"]["admin_users"]
 
 
-@pytest.mark.legacy_relations
+@pytest.mark.relations
 async def test_backend_db_admin_legacy_relation_remove_relation(ops_test: OpsTest):
     # Remove relation but keep pg application because we're going to need it for future tests.
     await ops_test.model.applications[POSTGRESQL].remove_relation(
-        f"{APP_NAME}:backend-db-admin", f"{POSTGRESQL}:db-admin"
+        f"{APP_NAME}:backend-database", f"{POSTGRESQL}:database"
     )
     await asyncio.gather(
         ops_test.model.wait_for_idle(apps=[POSTGRESQL], status="active", timeout=1000),
@@ -65,12 +66,13 @@ async def test_backend_db_admin_legacy_relation_remove_relation(ops_test: OpsTes
     )
 
 
+@pytest.mark.relations
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
     await ops_test.model.relate(f"{APP_NAME}:backend-database", f"{POSTGRESQL}:database")
     await asyncio.gather(
         ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000),
         ops_test.model.wait_for_idle(
-            apps=[POSTGRESQL], status="active", timeout=1000, wait_for_exact_units=2
+            apps=[POSTGRESQL], status="active", timeout=1000, wait_for_exact_units=3
         ),
     )
 
