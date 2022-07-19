@@ -144,17 +144,20 @@ class DbProvides(Object):
 
         # TODO consider replacing database/user sanitisation with sql.Identifier()
         database = database.replace("-", "_")
+
         user = pgb_app_databag.get("user", self.generate_username(change_event, external_app_name))
         user = user.replace("-", "_")
         password = pgb_app_databag.get("password", pgb.generate_password())
 
+        # TODO clean this up
         # Get data about primary unit for databags and charm config.
-        master_host = self.charm.backend_postgres.host.split(":")[0]
-        master_port = self.charm.backend_postgres.host.split(":")[1]
+        backend_endpoint = self.charm.backend_relation.data[self.charm.backend_relation.app].get("endpoints")
+        primary_host = backend_endpoint.split(":")[0]
+        primary_port = backend_endpoint.split(":")[1]
         primary = {
-            "host": master_host,
+            "host": primary_host,
             "dbname": database,
-            "port": master_port,
+            "port": primary_port,
         }
         dbs[database] = deepcopy(primary)
         primary.update(
@@ -173,8 +176,9 @@ class DbProvides(Object):
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         try:
-            self.charm.backend_postgres.create_database(database, user)
             self.charm.backend_postgres.create_user(user, password, admin=self.admin)
+            self.charm.backend_postgres.create_database(database,
+            user)
         except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
             logger.error(f"failed to create database or user for {self.relation_name}")
             return
@@ -184,9 +188,9 @@ class DbProvides(Object):
             updates = {
                 "allowed-subnets": self.get_allowed_subnets(change_event.relation),
                 "allowed-units": self.get_allowed_units(change_event.relation),
-                "host": f"http://{master_host}",
+                "host": f"http://{primary_host}",
                 "master": pgb.parse_dict_to_kv_string(primary),
-                "port": master_port,
+                "port": primary_port,
                 "standbys": standbys,
                 "version": "12",
                 "user": user,
@@ -198,7 +202,7 @@ class DbProvides(Object):
 
     def generate_username(self, event, app_name):
         """Generates a username for this relation."""
-        return f"{self.relation_name}_{event.relation.id}_{app_name}".replace("-", "_")
+        return f"relation_id_{event.relation.id}"
 
     def _get_standbys(self, cfg, app_name, database, user, password):
         dbs = cfg["databases"]

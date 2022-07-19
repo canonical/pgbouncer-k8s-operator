@@ -292,13 +292,13 @@ class PgBouncerK8sCharm(CharmBase):
             return
 
         userlist[user] = password
+        self._render_userlist(userlist)
 
         if admin and (user not in cfg[PGB]["admin_users"]):
             cfg[PGB]["admin_users"].append(user)
         if stats and (user not in cfg[PGB]["stats_users"]):
             cfg[PGB]["stats_users"].append(user)
 
-        self._render_userlist(userlist)
         if render_cfg:
             self._render_pgb_config(cfg, reload_pgbouncer)
 
@@ -386,10 +386,10 @@ class PgBouncerK8sCharm(CharmBase):
             return None
 
         backend_data = backend_relation.data[backend_relation.app]
-        host = backend_data.get("endpoints")
-        user = backend_data.get("user")
+        host = backend_data.get("endpoints").split(":")[0]
+        user = backend_data.get("username")
         password = backend_data.get("password")
-        database = backend_data.get("database")
+        database = backend_relation.data[self.app].get("database")
 
         return PostgreSQL(host=host, user=user, password=password, database=database)
 
