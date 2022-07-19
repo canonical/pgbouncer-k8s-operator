@@ -10,7 +10,7 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
-DATABASE_APP_NAME = METADATA["name"]
+PG = "postgresql-k8s"
 
 
 async def check_database_users_existence(
@@ -29,7 +29,7 @@ async def check_database_users_existence(
         pg_user: an admin user that can access the database
         pg_user_password: password for `pg_user`
     """
-    unit = ops_test.model.applications[DATABASE_APP_NAME].units[0]
+    unit = ops_test.model.applications[PG].units[0]
     unit_address = await get_unit_address(ops_test, unit.name)
 
     # Retrieve all users in the database.
@@ -39,7 +39,9 @@ async def check_database_users_existence(
         pg_user_password,
         "SELECT usename FROM pg_catalog.pg_user;",
     )
-
+    import logging
+    logging.error(output)
+    logging.error(user)
     # Assert users that should exist.
     for user in users_that_should_exist:
         assert user in output
@@ -60,7 +62,7 @@ async def check_database_creation(
         user: an admin user that can access the database
         password: password for `user`
     """
-    for unit in ops_test.model.applications[DATABASE_APP_NAME].units:
+    for unit in ops_test.model.applications[PG].units:
         unit_address = await get_unit_address(ops_test, unit.name)
 
         # Ensure database exists in PostgreSQL.
@@ -75,6 +77,7 @@ async def check_database_creation(
         # Ensure that application tables exist in the database
         output = await execute_query_on_unit(
             unit_address,
+            user,
             password,
             "SELECT table_name FROM information_schema.tables;",
             database=database,

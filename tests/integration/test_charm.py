@@ -18,12 +18,12 @@ APP_NAME = METADATA["name"]
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test: OpsTest):
     """Build and deploy pgbouncer charm."""
-    #charm = await ops_test.build_charm(".")
+    charm = await ops_test.build_charm(".")
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
     await ops_test.model.deploy(
-        "./pgbouncer-k8s-operator_ubuntu-20.04-amd64.charm",
+        charm,
         resources=resources,
         application_name=APP_NAME,
     )

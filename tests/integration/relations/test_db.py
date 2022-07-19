@@ -61,23 +61,23 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 timeout=1000,
             ),
         )
-        backend_relation_id = await ops_test.model.relate(f"{PGB}:backend-database", f"{PG}:database"),
+        backend_relation = await ops_test.model.relate(f"{PGB}:backend-database", f"{PG}:database")
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB], status="active", timeout=1000
         )
 
-        get_userlist = await ops_test.juju("ssh" , "--container", "pgbouncer", "pgbouncer-k8s-operator/0", "cat", f"{pgb.PGB_DIR}/userlist.txt")
+        get_userlist = await ops_test.juju("ssh", "--container", "pgbouncer", "pgbouncer-k8s-operator/0", "cat", f"{pgb.PGB_DIR}/userlist.txt")
         userlist = pgb.parse_userlist(get_userlist[1])
-        username = f"relation_id_{backend_relation_id}"
+        username = f"relation_id_{backend_relation.id}"
         password = userlist[username]
 
-        frontend_relation_id = (await ops_test.model.relate(f"{PGB}:db", f"{FINOS_WALTZ}:db"),)
+        finos_relation = await ops_test.model.relate(f"{PGB}:db", f"{FINOS_WALTZ}:db")
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, FINOS_WALTZ], status="active", timeout=1000
         )
         await check_database_creation(ops_test, "waltz", username, password)
-        finos_waltz_users = [f"relation_id_{frontend_relation_id}"]
-        await check_database_users_existence(ops_test, finos_waltz_users, [], username, password)
+        finos_user = [f"relation_id_{finos_relation.id}"]
+        await check_database_users_existence(ops_test, finos_user, [], username, password)
 
         await ops_test.model.deploy(
             "finos-waltz-k8s", application_name=ANOTHER_FINOS_WALTZ, channel="edge"
@@ -88,13 +88,13 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             raise_on_blocked=False,
             timeout=1000,
         )
-        another_relation_id = (await ops_test.model.relate(f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db"),)
+        second_finos_relation = await ops_test.model.relate(f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db")
         # In this case, the database name is the same as in the first deployment
         # because it's a fixed value in Finos Waltz charm.
         await check_database_creation(ops_test, "waltz", username, password)
-        another_finos_waltz_users = [f"relation_id_{another_relation_id}"]
+        second_finos_user = [f"relation_id_{second_finos_relation.id}"]
         await check_database_users_existence(
-            ops_test, finos_waltz_users + another_finos_waltz_users, [], username, password
+            ops_test, finos_user + second_finos_user, [], username, password
         )
 
         # Scale down the second deployment of Finos Waltz and confirm that the first deployment
@@ -103,17 +103,18 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             ANOTHER_FINOS_WALTZ, block_until_done=True
         )
 
-        another_finos_waltz_users = []
+        second_finos_user = []
         await check_database_users_existence(
-            ops_test, finos_waltz_users, another_finos_waltz_users, username, password
+            ops_test, finos_user, second_finos_user, username, password
         )
 
-        # Remove the first deployment of Finos Waltz.
-        await ops_test.model.remove_application(FINOS_WALTZ, block_until_done=True)
 
-        await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
+@pytest.mark.abort_on_fail
+async def test_remove_db_relations(ops_test: OpsTest):
+    # Remove the first deployment of Finos Waltz.
+    await ops_test.model.remove_application(FINOS_WALTZ, block_until_done=True)
+    await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
 
-        # Remove the other deployment of Finos Waltz.
-        await ops_test.model.remove_application(ANOTHER_FINOS_WALTZ, block_until_done=True)
-
-        await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
+    # Remove the other deployment of Finos Waltz.
+    await ops_test.model.remove_application(ANOTHER_FINOS_WALTZ, block_until_done=True)
+    await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)

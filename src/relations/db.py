@@ -38,6 +38,7 @@ from charms.pgbouncer_operator.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import (
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
+    PostgreSQLDeleteUserError,
 )
 from ops.charm import (
     CharmBase,
@@ -278,13 +279,15 @@ class DbProvides(Object):
         database = app_databag["database"]
 
         del dbs[database]
-        for db in list(dbs.keys()):
-            # TODO find a smarter way to delete standbys
-            if f"{database}_standby_" in dbs[db]["dbname"]:
-                del dbs[db]
+        dbs.pop(f"{database}_standby")
 
-        self.charm.remove_user(user, cfg=cfg, render_cfg=False)
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
+
+        try:
+            self.charm.backend_postgres.delete_user(user, if_exists=True)
+        except PostgreSQLDeleteUserError:
+            logger.error(f"failed to delete user for {self.relation_name}")
+            return
 
     def get_allowed_subnets(self, relation: Relation) -> str:
         """Gets the allowed subnets from this relation."""
