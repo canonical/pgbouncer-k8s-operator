@@ -32,6 +32,7 @@ from typing import Dict, Union
 logger = logging.getLogger(__name__)
 
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
+INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
 
 DEFAULT_CONFIG = {
     "databases": {},
