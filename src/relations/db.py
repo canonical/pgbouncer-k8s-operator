@@ -149,8 +149,6 @@ class DbProvides(Object):
         password = pgb_app_databag.get("password", pgb.generate_password())
 
         # Get data about primary unit for databags and charm config.
-        logger.error(self.charm.backend_postgres.host)
-        logger.error(self.charm.backend_postgres)
         master_host = self.charm.backend_postgres.host.split(":")[0]
         master_port = self.charm.backend_postgres.host.split(":")[1]
         primary = {
@@ -171,7 +169,7 @@ class DbProvides(Object):
         standbys = self._get_standbys(cfg, external_app_name, database, user, password)
 
         # Write config data to charm filesystem
-        self.charm.add_user(user, password, admin=self.admin, cfg=cfg, render_cfg=False)
+        self.charm.add_user(user, password=password, admin=self.admin, cfg=cfg, render_cfg=False)
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         try:
@@ -206,8 +204,8 @@ class DbProvides(Object):
         dbs = cfg["databases"]
 
         standbys = []
-
-        for read_only_endpoint in self.charm.backend_relation.get("read-only-endpoints").split(
+        backend_data = self.charm.backend_relation.data[self.charm.backend_relation.app]
+        for read_only_endpoint in backend_data.get("read-only-endpoints").split(
             ","
         ):
             standby = {

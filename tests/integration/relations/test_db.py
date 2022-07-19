@@ -9,28 +9,21 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers.postgresql import (
+from tests.integration.relations.helpers.postgresql_helpers import (
     check_database_creation,
     check_database_users_existence,
 )
 
-FINOS_WALTZ_APP_NAME = "finos-waltz"
-ANOTHER_FINOS_WALTZ_APP_NAME = "another-finos-waltz"
-APPLICATION_UNITS = 1
-DATABASE_UNITS = 3
+METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
+PGB = METADATA["name"]
+PG = "postgresql-k8s"
+FINOS_WALTZ = "finos-waltz"
+ANOTHER_FINOS_WALTZ = "another-finos-waltz"
 
 logger = logging.getLogger(__name__)
 
-METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
-PGB = METADATA["name"]
-PG = "postgresql"
-PSQL = "psql"
-APPS = [PG, PGB, PSQL]
 
-
-@pytest.mark.smoke
 @pytest.mark.abort_on_fail
-@pytest.mark.legacy_relations
 async def test_create_db_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
@@ -47,8 +40,10 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 application_name=PGB,
             ),
             ops_test.model.deploy(PG, num_units=3, trust=True, channel="edge"),
-            # Deploy a psql client shell charm
-            ops_test.model.deploy("postgresql-charmers-postgresql-client", application_name=PSQL),
+            # Deploy finos-waltz charm
+            ops_test.model.deploy(
+                "finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"
+            ),
         )
         await asyncio.gather(
             ops_test.model.wait_for_idle(
@@ -59,71 +54,38 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 wait_for_exact_units=3,
             ),
             ops_test.model.wait_for_idle(
-                apps=[PGB, FINOS_WALTZ_APP_NAME],
+                apps=[PGB],
                 status="active",
-                raise_on_blocked=True,
                 timeout=1000,
-                wait_for_exact_units=3,
-            )
+            ),
         )
-        await asyncio.gather(
-            # Add relations
-            ops_test.model.add_relation(f"{PGB}:db", f"{PSQL}:db"),
-            ops_test.model.add_relation(f"{PGB}:backend-database", f"{PG}:database"),
-        )
-        await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
-
-    ops_test.model.applications[PGB].get_relation()
-
-    # TODO assert cli database is created
-    # TODO assert db-admin user is created
-    # TODO assert we can actually connect from finos-waltz charm
-    # TODO user and password are the same in relation data, backend db, and pgb config
-    # assert False
-
-
-@pytest.mark.legacy_relations
-async def test_finos_waltz_db(ops_test: OpsTest) -> None:
-    """Deploy Finos Waltz to test the 'db' relation.
-    Args:
-        ops_test: The ops test framework
-    """
-    async with ops_test.fast_forward():
-        # Build and deploy the PostgreSQL charm.
-        charm = await ops_test.build_charm(".")
-        # Wait until the PostgreSQL charm is successfully deployed.
+        await ops_test.model.add_relation(f"{PGB}:backend-database", f"{PG}:database"),
         await ops_test.model.wait_for_idle(
-            apps=[PG],
-            status="active",
-            raise_on_blocked=True,
-            timeout=1000,
-            wait_for_exact_units=DATABASE_UNITS,
+            apps=[PG, PGB], status="active", timeout=1000
         )
 
-        # Deploy and test the first deployment of Finos Waltz.
-        relation_id = await deploy_and_relate_application_with_postgresql(
-            ops_test, "finos-waltz-k8s", FINOS_WALTZ_APP_NAME, APPLICATION_UNITS, channel="edge"
+        relation_id = (await ops_test.model.relate(f"{PGB}:db", f"{FINOS_WALTZ}:db"),)
+        await ops_test.model.wait_for_idle(
+            apps=[PG, PGB, FINOS_WALTZ], status="active", timeout=1000
         )
         await check_database_creation(ops_test, "waltz")
-
         finos_waltz_users = [f"relation_id_{relation_id}"]
-
         await check_database_users_existence(ops_test, finos_waltz_users, [])
 
-        # Deploy and test another deployment of Finos Waltz.
-        another_relation_id = await deploy_and_relate_application_with_postgresql(
-            ops_test,
-            "finos-waltz-k8s",
-            ANOTHER_FINOS_WALTZ_APP_NAME,
-            APPLICATION_UNITS,
-            channel="edge",
+        await ops_test.model.deploy(
+            "finos-waltz-k8s", application_name=ANOTHER_FINOS_WALTZ, channel="edge"
         )
+        await ops_test.model.wait_for_idle(
+            apps=[ANOTHER_FINOS_WALTZ],
+            status="blocked",
+            raise_on_blocked=False,
+            timeout=1000,
+        )
+        another_relation_id = (await ops_test.model.relate(f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db"),)
         # In this case, the database name is the same as in the first deployment
         # because it's a fixed value in Finos Waltz charm.
         await check_database_creation(ops_test, "waltz")
-
         another_finos_waltz_users = [f"relation_id_{another_relation_id}"]
-
         await check_database_users_existence(
             ops_test, finos_waltz_users + another_finos_waltz_users, []
         )
@@ -131,7 +93,7 @@ async def test_finos_waltz_db(ops_test: OpsTest) -> None:
         # Scale down the second deployment of Finos Waltz and confirm that the first deployment
         # is still active.
         await ops_test.model.remove_application(
-            ANOTHER_FINOS_WALTZ_APP_NAME, block_until_done=True
+            ANOTHER_FINOS_WALTZ, block_until_done=True
         )
 
         another_finos_waltz_users = []
@@ -140,24 +102,11 @@ async def test_finos_waltz_db(ops_test: OpsTest) -> None:
         )
 
         # Remove the first deployment of Finos Waltz.
-        await ops_test.model.remove_application(FINOS_WALTZ_APP_NAME, block_until_done=True)
+        await ops_test.model.remove_application(FINOS_WALTZ, block_until_done=True)
 
-        # Remove the PostgreSQL application.
-        await ops_test.model.remove_application(PG, block_until_done=True)
+        await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
 
+        # Remove the other deployment of Finos Waltz.
+        await ops_test.model.remove_application(ANOTHER_FINOS_WALTZ, block_until_done=True)
 
-@pytest.mark.legacy_relations
-async def test_remove_db_legacy_relation(ops_test: OpsTest):
-    """Test that removing relations still works ok."""
-    await ops_test.model.applications[PGB].remove_relation(f"{PGB}:db", f"{PSQL}:db")
-    await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
-
-
-@pytest.mark.legacy_relations
-async def test_delete_db_application_while_in_legacy_relation(ops_test: OpsTest):
-    """Test that the pgbouncer charm stays online when the db disconnects for some reason."""
-    await ops_test.model.add_relation(f"{PGB}:db", f"{PSQL}:db")
-    await ops_test.model.wait_for_idle(apps=APPS, status="active", timeout=1000)
-
-    await ops_test.model.remove_application(PSQL)
-    await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
+        await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)

@@ -221,7 +221,6 @@ class TestDb(unittest.TestCase):
         relation_data[external_unit] = {}
         external_unit.app.name = "external_test_unit"
 
-
         _backend_postgres.return_value = PostgreSQL(
             host=f"{master_host}:{master_port}", user=user, password=password, database=database
         )
