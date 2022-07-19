@@ -48,7 +48,7 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
     )
 
     await ops_test.model.relate(f"{APP_NAME}:{RELATION}", f"{PG}:database")
-    await ops_test.model.block_until(new_relation_joined(ops_test, APP_NAME, PG), timeout=60)
+    await ops_test.model.block_until(new_relation_joined(ops_test, APP_NAME, PG) == True, timeout=60)
     await ops_test.model.wait_for_idle(apps=[APP_NAME, PG], status="active", timeout=1000),
 
 
@@ -57,7 +57,7 @@ async def test_backend_db_admin_legacy_relation_remove_relation(ops_test: OpsTes
     await ops_test.model.applications[PG].remove_relation(
         f"{APP_NAME}:{RELATION}", f"{PG}:database"
     )
-    await ops_test.model.block_until(relation_exited(ops_test, RELATION), timeout=60)
+    await ops_test.model.block_until(relation_exited(ops_test, RELATION) == True, timeout=60)
     await asyncio.gather(
         ops_test.model.wait_for_idle(apps=[PG, APP_NAME], status="active", timeout=1000),
     )
