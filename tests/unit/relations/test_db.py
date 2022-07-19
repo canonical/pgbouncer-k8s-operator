@@ -4,6 +4,7 @@
 import unittest
 from unittest.mock import MagicMock, PropertyMock, patch
 
+from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
@@ -66,6 +67,7 @@ class TestDb(unittest.TestCase):
         _defer.assert_called_once()
 
     @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
+    @patch("charm.PgBouncerK8sCharm.backend_postgres", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("relations.db.DbProvides.get_external_units", return_value=[MagicMock()])
     @patch("relations.db.DbProvides.get_allowed_units", return_value="test_allowed_unit")
@@ -76,10 +78,14 @@ class TestDb(unittest.TestCase):
     @patch("ops.charm.EventBase.defer")
     @patch("relations.db.DbProvides._get_state", return_value="test-state")
     @patch("charm.PgBouncerK8sCharm.add_user")
+    @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_user")
+    @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_database")
     @patch("charm.PgBouncerK8sCharm._render_pgb_config")
     def test_instantiate_new_relation_on_relation_changed(
         self,
         _render_cfg,
+        _create_database,
+        _create_user,
         _add_user,
         _state,
         _defer,
@@ -90,19 +96,12 @@ class TestDb(unittest.TestCase):
         _allowed_units,
         _external_units,
         _read_cfg,
-        _backend,
+        _backend_postgres,
+        _backend_relation,
     ):
         """Test we can access database, user, and password data from the same relation easily."""
         # Ensure event doesn't defer too early
         self.harness.set_leader(True)
-
-        master_host = "test-host"
-        master_port = "test-port"
-        _read_cfg.return_value["databases"]["pg_master"] = {
-            "host": master_host,
-            "port": master_port,
-        }
-        external_unit = _external_units.return_value[0]
 
         mock_event = MagicMock()
         mock_event.defer = _defer
@@ -110,6 +109,7 @@ class TestDb(unittest.TestCase):
         pgb_unit_databag = relation_data[self.db_admin_relation.charm.unit] = {}
         pgb_app_databag = relation_data[self.charm.app] = {}
 
+        external_unit = _external_units.return_value[0]
         relation_data[external_unit] = {}
         external_unit.app.name = None
 
@@ -120,12 +120,19 @@ class TestDb(unittest.TestCase):
         external_unit.app.name = "external_test_unit"
         relation_data[external_unit] = {"database": "test_database_name"}
 
-        self.db_relation._on_relation_changed(mock_event)
-        _defer.assert_not_called()
+        master_host = "test-host"
+        master_port = "test-port"
 
         database = "test_database_name"
         user = _username.return_value
         password = _pass.return_value
+
+        _backend_postgres.return_value = PostgreSQL(
+            host=f"{master_host}:{master_port}", user=user, password=password, database=database
+        )
+
+        self.db_relation._on_relation_changed(mock_event)
+        _defer.assert_not_called()
 
         expected_primary = {
             "host": master_host,
@@ -156,6 +163,7 @@ class TestDb(unittest.TestCase):
         _render_cfg.assert_called_with(_read_cfg.return_value, reload_pgbouncer=True)
 
     @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
+    @patch("charm.PgBouncerK8sCharm.backend_postgres", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("relations.db.DbProvides.get_external_units", return_value=[MagicMock()])
     @patch("relations.db.DbProvides.get_allowed_units", return_value="test_allowed_unit")
@@ -178,7 +186,8 @@ class TestDb(unittest.TestCase):
         _allowed_units,
         _external_units,
         _read_cfg,
-        _backend,
+        _backend_postgres,
+        _backend_relation,
     ):
         # Ensure event doesn't defer too early
         self.harness.set_leader(True)

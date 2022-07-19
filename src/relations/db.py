@@ -149,6 +149,8 @@ class DbProvides(Object):
         password = pgb_app_databag.get("password", pgb.generate_password())
 
         # Get data about primary unit for databags and charm config.
+        logger.error(self.charm.backend_postgres.host)
+        logger.error(self.charm.backend_postgres)
         master_host = self.charm.backend_postgres.host.split(":")[0]
         master_port = self.charm.backend_postgres.host.split(":")[1]
         primary = {
