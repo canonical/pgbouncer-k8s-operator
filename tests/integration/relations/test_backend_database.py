@@ -48,7 +48,6 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
     )
     ops_test.model.wait_for_idle(apps=[APP_NAME, POSTGRESQL], status="active", timeout=1000),
 
-
     unit = ops_test.model.units[f"{APP_NAME}/0"]
     cfg = await get_cfg(unit)
     assert f"relation_id_{relation.id}" in cfg["pgbouncer"]["admin_users"]
@@ -65,10 +64,9 @@ async def test_backend_db_admin_legacy_relation_remove_relation(ops_test: OpsTes
         ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000),
     )
 
+
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
-    await ops_test.model.relate(
-        f"{APP_NAME}:backend-database", f"{POSTGRESQL}:database"
-    )
+    await ops_test.model.relate(f"{APP_NAME}:backend-database", f"{POSTGRESQL}:database")
     await asyncio.gather(
         ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000),
         ops_test.model.wait_for_idle(

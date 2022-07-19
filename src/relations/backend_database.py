@@ -36,18 +36,21 @@ Example:
 └──────────────────┴──────────────────┴──────────────────┴──────────────────┘
 """
 
+import logging
+
 from charms.data_platform_libs.v0.database_requires import (
     DatabaseCreatedEvent,
     DatabaseRequires,
 )
 from ops.charm import CharmBase, RelationBrokenEvent
 from ops.framework import Object
-import logging
 
 RELATION_NAME = "backend-database"
 
 
 logger = logging.getLogger(__name__)
+
+
 class BackendDatabaseRequires(Object):
     """Defines functionality for the 'requires' side of the 'backend' relation.
 
