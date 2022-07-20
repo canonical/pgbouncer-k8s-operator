@@ -103,3 +103,13 @@ class BackendDatabaseRequires(Object):
             self.charm.remove_user(user, cfg=cfg, reload_pgbouncer=True, render_cfg=True)
         except FileNotFoundError:
             event.defer()
+
+    def _trigger_db_relations(self):
+        """Triggers frontend relations if they exist."""
+        db_relation = self.charm.model.get_relation("db", None)
+        if db_relation is not None:
+            self.charm.on.db_relation_changed.emit(db_relation)
+
+        db_admin_relation = self.charm.model.get_relation("db-admin", None)
+        if db_admin_relation is not None:
+            self.charm.on.db_admin_relation_changed.emit(db_admin_relation)
