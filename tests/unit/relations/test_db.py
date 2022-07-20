@@ -309,20 +309,25 @@ class TestDb(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
     def test_get_standbys(self, backend_relation):
         backend_data = {"read-only-endpoints": "host1:port1,host2:port2"}
-        backend_relation.data = {backend_relation.app: backend_data}
+        self.charm.backend_relation.data = {self.charm.backend_relation.app: backend_data}
 
         cfg = PgbConfig(DEFAULT_CONFIG)
         app = "app_name"
-        db_name = "db_name"
+        cfg_entry = "db_app"
+        db_name = "dbname"
         user = "user"
         pw = "pw"
 
-        standbys = self.db_relation._get_standbys(cfg, app, db_name, user, pw)
+        standbys = self.db_relation._get_standbys(cfg, app, cfg_entry, db_name, user, pw)
         standby_list = standbys.split(", ")
-        import logging
-        logging.error(standby_list)
 
         assert len(standby_list) == 2
+
+        assert cfg["databases"][f"{cfg_entry}_standby"] == {
+            "host": "host2",
+            "dbname": db_name,
+            "port": "port2",
+        }
 
         for standby in standby_list:
             standby_dict = parse_kv_string_to_dict(standby)

@@ -31,17 +31,21 @@ PSQL = "psql"
 APPS = [PG, PGB, PSQL]
 
 
-#@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.abort_on_fail
 @pytest.mark.legacy_relations
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
     # Build, deploy, and relate charms.
     charm = await ops_test.build_charm(".")
+    resources = {
+        "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
+    }
 
     async with ops_test.fast_forward():
         await asyncio.gather(
             ops_test.model.deploy(
                 charm,
+                resources=resources,
                 application_name=PGB,
             ),
             ops_test.model.deploy(PG, trust=True, num_units=3, channel="edge"),

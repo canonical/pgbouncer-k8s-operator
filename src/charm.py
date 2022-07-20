@@ -378,6 +378,12 @@ class PgBouncerK8sCharm(CharmBase):
         else:
             return backend_relation
 
+    def backend_relation_app_databag(self) -> Dict:
+        """Wrapper around accessing the remote application databag for the backend relation."""
+        if not self.backend_relation:
+            return None
+        return self.backend_relation.data[self.backend_relation.app]
+
     @property
     def backend_postgres(self) -> PostgreSQL:
         """Returns PostgreSQL representation of backend database, as defined in relation."""

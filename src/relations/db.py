@@ -173,7 +173,7 @@ class DbProvides(Object):
         )
 
         # Get data about standby units for databags and charm config.
-        standbys = self._get_standbys(cfg, external_app_name, cfg_entry, user, password)
+        standbys = self._get_standbys(cfg, external_app_name, cfg_entry, database, user, password)
 
         # Write config data to charm filesystem
         self.charm.add_user(user, password=password, admin=self.admin, cfg=cfg, render_cfg=False)
@@ -211,18 +211,15 @@ class DbProvides(Object):
         """Generates a unique database name for this relation."""
         return f"{database}_{id}"
 
-    def _get_standbys(self, cfg, app_name, cfg_entry, user, password):
+    def _get_standbys(self, cfg, app_name, cfg_entry, dbname, user, password):
         dbs = cfg["databases"]
 
         standbys = []
         backend_data = self.charm.backend_relation.data[self.charm.backend_relation.app]
-        logging.error(self.charm.backend_relation.data)
-        logging.error(self.charm.backend_relation.app)
-        logging.error(backend_data)
         for read_only_endpoint in backend_data.get("read-only-endpoints").split(","):
             standby = {
                 "host": read_only_endpoint.split(":")[0],
-                "dbname": cfg_entry,
+                "dbname": dbname,
                 "port": read_only_endpoint.split(":")[1],
             }
             dbs[f"{cfg_entry}_standby"] = deepcopy(standby)
