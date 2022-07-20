@@ -9,7 +9,12 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.relations.helpers.helpers import get_cfg, get_userlist, wait_for_relation_joined_between, wait_for_relation_removed_between
+from tests.integration.relations.helpers.helpers import (
+    get_cfg,
+    get_userlist,
+    wait_for_relation_joined_between,
+    wait_for_relation_removed_between,
+)
 from tests.integration.relations.helpers.postgresql_helpers import (
     check_database_creation,
     check_database_users_existence,

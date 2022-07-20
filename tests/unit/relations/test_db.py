@@ -303,7 +303,7 @@ class TestDb(unittest.TestCase):
         self.db_admin_relation._on_relation_changed(mock_event)
 
         _add_user.assert_called_with(
-            user, password, admin=True, cfg=_read_cfg.return_value, render_cfg=False
+            user, password=password, admin=True, cfg=_read_cfg.return_value, render_cfg=False
         )
 
     @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
@@ -314,12 +314,10 @@ class TestDb(unittest.TestCase):
         db_name = "db_name"
         user = "user"
         pw = "pw"
+
         standbys = self.db_relation._get_standbys(cfg, app, db_name, user, pw)
-        import logging
-
-        logging.error(standbys)
-
         standby_list = standbys.split(", ")
+
         assert len(standby_list) == 2
 
         for standby in standby_list:

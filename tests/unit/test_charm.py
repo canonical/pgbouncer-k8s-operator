@@ -31,7 +31,7 @@ class TestCharm(unittest.TestCase):
 
         # Assert userlist is created with the generated password
         userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual('"juju-admin" "pw"', userlist)
+        self.assertEqual('"juju_admin" "pw"', userlist)
         _gen_pw.assert_called_once()
 
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))

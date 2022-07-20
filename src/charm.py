@@ -22,7 +22,7 @@ from ops.model import (
     Relation,
     WaitingStatus,
 )
-from ops.pebble import Layer, PathError, ChangeError
+from ops.pebble import ChangeError, Layer, PathError
 
 from relations.backend_database import RELATION_NAME as BACKEND_RELATION_NAME
 from relations.backend_database import BackendDatabaseRequires

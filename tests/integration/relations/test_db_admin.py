@@ -9,7 +9,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.relations.helpers.helpers import relation_joined, new_relation_joined
+from tests.integration.relations.helpers.helpers import wait_for_relation_joined_between
 from tests.integration.relations.helpers.postgresql_helpers import (
     check_database_creation,
     check_database_users_existence,
@@ -54,8 +54,10 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
             # Add relations
             ops_test.model.add_relation(f"{PGB}:backend-database", f"{PG}:database"),
         )
-
-        await ops_test.model.wait_for_idle(apps=[PG, PGB, REDIS_APP_NAME], status="active", timeout=1000)
+        wait_for_relation_joined_between(ops_test, PGB, PG)
+        await ops_test.model.wait_for_idle(
+            apps=[PG, PGB, REDIS_APP_NAME], status="active", timeout=1000
+        )
 
         # Discourse becomes blocked waiting for relations.
         await ops_test.model.wait_for_idle(
@@ -69,15 +71,17 @@ async def test_discourse(ops_test: OpsTest):
     # Add both relations to Discourse (PostgreSQL and Redis)
     # and wait for it to be ready.
     relation = await ops_test.model.add_relation(
-        f"{PG}:db-admin",
+        f"{PGB}:db-admin",
         FIRST_DISCOURSE_APP_NAME,
     )
     await ops_test.model.add_relation(
         REDIS_APP_NAME,
         FIRST_DISCOURSE_APP_NAME,
     )
+    wait_for_relation_joined_between(ops_test, REDIS_APP_NAME, FIRST_DISCOURSE_APP_NAME)
+    wait_for_relation_joined_between(ops_test, PGB, FIRST_DISCOURSE_APP_NAME)
     await ops_test.model.wait_for_idle(
-        apps=[PG, FIRST_DISCOURSE_APP_NAME, REDIS_APP_NAME],
+        apps=[PG, PGB, FIRST_DISCOURSE_APP_NAME, REDIS_APP_NAME],
         status="active",
         timeout=2000,  # Discourse takes a longer time to become active (a lot of setup).
     )
@@ -114,11 +118,11 @@ async def test_discourse_from_discourse_charmers(ops_test: OpsTest):
 
     # Relate PostgreSQL and Discourse, waiting for Discourse to be ready.
     relation = await ops_test.model.add_relation(
-        f"{PG}:db-admin",
+        f"{PGB}:db-admin",
         SECOND_DISCOURSE_APP_NAME,
     )
     await ops_test.model.wait_for_idle(
-        apps=[PG, SECOND_DISCOURSE_APP_NAME, REDIS_APP_NAME],
+        apps=[PG, PGB, SECOND_DISCOURSE_APP_NAME, REDIS_APP_NAME],
         status="active",
         timeout=2000,  # Discourse takes a longer time to become active (a lot of setup).
     )
