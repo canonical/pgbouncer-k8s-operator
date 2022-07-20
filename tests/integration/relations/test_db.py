@@ -4,12 +4,13 @@
 import asyncio
 import logging
 from pathlib import Path
+from xml.etree.ElementPath import ops
 
 import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
-from charms.pgbouncer_operator.v0 import pgb
 
+from tests.integration.relations.helpers.helpers import get_cfg, get_userlist
 from tests.integration.relations.helpers.postgresql_helpers import (
     check_database_creation,
     check_database_users_existence,
@@ -42,9 +43,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             ),
             ops_test.model.deploy(PG, num_units=3, trust=True, channel="edge"),
             # Deploy finos-waltz charm
-            ops_test.model.deploy(
-                "finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"
-            ),
+            ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
         )
 
         await asyncio.gather(
@@ -62,12 +61,9 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             ),
         )
         backend_relation = await ops_test.model.relate(f"{PGB}:backend-database", f"{PG}:database")
-        await ops_test.model.wait_for_idle(
-            apps=[PG, PGB], status="active", timeout=1000
-        )
+        await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
 
-        get_userlist = await ops_test.juju("ssh", "--container", "pgbouncer", "pgbouncer-k8s-operator/0", "cat", f"{pgb.PGB_DIR}/userlist.txt")
-        userlist = pgb.parse_userlist(get_userlist[1])
+        userlist = await get_userlist(ops_test)
         username = f"relation_id_{backend_relation.id}"
         password = userlist[username]
 
@@ -88,7 +84,17 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             raise_on_blocked=False,
             timeout=1000,
         )
-        second_finos_relation = await ops_test.model.relate(f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db")
+        logger.error((await get_cfg(ops_test)).render())
+        logger.error(await get_userlist(ops_test))
+        second_finos_relation = await ops_test.model.relate(
+            f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db"
+        )
+        await ops_test.model.wait_for_idle(
+            apps=[PG, PGB, FINOS_WALTZ, ANOTHER_FINOS_WALTZ], status="active", timeout=1000
+        )
+        logger.error((await get_cfg(ops_test)).render())
+        logger.error(await get_userlist(ops_test))
+
         # In this case, the database name is the same as in the first deployment
         # because it's a fixed value in Finos Waltz charm.
         await check_database_creation(ops_test, "waltz", username, password)
@@ -99,9 +105,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
 
         # Scale down the second deployment of Finos Waltz and confirm that the first deployment
         # is still active.
-        await ops_test.model.remove_application(
-            ANOTHER_FINOS_WALTZ, block_until_done=True
-        )
+        await ops_test.model.remove_application(ANOTHER_FINOS_WALTZ, block_until_done=True)
 
         second_finos_user = []
         await check_database_users_existence(

@@ -9,7 +9,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.relations.helpers.postgresql_helpers  import (
+from tests.integration.relations.helpers.postgresql_helpers import (
     check_database_creation,
     check_database_users_existence,
     get_unit_address,
@@ -29,58 +29,33 @@ PG = "postgresql-k8s"
 PSQL = "psql"
 APPS = [PG, PGB, PSQL]
 
+
 @pytest.mark.skip
 @pytest.mark.abort_on_fail
 @pytest.mark.legacy_relations
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
-    """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
     charm = await ops_test.build_charm(".")
-    await asyncio.gather(
-        ops_test.model.deploy(
-            charm,
-            application_name=PGB,
-        ),
-        ops_test.model.deploy(PG),
-        # Deploy a psql client shell charm
-        ops_test.model.deploy("postgresql-charmers-postgresql-client", application_name=PSQL),
-    )
-    await asyncio.gather(
-        # Add relations
-        ops_test.model.add_relation(f"{PGB}:db-admin", f"{PSQL}:db"),
-        ops_test.model.add_relation(f"{PGB}:backend-database", f"{PG}:database"),
-    )
-    await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
 
-@pytest.mark.skip
-@pytest.mark.abort_on_fail
-async def test_build_and_deploy(ops_test: OpsTest):
-    """Build the charm-under-test and deploy it.
-    Assert on the unit status before any relations/configurations take place.
-    """
     async with ops_test.fast_forward():
-        # Build and deploy charm from local source folder (and also redis from Charmhub).
-        # Both are needed by Discourse charms.
-        charm = await ops_test.build_charm(".")
-        resources = {
-            "postgresql-image": METADATA["resources"]["postgresql-image"]["upstream-source"],
-        }
         await asyncio.gather(
             ops_test.model.deploy(
                 charm,
-                resources=resources,
-                application_name=PG,
-                trust=True,
-                num_units=DATABASE_UNITS,
+                application_name=PGB,
             ),
+            ops_test.model.deploy(PG, trust=True, num_units=3, channel="edge"),
             ops_test.model.deploy(
                 FIRST_DISCOURSE_APP_NAME, application_name=FIRST_DISCOURSE_APP_NAME
             ),
             ops_test.model.deploy(REDIS_APP_NAME, application_name=REDIS_APP_NAME),
         )
-        await ops_test.model.wait_for_idle(
-            apps=[PG, REDIS_APP_NAME], status="active", timeout=1000
+        await asyncio.gather(
+            # Add relations
+            ops_test.model.add_relation(f"{PGB}:db-admin", f"{PSQL}:db"),
+            ops_test.model.add_relation(f"{PGB}:backend-database", f"{PG}:database"),
         )
+        await ops_test.model.wait_for_idle(apps=[PG, PGB, REDIS_APP_NAME], status="active", timeout=1000)
+
         # Discourse becomes blocked waiting for relations.
         await ops_test.model.wait_for_idle(
             apps=[FIRST_DISCOURSE_APP_NAME], status="blocked", timeout=1000
