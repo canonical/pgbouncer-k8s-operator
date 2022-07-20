@@ -360,12 +360,10 @@ class TestDb(unittest.TestCase):
         test_user = "test_user"
 
         input_cfg = PgbConfig(DEFAULT_CONFIG)
-        input_cfg["databases"]["pg_master"] = {"dbname": "pg_master"}
         input_cfg["databases"]["pgb_postgres_standby_0"] = {"dbname": "pgb_postgres_standby_0"}
         input_cfg["databases"]["pgb_postgres_standby_555"] = {"dbname": "pgb_postgres_standby_555"}
         input_cfg["databases"][f"{test_dbname}"] = {"dbname": f"{test_dbname}"}
-        input_cfg["databases"][f"{test_dbname}_standby_0"] = {"dbname": f"{test_dbname}_standby_0"}
-        input_cfg["databases"][f"{test_dbname}_standby_1"] = {"dbname": f"{test_dbname}_standby_1"}
+        input_cfg["databases"][f"{test_dbname}_standby"] = {"dbname": f"{test_dbname}_standby_0"}
         _read.return_value = input_cfg
 
         mock_event = MagicMock()

@@ -216,7 +216,9 @@ class DbProvides(Object):
 
         standbys = []
         backend_data = self.charm.backend_relation.data[self.charm.backend_relation.app]
-        logging.error()
+        logging.error(self.charm.backend_relation.data)
+        logging.error(self.charm.backend_relation.app)
+        logging.error(backend_data)
         for read_only_endpoint in backend_data.get("read-only-endpoints").split(","):
             standby = {
                 "host": read_only_endpoint.split(":")[0],
