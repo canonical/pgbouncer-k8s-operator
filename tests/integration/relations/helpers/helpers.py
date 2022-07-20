@@ -5,6 +5,7 @@ from typing import Dict
 
 from charms.pgbouncer_operator.v0 import pgb
 from pytest_operator.plugin import OpsTest
+from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 
 def get_backend_relation(ops_test: OpsTest):
@@ -40,6 +41,17 @@ async def get_cfg(ops_test: OpsTest) -> pgb.PgbConfig:
     return pgb.PgbConfig(cat_cfg[1])
 
 
+def wait_for_relation_joined_between(ops_test: OpsTest, endpoint_one: str, endpoint_two: str):
+    # wait for new relation to exist before waiting for idle.
+    try:
+        for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
+            with attempt:
+                if new_relation_joined(ops_test, endpoint_one, endpoint_two):
+                    break
+    except RetryError:
+        assert False, "New relation failed to join after 3 minutes."
+
+
 def new_relation_joined(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> bool:
     for rel in ops_test.model.relations:
         endpoints = [endpoint.name for endpoint in rel.endpoints]
@@ -48,5 +60,20 @@ def new_relation_joined(ops_test: OpsTest, endpoint_one: str, endpoint_two: str)
     return False
 
 
-def relation_exited(ops_test: OpsTest, relation_name) -> bool:
-    return relation_name not in ops_test.model.relations.keys()
+def wait_for_relation_removed_between(ops_test: OpsTest, endpoint_one: str, endpoint_two: str):
+    # wait for new relation to exist before waiting for idle.
+    try:
+        for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
+            with attempt:
+                if relation_exited(ops_test, endpoint_one, endpoint_two):
+                    break
+    except RetryError:
+        assert False, "New relation failed to join after 3 minutes."
+
+
+def relation_exited(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> bool:
+    for rel in ops_test.model.relations:
+        endpoints = [endpoint.name for endpoint in rel.endpoints]
+        if endpoint_one not in endpoints and endpoint_two not in endpoints:
+            return True
+    return False

@@ -9,6 +9,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
+from tests.integration.relations.helpers.helpers import relation_joined, new_relation_joined
 from tests.integration.relations.helpers.postgresql_helpers import (
     check_database_creation,
     check_database_users_existence,
@@ -51,9 +52,9 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
         )
         await asyncio.gather(
             # Add relations
-            ops_test.model.add_relation(f"{PGB}:db-admin", FIRST_DISCOURSE_APP_NAME),
             ops_test.model.add_relation(f"{PGB}:backend-database", f"{PG}:database"),
         )
+
         await ops_test.model.wait_for_idle(apps=[PG, PGB, REDIS_APP_NAME], status="active", timeout=1000)
 
         # Discourse becomes blocked waiting for relations.
