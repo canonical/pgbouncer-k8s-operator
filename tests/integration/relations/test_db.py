@@ -117,14 +117,15 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         # is still active.
         await ops_test.model.remove_application(ANOTHER_FINOS_WALTZ)
 
+        await ops_test.model.wait_for_idle(
+            apps=[PG, PGB, FINOS_WALTZ], status="active", timeout=1000
+        )
+
         second_finos_user = []
         await check_database_users_existence(
             ops_test, finos_user, second_finos_user, username, password
         )
 
-
-@pytest.mark.abort_on_fail
-async def test_remove_db_relation(ops_test: OpsTest):
-    # Remove the first deployment of Finos Waltz.
-    await ops_test.model.remove_application(FINOS_WALTZ)
-    await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
+        # Remove the first deployment of Finos Waltz.
+        await ops_test.model.remove_application(FINOS_WALTZ)
+        await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)

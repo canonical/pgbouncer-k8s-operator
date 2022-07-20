@@ -39,11 +39,6 @@ async def check_database_users_existence(
         pg_user_password,
         "SELECT usename FROM pg_catalog.pg_user;",
     )
-    import logging
-
-    logging.error(output)
-    logging.error(users_that_should_exist)
-    logging.error(users_that_should_not_exist)
     # Assert users that should exist.
     for user in users_that_should_exist:
         assert user in output

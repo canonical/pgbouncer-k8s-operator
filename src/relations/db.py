@@ -281,7 +281,7 @@ class DbProvides(Object):
         dbs = cfg["databases"]
         user = app_databag["user"]
         database = app_databag["database"]
-        cfg_entry = self.get_db_cfg_name(database, self.relation.id)
+        cfg_entry = self.get_db_cfg_name(database, broken_event.relation.id)
 
         del dbs[cfg_entry]
         dbs.pop(f"{cfg_entry}_standby")
