@@ -38,3 +38,15 @@ async def get_cfg(ops_test: OpsTest) -> pgb.PgbConfig:
         f"{pgb.PGB_DIR}/pgbouncer.ini",
     )
     return pgb.PgbConfig(cat_cfg[1])
+
+
+def new_relation_joined(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> bool:
+    for rel in ops_test.model.relations:
+        endpoints = [endpoint.name for endpoint in rel.endpoints]
+        if endpoint_one in endpoints and endpoint_two in endpoints:
+            return True
+    return False
+
+
+def relation_exited(ops_test: OpsTest, relation_name) -> bool:
+    return relation_name not in ops_test.model.relations.keys()

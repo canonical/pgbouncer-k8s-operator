@@ -162,7 +162,8 @@ class DbProvides(Object):
             "dbname": database,
             "port": primary_port,
         }
-        dbs[database] = deepcopy(primary)
+        db_cfg_name = self.get_db_cfg_name(database, change_event.relation.id)
+        dbs[db_cfg_name] = deepcopy(primary)
         primary.update(
             {
                 "user": user,
@@ -172,7 +173,7 @@ class DbProvides(Object):
         )
 
         # Get data about standby units for databags and charm config.
-        standbys = self._get_standbys(cfg, external_app_name, database, user, password)
+        standbys = self._get_standbys(cfg, external_app_name, db_cfg_name, user, password)
 
         # Write config data to charm filesystem
         self.charm.add_user(user, password=password, admin=self.admin, cfg=cfg, render_cfg=False)
@@ -206,7 +207,11 @@ class DbProvides(Object):
         """Generates a username for this relation."""
         return f"relation_id_{event.relation.id}"
 
-    def _get_standbys(self, cfg, app_name, database, user, password):
+    def get_db_cfg_name(self, database, id):
+        """Generates a unique database name for this relation."""
+        return f"{database}_{id}"
+
+    def _get_standbys(self, cfg, app_name, cfg_entry, user, password):
         dbs = cfg["databases"]
 
         standbys = []
@@ -214,10 +219,10 @@ class DbProvides(Object):
         for read_only_endpoint in backend_data.get("read-only-endpoints").split(","):
             standby = {
                 "host": read_only_endpoint.split(":")[0],
-                "dbname": database,
+                "dbname": cfg_entry,
                 "port": read_only_endpoint.split(":")[1],
             }
-            dbs[f"{database}_standby"] = deepcopy(standby)
+            dbs[f"{cfg_entry}_standby"] = deepcopy(standby)
 
             standby.update(
                 {
@@ -276,9 +281,10 @@ class DbProvides(Object):
         dbs = cfg["databases"]
         user = app_databag["user"]
         database = app_databag["database"]
+        db_cfg_name = self.get_db_cfg_name(database, self.relation.id)
 
-        del dbs[database]
-        dbs.pop(f"{database}_standby")
+        del dbs[db_cfg_name]
+        dbs.pop(f"{db_cfg_name}_standby")
 
         self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
 

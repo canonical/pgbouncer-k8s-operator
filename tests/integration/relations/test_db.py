@@ -4,13 +4,13 @@
 import asyncio
 import logging
 from pathlib import Path
-from xml.etree.ElementPath import ops
 
 import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
+from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
-from tests.integration.relations.helpers.helpers import get_cfg, get_userlist
+from tests.integration.relations.helpers.helpers import get_cfg, get_userlist, new_relation_joined
 from tests.integration.relations.helpers.postgresql_helpers import (
     check_database_creation,
     check_database_users_existence,
@@ -89,6 +89,16 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         second_finos_relation = await ops_test.model.relate(
             f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db"
         )
+
+        # wait for new relation to exist before waiting for idle.
+        try:
+            for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
+                with attempt:
+                    if new_relation_joined(ops_test, PGB, ANOTHER_FINOS_WALTZ):
+                        break
+        except RetryError:
+            assert False, "New relation failed to join after 3 minutes."
+
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, FINOS_WALTZ, ANOTHER_FINOS_WALTZ], status="active", timeout=1000
         )
