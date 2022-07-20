@@ -57,7 +57,7 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
                 if new_relation_joined(ops_test, APP_NAME, PG):
                     break
     except RetryError:
-        assert False, "New relation failed to join mongodb after 5 minutes."
+        assert False, "failed to create backend relation after 3 minutes"
 
     await ops_test.model.wait_for_idle(apps=[APP_NAME, PG], status="active", timeout=1000),
 
@@ -75,7 +75,7 @@ async def test_backend_db_admin_legacy_relation_remove_relation(ops_test: OpsTes
                 if relation_exited(ops_test, RELATION):
                     break
     except RetryError:
-        assert False, "New relation failed to join mongodb after 5 minutes."
+        assert False, "failed to exit backend relation"
 
     await ops_test.model.wait_for_idle(apps=[PG, APP_NAME], status="active", timeout=1000),
 

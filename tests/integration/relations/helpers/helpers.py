@@ -13,5 +13,9 @@ def new_relation_joined(ops_test: OpsTest, endpoint_one: str, endpoint_two: str)
     return False
 
 
-def relation_exited(ops_test: OpsTest, relation_name) -> bool:
-    return relation_name not in ops_test.model.relations.keys()
+def relation_exited(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> bool:
+    for rel in ops_test.model.relations:
+        endpoints = [endpoint.name for endpoint in rel.endpoints]
+        if endpoint_one not in endpoints and endpoint_two not in endpoints:
+            return True
+    return False
