@@ -45,6 +45,7 @@ from ops.charm import (
     RelationBrokenEvent,
     RelationChangedEvent,
     RelationDepartedEvent,
+    RelationJoinedEvent,
 )
 from ops.framework import Object
 from ops.model import Relation, Unit
@@ -89,6 +90,60 @@ class DbProvides(Object):
         self.charm = charm
         self.admin = admin
 
+
+    def _on_relation_joined(self, join_event: RelationJoinedEvent):
+        """Handle db-relation-joined event. """
+
+        if not self.charm.backend_relation:
+            # We can't relate an app to the backend database without a backend postgres relation
+            logger.warning("waiting for backend-database relation")
+            join_event.defer()
+            return
+
+        logger.info(f"Setting up {self.relation_name} relation")
+        logger.warning(
+            f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
+        )
+
+        cfg = self.charm.read_pgb_config()
+        dbs = cfg["databases"]
+
+        relation_data = join_event.relation.data
+        pgb_unit_databag = relation_data[self.charm.unit]
+        pgb_app_databag = relation_data[self.charm.app]
+
+        external_unit = self.get_external_units(join_event.relation)[0]
+        database = pgb_app_databag.get("database", relation_data[external_unit].get("database"))
+        if database is None:
+            logger.warning("No database name provided")
+            join_event.defer()
+            return
+
+        # TODO consider replacing database/user sanitisation with sql.Identifier()
+        database = database.replace("-", "_")
+
+        user = pgb_app_databag.get("user", self.generate_username(join_event))
+        user = user.replace("-", "_")
+        password = pgb_app_databag.get("password", pgb.generate_password())
+
+        self.charm.add_user(user, password=password, admin=self.admin, cfg=cfg, render_cfg=False)
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+
+        try:
+            self.charm.backend_postgres.create_user(user, password, admin=self.admin)
+            self.charm.backend_postgres.create_database(database, user)
+        except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
+            logger.error(f"failed to create database or user for {self.relation_name}")
+            return
+
+        for databag in [pgb_app_databag, pgb_unit_databag]:
+            updates = {
+                "user": user,
+                "password": password,
+                "database": database,
+            }
+            databag.update(updates)
+
     def _on_relation_changed(self, change_event: RelationChangedEvent):
         """Handle db-relation-changed event.
 
@@ -104,7 +159,7 @@ class DbProvides(Object):
             change_event.defer()
             return
 
-        logger.info(f"Setting up {self.relation_name} relation - updating config")
+        logger.info(f"changing {self.relation_name} relation - updating config")
         logger.warning(
             f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
         )
@@ -129,6 +184,7 @@ class DbProvides(Object):
         external_app_name = external_unit.app.name
 
         # Do not allow apps requesting extensions to be installed.
+        # TODO how would these be added into the pgb databags? surely they should be external?
         if "extensions" in pgb_unit_databag or "extensions" in pgb_app_databag:
             logger.error(
                 "ERROR - `extensions` cannot be requested through relations"
@@ -137,7 +193,7 @@ class DbProvides(Object):
             # TODO fail to create relation
             return
 
-        database = pgb_app_databag.get("database", relation_data[external_unit].get("database"))
+        database = pgb_app_databag.get("database")
         if database is None:
             logger.warning("No database name provided")
             change_event.defer()
@@ -146,13 +202,14 @@ class DbProvides(Object):
         # TODO consider replacing database/user sanitisation with sql.Identifier()
         database = database.replace("-", "_")
 
-        user = pgb_app_databag.get("user", self.generate_username(change_event, external_app_name))
+        user = pgb_app_databag.get("user")
         user = user.replace("-", "_")
-        password = pgb_app_databag.get("password", pgb.generate_password())
+        password = pgb_app_databag.get("password")
 
         # TODO clean this up
         # Get data about primary unit for databags and charm config.
         backend_endpoint = self.charm.backend_relation_app_databag.get("endpoints")
+        logger.error(self.charm.backend_relation_app_databag)
         primary_host = backend_endpoint.split(":")[0]
         primary_port = backend_endpoint.split(":")[1]
         primary = {
@@ -174,15 +231,7 @@ class DbProvides(Object):
         standbys = self._get_standbys(cfg, external_app_name, cfg_entry, database, user, password)
 
         # Write config data to charm filesystem
-        self.charm.add_user(user, password=password, admin=self.admin, cfg=cfg, render_cfg=False)
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
-
-        try:
-            self.charm.backend_postgres.create_user(user, password, admin=self.admin)
-            self.charm.backend_postgres.create_database(database, user)
-        except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
-            logger.error(f"failed to create database or user for {self.relation_name}")
-            return
 
         # Populate databags
         for databag in [pgb_app_databag, pgb_unit_databag]:
@@ -201,7 +250,7 @@ class DbProvides(Object):
             }
             databag.update(updates)
 
-    def generate_username(self, event, app_name):
+    def generate_username(self, event):
         """Generates a username for this relation."""
         return f"relation_id_{event.relation.id}"
 

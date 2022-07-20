@@ -89,6 +89,9 @@ class BackendDatabaseRequires(Object):
                 reload_pgbouncer=True,
                 render_cfg=True,
             )
+
+            self._trigger_db_relations()
+
         except FileNotFoundError:
             event.defer()
 
@@ -101,6 +104,9 @@ class BackendDatabaseRequires(Object):
             cfg = self.charm.read_pgb_config()
             user = self.charm.backend_postgres.user
             self.charm.remove_user(user, cfg=cfg, reload_pgbouncer=True, render_cfg=True)
+
+            self._trigger_db_relations()
+
         except FileNotFoundError:
             event.defer()
 

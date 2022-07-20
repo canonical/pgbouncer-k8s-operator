@@ -21,8 +21,9 @@ from ops.model import (
     MaintenanceStatus,
     Relation,
     WaitingStatus,
+    Application
 )
-from ops.pebble import ChangeError, Layer, PathError
+from ops.pebble import Layer, PathError
 
 from relations.backend_database import RELATION_NAME as BACKEND_RELATION_NAME
 from relations.backend_database import BackendDatabaseRequires
@@ -370,27 +371,39 @@ class PgBouncerK8sCharm(CharmBase):
         """Returns the relation to the postgresql backend.
 
         Returns:
-            Relation object for the backend relation, or None if it doesn't exist.
+            Relation object for the backend relation.
         """
-        return self.model.get_relation(BACKEND_RELATION_NAME, None)
+        backend_relation = self.model.get_relation(BACKEND_RELATION_NAME)
+        if not backend_relation:
+            return None
+        else:
+            return backend_relation
 
     @property
     def backend_relation_app_databag(self) -> Dict:
         """Wrapper around accessing the remote application databag for the backend relation."""
-        if not self.backend_relation:
+        backend_relation = self.backend_relation
+        if not backend_relation:
             return None
-        return self.backend_relation.data[self.backend_relation.app]
+
+        # Since we can trigger db-relation-changed on backend-changed,
+        for entry in backend_relation.data:
+            if isinstance(entry, Application) and entry != self.app:
+                return self.backend_relation.data[entry]
+
 
     @property
     def backend_postgres(self) -> PostgreSQL:
         """Returns PostgreSQL representation of backend database, as defined in relation."""
-        if not self.backend_relation:
+        backend_relation = self.backend_relation
+        if not backend_relation:
             return None
 
-        host = self.backend_relation_app_databag.get("endpoints").split(":")[0]
-        user = self.backend_relation_app_databag.get("username")
-        password = self.backend_relation_app_databag.get("password")
-        database = self.backend_relation.data[self.app].get("database")
+        backend_data = backend_relation.data[backend_relation.app]
+        host = backend_data.get("endpoints").split(":")[0]
+        user = backend_data.get("username")
+        password = backend_data.get("password")
+        database = backend_relation.data[self.app].get("database")
 
         return PostgreSQL(host=host, user=user, password=password, database=database)
 
