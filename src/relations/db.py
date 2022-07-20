@@ -162,8 +162,8 @@ class DbProvides(Object):
             "dbname": database,
             "port": primary_port,
         }
-        db_cfg_name = self.get_db_cfg_name(database, change_event.relation.id)
-        dbs[db_cfg_name] = deepcopy(primary)
+        cfg_entry = self.get_db_cfg_name(database, change_event.relation.id)
+        dbs[cfg_entry] = deepcopy(primary)
         primary.update(
             {
                 "user": user,
@@ -173,7 +173,7 @@ class DbProvides(Object):
         )
 
         # Get data about standby units for databags and charm config.
-        standbys = self._get_standbys(cfg, external_app_name, db_cfg_name, user, password)
+        standbys = self._get_standbys(cfg, external_app_name, cfg_entry, user, password)
 
         # Write config data to charm filesystem
         self.charm.add_user(user, password=password, admin=self.admin, cfg=cfg, render_cfg=False)
@@ -281,10 +281,10 @@ class DbProvides(Object):
         dbs = cfg["databases"]
         user = app_databag["user"]
         database = app_databag["database"]
-        db_cfg_name = self.get_db_cfg_name(database, self.relation.id)
+        cfg_entry = self.get_db_cfg_name(database, self.relation.id)
 
-        del dbs[db_cfg_name]
-        dbs.pop(f"{db_cfg_name}_standby")
+        del dbs[cfg_entry]
+        dbs.pop(f"{cfg_entry}_standby")
 
         self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
 

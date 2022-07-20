@@ -115,7 +115,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
 
         # Scale down the second deployment of Finos Waltz and confirm that the first deployment
         # is still active.
-        await ops_test.model.remove_application(ANOTHER_FINOS_WALTZ, block_until_done=True)
+        await ops_test.model.remove_application(ANOTHER_FINOS_WALTZ)
 
         second_finos_user = []
         await check_database_users_existence(
@@ -124,11 +124,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
 
 
 @pytest.mark.abort_on_fail
-async def test_remove_db_relations(ops_test: OpsTest):
+async def test_remove_db_relation(ops_test: OpsTest):
     # Remove the first deployment of Finos Waltz.
-    await ops_test.model.remove_application(FINOS_WALTZ, block_until_done=True)
-    await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
-
-    # Remove the other deployment of Finos Waltz.
-    await ops_test.model.remove_application(ANOTHER_FINOS_WALTZ, block_until_done=True)
+    await ops_test.model.remove_application(FINOS_WALTZ)
     await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
