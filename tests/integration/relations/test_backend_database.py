@@ -72,7 +72,7 @@ async def test_backend_db_admin_legacy_relation_remove_relation(ops_test: OpsTes
     try:
         for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
             with attempt:
-                if relation_exited(ops_test, RELATION):
+                if relation_exited(ops_test, PG, APP_NAME):
                     break
     except RetryError:
         assert False, "failed to exit backend relation"
