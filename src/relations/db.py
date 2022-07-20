@@ -152,9 +152,7 @@ class DbProvides(Object):
 
         # TODO clean this up
         # Get data about primary unit for databags and charm config.
-        backend_endpoint = self.charm.backend_relation.data[self.charm.backend_relation.app].get(
-            "endpoints"
-        )
+        backend_endpoint = self.charm.backend_relation_app_databag.get("endpoints")
         primary_host = backend_endpoint.split(":")[0]
         primary_port = backend_endpoint.split(":")[1]
         primary = {
@@ -215,8 +213,9 @@ class DbProvides(Object):
         dbs = cfg["databases"]
 
         standbys = []
-        backend_data = self.charm.backend_relation.data[self.charm.backend_relation.app]
-        for read_only_endpoint in backend_data.get("read-only-endpoints").split(","):
+        for read_only_endpoint in self.charm.backend_relation_app_databag.get(
+            "read-only-endpoints"
+        ).split(","):
             standby = {
                 "host": read_only_endpoint.split(":")[0],
                 "dbname": dbname,

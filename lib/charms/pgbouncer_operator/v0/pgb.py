@@ -424,7 +424,6 @@ def parse_userlist(userlist: str) -> Dict[str, str]:
     for line in userlist.split("\n"):
         line = line.strip()
         if valid_userlist_regex.fullmatch(line) is None:
-            logger.error(line)
             logger.warning("unable to parse line in userlist file - user not imported")
             continue
         # Userlist is formatted '"username" "password"'
