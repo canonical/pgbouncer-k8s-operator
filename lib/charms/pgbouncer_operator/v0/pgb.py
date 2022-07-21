@@ -422,6 +422,7 @@ def parse_userlist(userlist: str) -> Dict[str, str]:
     # Each line in userlist can only be two space-separated substrings, wrapped in double quotes.
     valid_userlist_regex = re.compile(r'^"[^"]*" "[^"]*"$')
     for line in userlist.split("\n"):
+        line.strip()
         if valid_userlist_regex.fullmatch(line) is None:
             logger.warning("unable to parse line in userlist file - user not imported")
             continue

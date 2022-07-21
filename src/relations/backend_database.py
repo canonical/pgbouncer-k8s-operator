@@ -101,4 +101,5 @@ class BackendDatabaseRequires(Object):
             user = self.charm.backend_postgres.user
             self.charm.remove_user(user, cfg=cfg, reload_pgbouncer=True, render_cfg=True)
         except FileNotFoundError:
+            logging.error("failed to access config file")
             event.defer()
