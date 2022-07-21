@@ -48,7 +48,7 @@ from ops.charm import (
     RelationJoinedEvent,
 )
 from ops.framework import Object
-from ops.model import Relation, Unit
+from ops.model import Application, Relation, Unit
 
 logger = logging.getLogger(__name__)
 
@@ -108,28 +108,42 @@ class DbProvides(Object):
         )
 
         cfg = self.charm.read_pgb_config()
-        dbs = cfg["databases"]
 
         relation_data = join_event.relation.data
         pgb_unit_databag = relation_data[self.charm.unit]
         pgb_app_databag = relation_data[self.charm.app]
+        remote_unit_databag = relation_data[join_event.unit]
+        remote_app_databag = relation_data[join_event.app]
 
-        external_unit = self.get_external_units(join_event.relation)[0]
-        database = relation_data[external_unit].get("database")
+        # Do not allow apps requesting extensions to be installed.
+        if "extensions" in remote_unit_databag or "extensions" in remote_app_databag:
+            logger.error(
+                "ERROR - `extensions` cannot be requested through relations"
+                " - they should be installed through a database charm config in the future"
+            )
+            # TODO fail to create relation
+            return
+
+        database = remote_unit_databag.get("database")
         if database is None:
             logger.warning("No database name provided")
             join_event.defer()
             return
 
-        # TODO consider replacing database/user sanitisation with sql.Identifier()
+        # TODO consider replacing database name sanitisation with sql.Identifier()
         database = database.replace("-", "_")
 
-        user = pgb_app_databag.get("user", self.generate_username(join_event))
-        user = user.replace("-", "_")
-        password = pgb_app_databag.get("password", pgb.generate_password())
+        user = self.generate_username(join_event)
+        password = pgb.generate_password()
 
-        self.charm.add_user(user, password=password, admin=self.admin, cfg=cfg, render_cfg=False)
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm.add_user(
+            user,
+            password=password,
+            admin=self.admin,
+            cfg=cfg,
+            render_cfg=True,
+            reload_pgbouncer=True,
+        )
 
         try:
             self.charm.backend_postgres.create_user(user, password, admin=self.admin)
@@ -173,45 +187,17 @@ class DbProvides(Object):
         pgb_unit_databag = relation_data[self.charm.unit]
         pgb_app_databag = relation_data[self.charm.app]
 
-        try:
-            external_unit = self.get_external_units(change_event.relation)[0]
-        except IndexError:
-            # In cases where pgbouncer changes the relation, we have no new information to add to
-            # the config. Scaling is not yet implemented, and calling this hook from the
-            # backend-db-admin relation occurs after the config updates are added.
-            logger.info(
-                f"no external unit found in {self.relation_name} relation - nothing to change in config, exiting relation hook"
-            )
-            return
-        external_app_name = external_unit.app.name
-
-        # Do not allow apps requesting extensions to be installed.
-        # TODO how would these be added into the pgb databags? surely they should be external?
-        if "extensions" in pgb_unit_databag or "extensions" in pgb_app_databag:
-            logger.error(
-                "ERROR - `extensions` cannot be requested through relations"
-                " - they should be installed through a database charm config in the future"
-            )
-            # TODO fail to create relation
-            return
+        external_app_name = self.get_external_app(change_event.relation).name
 
         database = pgb_app_databag.get("database")
-        if database is None:
-            logger.warning("No database name provided")
-            change_event.defer()
-            return
-
-        # TODO consider replacing database/user sanitisation with sql.Identifier()
-        database = database.replace("-", "_")
-
         user = pgb_app_databag.get("user")
-        user = user.replace("-", "_")
         password = pgb_app_databag.get("password")
 
         # TODO clean this up
         # Get data about primary unit for databags and charm config.
         backend_endpoint = self.charm.backend_relation_app_databag.get("endpoints")
         logger.error(self.charm.backend_relation_app_databag)
+
         primary_host = backend_endpoint.split(":")[0]
         primary_port = backend_endpoint.split(":")[1]
         primary = {
@@ -366,10 +352,7 @@ class DbProvides(Object):
         """Gets the external units from this relation that can be allowed into the network."""
         return ",".join(sorted([unit.name for unit in self.get_external_units(relation)]))
 
-    def get_external_units(self, relation: Relation) -> Unit:
-        """Gets all units from this relation that aren't owned by this charm."""
-        return [
-            unit
-            for unit in relation.data
-            if isinstance(unit, Unit) and not unit.name.startswith(self.model.app.name)
-        ]
+    def get_external_app(self, relation):
+        for entry in relation.data:
+            if isinstance(entry, Application) and entry != self.charm.app:
+                return relation.data[entry]

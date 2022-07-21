@@ -29,7 +29,7 @@ ANOTHER_FINOS_WALTZ = "another-finos-waltz"
 logger = logging.getLogger(__name__)
 
 
-# @pytest.mark.skip
+@pytest.mark.skip
 @pytest.mark.abort_on_fail
 async def test_create_db_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -123,3 +123,5 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         await ops_test.model.remove_application(FINOS_WALTZ)
         wait_for_relation_removed_between(ops_test, PGB, ANOTHER_FINOS_WALTZ)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
+
+        # TODO assert users are correctly removed from postgres charm and config files.

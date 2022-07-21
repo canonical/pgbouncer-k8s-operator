@@ -40,8 +40,8 @@ class TestDb(unittest.TestCase):
 
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("ops.charm.EventBase.defer")
-    @patch("relations.db.DbProvides.get_external_units", return_value=[MagicMock()])
-    def test_on_relation_changed_early_returns(self, _get_units, _defer, _read_cfg):
+    @patch("relations.db.DbProvides.get_external_app")
+    def test_on_relation_changed_early_returns(self, _get_app, _defer, _read_cfg):
         """Validate the various cases where we want _on_relation_changed to return early."""
         mock_event = MagicMock()
         mock_event.defer = _defer
@@ -60,7 +60,7 @@ class TestDb(unittest.TestCase):
         mock_event.relation.data = {}
         mock_event.relation.data[self.db_admin_relation.charm.unit] = None
         mock_event.relation.data[self.charm.app] = {"database": None}
-        mock_event.relation.data[_get_units.return_value[0]] = {"database": None}
+        mock_event.relation.data[_get_app] = {"database": None}
 
         _read_cfg.return_value["databases"]["pg_master"] = {"test": "value"}
         self.db_relation._on_relation_changed(mock_event)
@@ -69,32 +69,24 @@ class TestDb(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.backend_postgres", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
-    @patch("relations.db.DbProvides.get_external_units", return_value=[MagicMock()])
-    @patch("relations.db.DbProvides.get_allowed_units", return_value="test_allowed_unit")
-    @patch("relations.db.DbProvides.get_allowed_subnets", return_value="test_allowed_subnet")
-    @patch("relations.db.DbProvides._get_standbys", return_value="test_postgres_standbys")
+    @patch("relations.db.DbProvides.get_external_app")
     @patch("charms.pgbouncer_operator.v0.pgb.generate_password", return_value="test_pass")
     @patch("relations.db.DbProvides.generate_username", return_value="test_user")
     @patch("ops.charm.EventBase.defer")
-    @patch("relations.db.DbProvides._get_state", return_value="test-state")
     @patch("charm.PgBouncerK8sCharm.add_user")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_user")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_database")
     @patch("charm.PgBouncerK8sCharm._render_pgb_config")
-    def test_instantiate_new_relation_on_relation_changed(
+    def test_on_relation_joined(
         self,
         _render_cfg,
         _create_database,
         _create_user,
         _add_user,
-        _state,
         _defer,
         _username,
         _pass,
-        _standbys,
-        _allowed_subnets,
-        _allowed_units,
-        _external_units,
+        _external_app,
         _read_cfg,
         _backend_postgres,
         _backend_relation,
@@ -109,53 +101,32 @@ class TestDb(unittest.TestCase):
         pgb_unit_databag = relation_data[self.db_admin_relation.charm.unit] = {}
         pgb_app_databag = relation_data[self.charm.app] = {}
 
-        external_unit = _external_units.return_value[0]
+        external_unit = _external_app.return_value[0]
         relation_data[external_unit] = {}
         external_unit.app.name = None
 
-        self.db_relation._on_relation_changed(mock_event)
+        self.db_relation._on_relation_joined(mock_event)
         _defer.assert_called_once()
         _defer.reset_mock()
 
         external_unit.app.name = "external_test_unit"
         relation_data[external_unit] = {"database": "test_database_name"}
 
-        master_host = "test-host"
-        master_port = "test-port"
-
         database = "test_database_name"
         user = _username.return_value
         password = _pass.return_value
 
         _backend_postgres.return_value = PostgreSQL(
-            host=f"{master_host}:{master_port}", user=user, password=password, database=database
+            host=f"host:port", user=user, password=password, database=database
         )
 
-        self.db_relation._on_relation_changed(mock_event)
+        self.db_relation._on_relation_joined(mock_event)
         _defer.assert_not_called()
 
-        expected_primary = {
-            "host": master_host,
-            "dbname": database,
-            "port": master_port,
-            "user": user,
-            "password": password,
-            "fallback_application_name": external_unit.app.name,
-        }
-
         for databag in [pgb_app_databag, pgb_unit_databag]:
-            assert databag["allowed-subnets"] == _allowed_subnets.return_value
-            assert databag["allowed-units"] == _allowed_units.return_value
-            assert databag["host"] == f"http://{master_host}"
-            assert databag["master"] == parse_dict_to_kv_string(expected_primary)
-            assert databag["port"] == master_port
-            assert databag["standbys"] == _standbys.return_value
-            assert databag["version"] == "12"
             assert databag["user"] == user
             assert databag["password"] == password
             assert databag["database"] == database
-
-        assert pgb_unit_databag["state"] == _state.return_value
 
         _add_user.assert_called_with(
             user, password, admin=False, cfg=_read_cfg.return_value, render_cfg=False
@@ -165,26 +136,20 @@ class TestDb(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.backend_postgres", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
-    @patch("relations.db.DbProvides.get_external_units", return_value=[MagicMock()])
+    @patch("relations.db.DbProvides.get_external_app", return_value=[MagicMock()])
     @patch("relations.db.DbProvides.get_allowed_units", return_value="test_allowed_unit")
     @patch("relations.db.DbProvides.get_allowed_subnets", return_value="test_allowed_subnet")
     @patch("relations.db.DbProvides._get_standbys", return_value="test-postgres-standbys")
     @patch("relations.db.DbProvides._get_state", return_value="test-state")
-    @patch("charm.PgBouncerK8sCharm.add_user")
-    @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_user")
-    @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_database")
     @patch("charm.PgBouncerK8sCharm._render_pgb_config")
-    def test_update_existing_relation_on_relation_changed(
+    def test_on_relation_changed(
         self,
         _render_cfg,
-        _create_database,
-        _create_user,
-        _add_user,
         _state,
         _standbys,
         _allowed_subnets,
         _allowed_units,
-        _external_units,
+        _external_app,
         _read_cfg,
         _backend_postgres,
         _backend_relation,
@@ -193,8 +158,8 @@ class TestDb(unittest.TestCase):
         self.harness.set_leader(True)
 
         # set up mocks
-        master_host = "test-host"
-        master_port = "test-port"
+        primary_host = "test-host"
+        primary_port = "test-port"
         _read_cfg.return_value["databases"]["test_db"] = {
             "host": "test-host",
             "dbname": "external_test_unit",
@@ -204,7 +169,6 @@ class TestDb(unittest.TestCase):
             "fallback_application_name": "external_test_unit",
         }
 
-        external_unit = _external_units.return_value[0]
 
         mock_event = MagicMock()
         relation_data = mock_event.relation.data = {}
@@ -218,11 +182,12 @@ class TestDb(unittest.TestCase):
             "password": password,
         }
 
-        relation_data[external_unit] = {}
-        external_unit.app.name = "external_test_unit"
+        external_app = _external_app.return_value
+        relation_data[external_app] = {}
+        external_app.name = "external_test_app"
 
         _backend_postgres.return_value = PostgreSQL(
-            host=f"{master_host}:{master_port}", user=user, password=password, database=database
+            host=f"{primary_host}:{primary_port}", user=user, password=password, database=database
         )
 
         # Call the function
@@ -230,20 +195,20 @@ class TestDb(unittest.TestCase):
 
         # evaluate output
         expected_primary = {
-            "host": master_host,
+            "host": primary_host,
             "dbname": database,
-            "port": master_port,
+            "port": primary_port,
             "user": user,
             "password": password,
-            "fallback_application_name": external_unit.app.name,
+            "fallback_application_name": external_app.name,
         }
 
         for databag in [pgb_app_databag, pgb_unit_databag]:
             assert databag["allowed-subnets"] == _allowed_subnets.return_value
             assert databag["allowed-units"] == _allowed_units.return_value
-            assert databag["host"] == f"http://{master_host}"
+            assert databag["host"] == f"http://{primary_host}"
             assert databag["master"] == parse_dict_to_kv_string(expected_primary)
-            assert databag["port"] == master_port
+            assert databag["port"] == primary_port
             assert databag["standbys"] == _standbys.return_value
             assert databag["version"] == "12"
             assert databag["user"] == user
@@ -252,18 +217,11 @@ class TestDb(unittest.TestCase):
 
         assert pgb_unit_databag["state"] == _state.return_value
 
-        _add_user.assert_called_with(
-            user, password, admin=False, cfg=_read_cfg.return_value, render_cfg=False
-        )
         _render_cfg.assert_called_with(_read_cfg.return_value, reload_pgbouncer=True)
 
     @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
-    @patch("relations.db.DbProvides.get_external_units", return_value=[MagicMock()])
-    @patch("relations.db.DbProvides.get_allowed_units", return_value="test_allowed_unit")
-    @patch("relations.db.DbProvides.get_allowed_subnets", return_value="test_allowed_subnet")
-    @patch("relations.db.DbProvides._get_standbys", return_value="test-postgres-standbys")
-    @patch("relations.db.DbProvides._get_state", return_value="test-state")
+    @patch("relations.db.DbProvides.get_external_app")
     @patch("charm.PgBouncerK8sCharm.add_user")
     @patch("charm.PgBouncerK8sCharm._render_pgb_config")
     def test_admin_user_generated_with_correct_admin_permissions(
@@ -274,15 +232,11 @@ class TestDb(unittest.TestCase):
         _standbys,
         _allowed_subnets,
         _allowed_units,
-        _external_units,
+        _external_app,
         _read_cfg,
         _backend,
     ):
         self.harness.set_leader(True)
-        _read_cfg.return_value["databases"]["pg_master"] = {
-            "host": "test-host",
-            "port": "test-port",
-        }
 
         mock_event = MagicMock()
         relation_data = mock_event.relation.data = {}
@@ -290,17 +244,15 @@ class TestDb(unittest.TestCase):
         user = "test_user"
         password = "test_pw"
 
-        relation_data[self.db_relation.charm.unit] = {}
         relation_data[self.charm.app] = {
             "database": database,
             "user": user,
             "password": password,
         }
-        external_unit = _external_units.return_value[0]
-        relation_data[external_unit] = {}
-        external_unit.app.name = "external_test_unit"
+        relation_data[_external_app.return_value] = {"database": database,}
+        _external_app.name = "external_test_app"
 
-        self.db_admin_relation._on_relation_changed(mock_event)
+        self.db_admin_relation._on_relation_joined(mock_event)
 
         _add_user.assert_called_with(
             user, password=password, admin=True, cfg=_read_cfg.return_value, render_cfg=False
