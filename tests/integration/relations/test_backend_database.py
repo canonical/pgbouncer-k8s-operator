@@ -8,17 +8,21 @@ from pathlib import Path
 import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
-from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from tests.integration.relations.helpers.helpers import (
-    new_relation_joined,
-    relation_exited,
+    get_cfg,
+    get_userlist,
+    wait_for_relation_joined_between,
+    wait_for_relation_removed_between,
+)
+from tests.integration.relations.helpers.postgres_helpers import (
+    check_database_users_existence,
 )
 
 logger = logging.getLogger(__name__)
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
-APP_NAME = METADATA["name"]
+PGB = METADATA["name"]
 PG = "postgresql-k8s"
 RELATION = "backend-database"
 
@@ -36,58 +40,51 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
         ops_test.model.deploy(
             charm,
             resources=resources,
-            application_name=APP_NAME,
+            application_name=PGB,
         ),
         # Edge 5 is the new postgres charm
         ops_test.model.deploy(PG, channel="edge", trust=True, num_units=3),
     )
     await asyncio.gather(
-        ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000),
+        ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000),
         ops_test.model.wait_for_idle(
             apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
         ),
     )
 
-    await ops_test.model.relate(f"{APP_NAME}:{RELATION}", f"{PG}:database")
+    relation = await ops_test.model.relate(f"{PGB}:{RELATION}", f"{PG}:database")
+    wait_for_relation_joined_between(ops_test, PG, PGB)
+    await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),
 
-    # wait for new relation to exist before waiting for idle.
-    try:
-        for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
-            with attempt:
-                if new_relation_joined(ops_test, APP_NAME, PG):
-                    break
-    except RetryError:
-        assert False, "failed to create backend relation after 3 minutes"
+    pgb_user = f"relation_id_{relation.id}"
+    userlist = await get_userlist(ops_test)
+    pgb_password = userlist[pgb_user]
+    cfg = await get_cfg(ops_test)
+    assert pgb_user in cfg["pgbouncer"]["admin_users"]
 
-    await ops_test.model.wait_for_idle(apps=[APP_NAME, PG], status="active", timeout=1000),
+    await check_database_users_existence(ops_test, [pgb_user], [], pgb_user, pgb_password)
 
-
-async def test_backend_db_admin_legacy_relation_remove_relation(ops_test: OpsTest):
     # Remove relation but keep pg application because we're going to need it for future tests.
-    await ops_test.model.applications[PG].remove_relation(
-        f"{APP_NAME}:{RELATION}", f"{PG}:database"
-    )
+    await ops_test.model.applications[PG].remove_relation(f"{PGB}:{RELATION}", f"{PG}:database")
+    wait_for_relation_removed_between(ops_test, PG, PGB)
+    await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000),
 
-    # wait for new relation to exist before waiting for idle.
-    try:
-        for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
-            with attempt:
-                if relation_exited(ops_test, PG, APP_NAME):
-                    break
-    except RetryError:
-        assert False, "failed to exit backend relation"
-
-    await ops_test.model.wait_for_idle(apps=[PG, APP_NAME], status="active", timeout=1000),
+    userlist = await get_userlist(ops_test)
+    cfg = await get_cfg(ops_test)
+    assert pgb_user not in userlist.keys()
+    assert pgb_user not in cfg["pgbouncer"]["admin_users"]
 
 
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
-    await ops_test.model.relate(f"{APP_NAME}:{RELATION}", f"{PG}:database")
+    await ops_test.model.relate(f"{PGB}:{RELATION}", f"{PG}:database")
+    wait_for_relation_joined_between(ops_test, PG, PGB)
     await asyncio.gather(
-        ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000),
+        ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000),
         ops_test.model.wait_for_idle(
             apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
         ),
     )
 
     await ops_test.model.applications[PG].remove()
-    await ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=1000)
+    wait_for_relation_removed_between(ops_test, PG, PGB)
+    await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)
