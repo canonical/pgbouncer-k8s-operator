@@ -29,7 +29,7 @@ ANOTHER_FINOS_WALTZ = "another-finos-waltz"
 logger = logging.getLogger(__name__)
 
 
-#@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.abort_on_fail
 async def test_create_db_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -47,7 +47,6 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 application_name=PGB,
             ),
             ops_test.model.deploy(PG, num_units=3, trust=True, channel="edge"),
-            # Deploy finos-waltz charm
             ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
         )
 
@@ -55,13 +54,13 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             ops_test.model.wait_for_idle(
                 apps=[PG],
                 status="active",
-                raise_on_blocked=True,
                 timeout=1000,
                 wait_for_exact_units=3,
             ),
             ops_test.model.wait_for_idle(
                 apps=[PGB],
                 status="active",
+                raise_on_blocked=True,
                 timeout=1000,
             ),
         )

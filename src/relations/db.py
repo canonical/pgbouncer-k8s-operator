@@ -78,6 +78,9 @@ class DbProvides(Object):
         super().__init__(charm, self.relation_name)
 
         self.framework.observe(
+            charm.on[self.relation_name].relation_joined, self._on_relation_joined
+        )
+        self.framework.observe(
             charm.on[self.relation_name].relation_changed, self._on_relation_changed
         )
         self.framework.observe(
@@ -90,9 +93,8 @@ class DbProvides(Object):
         self.charm = charm
         self.admin = admin
 
-
     def _on_relation_joined(self, join_event: RelationJoinedEvent):
-        """Handle db-relation-joined event. """
+        """Handle db-relation-joined event."""
 
         if not self.charm.backend_relation:
             # We can't relate an app to the backend database without a backend postgres relation
@@ -113,7 +115,7 @@ class DbProvides(Object):
         pgb_app_databag = relation_data[self.charm.app]
 
         external_unit = self.get_external_units(join_event.relation)[0]
-        database = pgb_app_databag.get("database", relation_data[external_unit].get("database"))
+        database = relation_data[external_unit].get("database")
         if database is None:
             logger.warning("No database name provided")
             join_event.defer()

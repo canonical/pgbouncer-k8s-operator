@@ -42,7 +42,9 @@ async def get_cfg(ops_test: OpsTest) -> pgb.PgbConfig:
     return pgb.PgbConfig(cat_cfg[1])
 
 
-def wait_for_relation_joined_between(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> None:
+def wait_for_relation_joined_between(
+    ops_test: OpsTest, endpoint_one: str, endpoint_two: str
+) -> None:
     """Wait for relation to be be created before checking if it's waiting or idle.
 
     Args:
@@ -67,7 +69,9 @@ def new_relation_joined(ops_test: OpsTest, endpoint_one: str, endpoint_two: str)
     return False
 
 
-def wait_for_relation_removed_between(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> None:
+def wait_for_relation_removed_between(
+    ops_test: OpsTest, endpoint_one: str, endpoint_two: str
+) -> None:
     """Wait for relation to be removed before checking if it's waiting or idle.
 
     Args:

@@ -17,11 +17,11 @@ from ops.framework import StoredState
 from ops.main import main
 from ops.model import (
     ActiveStatus,
+    Application,
     BlockedStatus,
     MaintenanceStatus,
     Relation,
     WaitingStatus,
-    Application
 )
 from ops.pebble import Layer, PathError
 
@@ -390,7 +390,6 @@ class PgBouncerK8sCharm(CharmBase):
         for entry in backend_relation.data:
             if isinstance(entry, Application) and entry != self.app:
                 return self.backend_relation.data[entry]
-
 
     @property
     def backend_postgres(self) -> PostgreSQL:
