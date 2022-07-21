@@ -12,7 +12,7 @@ from typing import Dict
 from charms.pgbouncer_operator.v0 import pgb
 from charms.pgbouncer_operator.v0.pgb import PgbConfig
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL
-from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
+from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import (
@@ -56,12 +56,20 @@ class PgBouncerK8sCharm(CharmBase):
     #  Charm Lifecycle Hooks
     # =======================
 
-    def _on_install(self, _) -> None:
+    def _on_install(self, event: InstallEvent) -> None:
         """On install hook.
 
         This imports any users from the juju config, and initialises userlist and pgbouncer.ini
         config files that are essential for pgbouncer to run.
         """
+        container = self.unit.get_container(PGB)
+        if not container.can_connect():
+            logger.debug(
+                "pgbouncer config could not be rendered, waiting for container to be available."
+            )
+            event.defer()
+            return
+
         # Initialise pgbouncer.ini config files from defaults set in charm lib.
         config = PgbConfig(pgb.DEFAULT_CONFIG)
         self._render_pgb_config(config)
@@ -187,7 +195,12 @@ class PgBouncerK8sCharm(CharmBase):
             FileNotFoundError when the config at INI_PATH isn't available, such as if this is
             called before the charm has finished installing.
         """
-        return PgbConfig(self._read_file(INI_PATH))
+        try:
+            config = self._read_file(INI_PATH)
+            return pgb.PgbConfig(config)
+        except FileNotFoundError as e:
+            logger.error("pgbouncer config not found")
+            raise e
 
     def _render_userlist(self, userlist: Dict, reload_pgbouncer: bool = False) -> None:
         """Generate userlist.txt from the given userlist dict, and deploy it to the container.

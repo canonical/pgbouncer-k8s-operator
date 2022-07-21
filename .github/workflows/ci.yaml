@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install dependencies
-        run: python3 -m pip install tox
+        run: python -m pip install tox
       - name: Run linters
         run: tox -e lint
   unit-test:
@@ -23,40 +23,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install dependencies
-        run: python3 -m pip install tox
+        run: python -m pip install tox
       - name: Run tests
         run: tox -e unit
-  # This job is needed until the OCI image is published to ROCKS.
-  build-oci-image:
-    name: Build OCI image for integration tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          repository: 'canonical/pgbouncer-container'
-          ref: 'v0.1.1'
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      - name: Build Image and Export
-        uses: docker/build-push-action@v2
-        with:
-          context: ./
-          file: ./Dockerfile
-          builder: ${{ steps.buildx.outputs.name }}
-          # Do not publish the image.
-          push: false
-          # Set the tag to retrieve the image in integration tests.
-          tags: pgbouncer:local
-          outputs: type=docker,dest=/tmp/image.tar
-      - name: Upload image to be used in integration tests
-        uses: actions/upload-artifact@v2
-        with:
-          name: image
-          path: /tmp/image.tar
   integration-test-microk8s:
     name: Integration tests (microk8s)
-    needs: build-oci-image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -66,21 +37,10 @@ jobs:
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: microk8s
-        # These two steps (download and load image) are needed until the OCI image is published to ROCKS.
-      - name: Download image built in build oci image step
-        uses: actions/download-artifact@v2
-        with:
-          name: image
-          path: /tmp
-      - name: Load Image into microk8s
-        run: |
-          /usr/bin/sg microk8s -c "microk8s ctr image import /tmp/image.tar"
       - name: Run integration tests
-        # set a predictable model name so it can be consumed by charm-logdump-action
-        run: tox -e integration -- --model testing
+        run: tox -e integration
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
         if: failure()
         with:
           app: pgbouncer-k8s-operator
-          model: testing

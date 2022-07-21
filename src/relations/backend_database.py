@@ -36,6 +36,8 @@ Example:
 └──────────────────┴──────────────────┴──────────────────┴──────────────────┘
 """
 
+import logging
+
 from charms.data_platform_libs.v0.database_requires import (
     DatabaseCreatedEvent,
     DatabaseRequires,
@@ -44,6 +46,9 @@ from ops.charm import CharmBase, RelationBrokenEvent
 from ops.framework import Object
 
 RELATION_NAME = "backend-database"
+
+
+logger = logging.getLogger(__name__)
 
 
 class BackendDatabaseRequires(Object):
@@ -96,4 +101,5 @@ class BackendDatabaseRequires(Object):
             user = self.charm.backend_postgres.user
             self.charm.remove_user(user, cfg=cfg, reload_pgbouncer=True, render_cfg=True)
         except FileNotFoundError:
+            logging.error("failed to access config file")
             event.defer()
