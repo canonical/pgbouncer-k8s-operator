@@ -108,6 +108,7 @@ class BackendDatabaseRequires(Object):
             self._trigger_db_relations()
 
         except FileNotFoundError:
+            logging.error("failed to access config file")
             event.defer()
 
     def _trigger_db_relations(self):
