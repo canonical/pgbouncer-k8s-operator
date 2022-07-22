@@ -10,14 +10,20 @@ As this charm is not yet published, you need to follow the build and deploy inst
 
 ## Relations
 
+Please only create relations on charms that are in active-idle status.
+
 - `backend:postgresql-client`
   - Provides a relation to the corresponding [postgresql-k8s-operator charm](https://github.com/canonical/postgresql-k8s-operator).
   - Makes use of the [data-platform-libs DatabaseRequires library](https://github.com/canonical/data-platform-libs/blob/main/lib/charms/data_platform_libs/v0/database_provides.py).
 
-### Planned
+### Legacy
+
+These relations will be deprecated in future. When deploying these relations, please ensure the `backend` relation is completed first.
 
 - `db:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)
 - `db-admin:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)
+
+### Planned
 
 The following relations provide support for the [LMA charm bundle](https://juju.is/docs/lma2), our expected observability stack.
 

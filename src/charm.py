@@ -7,6 +7,7 @@
 
 import logging
 import os
+import socket
 from typing import Dict
 
 from charms.pgbouncer_operator.v0 import pgb
@@ -17,6 +18,7 @@ from ops.framework import StoredState
 from ops.main import main
 from ops.model import (
     ActiveStatus,
+    Application,
     BlockedStatus,
     MaintenanceStatus,
     Relation,
@@ -26,6 +28,7 @@ from ops.pebble import Layer, PathError
 
 from relations.backend_database import RELATION_NAME as BACKEND_RELATION_NAME
 from relations.backend_database import BackendDatabaseRequires
+from relations.db import DbProvides
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +52,8 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
         self.backend = BackendDatabaseRequires(self)
+        self.legacy_db_relation = DbProvides(self, admin=False)
+        self.legacy_db_admin_relation = DbProvides(self, admin=True)
 
         self._cores = os.cpu_count()
 
@@ -289,13 +294,13 @@ class PgBouncerK8sCharm(CharmBase):
             return
 
         userlist[user] = password
+        self._render_userlist(userlist)
 
         if admin and (user not in cfg[PGB]["admin_users"]):
             cfg[PGB]["admin_users"].append(user)
         if stats and (user not in cfg[PGB]["stats_users"]):
             cfg[PGB]["stats_users"].append(user)
 
-        self._render_userlist(userlist)
         if render_cfg:
             self._render_pgb_config(cfg, reload_pgbouncer)
 
@@ -376,19 +381,46 @@ class PgBouncerK8sCharm(CharmBase):
             return backend_relation
 
     @property
+    def backend_relation_app_databag(self) -> Dict:
+        """Wrapper around accessing the remote application databag for the backend relation.
+
+        Returns None if backend_relation is none.
+
+        Since we can trigger db-relation-changed on backend-changed, we need to be able to easily
+        access the backend app relation databag.
+        """
+        backend_relation = self.backend_relation
+        if backend_relation:
+            for key, databag in backend_relation.data.items():
+                if isinstance(key, Application) and key != self.app:
+                    return databag
+
+        return None
+
+    @property
     def backend_postgres(self) -> PostgreSQL:
         """Returns PostgreSQL representation of backend database, as defined in relation."""
-        backend_relation = self.backend_relation
-        if not backend_relation:
+        if not self.backend_relation:
             return None
 
-        backend_data = backend_relation.data[backend_relation.app]
-        host = backend_data.get("endpoints")
-        user = backend_data.get("user")
-        password = backend_data.get("password")
-        database = backend_data.get("database")
+        logger.error(self.backend_relation_app_databag)
+        logger.error(self.backend_relation.data[self.app])
+        host = self.backend_relation_app_databag.get("endpoints").split(":")[0]
+        user = self.backend_relation_app_databag.get("username")
+        password = self.backend_relation_app_databag.get("password")
+        database = self.backend_relation.data[self.app].get("database")
 
         return PostgreSQL(host=host, user=user, password=password, database=database)
+
+    @property
+    def unit_pod_hostname(self, name="") -> str:
+        """Creates the pod hostname from its name."""
+        return socket.getfqdn(name)
+
+    @property
+    def local_ip(self) -> str:
+        """returns the local IP to listen on"""
+        return
 
 
 if __name__ == "__main__":
