@@ -417,6 +417,11 @@ class PgBouncerK8sCharm(CharmBase):
         """Creates the pod hostname from its name."""
         return socket.getfqdn(name)
 
+    @property
+    def local_ip(self) -> str:
+        """returns the local IP to listen on"""
+        return
+
 
 if __name__ == "__main__":
     main(PgBouncerK8sCharm)

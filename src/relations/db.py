@@ -164,6 +164,9 @@ class DbProvides(Object):
 
         Takes information from the db relation databag and copies it into the pgbouncer.ini
         config.
+        TODO update hostnames and ports to point to pgbouncer host and port
+        TODO update pgbouncer config to have a listen_addr and listen_port
+        TODO update pgb config to point to remote hostnames and ports
         """
         if not self.charm.unit.is_leader():
             return
@@ -199,9 +202,6 @@ class DbProvides(Object):
             change_event.defer()
             return
 
-        logger.error(pgb_app_databag)
-
-        logger.error(self.charm.backend_relation_app_databag)
         backend_endpoint = self.charm.backend_relation_app_databag.get("endpoints")
         if backend_endpoint == None:
             # Sometimes postgres can create relation data without endpoints, so we defer until they
