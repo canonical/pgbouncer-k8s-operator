@@ -95,6 +95,9 @@ class DbProvides(Object):
 
     def _on_relation_joined(self, join_event: RelationJoinedEvent):
         """Handle db-relation-joined event."""
+        if not self.charm.unit.is_leader():
+            return
+
         if not self.charm.backend_relation:
             # We can't relate an app to the backend database without a backend postgres relation
             logger.warning("waiting for backend-database relation")
@@ -125,7 +128,6 @@ class DbProvides(Object):
         database = remote_unit_databag.get("database")
         if database is None:
             logger.warning("No database name provided")
-            join_event.defer()
             return
 
         user = self.generate_username(join_event)
@@ -218,7 +220,7 @@ class DbProvides(Object):
         standbys = self._get_standbys(cfg, external_app_name, cfg_entry, database, user, password)
 
         # Write config data to charm filesystem
-        logger.error(cfg.render())
+        logger.error(cfg)
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         # Populate databags

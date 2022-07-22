@@ -103,6 +103,10 @@ class PgbConfig(MutableMapping):
         """Gets number of key-value pairs in internal mapping."""
         return len(self.__dict__)
 
+    def __str__(self):
+        """String representation of PgbConfig object."""
+        return str(self.__dict__)
+
     def read_dict(self, input: Dict) -> None:
         """Populates this object from a dictionary.
 
