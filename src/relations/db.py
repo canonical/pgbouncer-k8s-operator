@@ -95,7 +95,6 @@ class DbProvides(Object):
 
     def _on_relation_joined(self, join_event: RelationJoinedEvent):
         """Handle db-relation-joined event."""
-
         if not self.charm.backend_relation:
             # We can't relate an app to the backend database without a backend postgres relation
             logger.warning("waiting for backend-database relation")
@@ -113,10 +112,9 @@ class DbProvides(Object):
         pgb_unit_databag = relation_data[self.charm.unit]
         pgb_app_databag = relation_data[self.charm.app]
         remote_unit_databag = relation_data[join_event.unit]
-        remote_app_databag = relation_data[join_event.app]
 
         # Do not allow apps requesting extensions to be installed.
-        if "extensions" in remote_unit_databag or "extensions" in remote_app_databag:
+        if "extensions" in remote_unit_databag:
             logger.error(
                 "ERROR - `extensions` cannot be requested through relations"
                 " - they should be installed through a database charm config in the future"
@@ -129,9 +127,6 @@ class DbProvides(Object):
             logger.warning("No database name provided")
             join_event.defer()
             return
-
-        # TODO consider replacing database name sanitisation with sql.Identifier()
-        database = database.replace("-", "_")
 
         user = self.generate_username(join_event)
         password = pgb.generate_password()
@@ -193,11 +188,7 @@ class DbProvides(Object):
         user = pgb_app_databag.get("user")
         password = pgb_app_databag.get("password")
 
-        # TODO clean this up
-        # Get data about primary unit for databags and charm config.
         backend_endpoint = self.charm.backend_relation_app_databag.get("endpoints")
-        logger.error(self.charm.backend_relation_app_databag)
-
         primary_host = backend_endpoint.split(":")[0]
         primary_port = backend_endpoint.split(":")[1]
         primary = {
@@ -219,6 +210,9 @@ class DbProvides(Object):
         standbys = self._get_standbys(cfg, external_app_name, cfg_entry, database, user, password)
 
         # Write config data to charm filesystem
+        for key, value in cfg.items():
+            logger.error(key)
+            logger.error(value)
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         # Populate databags
@@ -353,6 +347,7 @@ class DbProvides(Object):
         return ",".join(sorted([unit.name for unit in self.get_external_units(relation)]))
 
     def get_external_app(self, relation):
-        for entry in relation.data:
+        """Gets external application, as an Application object."""
+        for entry in relation.data.keys():
             if isinstance(entry, Application) and entry != self.charm.app:
-                return relation.data[entry]
+                return entry

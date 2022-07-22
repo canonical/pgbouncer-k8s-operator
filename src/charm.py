@@ -22,6 +22,7 @@ from ops.model import (
     MaintenanceStatus,
     Relation,
     WaitingStatus,
+    Unit,
 )
 from ops.pebble import Layer, PathError
 
@@ -381,15 +382,20 @@ class PgBouncerK8sCharm(CharmBase):
 
     @property
     def backend_relation_app_databag(self) -> Dict:
-        """Wrapper around accessing the remote application databag for the backend relation."""
-        backend_relation = self.backend_relation
-        if not backend_relation:
-            return None
+        """Wrapper around accessing the remote application databag for the backend relation.
 
-        # Since we can trigger db-relation-changed on backend-changed,
-        for entry in backend_relation.data:
-            if isinstance(entry, Application) and entry != self.app:
-                return self.backend_relation.data[entry]
+        Returns None if backend_relation is none.
+
+        Since we can trigger db-relation-changed on backend-changed, we need to be able to easily
+        access the backend app relation databag.
+        """
+        backend_relation = self.backend_relation
+        if backend_relation:
+            for key, databag in backend_relation.data.items():
+                if isinstance(key, Application) and key != self.app:
+                    return databag
+
+        return None
 
     @property
     def backend_postgres(self) -> PostgreSQL:
