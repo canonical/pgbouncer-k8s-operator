@@ -7,6 +7,7 @@
 
 import logging
 import os
+import socket
 from typing import Dict
 
 from charms.pgbouncer_operator.v0 import pgb
@@ -22,7 +23,6 @@ from ops.model import (
     MaintenanceStatus,
     Relation,
     WaitingStatus,
-    Unit,
 )
 from ops.pebble import Layer, PathError
 
@@ -393,8 +393,6 @@ class PgBouncerK8sCharm(CharmBase):
         if backend_relation:
             for key, databag in backend_relation.data.items():
                 if isinstance(key, Application) and key != self.app:
-                    logger.error(key)
-                    logger.error(databag)
                     return databag
 
         return None
@@ -413,6 +411,11 @@ class PgBouncerK8sCharm(CharmBase):
         database = self.backend_relation.data[self.app].get("database")
 
         return PostgreSQL(host=host, user=user, password=password, database=database)
+
+    @property
+    def unit_pod_hostname(self, name="") -> str:
+        """Creates the pod hostname from its name."""
+        return socket.getfqdn(name)
 
 
 if __name__ == "__main__":

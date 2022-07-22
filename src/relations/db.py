@@ -211,6 +211,8 @@ class DbProvides(Object):
 
         primary_host = backend_endpoint.split(":")[0]
         primary_port = backend_endpoint.split(":")[1]
+        # TODO this is sending connections to the postgres hostname, not pgbouncer - we aren't
+        # routing anything!
         primary = {
             "host": primary_host,
             "dbname": database,
@@ -242,7 +244,7 @@ class DbProvides(Object):
                 "master": pgb.parse_dict_to_kv_string(primary),
                 "port": primary_port,
                 "standbys": standbys,
-                "version": "12",
+                "version": "12",  # TODO get postgres version from charm.postgres
                 "user": user,
                 "password": password,
                 "database": database,
@@ -267,6 +269,8 @@ class DbProvides(Object):
             "read-only-endpoints"
         ).split(","):
             standby = {
+                # TODO this is sending connections to the postgres hostname, not pgbouncer - we aren't
+                # routing anything!
                 "host": read_only_endpoint.split(":")[0],
                 "dbname": dbname,
                 "port": read_only_endpoint.split(":")[1],

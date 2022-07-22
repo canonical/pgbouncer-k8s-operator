@@ -56,9 +56,7 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
             ),
             ops_test.model.deploy(REDIS_APP_NAME, application_name=REDIS_APP_NAME),
         )
-        await ops_test.model.wait_for_idle(
-            apps=[PG, PGB], status="active", timeout=1000
-        )
+        await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
 
         backend_relation = await ops_test.model.relate(f"{PGB}:backend-database", f"{PG}:database")
         pgb_user = f"relation_id_{backend_relation.id}"
