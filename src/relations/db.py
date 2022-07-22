@@ -7,6 +7,7 @@ This relation uses the pgsql interface, omitting roles and extensions as they ar
 the new postgres charm.
 
 Some example relation data is below. All values are examples, generated in a running test instance.
+# TODO update this documentation to use the discourse k8s charm
 ┏━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
 ┃ category  ┃          keys ┃ pgbouncer/25                                      ┃ psql/1 ┃
 ┡━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
@@ -114,10 +115,10 @@ class DbProvides(Object):
         relation_data = join_event.relation.data
         pgb_unit_databag = relation_data[self.charm.unit]
         pgb_app_databag = relation_data[self.charm.app]
-        remote_unit_databag = relation_data[join_event.unit]
+        remote_app_databag = relation_data[join_event.app]
 
         # Do not allow apps requesting extensions to be installed.
-        if "extensions" in remote_unit_databag:
+        if "extensions" in remote_app_databag:
             logger.error(
                 "ERROR - `extensions` cannot be requested through relations"
                 " - they should be installed through a database charm config in the future"
@@ -125,9 +126,10 @@ class DbProvides(Object):
             # TODO fail to create relation
             return
 
-        database = remote_unit_databag.get("database")
+        database = remote_app_databag.get("database")
         if database is None:
             logger.warning("No database name provided")
+            join_event.defer()
             return
 
         user = self.generate_username(join_event)
@@ -183,12 +185,20 @@ class DbProvides(Object):
         relation_data = change_event.relation.data
         pgb_unit_databag = relation_data[self.charm.unit]
         pgb_app_databag = relation_data[self.charm.app]
+        remote_app_databag = relation_data[change_event.app]
 
+        # External app != event.app
         external_app_name = self.get_external_app(change_event.relation).name
 
-        database = pgb_app_databag.get("database")
+        database = pgb_app_databag.get("database", remote_app_databag.get("database"))
         user = pgb_app_databag.get("user")
         password = pgb_app_databag.get("password")
+
+        if database is None or user is None or password is None:
+            logger.warning("No database name provided")
+            change_event.defer()
+            return
+
         logger.error(pgb_app_databag)
 
         logger.error(self.charm.backend_relation_app_databag)
@@ -354,6 +364,15 @@ class DbProvides(Object):
     def get_allowed_units(self, relation: Relation) -> str:
         """Gets the external units from this relation that can be allowed into the network."""
         return ",".join(sorted([unit.name for unit in self.get_external_units(relation)]))
+
+    def get_external_units(self, relation: Relation) -> Unit:
+        """Gets all units from this relation that aren't owned by this charm."""
+        # TODO switch if line for unit.app != self.charm.app
+        return [
+            unit
+            for unit in relation.data
+            if isinstance(unit, Unit) and not unit.name.startswith(self.model.app.name)
+        ]
 
     def get_external_app(self, relation):
         """Gets external application, as an Application object."""
