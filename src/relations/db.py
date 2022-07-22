@@ -187,8 +187,16 @@ class DbProvides(Object):
         database = pgb_app_databag.get("database")
         user = pgb_app_databag.get("user")
         password = pgb_app_databag.get("password")
+        logger.error(pgb_app_databag)
 
+        logger.error(self.charm.backend_relation_app_databag)
         backend_endpoint = self.charm.backend_relation_app_databag.get("endpoints")
+        if backend_endpoint == None:
+            # Sometimes postgres can create relation data without endpoints, so we defer until they
+            # show up.
+            change_event.defer()
+            return
+
         primary_host = backend_endpoint.split(":")[0]
         primary_port = backend_endpoint.split(":")[1]
         primary = {
@@ -210,9 +218,7 @@ class DbProvides(Object):
         standbys = self._get_standbys(cfg, external_app_name, cfg_entry, database, user, password)
 
         # Write config data to charm filesystem
-        for key, value in cfg.items():
-            logger.error(key)
-            logger.error(value)
+        logger.error(cfg.render())
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         # Populate databags
@@ -230,6 +236,7 @@ class DbProvides(Object):
                 "database": database,
                 "state": self._get_state(standbys),
             }
+            logger.error(updates)
             databag.update(updates)
 
     def generate_username(self, event):

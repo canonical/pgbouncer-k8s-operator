@@ -393,6 +393,8 @@ class PgBouncerK8sCharm(CharmBase):
         if backend_relation:
             for key, databag in backend_relation.data.items():
                 if isinstance(key, Application) and key != self.app:
+                    logger.error(key)
+                    logger.error(databag)
                     return databag
 
         return None
@@ -400,15 +402,15 @@ class PgBouncerK8sCharm(CharmBase):
     @property
     def backend_postgres(self) -> PostgreSQL:
         """Returns PostgreSQL representation of backend database, as defined in relation."""
-        backend_relation = self.backend_relation
-        if not backend_relation:
+        if not self.backend_relation:
             return None
 
-        backend_data = backend_relation.data[backend_relation.app]
-        host = backend_data.get("endpoints").split(":")[0]
-        user = backend_data.get("username")
-        password = backend_data.get("password")
-        database = backend_relation.data[self.app].get("database")
+        logger.error(self.backend_relation_app_databag)
+        logger.error(self.backend_relation.data[self.app])
+        host = self.backend_relation_app_databag.get("endpoints").split(":")[0]
+        user = self.backend_relation_app_databag.get("username")
+        password = self.backend_relation_app_databag.get("password")
+        database = self.backend_relation.data[self.app].get("database")
 
         return PostgreSQL(host=host, user=user, password=password, database=database)
 
