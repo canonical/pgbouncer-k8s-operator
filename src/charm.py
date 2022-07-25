@@ -103,6 +103,7 @@ class PgBouncerK8sCharm(CharmBase):
             self.config["max_db_connections"],
             self._cores,
         )
+        config["pgbouncer"]["listen_addr"] = self.unit_pod_hostname
         self._render_pgb_config(config)
 
         # Create an updated pebble layer for the pgbouncer container, and apply it if there are
@@ -403,8 +404,6 @@ class PgBouncerK8sCharm(CharmBase):
         if not self.backend_relation:
             return None
 
-        logger.error(self.backend_relation_app_databag)
-        logger.error(self.backend_relation.data[self.app])
         host = self.backend_relation_app_databag.get("endpoints").split(":")[0]
         user = self.backend_relation_app_databag.get("username")
         password = self.backend_relation_app_databag.get("password")
@@ -416,11 +415,6 @@ class PgBouncerK8sCharm(CharmBase):
     def unit_pod_hostname(self, name="") -> str:
         """Creates the pod hostname from its name."""
         return socket.getfqdn(name)
-
-    @property
-    def local_ip(self) -> str:
-        """returns the local IP to listen on"""
-        return
 
 
 if __name__ == "__main__":

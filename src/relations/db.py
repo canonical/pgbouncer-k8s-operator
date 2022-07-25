@@ -190,7 +190,6 @@ class DbProvides(Object):
         pgb_app_databag = relation_data[self.charm.app]
         remote_app_databag = relation_data[change_event.app]
 
-        # External app != event.app
         external_app_name = self.get_external_app(change_event.relation).name
 
         database = pgb_app_databag.get("database", remote_app_databag.get("database"))
@@ -222,6 +221,8 @@ class DbProvides(Object):
         dbs[cfg_entry] = deepcopy(primary)
         primary.update(
             {
+                "host": self.charm.unit_pod_hostname,
+                "port" : cfg["pgbouncer"]["listen_port"],
                 "user": user,
                 "password": password,
                 "fallback_application_name": external_app_name,
@@ -240,7 +241,7 @@ class DbProvides(Object):
             updates = {
                 "allowed-subnets": self.get_allowed_subnets(change_event.relation),
                 "allowed-units": self.get_allowed_units(change_event.relation),
-                "host": f"http://{primary_host}",
+                "host": f"http://{self.charm.unit_pod_hostname,}",
                 "master": pgb.parse_dict_to_kv_string(primary),
                 "port": primary_port,
                 "standbys": standbys,
@@ -279,6 +280,8 @@ class DbProvides(Object):
 
             standby.update(
                 {
+                    "host": self.charm.unit_pod_hostname,
+                    "port" : cfg["pgbouncer"]["listen_port"],
                     "fallback_application_name": app_name,
                     "user": user,
                     "password": password,
@@ -379,7 +382,10 @@ class DbProvides(Object):
         ]
 
     def get_external_app(self, relation):
-        """Gets external application, as an Application object."""
+        """Gets external application, as an Application object.
+
+        # External app != event.app
+        # """
         for entry in relation.data.keys():
             if isinstance(entry, Application) and entry != self.charm.app:
                 return entry
