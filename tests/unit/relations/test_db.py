@@ -233,7 +233,7 @@ class TestDb(unittest.TestCase):
         user = "user"
         pw = "pw"
 
-        standbys = self.db_relation._get_standbys(cfg, app, cfg_entry, db_name, user, pw)
+        standbys = self.db_relation._get_standby(cfg, app, cfg_entry, db_name, user, pw)
         standby_list = standbys.split(", ")
 
         assert len(standby_list) == 2

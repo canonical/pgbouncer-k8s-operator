@@ -59,10 +59,21 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
         await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
 
         backend_relation = await ops_test.model.relate(f"{PGB}:backend-database", f"{PG}:database")
-        pgb_user = f"relation_id_{backend_relation.id}"
         wait_for_relation_joined_between(ops_test, PGB, PG)
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, REDIS_APP_NAME], status="active", timeout=1000
+        )
+
+        pgb_user = f"relation_id_{backend_relation.id}"
+        userlist = await get_userlist(ops_test)
+        pgb_password = userlist[pgb_user]
+        await check_database_users_existence(
+            ops_test,
+            [pgb_user],
+            [],
+            admin=True,
+            pg_user=pgb_user,
+            pg_user_password=pgb_password,
         )
 
         # Discourse becomes blocked waiting for relations.
@@ -75,19 +86,17 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
             f"{PGB}:db-admin",
             FIRST_DISCOURSE_APP_NAME,
         )
+        wait_for_relation_joined_between(ops_test, PGB, FIRST_DISCOURSE_APP_NAME)
         await ops_test.model.add_relation(
             REDIS_APP_NAME,
             FIRST_DISCOURSE_APP_NAME,
         )
         wait_for_relation_joined_between(ops_test, REDIS_APP_NAME, FIRST_DISCOURSE_APP_NAME)
-        wait_for_relation_joined_between(ops_test, PGB, FIRST_DISCOURSE_APP_NAME)
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, FIRST_DISCOURSE_APP_NAME, REDIS_APP_NAME],
             status="active",
             timeout=2000,  # Discourse takes a longer time to become active (a lot of setup).
         )
-        userlist = await get_userlist(ops_test)
-        pgb_password = userlist[pgb_user]
 
         # Check for the correct databases and users creation.
         await check_database_creation(

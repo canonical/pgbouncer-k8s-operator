@@ -170,6 +170,7 @@ class DbProvides(Object):
             self.charm.backend_postgres.create_database(database, user)
         except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
             logger.error(f"failed to create database or user for {self.relation_name}")
+            join_event.defer()
             return
 
         for databag in [pgb_app_databag, pgb_unit_databag]:
@@ -206,16 +207,17 @@ class DbProvides(Object):
         relation_data = change_event.relation.data
         pgb_unit_databag = relation_data[self.charm.unit]
         pgb_app_databag = relation_data[self.charm.app]
+        # TODO Delete, this was used to get a backup database name but it shouldn't be used.
         remote_app_databag = relation_data[change_event.app]
 
         external_app_name = self.get_external_app(change_event.relation).name
 
-        database = pgb_app_databag.get("database", remote_app_databag.get("database"))
+        database = pgb_app_databag.get("database")
         user = pgb_app_databag.get("user")
         password = pgb_app_databag.get("password")
 
-        if database is None or user is None or password is None:
-            logger.warning("No database name provided")
+        if None in [database, user, password]:
+            logger.warning("relation not initialised - deferring until join_event is complete")
             change_event.defer()
             return
 
@@ -228,15 +230,12 @@ class DbProvides(Object):
 
         primary_host = backend_endpoint.split(":")[0]
         primary_port = backend_endpoint.split(":")[1]
-        # TODO this is sending connections to the postgres hostname, not pgbouncer - we aren't
-        # routing anything!
         primary = {
             "host": primary_host,
             "dbname": database,
             "port": primary_port,
         }
-        cfg_entry = self.get_db_cfg_name(database, change_event.relation.id)
-        dbs[cfg_entry] = deepcopy(primary)
+        dbs[database] = deepcopy(primary)
         primary.update(
             {
                 "host": self.charm.unit_pod_hostname,
@@ -248,7 +247,7 @@ class DbProvides(Object):
         )
 
         # Get data about standby units for databags and charm config.
-        standbys = self._get_standbys(cfg, external_app_name, cfg_entry, database, user, password)
+        standbys = self._get_standby(cfg, external_app_name, database, user, password)
 
         # Write config data to charm filesystem
         logger.error(cfg)
@@ -280,35 +279,28 @@ class DbProvides(Object):
         """Generates a unique database name for this relation."""
         return f"{database}_{id}"
 
-    def _get_standbys(self, cfg, app_name, cfg_entry, dbname, user, password):
+    def _get_standby(self, cfg, app_name, dbname, user, password):
         dbs = cfg["databases"]
 
-        standbys = []
-        logger.error(self.charm.backend_relation_app_databag)
-        for read_only_endpoint in self.charm.backend_relation_app_databag.get(
-            "read-only-endpoints"
-        ).split(","):
-            standby = {
-                # TODO this is sending connections to the postgres hostname, not pgbouncer - we aren't
-                # routing anything!
-                "host": read_only_endpoint.split(":")[0],
-                "dbname": dbname,
-                "port": read_only_endpoint.split(":")[1],
-            }
-            dbs[f"{cfg_entry}_standby"] = deepcopy(standby)
+        read_only_endpoints = self.charm.backend_relation_app_databag.get("read-only-endpoints")
+        if read_only_endpoints is None or len(read_only_endpoints) == 0:
+            return None
+        read_only_endpoint = read_only_endpoints.split(",")[0]
 
-            standby.update(
-                {
-                    "host": self.charm.unit_pod_hostname,
-                    "port": cfg["pgbouncer"]["listen_port"],
-                    "fallback_application_name": app_name,
-                    "user": user,
-                    "password": password,
-                }
-            )
-            standbys.append(pgb.parse_dict_to_kv_string(standby))
+        dbs[f"{dbname}_standby"] = {
+            "host": read_only_endpoint.split(":")[0],
+            "dbname": dbname,
+            "port": read_only_endpoint.split(":")[1],
+        }
 
-        return ", ".join(standbys)
+        return pgb.parse_dict_to_kv_string({
+            "host": self.charm.unit_pod_hostname,
+            "dbname": dbname,
+            "port": cfg["pgbouncer"]["listen_port"],
+            "fallback_application_name": app_name,
+            "user": user,
+            "password": password,
+        })
 
     def _get_state(self, standbys: str) -> str:
         """Gets the given state for this unit.
@@ -356,10 +348,19 @@ class DbProvides(Object):
         dbs = cfg["databases"]
         user = app_databag["user"]
         database = app_databag["database"]
-        cfg_entry = self.get_db_cfg_name(database, broken_event.relation.id)
 
-        del dbs[cfg_entry]
-        dbs.pop(f"{cfg_entry}_standby")
+        duplicate = False
+        logging.error(self.charm.model.relations)
+        for relname in ["db", "db-admin"]:
+            logging.error(self.charm.model.relations.get(relname))
+            for relation in self.charm.model.relations.get(relname):
+                logging.error(relation)
+                if relation.data.get("database") == database:
+                    duplicate = True
+
+        if not duplicate:
+            del dbs[database]
+            dbs.pop(f"{database}_standby")
 
         self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
 
