@@ -418,7 +418,6 @@ class PgBouncerK8sCharm(CharmBase):
         """Creates the pod hostname from its name."""
         return socket.getfqdn(name)
 
-
     def trigger_db_relations(self):
         """Triggers frontend relations if they exist."""
         db_relation = self.model.get_relation("db", None)

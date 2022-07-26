@@ -109,4 +109,3 @@ class BackendDatabaseRequires(Object):
         except FileNotFoundError:
             logging.error("failed to access config file")
             event.defer()
-

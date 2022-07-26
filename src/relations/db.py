@@ -291,14 +291,16 @@ class DbProvides(Object):
             "port": read_only_endpoint.split(":")[1],
         }
 
-        return pgb.parse_dict_to_kv_string({
-            "host": self.charm.unit_pod_hostname,
-            "dbname": dbname,
-            "port": cfg["pgbouncer"]["listen_port"],
-            "fallback_application_name": app_name,
-            "user": user,
-            "password": password,
-        })
+        return pgb.parse_dict_to_kv_string(
+            {
+                "host": self.charm.unit_pod_hostname,
+                "dbname": dbname,
+                "port": cfg["pgbouncer"]["listen_port"],
+                "fallback_application_name": app_name,
+                "user": user,
+                "password": password,
+            }
+        )
 
     def _get_state(self, standbys: str) -> str:
         """Gets the given state for this unit.
@@ -347,26 +349,21 @@ class DbProvides(Object):
         user = app_databag["user"]
         database = app_databag["database"]
 
+        # TODO somewhere I'm messing up this boolean logic - fix tomorrow
         duplicate = False
         logging.error(self.charm.model.relations)
-
         for relname in ["db", "db-admin"]:
             logging.error(self.charm.model.relations.get(relname))
-
             for relation in self.charm.model.relations.get(relname):
-
                 logging.error(relation)
-
                 if relation.id == broken_event.relation.id:
                     continue
-
                 logging.error(database)
                 logging.error(relation.data.get("database"))
                 if relation.data.get("database") == database:
                     duplicate = True
                     break
 
-        # TODO somewhere I'm messing up this boolean logic - fix tomorrow
         if not duplicate:
             del dbs[database]
             dbs.pop(f"{database}_standby")
