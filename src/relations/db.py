@@ -345,12 +345,18 @@ class DbProvides(Object):
         app_databag = broken_event.relation.data[self.charm.app]
 
         cfg = self.charm.read_pgb_config()
-        dbs = cfg["databases"]
         user = app_databag["user"]
         database = app_databag["database"]
 
         # TODO somewhere I'm messing up this boolean logic - fix tomorrow
-        duplicate = False
+        # The plan:
+        # - iterate through all relations
+        # - if relation R is not this relation, and R has a database key, check it against this
+        #   relation's database key
+        # - if there's a duplicate relation that wants this database key, keep the database in the
+        #   config
+        # - otherwise, delete the data.
+        # Presumably this also applies to the
         logging.error(self.charm.model.relations)
         for relname in ["db", "db-admin"]:
             logging.error(self.charm.model.relations.get(relname))
@@ -361,12 +367,11 @@ class DbProvides(Object):
                 logging.error(database)
                 logging.error(relation.data.get("database"))
                 if relation.data.get("database") == database:
-                    duplicate = True
-                    break
+                    # There's multiple databases using this, so break.
+                    return
 
-        if not duplicate:
-            del dbs[database]
-            dbs.pop(f"{database}_standby")
+        del cfg["databases"][database]
+        cfg["databases"].pop(f"{database}_standby")
 
         self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
 
