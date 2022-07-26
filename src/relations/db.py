@@ -222,7 +222,7 @@ class DbProvides(Object):
         primary.update(
             {
                 "host": self.charm.unit_pod_hostname,
-                "port" : cfg["pgbouncer"]["listen_port"],
+                "port": cfg["pgbouncer"]["listen_port"],
                 "user": user,
                 "password": password,
                 "fallback_application_name": external_app_name,
@@ -281,7 +281,7 @@ class DbProvides(Object):
             standby.update(
                 {
                     "host": self.charm.unit_pod_hostname,
-                    "port" : cfg["pgbouncer"]["listen_port"],
+                    "port": cfg["pgbouncer"]["listen_port"],
                     "fallback_application_name": app_name,
                     "user": user,
                     "password": password,
@@ -385,7 +385,7 @@ class DbProvides(Object):
         """Gets external application, as an Application object.
 
         # External app != event.app
-        # """
+        #"""
         for entry in relation.data.keys():
             if isinstance(entry, Application) and entry != self.charm.app:
                 return entry
