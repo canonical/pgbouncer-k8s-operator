@@ -89,7 +89,7 @@ class BackendDatabaseRequires(Object):
                 render_cfg=True,
             )
 
-            self._trigger_db_relations()
+            self.charm.trigger_db_relations()
 
         except FileNotFoundError:
             event.defer()
@@ -104,18 +104,9 @@ class BackendDatabaseRequires(Object):
             user = self.charm.backend_postgres.user
             self.charm.remove_user(user, cfg=cfg, reload_pgbouncer=True, render_cfg=True)
 
-            self._trigger_db_relations()
+            self.charm._trigger_db_relations()
 
         except FileNotFoundError:
             logging.error("failed to access config file")
             event.defer()
 
-    def _trigger_db_relations(self):
-        """Triggers frontend relations if they exist."""
-        db_relation = self.charm.model.get_relation("db", None)
-        if db_relation is not None:
-            self.charm.on.db_relation_changed.emit(db_relation)
-
-        db_admin_relation = self.charm.model.get_relation("db-admin", None)
-        if db_admin_relation is not None:
-            self.charm.on.db_admin_relation_changed.emit(db_admin_relation)

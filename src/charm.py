@@ -103,6 +103,7 @@ class PgBouncerK8sCharm(CharmBase):
             self.config["max_db_connections"],
             self._cores,
         )
+        config["pgbouncer"]["listen_port"] = self.config["listen_port"]
         self._render_pgb_config(config)
 
         # Create an updated pebble layer for the pgbouncer container, and apply it if there are
@@ -416,6 +417,17 @@ class PgBouncerK8sCharm(CharmBase):
     def unit_pod_hostname(self, name="") -> str:
         """Creates the pod hostname from its name."""
         return socket.getfqdn(name)
+
+
+    def trigger_db_relations(self):
+        """Triggers frontend relations if they exist."""
+        db_relation = self.model.get_relation("db", None)
+        if db_relation is not None:
+            self.on.db_relation_changed.emit(db_relation)
+
+        db_admin_relation = self.model.get_relation("db-admin", None)
+        if db_admin_relation is not None:
+            self.on.db_admin_relation_changed.emit(db_admin_relation)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,10 @@
 # See LICENSE file for licensing details.
 
 options:
+  listen_port:
+    default: 6432
+    description: The port where pgbouncer listens fix this later
+    type: int
   pool_mode:
     default: session
     description: |

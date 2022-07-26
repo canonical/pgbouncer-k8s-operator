@@ -250,7 +250,6 @@ class DbProvides(Object):
         standbys = self._get_standby(cfg, external_app_name, database, user, password)
 
         # Write config data to charm filesystem
-        logger.error(cfg)
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         # Populate databags
@@ -268,7 +267,6 @@ class DbProvides(Object):
                 "database": database,
                 "state": self._get_state(standbys),
             }
-            logger.error(updates)
             databag.update(updates)
 
     def generate_username(self, event):
@@ -351,13 +349,24 @@ class DbProvides(Object):
 
         duplicate = False
         logging.error(self.charm.model.relations)
+
         for relname in ["db", "db-admin"]:
             logging.error(self.charm.model.relations.get(relname))
+
             for relation in self.charm.model.relations.get(relname):
+
                 logging.error(relation)
+
+                if relation.id == broken_event.relation.id:
+                    continue
+
+                logging.error(database)
+                logging.error(relation.data.get("database"))
                 if relation.data.get("database") == database:
                     duplicate = True
+                    break
 
+        # TODO somewhere I'm messing up this boolean logic - fix tomorrow
         if not duplicate:
             del dbs[database]
             dbs.pop(f"{database}_standby")
