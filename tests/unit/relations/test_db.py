@@ -217,12 +217,16 @@ class TestDb(unittest.TestCase):
         _render_cfg.assert_called_with(_read_cfg.return_value, reload_pgbouncer=True)
 
     @patch("charm.PgBouncerK8sCharm.backend_relation_app_databag", new_callable=PropertyMock)
-    @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
-    def test_get_standbys(self, backend_relation, backend_databag):
-        backend_data = {"read-only-endpoints": "host1:port1,host2:port2"}
-        self.charm.backend_relation.data = {self.charm.backend_relation.app: backend_data}
+    @patch(
+        "charm.PgBouncerK8sCharm.unit_pod_hostname",
+        new_callable=PropertyMock,
+        return_value="test-listen_addr",
+    )
+    def test_get_standbys(self, hostname, backend_databag):
+        backend_databag.return_value = {"read-only-endpoints": "host1:port1,host2:port2"}
 
         cfg = PgbConfig(DEFAULT_CONFIG)
+        cfg["pgbouncer"]["listen_addr"] = hostname.return_value
         app = "app_name"
         cfg_entry = "db_app"
         db_name = "dbname"
@@ -246,8 +250,8 @@ class TestDb(unittest.TestCase):
             assert standby_dict.get("user") == user
             assert standby_dict.get("password") == pw
             assert standby_dict.get("fallback_application_name") == app
-            assert "host" in standby_dict.get("host")
-            assert "port" in standby_dict.get("port")
+            assert standby_dict.get("host") == cfg["pgbouncer"]["listen_addr"]
+            assert standby_dict.get("port") == cfg["pgbouncer"]["listen_port"]
 
     @patch("relations.db.DbProvides.get_allowed_units", return_value="test_string")
     def test_on_relation_departed(self, _get_units):

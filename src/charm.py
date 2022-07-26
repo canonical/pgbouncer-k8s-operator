@@ -103,7 +103,6 @@ class PgBouncerK8sCharm(CharmBase):
             self.config["max_db_connections"],
             self._cores,
         )
-        config["pgbouncer"]["listen_addr"] = self.unit_pod_hostname
         self._render_pgb_config(config)
 
         # Create an updated pebble layer for the pgbouncer container, and apply it if there are
@@ -174,6 +173,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
+            logger.error("unable to connect to container")
             self.unit.status = WaitingStatus(
                 "Unable to push config to container - container unavailable."
             )
@@ -183,7 +183,7 @@ class PgBouncerK8sCharm(CharmBase):
             INI_PATH,
             config.render(),
             user=PG_USER,
-            permissions=0o600,
+            permissions=0o644,
             make_dirs=True,
         )
         logging.info("pushed new pgbouncer.ini config file to pgbouncer container")
@@ -220,6 +220,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
+            logger.error("unable to connect to container")
             self.unit.status = WaitingStatus(
                 "Unable to push config to container - container unavailable."
             )
@@ -229,7 +230,7 @@ class PgBouncerK8sCharm(CharmBase):
             USERLIST_PATH,
             pgb.generate_userlist(userlist),
             user=PG_USER,
-            permissions=0o600,
+            permissions=0o644,
             make_dirs=True,
         )
         logging.info("pushed new userlist to pgbouncer container")

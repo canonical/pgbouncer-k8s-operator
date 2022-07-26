@@ -4,7 +4,7 @@
 # Learn more about testing at: https://juju.is/docs/sdk/testing
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 from charms.pgbouncer_operator.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from ops.model import ActiveStatus, WaitingStatus
@@ -35,8 +35,13 @@ class TestCharm(unittest.TestCase):
         _gen_pw.assert_called_once()
 
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
+    @patch(
+        "charm.PgBouncerK8sCharm.unit_pod_hostname",
+        return_value="test-host",
+        new_callable=PropertyMock,
+    )
     @patch("ops.model.Container.restart")
-    def test_on_config_changed(self, _restart, _read):
+    def test_on_config_changed(self, _restart, _host, _read):
         self.harness.update_config()
 
         mock_cores = 1
@@ -50,6 +55,7 @@ class TestCharm(unittest.TestCase):
             max_db_connections=max_db_connections,
             pgb_instances=mock_cores,
         )
+        test_config["pgbouncer"]["listen_addr"] = _host.return_value
 
         self.harness.update_config(
             {

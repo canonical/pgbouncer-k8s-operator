@@ -37,6 +37,7 @@ INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
 DEFAULT_CONFIG = {
     "databases": {},
     "pgbouncer": {
+        "listen_addr": "*",
         "listen_port": "6432",
         "logfile": f"{PGB_DIR}/pgbouncer.log",
         "pidfile": f"{PGB_DIR}/pgbouncer.pid",

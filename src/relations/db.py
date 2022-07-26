@@ -7,28 +7,49 @@ This relation uses the pgsql interface, omitting roles and extensions as they ar
 the new postgres charm.
 
 Some example relation data is below. All values are examples, generated in a running test instance.
-# TODO update this documentation to use the discourse k8s charm
-┏━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
-┃ category  ┃          keys ┃ pgbouncer/25                                      ┃ psql/1 ┃
-┡━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
-│ metadata  │      endpoint │ 'db'                                              │ 'db'   │
-│           │        leader │ True                                              │ True   │
-├───────────┼───────────────┼───────────────────────────────────────────────────┼────────┤
-│ unit data │ allowed-units │ psql/1                                            │        │
-│           │      database │ cli                                               │ cli    │
-│           │          host │ 10.101.233.10                                     │        │
-│           │        master │ dbname=cli host=10.101.233.10                     │        │
-│           │               │ password=jnT4LxNPPrssscxGYmGPy4FKjRNXCn4NL2Y32jqs │        │
-│           │               │ port=6432 user=db_85_psql                         │        │
-│           │      password │ jnT4LxNPPrssscxGYmGPy4FKjRNXCn4NL2Y32jqs          │        │
-│           │          port │ 6432                                              │        │
-│           │      standbys │ dbname=cli_standby host=10.101.233.10             │        │
-│           │               │ password=jnT4LxNPPrssscxGYmGPy4FKjRNXCn4NL2Y32jqs │        │
-│           │               │ port=6432 user=db_85_psql                         │        │
-│           │         state │ master                                            │        │
-│           │          user │ db_85_psql                                        │        │
-│           │       version │ 12                                                │        │
-└───────────┴───────────────┴───────────────────────────────────────────────────┴────────┘
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ category         ┃            keys ┃ pgbouncer-k8s-operator/0                                ┃ finos-waltz/0 ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ metadata         │        endpoint │ 'db'                                                    │ 'db'          │
+│                  │          leader │ True                                                    │ True          │
+├──────────────────┼─────────────────┼─────────────────────────────────────────────────────────┼───────────────┤
+│ application data │ allowed-subnets │ 10.152.183.22/32                                        │               │
+│                  │   allowed-units │ finos-waltz/0                                           │               │
+│                  │        database │ waltz                                                   │ waltz         │
+│                  │            host │ pgbouncer-k8s-operator-0.pgbouncer-k8s-operator-endpoi… │               │
+│                  │          master │ host=pgbouncer-k8s-operator-0.pgbouncer-k8s-operator-e… │               │
+│                  │                 │ dbname=waltz port=6432 user=relation_id_3               │               │
+│                  │                 │ password=ZFz5RnH7hyvTpgu1wE0O9uoi                       │               │
+│                  │                 │ fallback_application_name=finos-waltz                   │               │
+│                  │        password │ ZFz5RnH7hyvTpgu1wE0O9uoi                                │               │
+│                  │            port │ 5432                                                    │               │
+│                  │        standbys │ host=pgbouncer-k8s-operator-0.pgbouncer-k8s-operator-e… │               │
+│                  │                 │ dbname=waltz port=6432                                  │               │
+│                  │                 │ fallback_application_name=finos-waltz                   │               │
+│                  │                 │ user=relation_id_3 password=ZFz5RnH7hyvTpgu1wE0O9uoi    │               │
+│                  │           state │ master                                                  │               │
+│                  │            user │ relation_id_3                                           │               │
+│                  │         version │ 12                                                      │               │
+│ unit data        │ allowed-subnets │ 10.152.183.22/32                                        │               │
+│                  │   allowed-units │ finos-waltz/0                                           │               │
+│                  │        database │ waltz                                                   │ waltz         │
+│                  │            host │ pgbouncer-k8s-operator-0.pgbouncer-k8s-operator-endpoi… │               │
+│                  │          master │ host=pgbouncer-k8s-operator-0.pgbouncer-k8s-operator-e… │               │
+│                  │                 │ dbname=waltz port=6432 user=relation_id_3               │               │
+│                  │                 │ password=ZFz5RnH7hyvTpgu1wE0O9uoi                       │               │
+│                  │                 │ fallback_application_name=finos-waltz                   │               │
+│                  │        password │ ZFz5RnH7hyvTpgu1wE0O9uoi                                │               │
+│                  │            port │ 5432                                                    │               │
+│                  │        standbys │ host=pgbouncer-k8s-operator-0.pgbouncer-k8s-operator-e… │               │
+│                  │                 │ dbname=waltz port=6432                                  │               │
+│                  │                 │ fallback_application_name=finos-waltz                   │               │
+│                  │                 │ user=relation_id_3 password=ZFz5RnH7hyvTpgu1wE0O9uoi    │               │
+│                  │           state │ master                                                  │               │
+│                  │            user │ relation_id_3                                           │               │
+│                  │         version │ 12                                                      │               │
+└──────────────────┴─────────────────┴─────────────────────────────────────────────────────────┴───────────────┘
+wrf@wrf-canonical:~/src/pgbouncer-k8s-operator$
+
 """
 
 import logging
@@ -164,9 +185,6 @@ class DbProvides(Object):
 
         Takes information from the db relation databag and copies it into the pgbouncer.ini
         config.
-        TODO update hostnames and ports to point to pgbouncer host and port
-        TODO update pgbouncer config to have a listen_addr and listen_port
-        TODO update pgb config to point to remote hostnames and ports
         """
         if not self.charm.unit.is_leader():
             return
@@ -241,11 +259,11 @@ class DbProvides(Object):
             updates = {
                 "allowed-subnets": self.get_allowed_subnets(change_event.relation),
                 "allowed-units": self.get_allowed_units(change_event.relation),
-                "host": f"http://{self.charm.unit_pod_hostname,}",
+                "host": self.charm.unit_pod_hostname,
                 "master": pgb.parse_dict_to_kv_string(primary),
-                "port": primary_port,
+                "port": cfg["pgbouncer"]["listen_port"],
                 "standbys": standbys,
-                "version": "12",  # TODO get postgres version from charm.postgres
+                "version": self.charm.backend_postgres.get_postgresql_version(),
                 "user": user,
                 "password": password,
                 "database": database,
@@ -266,6 +284,7 @@ class DbProvides(Object):
         dbs = cfg["databases"]
 
         standbys = []
+        logger.error(self.charm.backend_relation_app_databag)
         for read_only_endpoint in self.charm.backend_relation_app_databag.get(
             "read-only-endpoints"
         ).split(","):
