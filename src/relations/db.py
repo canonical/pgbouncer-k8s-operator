@@ -48,7 +48,6 @@ Some example relation data is below. All values are examples, generated in a run
 │                  │            user │ relation_id_3                                           │               │
 │                  │         version │ 12                                                      │               │
 └──────────────────┴─────────────────┴─────────────────────────────────────────────────────────┴───────────────┘
-wrf@wrf-canonical:~/src/pgbouncer-k8s-operator$
 
 """
 
@@ -70,7 +69,14 @@ from ops.charm import (
     RelationJoinedEvent,
 )
 from ops.framework import Object
-from ops.model import Application, Relation, Unit
+from ops.model import (
+    ActiveStatus,
+    Application,
+    BlockedStatus,
+    MaintenanceStatus,
+    Relation,
+    Unit,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -120,9 +126,9 @@ class DbProvides(Object):
         if not self.charm.unit.is_leader():
             return
 
-        if not self.charm.backend_relation:
+        if not self.charm.backend_postgres:
             # We can't relate an app to the backend database without a backend postgres relation
-            logger.warning("waiting for backend-database relation")
+            logger.warning("waiting for backend-database relation to connect")
             join_event.defer()
             return
 
@@ -144,7 +150,9 @@ class DbProvides(Object):
                 "ERROR - `extensions` cannot be requested through relations"
                 " - they should be installed through a database charm config in the future"
             )
-            # TODO fail to create relation
+            self.charm.unit.status = BlockedStatus(
+                "bad relation request - remote app requested extensions, which are unsupported."
+            )
             return
 
         database = remote_app_databag.get("database")
@@ -156,6 +164,7 @@ class DbProvides(Object):
         user = self.generate_username(join_event)
         password = pgb.generate_password()
 
+        # Create user in pgbouncer config
         self.charm.add_user(
             user,
             password=password,
@@ -165,11 +174,22 @@ class DbProvides(Object):
             reload_pgbouncer=True,
         )
 
+        # Create user and database in backend postgresql database
         try:
+            logstr = f"initialising database and user for {self.relation_name} relation"
+            self.charm.unit.status = MaintenanceStatus(logstr)
+            logger.debug(logstr)
+
             self.charm.backend_postgres.create_user(user, password, admin=self.admin)
             self.charm.backend_postgres.create_database(database, user)
+
+            logstr = f"database and user for {self.relation_name} relation created"
+            self.charm.unit.status = ActiveStatus(logstr)
+            logger.debug(logstr)
         except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
-            logger.error(f"failed to create database or user for {self.relation_name}")
+            errmsg = f"failed to create database or user for {self.relation_name}"
+            logger.error(errmsg)
+            self.charm.unit.status = BlockedStatus(errmsg)
             join_event.defer()
             return
 
@@ -190,9 +210,9 @@ class DbProvides(Object):
         if not self.charm.unit.is_leader():
             return
 
-        if not self.charm.backend_relation:
+        if not self.charm.backend_postgres:
             # We can't relate an app to the backend database without a backend postgres relation
-            logger.warning("waiting for backend-database relation")
+            logger.warning("waiting for backend-database relation to connect")
             change_event.defer()
             return
 
@@ -202,7 +222,6 @@ class DbProvides(Object):
         )
 
         cfg = self.charm.read_pgb_config()
-        dbs = cfg["databases"]
 
         relation_data = change_event.relation.data
         pgb_unit_databag = relation_data[self.charm.unit]
@@ -210,6 +229,9 @@ class DbProvides(Object):
 
         external_app_name = self.get_external_app(change_event.relation).name
 
+        # No backup values because if pgb_app_databag isn't populated, this relation isn't
+        # initialised. This means that the database and user requested in this relation haven't
+        # been created, so we defer this event until the databag is populated.
         database = pgb_app_databag.get("database")
         user = pgb_app_databag.get("user")
         password = pgb_app_databag.get("password")
@@ -220,32 +242,32 @@ class DbProvides(Object):
             return
 
         backend_endpoint = self.charm.backend_relation_app_databag.get("endpoints")
-        if backend_endpoint == None:
-            # Sometimes postgres can create relation data without endpoints, so we defer until they
-            # show up.
-            change_event.defer()
-            return
-
         primary_host = backend_endpoint.split(":")[0]
         primary_port = backend_endpoint.split(":")[1]
-        primary = {
+
+        cfg["databases"][database] = {
             "host": primary_host,
             "dbname": database,
             "port": primary_port,
         }
-        dbs[database] = deepcopy(primary)
-        primary.update(
+
+        read_only_endpoint = self._get_read_only_endpoint()
+        cfg["databases"][f"{database}_standby"] = {
+            "host": read_only_endpoint.split(":")[0],
+            "dbname": database,
+            "port": read_only_endpoint.split(":")[1],
+        }
+
+        dbconnstr = pgb.parse_dict_to_kv_string(
             {
                 "host": self.charm.unit_pod_hostname,
+                "dbname": database,
                 "port": cfg["pgbouncer"]["listen_port"],
+                "fallback_application_name": external_app_name,
                 "user": user,
                 "password": password,
-                "fallback_application_name": external_app_name,
             }
         )
-
-        # Get data about standby units for databags and charm config.
-        standbys = self._get_standby(cfg, external_app_name, database, user, password)
 
         # Write config data to charm filesystem
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
@@ -256,14 +278,14 @@ class DbProvides(Object):
                 "allowed-subnets": self.get_allowed_subnets(change_event.relation),
                 "allowed-units": self.get_allowed_units(change_event.relation),
                 "host": self.charm.unit_pod_hostname,
-                "master": pgb.parse_dict_to_kv_string(primary),
+                "master": dbconnstr,
                 "port": cfg["pgbouncer"]["listen_port"],
-                "standbys": standbys,
+                "standbys": dbconnstr,
                 "version": self.charm.backend_postgres.get_postgresql_version(),
                 "user": user,
                 "password": password,
                 "database": database,
-                "state": self._get_state(standbys),
+                "state": self._get_state(dbconnstr),
             }
             databag.update(updates)
 
@@ -275,30 +297,12 @@ class DbProvides(Object):
         """Generates a unique database name for this relation."""
         return f"{database}_{id}"
 
-    def _get_standby(self, cfg, app_name, dbname, user, password):
-        dbs = cfg["databases"]
-
+    def _get_read_only_endpoint(self):
+        """get standby string, and modifies cfg"""
         read_only_endpoints = self.charm.backend_relation_app_databag.get("read-only-endpoints")
         if read_only_endpoints is None or len(read_only_endpoints) == 0:
             return None
-        read_only_endpoint = read_only_endpoints.split(",")[0]
-
-        dbs[f"{dbname}_standby"] = {
-            "host": read_only_endpoint.split(":")[0],
-            "dbname": dbname,
-            "port": read_only_endpoint.split(":")[1],
-        }
-
-        return pgb.parse_dict_to_kv_string(
-            {
-                "host": self.charm.unit_pod_hostname,
-                "dbname": dbname,
-                "port": cfg["pgbouncer"]["listen_port"],
-                "fallback_application_name": app_name,
-                "user": user,
-                "password": password,
-            }
-        )
+        return read_only_endpoints.split(",")[0]
 
     def _get_state(self, standbys: str) -> str:
         """Gets the given state for this unit.
@@ -311,6 +315,8 @@ class DbProvides(Object):
         """
         if standbys == "":
             return "standalone"
+        # TODO this doesn't ever return false. Revisit mastery once scaling is sorted, and check
+        # replicas return standby.
         elif self.charm.unit.is_leader():
             return "master"
         else:

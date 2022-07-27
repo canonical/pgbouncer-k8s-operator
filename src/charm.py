@@ -117,6 +117,8 @@ class PgBouncerK8sCharm(CharmBase):
             logging.info(f"restarted {PGB} service")
         self.unit.status = ActiveStatus()
 
+        self.trigger_db_relations()
+
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
 
@@ -406,10 +408,15 @@ class PgBouncerK8sCharm(CharmBase):
         if not self.backend_relation:
             return None
 
-        host = self.backend_relation_app_databag.get("endpoints").split(":")[0]
+        endpoint = self.backend_relation_app_databag.get("endpoints")
         user = self.backend_relation_app_databag.get("username")
         password = self.backend_relation_app_databag.get("password")
         database = self.backend_relation.data[self.app].get("database")
+
+        if None in [endpoint, user, password, database]:
+            return None
+
+        host = endpoint.split(":")[0]
 
         return PostgreSQL(host=host, user=user, password=password, database=database)
 
