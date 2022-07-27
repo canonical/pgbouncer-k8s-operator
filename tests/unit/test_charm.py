@@ -4,7 +4,7 @@
 # Learn more about testing at: https://juju.is/docs/sdk/testing
 
 import unittest
-from unittest.mock import PropertyMock, patch
+from unittest.mock import patch
 
 from charms.pgbouncer_operator.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from ops.model import ActiveStatus, WaitingStatus
@@ -56,7 +56,7 @@ class TestCharm(unittest.TestCase):
             {
                 "pool_mode": "transaction",
                 "max_db_connections": max_db_connections,
-                "listen_port": "6464"
+                "listen_port": "6464",
             }
         )
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())

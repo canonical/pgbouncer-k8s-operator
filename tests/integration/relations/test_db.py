@@ -102,7 +102,10 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         )
         wait_for_relation_joined_between(ops_test, PGB, ANOTHER_FINOS_WALTZ)
         await ops_test.model.wait_for_idle(
-            apps=[PG, PGB, FINOS_WALTZ, ANOTHER_FINOS_WALTZ], status="active", timeout=1000, raise_on_error=False
+            apps=[PG, PGB, FINOS_WALTZ, ANOTHER_FINOS_WALTZ],
+            status="active",
+            timeout=1000,
+            raise_on_error=False,
         )
 
         # In this case, the database name is the same as in the first deployment

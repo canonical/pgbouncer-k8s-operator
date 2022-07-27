@@ -7,52 +7,51 @@ This relation uses the pgsql interface, omitting roles and extensions as they ar
 the new postgres charm.
 
 Some example relation data is below. All values are examples, generated in a running test instance.
-┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
-┃ category         ┃            keys ┃ pgbouncer-k8s-operator/0                                ┃ finos-waltz/0 ┃
-┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
-│ metadata         │        endpoint │ 'db'                                                    │ 'db'          │
-│                  │          leader │ True                                                    │ True          │
-├──────────────────┼─────────────────┼─────────────────────────────────────────────────────────┼───────────────┤
-│ application data │ allowed-subnets │ 10.152.183.22/32                                        │               │
-│                  │   allowed-units │ finos-waltz/0                                           │               │
-│                  │        database │ waltz                                                   │ waltz         │
-│                  │            host │ pgbouncer-k8s-operator-0.pgbouncer-k8s-operator-endpoi… │               │
-│                  │          master │ host=pgbouncer-k8s-operator-0.pgbouncer-k8s-operator-e… │               │
-│                  │                 │ dbname=waltz port=6432 user=relation_id_3               │               │
-│                  │                 │ password=ZFz5RnH7hyvTpgu1wE0O9uoi                       │               │
-│                  │                 │ fallback_application_name=finos-waltz                   │               │
-│                  │        password │ ZFz5RnH7hyvTpgu1wE0O9uoi                                │               │
-│                  │            port │ 5432                                                    │               │
-│                  │        standbys │ host=pgbouncer-k8s-operator-0.pgbouncer-k8s-operator-e… │               │
-│                  │                 │ dbname=waltz port=6432                                  │               │
-│                  │                 │ fallback_application_name=finos-waltz                   │               │
-│                  │                 │ user=relation_id_3 password=ZFz5RnH7hyvTpgu1wE0O9uoi    │               │
-│                  │           state │ master                                                  │               │
-│                  │            user │ relation_id_3                                           │               │
-│                  │         version │ 12                                                      │               │
-│ unit data        │ allowed-subnets │ 10.152.183.22/32                                        │               │
-│                  │   allowed-units │ finos-waltz/0                                           │               │
-│                  │        database │ waltz                                                   │ waltz         │
-│                  │            host │ pgbouncer-k8s-operator-0.pgbouncer-k8s-operator-endpoi… │               │
-│                  │          master │ host=pgbouncer-k8s-operator-0.pgbouncer-k8s-operator-e… │               │
-│                  │                 │ dbname=waltz port=6432 user=relation_id_3               │               │
-│                  │                 │ password=ZFz5RnH7hyvTpgu1wE0O9uoi                       │               │
-│                  │                 │ fallback_application_name=finos-waltz                   │               │
-│                  │        password │ ZFz5RnH7hyvTpgu1wE0O9uoi                                │               │
-│                  │            port │ 5432                                                    │               │
-│                  │        standbys │ host=pgbouncer-k8s-operator-0.pgbouncer-k8s-operator-e… │               │
-│                  │                 │ dbname=waltz port=6432                                  │               │
-│                  │                 │ fallback_application_name=finos-waltz                   │               │
-│                  │                 │ user=relation_id_3 password=ZFz5RnH7hyvTpgu1wE0O9uoi    │               │
-│                  │           state │ master                                                  │               │
-│                  │            user │ relation_id_3                                           │               │
-│                  │         version │ 12                                                      │               │
-└──────────────────┴─────────────────┴─────────────────────────────────────────────────────────┴───────────────┘
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ category         ┃            keys ┃ pgbouncer-k8s-operator/0                   ┃ finos-waltz/0 ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ metadata         │        endpoint │ 'db'                                       │ 'db'          │
+│                  │          leader │ True                                       │ True          │
+├──────────────────┼─────────────────┼────────────────────────────────────────────┼───────────────┤
+│ application data │ allowed-subnets │ 10.152.183.22/32                           │               │
+│                  │   allowed-units │ finos-waltz/0                              │               │
+│                  │        database │ waltz                                      │ waltz         │
+│                  │            host │ pgbouncer-k8s-operator-0.pgbouncer-k8s-op… │               │
+│                  │          master │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
+│                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
+│                  │                 │ password=ZFz5RnH7hyvTpgu1wE0O9uoi          │               │
+│                  │                 │ fallback_application_name=finos-waltz      │               │
+│                  │        password │ ZFz5RnH7hyvTpgu1wE0O9uoi                   │               │
+│                  │            port │ 5432                                       │               │
+│                  │        standbys │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
+│                  │                 │ dbname=waltz port=6432                     │               │
+│                  │                 │ fallback_application_name=finos-waltz      │               │
+│                  │                 │ user=relation_id_3 password=ZFz5RnH7hyvTp… │               │
+│                  │           state │ master                                     │               │
+│                  │            user │ relation_id_3                              │               │
+│                  │         version │ 12                                         │               │
+│ unit data        │ allowed-subnets │ 10.152.183.22/32                           │               │
+│                  │   allowed-units │ finos-waltz/0                              │               │
+│                  │        database │ waltz                                      │ waltz         │
+│                  │            host │ pgbouncer-k8s-operator-0.pgbouncer-k8s-op… │               │
+│                  │          master │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
+│                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
+│                  │                 │ password=ZFz5RnH7hyvTpgu1wE0O9uoi          │               │
+│                  │                 │ fallback_application_name=finos-waltz      │               │
+│                  │        password │ ZFz5RnH7hyvTpgu1wE0O9uoi                   │               │
+│                  │            port │ 5432                                       │               │
+│                  │        standbys │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
+│                  │                 │ dbname=waltz port=6432                     │               │
+│                  │                 │ fallback_application_name=finos-waltz      │               │
+│                  │                 │ user=relation_id_3 password=ZFz5RnH7hyvTp… │               │
+│                  │           state │ master                                     │               │
+│                  │            user │ relation_id_3                              │               │
+│                  │         version │ 12                                         │               │
+└──────────────────┴─────────────────┴────────────────────────────────────────────┴───────────────┘
 
 """
 
 import logging
-from copy import deepcopy
 from typing import Iterable
 
 from charms.pgbouncer_operator.v0 import pgb
@@ -157,7 +156,7 @@ class DbProvides(Object):
 
         database = remote_app_databag.get("database")
         if database is None:
-            logger.warning("No database name provided")
+            logger.warning("No database name provided in app databag")
             join_event.defer()
             return
 
@@ -178,14 +177,14 @@ class DbProvides(Object):
         try:
             logstr = f"initialising database and user for {self.relation_name} relation"
             self.charm.unit.status = MaintenanceStatus(logstr)
-            logger.debug(logstr)
+            logger.info(logstr)
 
             self.charm.backend_postgres.create_user(user, password, admin=self.admin)
             self.charm.backend_postgres.create_database(database, user)
 
             logstr = f"database and user for {self.relation_name} relation created"
             self.charm.unit.status = ActiveStatus(logstr)
-            logger.debug(logstr)
+            logger.info(logstr)
         except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
             errmsg = f"failed to create database or user for {self.relation_name}"
             logger.error(errmsg)
@@ -252,20 +251,21 @@ class DbProvides(Object):
         }
 
         read_only_endpoint = self._get_read_only_endpoint()
-        cfg["databases"][f"{database}_standby"] = {
-            "host": read_only_endpoint.split(":")[0],
-            "dbname": database,
-            "port": read_only_endpoint.split(":")[1],
-        }
+        if read_only_endpoint:
+            cfg["databases"][f"{database}_standby"] = {
+                "host": read_only_endpoint.split(":")[0],
+                "dbname": database,
+                "port": read_only_endpoint.split(":")[1],
+            }
 
         dbconnstr = pgb.parse_dict_to_kv_string(
             {
                 "host": self.charm.unit_pod_hostname,
                 "dbname": database,
                 "port": cfg["pgbouncer"]["listen_port"],
-                "fallback_application_name": external_app_name,
                 "user": user,
                 "password": password,
+                "fallback_application_name": external_app_name,
             }
         )
 
@@ -359,7 +359,9 @@ class DbProvides(Object):
         # delete user
         self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
         try:
+            logging.error(self.charm.backend_postgres.delete_user)
             self.charm.backend_postgres.delete_user(user, if_exists=True)
+            logging.error("this definitely worked, yeah?")
         except PostgreSQLDeleteUserError:
             blockedmsg = f"failed to delete user for {self.relation_name}"
             logger.error(blockedmsg)
