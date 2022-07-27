@@ -10,6 +10,7 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from tests.integration.relations.helpers.helpers import (
+    get_cfg,
     get_userlist,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
@@ -84,8 +85,8 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             apps=[PG, PGB, FINOS_WALTZ], status="active", timeout=1000
         )
         await check_database_creation(ops_test, "waltz", pgb_user, pgb_password)
-        finos_user = [f"relation_id_{finos_relation.id}"]
-        await check_database_users_existence(ops_test, finos_user, [], pgb_user, pgb_password)
+        finos_user = f"relation_id_{finos_relation.id}"
+        await check_database_users_existence(ops_test, [finos_user], [], pgb_user, pgb_password)
 
         await ops_test.model.deploy(
             "finos-waltz-k8s", application_name=ANOTHER_FINOS_WALTZ, channel="edge"
@@ -101,16 +102,18 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         )
         wait_for_relation_joined_between(ops_test, PGB, ANOTHER_FINOS_WALTZ)
         await ops_test.model.wait_for_idle(
-            apps=[PG, PGB, FINOS_WALTZ, ANOTHER_FINOS_WALTZ], status="active", timeout=1000
+            apps=[PG, PGB, FINOS_WALTZ, ANOTHER_FINOS_WALTZ], status="active", timeout=1000, raise_on_error=False
         )
 
         # In this case, the database name is the same as in the first deployment
         # because it's a fixed value in Finos Waltz charm.
         await check_database_creation(ops_test, "waltz", pgb_user, pgb_password)
-        second_finos_user = [f"relation_id_{second_finos_relation.id}"]
+        second_finos_user = f"relation_id_{second_finos_relation.id}"
         await check_database_users_existence(
-            ops_test, finos_user + second_finos_user, [], pgb_user, pgb_password
+            ops_test, [finos_user, second_finos_user], [], pgb_user, pgb_password
         )
+
+        logging.info([finos_user, second_finos_user])
 
         # Scale down the second deployment of Finos Waltz and confirm that the first deployment
         # is still active.
@@ -120,14 +123,23 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             apps=[PG, PGB, FINOS_WALTZ], status="active", timeout=1000
         )
 
-        second_finos_user = []
         await check_database_users_existence(
-            ops_test, finos_user, second_finos_user, pgb_user, pgb_password
+            ops_test, [finos_user], [second_finos_user], pgb_user, pgb_password
         )
 
         # Remove the first deployment of Finos Waltz.
         await ops_test.model.remove_application(FINOS_WALTZ)
-        wait_for_relation_removed_between(ops_test, PGB, ANOTHER_FINOS_WALTZ)
+        wait_for_relation_removed_between(ops_test, PGB, FINOS_WALTZ)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
 
-        # TODO assert users are correctly removed from postgres charm and config files.
+        await check_database_users_existence(ops_test, [], [finos_user], pgb_user, pgb_password)
+
+        userlist = await get_userlist(ops_test)
+        logging.info(userlist)
+        assert finos_user not in userlist.keys()
+        assert second_finos_user not in userlist.keys()
+
+        cfg = await get_cfg(ops_test)
+        logging.info(cfg)
+        assert finos_user not in cfg["pgbouncer"]["admin_users"]
+        assert second_finos_user not in cfg["pgbouncer"]["admin_users"]

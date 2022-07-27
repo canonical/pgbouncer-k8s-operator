@@ -298,7 +298,11 @@ class DbProvides(Object):
         return f"{database}_{id}"
 
     def _get_read_only_endpoint(self):
-        """get standby string, and modifies cfg"""
+        """Get a read-only-endpoint from backend relation.
+
+        Though multiple readonly endpoints can be provided by the new backend relation, only one
+        can be consumed by this legacy relation.
+        """
         read_only_endpoints = self.charm.backend_relation_app_databag.get("read-only-endpoints")
         if read_only_endpoints is None or len(read_only_endpoints) == 0:
             return None
@@ -352,39 +356,28 @@ class DbProvides(Object):
         user = app_databag["user"]
         database = app_databag["database"]
 
-        # TODO somewhere I'm messing up this boolean logic - fix tomorrow
-        # The plan:
-        # - iterate through all relations
-        # - if relation R is not this relation, and R has a database key, check it against this
-        #   relation's database key
-        # - if there's a duplicate relation that wants this database key, keep the database in the
-        #   config
-        # - otherwise, delete the data.
-        logging.error(self.charm.model.relations)
-        for relname in ["db", "db-admin"]:
-            logging.error(self.charm.model.relations.get(relname))
-            for relation in self.charm.model.relations.get(relname):
-                logging.error(relation)
-                if relation.id == broken_event.relation.id:
-                    continue
-                logging.error(database)
-                logging.error(relation.data.get(self.charm.app))
-                logging.error(relation.data.get(self.charm.app).get("database"))
-                if relation.data.get(self.charm.app, {}).get("database") == database:
-                    # There's multiple databases using this database and user, so break.
-                    return
-
-        logging.error(cfg.render())
-        del cfg["databases"][database]
-        cfg["databases"].pop(f"{database}_standby")
-
+        # delete user
         self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
-
         try:
             self.charm.backend_postgres.delete_user(user, if_exists=True)
         except PostgreSQLDeleteUserError:
-            logger.error(f"failed to delete user for {self.relation_name}")
+            blockedmsg = f"failed to delete user for {self.relation_name}"
+            logger.error(blockedmsg)
+            self.charm.unit.status = BlockedStatus(blockedmsg)
             return
+
+        # check database can be deleted, and if so, delete it.
+        for relname in ["db", "db-admin"]:
+            for relation in self.charm.model.relations.get(relname):
+                if relation.id == broken_event.relation.id:
+                    continue
+                if relation.data.get(self.charm.app, {}).get("database") == database:
+                    # There's multiple applications using this table, so don't remove it until we
+                    # can guarantee this is the last one.
+                    return
+
+        del cfg["databases"][database]
+        cfg["databases"].pop(f"{database}_standby")
 
     def get_allowed_subnets(self, relation: Relation) -> str:
         """Gets the allowed subnets from this relation."""
@@ -410,18 +403,16 @@ class DbProvides(Object):
 
     def get_external_units(self, relation: Relation) -> Unit:
         """Gets all units from this relation that aren't owned by this charm."""
-        # TODO switch if line for unit.app != self.charm.app
         return [
             unit
             for unit in relation.data
-            if isinstance(unit, Unit) and not unit.name.startswith(self.model.app.name)
+            # TODO verify this works
+            if isinstance(unit, Unit) and not unit.app != self.charm.app
+            # if isinstance(unit, Unit) and not unit.name.startswith(self.model.app.name)
         ]
 
     def get_external_app(self, relation):
-        """Gets external application, as an Application object.
-
-        # External app != event.app
-        #"""
+        """Gets external application, as an Application object."""
         for entry in relation.data.keys():
             if isinstance(entry, Application) and entry != self.charm.app:
                 return entry
