@@ -207,8 +207,6 @@ class DbProvides(Object):
         relation_data = change_event.relation.data
         pgb_unit_databag = relation_data[self.charm.unit]
         pgb_app_databag = relation_data[self.charm.app]
-        # TODO Delete, this was used to get a backup database name but it shouldn't be used.
-        remote_app_databag = relation_data[change_event.app]
 
         external_app_name = self.get_external_app(change_event.relation).name
 
@@ -356,7 +354,6 @@ class DbProvides(Object):
         # - if there's a duplicate relation that wants this database key, keep the database in the
         #   config
         # - otherwise, delete the data.
-        # Presumably this also applies to the
         logging.error(self.charm.model.relations)
         for relname in ["db", "db-admin"]:
             logging.error(self.charm.model.relations.get(relname))
@@ -365,11 +362,13 @@ class DbProvides(Object):
                 if relation.id == broken_event.relation.id:
                     continue
                 logging.error(database)
-                logging.error(relation.data.get("database"))
-                if relation.data.get("database") == database:
-                    # There's multiple databases using this, so break.
+                logging.error(relation.data.get(self.charm.app))
+                logging.error(relation.data.get(self.charm.app).get("database"))
+                if relation.data.get(self.charm.app, {}).get("database") == database:
+                    # There's multiple databases using this database and user, so break.
                     return
 
+        logging.error(cfg.render())
         del cfg["databases"][database]
         cfg["databases"].pop(f"{database}_standby")
 
