@@ -216,43 +216,6 @@ class TestDb(unittest.TestCase):
 
         _render_cfg.assert_called_with(_read_cfg.return_value, reload_pgbouncer=True)
 
-    @patch("charm.PgBouncerK8sCharm.backend_relation_app_databag", new_callable=PropertyMock)
-    @patch(
-        "charm.PgBouncerK8sCharm.unit_pod_hostname",
-        new_callable=PropertyMock,
-        return_value="test-listen_addr",
-    )
-    def test_get_standbys(self, hostname, backend_databag):
-        backend_databag.return_value = {"read-only-endpoints": "host1:port1,host2:port2"}
-
-        cfg = PgbConfig(DEFAULT_CONFIG)
-        cfg["pgbouncer"]["listen_addr"] = hostname.return_value
-        app = "app_name"
-        cfg_entry = "db_app"
-        db_name = "dbname"
-        user = "user"
-        pw = "pw"
-
-        standbys = self.db_relation._get_read_only_endpoint(cfg, app, cfg_entry, db_name, user, pw)
-        standby_list = standbys.split(", ")
-
-        assert len(standby_list) == 2
-
-        assert cfg["databases"][f"{cfg_entry}_standby"] == {
-            "host": "host2",
-            "dbname": db_name,
-            "port": "port2",
-        }
-
-        for standby in standby_list:
-            standby_dict = parse_kv_string_to_dict(standby)
-            assert standby_dict.get("dbname") == db_name
-            assert standby_dict.get("user") == user
-            assert standby_dict.get("password") == pw
-            assert standby_dict.get("fallback_application_name") == app
-            assert standby_dict.get("host") == cfg["pgbouncer"]["listen_addr"]
-            assert standby_dict.get("port") == cfg["pgbouncer"]["listen_port"]
-
     @patch("relations.db.DbProvides.get_allowed_units", return_value="test_string")
     def test_on_relation_departed(self, _get_units):
         mock_event = MagicMock()
@@ -280,8 +243,7 @@ class TestDb(unittest.TestCase):
         test_user = "test_user"
 
         input_cfg = PgbConfig(DEFAULT_CONFIG)
-        input_cfg["databases"]["pgb_postgres_standby_0"] = {"dbname": "pgb_postgres_standby_0"}
-        input_cfg["databases"]["pgb_postgres_standby_555"] = {"dbname": "pgb_postgres_standby_555"}
+        input_cfg["databases"]["some_other_db"] = {"dbname": "pgb_postgres_standby_0"}
         input_cfg["databases"][f"{test_dbname}"] = {"dbname": f"{test_dbname}"}
         input_cfg["databases"][f"{test_dbname}_standby"] = {"dbname": f"{test_dbname}_standby_0"}
         _read.return_value = input_cfg

@@ -160,9 +160,9 @@ class PgBouncerK8sCharm(CharmBase):
         container.autostart()
         self.unit.status = ActiveStatus()
 
-    # ===================================
-    #  PgBouncer-Specific Utilities
-    # ===================================
+    # =============================
+    #  PgBouncer Config Management
+    # =============================
 
     def _render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
@@ -257,6 +257,32 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_container.restart(PGB)
         self.unit.status = ActiveStatus("PgBouncer Reloaded")
 
+    def _read_file(self, filepath: str) -> str:
+        """Reads file from pgbouncer container as a string.
+
+        Args:
+            filepath: the filepath to be read
+
+        Returns:
+            A string containing the file located at the given filepath.
+
+        Raises:
+            FileNotFoundError: if there is no file at the given path.
+        """
+        pgb_container = self.unit.get_container(PGB)
+        if not pgb_container.can_connect():
+            inaccessible = f"pgbouncer container not accessible, cannot find {filepath}"
+            logger.info(inaccessible)
+            raise FileNotFoundError(inaccessible)
+
+        try:
+            file_contents = pgb_container.pull(filepath).read()
+        except FileNotFoundError as e:
+            raise e
+        except PathError as e:
+            raise FileNotFoundError(str(e))
+        return file_contents
+
     # =================
     #  User Management
     # =================
@@ -343,34 +369,8 @@ class PgBouncerK8sCharm(CharmBase):
             self._render_pgb_config(cfg, reload_pgbouncer)
 
     # =====================
-    #  K8s Charm Utilities
+    #  Relation Utilities
     # =====================
-
-    def _read_file(self, filepath: str) -> str:
-        """Reads file from pgbouncer container as a string.
-
-        Args:
-            filepath: the filepath to be read
-
-        Returns:
-            A string containing the file located at the given filepath.
-
-        Raises:
-            FileNotFoundError: if there is no file at the given path.
-        """
-        pgb_container = self.unit.get_container(PGB)
-        if not pgb_container.can_connect():
-            inaccessible = f"pgbouncer container not accessible, cannot find {filepath}"
-            logger.info(inaccessible)
-            raise FileNotFoundError(inaccessible)
-
-        try:
-            file_contents = pgb_container.pull(filepath).read()
-        except FileNotFoundError as e:
-            raise e
-        except PathError as e:
-            raise FileNotFoundError(str(e))
-        return file_contents
 
     @property
     def backend_relation(self) -> Relation:
@@ -420,11 +420,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         return PostgreSQL(host=host, user=user, password=password, database=database)
 
-    @property
-    def unit_pod_hostname(self, name="") -> str:
-        """Creates the pod hostname from its name."""
-        return socket.getfqdn(name)
-
     def trigger_db_relations(self):
         """Triggers frontend relations if they exist."""
         db_relation = self.model.get_relation("db", None)
@@ -434,6 +429,11 @@ class PgBouncerK8sCharm(CharmBase):
         db_admin_relation = self.model.get_relation("db-admin", None)
         if db_admin_relation is not None:
             self.on.db_admin_relation_changed.emit(db_admin_relation)
+
+    @property
+    def unit_pod_hostname(self, name="") -> str:
+        """Creates the pod hostname from its name."""
+        return socket.getfqdn(name)
 
 
 if __name__ == "__main__":
