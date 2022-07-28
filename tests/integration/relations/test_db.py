@@ -30,6 +30,7 @@ ANOTHER_FINOS_WALTZ = "another-finos-waltz"
 logger = logging.getLogger(__name__)
 
 
+# @pytest.mark.skip
 @pytest.mark.abort_on_fail
 async def test_create_db_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -92,10 +93,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         # test that changing config updates relation data
         pgbouncer_app = ops_test.model.applications[PGB]
         port = "6464"
-        pgbouncer_app.set_config({"listen_port": port})
-        await ops_test.model.wait_for_idle(
-            apps=[PG, PGB, FINOS_WALTZ], status="active", timeout=1000
-        )
+        await pgbouncer_app.set_config({"listen_port": port})
 
         await ops_test.model.deploy(
             "finos-waltz-k8s", application_name=ANOTHER_FINOS_WALTZ, channel="edge"
@@ -107,11 +105,16 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             timeout=1000,
         )
 
+        cfg = await get_cfg(ops_test)
+        logger.info(cfg)
+        logger.info(await pgbouncer_app.get_config())
+        assert cfg["pgbouncer"]["listen_port"] == port
+
         finos_unit = ops_test.model.applications[FINOS_WALTZ].units[0]
         finos_app_databag = await get_app_relation_databag(
             ops_test, finos_unit.name, finos_relation.id
         )
-        logging.info(finos_app_databag)
+        logger.info(finos_app_databag)
         assert port == finos_app_databag.get("port")
         second_finos_relation = await ops_test.model.relate(
             f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db"

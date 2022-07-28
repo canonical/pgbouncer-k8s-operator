@@ -87,14 +87,20 @@ class PgBouncerK8sCharm(CharmBase):
         """Handle changes in configuration."""
         container = self.unit.get_container(PGB)
         if not container.can_connect():
-            self.unit.status = WaitingStatus("waiting for pgbouncer workload container.")
+            container_err_msg = "waiting for pgbouncer workload container."
+            logger.error(container_err_msg)
+            self.unit.status = WaitingStatus(container_err_msg)
             event.defer()
             return
 
         try:
             config = self.read_pgb_config()
         except FileNotFoundError:
-            self.unit.status = WaitingStatus("waiting for pgbouncer install hook to finish")
+            # TODO this may need to change to a Blocked or Error status, depending on why the
+            # config can't be found.
+            config_err_msg = "Unable to read config. Waiting for pgbouncer install hook to finish"
+            logger.error(config_err_msg)
+            self.unit.status = WaitingStatus(config_err_msg)
             event.defer()
             return
 
@@ -149,11 +155,23 @@ class PgBouncerK8sCharm(CharmBase):
 
         TODO verify pgbouncer is actually running in this hook
         """
-        if not self.backend_relation:
-            self.unit.status = BlockedStatus("waiting for backend database relation")
+        if not self.backend_postgres:
+            self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
 
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Define and start pgbouncer workload."""
+        try:
+            # Check config is available before running pgbouncer.
+            self.read_pgb_config()
+        except FileNotFoundError:
+            # TODO this may need to change to a Blocked or Error status, depending on why the
+            # config can't be found.
+            config_err_msg = "Unable to read config. Waiting for pgbouncer install hook to finish"
+            logger.error(config_err_msg)
+            self.unit.status = WaitingStatus(config_err_msg)
+            event.defer()
+            return
+
         container = event.workload
         pebble_layer = self._pgbouncer_layer()
         container.add_layer(PGB, pebble_layer, combine=True)
