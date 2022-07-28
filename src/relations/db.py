@@ -193,12 +193,13 @@ class DbProvides(Object):
             return
 
         for databag in [pgb_app_databag, pgb_unit_databag]:
-            updates = {
-                "user": user,
-                "password": password,
-                "database": database,
-            }
-            databag.update(updates)
+            databag.update(
+                {
+                    "user": user,
+                    "password": password,
+                    "database": database,
+                }
+            )
 
     def _on_relation_changed(self, change_event: RelationChangedEvent):
         """Handle db-relation-changed event.
@@ -222,11 +223,8 @@ class DbProvides(Object):
 
         cfg = self.charm.read_pgb_config()
 
-        relation_data = change_event.relation.data
-        pgb_unit_databag = relation_data[self.charm.unit]
-        pgb_app_databag = relation_data[self.charm.app]
-
-        external_app_name = self.get_external_app(change_event.relation).name
+        pgb_unit_databag = change_event.relation.data[self.charm.unit]
+        pgb_app_databag = change_event.relation.data[self.charm.app]
 
         # No backup values because if pgb_app_databag isn't populated, this relation isn't
         # initialised. This means that the database and user requested in this relation haven't
@@ -265,7 +263,7 @@ class DbProvides(Object):
                 "port": self.charm.config["listen_port"],
                 "user": user,
                 "password": password,
-                "fallback_application_name": external_app_name,
+                "fallback_application_name": self.get_external_app(change_event.relation).name,
             }
         )
 
@@ -292,10 +290,6 @@ class DbProvides(Object):
     def generate_username(self, event):
         """Generates a username for this relation."""
         return f"relation_id_{event.relation.id}"
-
-    def get_db_cfg_name(self, database, id):
-        """Generates a unique database name for this relation."""
-        return f"{database}_{id}"
 
     def _get_read_only_endpoint(self):
         """Get a read-only-endpoint from backend relation.
@@ -368,14 +362,16 @@ class DbProvides(Object):
             self.charm.unit.status = BlockedStatus(blockedmsg)
             return
 
-        # check database can be deleted, and if so, delete it.
+        # check database can be deleted from pgb config, and if so, delete it.
+        # database is kept on postgres application because we don't want to delete all user data
+        # with one command.
         for relname in ["db", "db-admin"]:
             for relation in self.charm.model.relations.get(relname):
                 if relation.id == broken_event.relation.id:
                     continue
                 if relation.data.get(self.charm.app, {}).get("database") == database:
-                    # There's multiple applications using this table, so don't remove it until we
-                    # can guarantee this is the last one.
+                    # There's multiple applications using this database, so don't remove it until
+                    # we can guarantee this is the last one.
                     return
 
         del cfg["databases"][database]
@@ -408,9 +404,7 @@ class DbProvides(Object):
         return [
             unit
             for unit in relation.data
-            # TODO verify this works
             if isinstance(unit, Unit) and not unit.app != self.charm.app
-            # if isinstance(unit, Unit) and not unit.name.startswith(self.model.app.name)
         ]
 
     def get_external_app(self, relation):

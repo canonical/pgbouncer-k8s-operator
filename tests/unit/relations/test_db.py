@@ -217,7 +217,6 @@ class TestDb(unittest.TestCase):
             assert databag["allowed-subnets"] == _allowed_subnets.return_value
             assert databag["allowed-units"] == _allowed_units.return_value
             assert databag["host"] == _hostname.return_value
-            logging.error("failed to access config fi
             assert databag["master"] == dbconnstr
             assert databag["port"] == str(self.charm.config["listen_port"])
             assert databag["standbys"] == dbconnstr

@@ -9,9 +9,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.relations.helpers.helpers import (
-    get_cfg,
-)
+from tests.integration.relations.helpers.helpers import get_cfg
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +31,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
             application_name=PGB,
         )
         await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)
+
 
 async def test_config_updates(ops_test: OpsTest):
     """Test updating charm config updates pgbouncer config."""
