@@ -262,7 +262,7 @@ class DbProvides(Object):
             {
                 "host": self.charm.unit_pod_hostname,
                 "dbname": database,
-                "port": cfg["pgbouncer"]["listen_port"],
+                "port": self.charm.config["listen_port"],
                 "user": user,
                 "password": password,
                 "fallback_application_name": external_app_name,
@@ -279,7 +279,7 @@ class DbProvides(Object):
                 "allowed-units": self.get_allowed_units(change_event.relation),
                 "host": self.charm.unit_pod_hostname,
                 "master": dbconnstr,
-                "port": cfg["pgbouncer"]["listen_port"],
+                "port": str(self.charm.config["listen_port"]),
                 "standbys": dbconnstr,
                 "version": self.charm.backend_postgres.get_postgresql_version(),
                 "user": user,

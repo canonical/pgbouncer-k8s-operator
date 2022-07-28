@@ -27,7 +27,8 @@ PGB = METADATA["name"]
 PG = "postgresql-k8s"
 RELATION = "backend-database"
 
-@pytest.mark.skip
+
+# @pytest.mark.skip
 @pytest.mark.abort_on_fail
 async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -85,6 +86,7 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
                         break
         except RetryError:
             assert False, "pgbouncer config files failed to update in 3 minutes "
+
 
 @pytest.mark.skip
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):

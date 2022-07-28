@@ -206,7 +206,7 @@ class TestDb(unittest.TestCase):
             {
                 "host": self.charm.unit_pod_hostname,
                 "dbname": database,
-                "port": _read_cfg.return_value["pgbouncer"]["listen_port"],
+                "port": self.charm.config["listen_port"],
                 "user": user,
                 "password": password,
                 "fallback_application_name": external_app.name,
@@ -218,7 +218,7 @@ class TestDb(unittest.TestCase):
             assert databag["allowed-units"] == _allowed_units.return_value
             assert databag["host"] == _hostname.return_value
             assert databag["master"] == dbconnstr
-            assert databag["port"] == _read_cfg.return_value["pgbouncer"]["listen_port"]
+            assert databag["port"] == str(self.charm.config["listen_port"])
             assert databag["standbys"] == dbconnstr
             assert databag["version"] == _postgres.get_postgresql_version()
             assert databag["user"] == user
