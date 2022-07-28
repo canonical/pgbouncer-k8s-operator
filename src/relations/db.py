@@ -355,7 +355,6 @@ class DbProvides(Object):
         try:
             logging.error(self.charm.backend_postgres.delete_user)
             self.charm.backend_postgres.delete_user(user, if_exists=True)
-            logging.error("this definitely worked, yeah?")
         except PostgreSQLDeleteUserError:
             blockedmsg = f"failed to delete user for {self.relation_name}"
             logger.error(blockedmsg)
