@@ -116,7 +116,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             ops_test, [finos_user, second_finos_user], [], pgb_user, pgb_password
         )
 
-        logging.info([finos_user, second_finos_user])
+        logger.info([finos_user, second_finos_user])
 
         # Scale down the second deployment of Finos Waltz and confirm that the first deployment
         # is still active.
@@ -130,6 +130,18 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             ops_test, [finos_user], [second_finos_user], pgb_user, pgb_password
         )
 
+        # TODO test that changing config updates relation data once there's an easy way to view
+        # relation data
+        pgbouncer_app = ops_test.model.applications[PGB]
+        port = "6464"
+        pgbouncer_app.set_config({"listen_port": port})
+        relation = ops_test.model.get_relation("db")
+        logger.info(relation)
+        logger.info(relation.data)
+        logger.info(relation.data.get(pgbouncer_app))
+        logger.info(relation.data.get(pgbouncer_app).get("port"))
+        assert port == relation.data.get(pgbouncer_app).get("port")
+
         # Remove the first deployment of Finos Waltz.
         await ops_test.model.remove_application(FINOS_WALTZ)
         wait_for_relation_removed_between(ops_test, PGB, FINOS_WALTZ)
@@ -138,11 +150,11 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         await check_database_users_existence(ops_test, [], [finos_user], pgb_user, pgb_password)
 
         userlist = await get_userlist(ops_test)
-        logging.info(userlist)
+        logger.info(userlist)
         assert finos_user not in userlist.keys()
         assert second_finos_user not in userlist.keys()
 
         cfg = await get_cfg(ops_test)
-        logging.info(cfg)
+        logger.info(cfg)
         assert finos_user not in cfg["pgbouncer"]["admin_users"]
         assert second_finos_user not in cfg["pgbouncer"]["admin_users"]

@@ -4,7 +4,7 @@
 # Learn more about testing at: https://juju.is/docs/sdk/testing
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 from charms.pgbouncer_operator.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from ops.model import ActiveStatus, WaitingStatus
@@ -35,8 +35,9 @@ class TestCharm(unittest.TestCase):
         _gen_pw.assert_called_once()
 
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.trigger_db_relations")
     @patch("ops.model.Container.restart")
-    def test_on_config_changed(self, _restart, _read):
+    def test_on_config_changed(self, _restart, _trigger_db_relations, _read):
         self.harness.update_config()
 
         mock_cores = 1
@@ -61,6 +62,7 @@ class TestCharm(unittest.TestCase):
         )
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
         _restart.assert_called()
+        _trigger_db_relations.assert_called()
 
         # Test changing charm config propagates to container config file.
         pgb_container = self.harness.model.unit.get_container(PGB)
@@ -226,3 +228,15 @@ class TestCharm(unittest.TestCase):
         assert user not in cfg[PGB]["stats_users"]
         _render_userlist.assert_called_with({})
         _render_cfg.assert_called_with(cfg, True)
+
+    @patch("ops.framework.BoundEvent.emit")
+    @patch("ops.model.Model.get_relation")
+    def test_trigger_db_relations(self, _get_relation, _emit_relation_changed):
+        _get_relation.return_value = None
+        self.charm.trigger_db_relations()
+        _emit_relation_changed.assert_not_called()
+
+        relation = "Relation"
+        _get_relation.return_value = relation
+        self.charm.trigger_db_relations()
+        _emit_relation_changed.assert_has_calls([call(relation), call(relation)])

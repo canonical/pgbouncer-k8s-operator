@@ -175,20 +175,20 @@ class DbProvides(Object):
 
         # Create user and database in backend postgresql database
         try:
-            logstr = f"initialising database and user for {self.relation_name} relation"
-            self.charm.unit.status = MaintenanceStatus(logstr)
-            logger.info(logstr)
+            init_msg = f"initialising database and user for {self.relation_name} relation"
+            self.charm.unit.status = MaintenanceStatus(init_msg)
+            logger.info(init_msg)
 
             self.charm.backend_postgres.create_user(user, password, admin=self.admin)
             self.charm.backend_postgres.create_database(database, user)
 
-            logstr = f"database and user for {self.relation_name} relation created"
-            self.charm.unit.status = ActiveStatus(logstr)
-            logger.info(logstr)
+            created_msg = f"database and user for {self.relation_name} relation created"
+            self.charm.unit.status = ActiveStatus(created_msg)
+            logger.info(created_msg)
         except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
-            errmsg = f"failed to create database or user for {self.relation_name}"
-            logger.error(errmsg)
-            self.charm.unit.status = BlockedStatus(errmsg)
+            err_msg = f"failed to create database or user for {self.relation_name}"
+            logger.error(err_msg)
+            self.charm.unit.status = BlockedStatus(err_msg)
             join_event.defer()
             return
 

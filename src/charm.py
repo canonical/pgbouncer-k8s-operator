@@ -186,7 +186,7 @@ class PgBouncerK8sCharm(CharmBase):
             INI_PATH,
             config.render(),
             user=PG_USER,
-            permissions=0o644,
+            permissions=0o600,
             make_dirs=True,
         )
         logging.info("pushed new pgbouncer.ini config file to pgbouncer container")
@@ -233,7 +233,7 @@ class PgBouncerK8sCharm(CharmBase):
             USERLIST_PATH,
             pgb.generate_userlist(userlist),
             user=PG_USER,
-            permissions=0o644,
+            permissions=0o600,
             make_dirs=True,
         )
         logging.info("pushed new userlist to pgbouncer container")
@@ -374,7 +374,12 @@ class PgBouncerK8sCharm(CharmBase):
 
     @property
     def backend_relation(self) -> Relation:
-        """Returns the relation to the postgresql backend.
+        """Returns the relation object pointing to the postgresql backend.
+
+        This only returns the relation object, and does no verification that the relation is
+        initialised or functional. For situations where the relation has to be fully initialised
+        and usable, self.backend_postgres will only return a valid value if the relation is
+        initialised.
 
         Returns:
             Relation object for the backend relation.
@@ -404,7 +409,10 @@ class PgBouncerK8sCharm(CharmBase):
 
     @property
     def backend_postgres(self) -> PostgreSQL:
-        """Returns PostgreSQL representation of backend database, as defined in relation."""
+        """Returns PostgreSQL representation of backend database, as defined in relation.
+
+        Returns None if backend relation is not fully initialised.
+        """
         if not self.backend_relation:
             return None
 
@@ -421,7 +429,7 @@ class PgBouncerK8sCharm(CharmBase):
         return PostgreSQL(host=host, user=user, password=password, database=database)
 
     def trigger_db_relations(self):
-        """Triggers frontend relations if they exist."""
+        """Triggers frontend relations db and db-admin, if they exist."""
         db_relation = self.model.get_relation("db", None)
         if db_relation is not None:
             self.on.db_relation_changed.emit(db_relation)
