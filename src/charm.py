@@ -22,6 +22,7 @@ from ops.model import (
     BlockedStatus,
     MaintenanceStatus,
     Relation,
+    TooManyRelatedAppsError,
     WaitingStatus,
 )
 from ops.pebble import Layer, PathError
@@ -448,14 +449,12 @@ class PgBouncerK8sCharm(CharmBase):
         return PostgreSQL(host=host, user=user, password=password, database=database)
 
     def trigger_db_relations(self):
-        """Triggers frontend relations db and db-admin, if they exist."""
-        db_relation = self.model.get_relation("db", None)
-        if db_relation is not None:
-            self.on.db_relation_changed.emit(db_relation)
+        """Triggers every instance of client relations db and db-admin, if they exist."""
+        for relation in self.model.relations.get("db", []):
+            self.on.db_relation_changed.emit(relation)
 
-        db_admin_relation = self.model.get_relation("db-admin", None)
-        if db_admin_relation is not None:
-            self.on.db_admin_relation_changed.emit(db_admin_relation)
+        for relation in self.model.relations.get("db_admin", []):
+            self.on.db_admin_relation_changed.emit(relation)
 
     @property
     def unit_pod_hostname(self, name="") -> str:

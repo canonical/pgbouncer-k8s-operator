@@ -229,14 +229,3 @@ class TestCharm(unittest.TestCase):
         _render_userlist.assert_called_with({})
         _render_cfg.assert_called_with(cfg, True)
 
-    @patch("ops.framework.BoundEvent.emit")
-    @patch("ops.model.Model.get_relation")
-    def test_trigger_db_relations(self, _get_relation, _emit_relation_changed):
-        _get_relation.return_value = None
-        self.charm.trigger_db_relations()
-        _emit_relation_changed.assert_not_called()
-
-        relation = "Relation"
-        _get_relation.return_value = relation
-        self.charm.trigger_db_relations()
-        _emit_relation_changed.assert_has_calls([call(relation), call(relation)])

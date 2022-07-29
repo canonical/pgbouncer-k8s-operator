@@ -89,11 +89,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         finos_user = f"relation_id_{finos_relation.id}"
         await check_database_users_existence(ops_test, [finos_user], [], pgb_user, pgb_password)
 
-        # test that changing config updates relation data
-        pgbouncer_app = ops_test.model.applications[PGB]
-        port = "6464"
-        await pgbouncer_app.set_config({"listen_port": port})
-
+        # Deploy second finos
         await ops_test.model.deploy(
             "finos-waltz-k8s", application_name=ANOTHER_FINOS_WALTZ, channel="edge"
         )
@@ -103,14 +99,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             raise_on_blocked=False,
             timeout=1000,
         )
-
-        finos_unit = ops_test.model.applications[FINOS_WALTZ].units[0]
-        finos_app_databag = await get_app_relation_databag(
-            ops_test, finos_unit.name, finos_relation.id
-        )
-        logger.info(finos_app_databag)
-        assert port == finos_app_databag.get("port")
-        second_finos_relation = await ops_test.model.relate(
+        another_finos_relation = await ops_test.model.relate(
             f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db"
         )
         wait_for_relation_joined_between(ops_test, PGB, ANOTHER_FINOS_WALTZ)
@@ -124,12 +113,36 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         # In this case, the database name is the same as in the first deployment
         # because it's a fixed value in Finos Waltz charm.
         await check_database_creation(ops_test, "waltz", pgb_user, pgb_password)
-        second_finos_user = f"relation_id_{second_finos_relation.id}"
+        another_finos_user = f"relation_id_{another_finos_relation.id}"
+        logger.info([finos_user, another_finos_user])
         await check_database_users_existence(
-            ops_test, [finos_user, second_finos_user], [], pgb_user, pgb_password
+            ops_test, [finos_user, another_finos_user], [], pgb_user, pgb_password
         )
 
-        logger.info([finos_user, second_finos_user])
+        # test that changing config updates relation data
+        pgbouncer_app = ops_test.model.applications[PGB]
+        port = "6464"
+        await pgbouncer_app.set_config({"listen_port": port})
+        await ops_test.model.wait_for_idle(
+            apps=[PG, PGB, FINOS_WALTZ, ANOTHER_FINOS_WALTZ],
+            status="active",
+            timeout=1000,
+            raise_on_error=False,
+        )
+
+        finos_unit = ops_test.model.applications[FINOS_WALTZ].units[0]
+        finos_app_databag = await get_app_relation_databag(
+            ops_test, finos_unit.name, finos_relation.id
+        )
+        logger.info(finos_app_databag)
+        assert port == finos_app_databag.get("port")
+
+        another_finos_unit = ops_test.model.applications[ANOTHER_FINOS_WALTZ].units[0]
+        another_finos_app_databag = await get_app_relation_databag(
+            ops_test, another_finos_unit.name, another_finos_relation.id
+        )
+        logger.info(another_finos_app_databag)
+        assert port == another_finos_app_databag.get("port")
 
         # Scale down the second deployment of Finos Waltz and confirm that the first deployment
         # is still active.
@@ -140,7 +153,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         )
 
         await check_database_users_existence(
-            ops_test, [finos_user], [second_finos_user], pgb_user, pgb_password
+            ops_test, [finos_user], [another_finos_user], pgb_user, pgb_password
         )
 
         # Remove the first deployment of Finos Waltz.
@@ -153,9 +166,9 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         userlist = await get_userlist(ops_test)
         logger.info(userlist)
         assert finos_user not in userlist.keys()
-        assert second_finos_user not in userlist.keys()
+        assert another_finos_user not in userlist.keys()
 
         cfg = await get_cfg(ops_test)
         logger.info(cfg)
         assert finos_user not in cfg["pgbouncer"]["admin_users"]
-        assert second_finos_user not in cfg["pgbouncer"]["admin_users"]
+        assert another_finos_user not in cfg["pgbouncer"]["admin_users"]
