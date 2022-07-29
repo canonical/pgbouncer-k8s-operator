@@ -7,48 +7,47 @@ This relation uses the pgsql interface, omitting roles and extensions as they ar
 the new postgres charm.
 
 Some example relation data is below. All values are examples, generated in a running test instance.
-┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
 ┃ category         ┃            keys ┃ pgbouncer-k8s-operator/0                   ┃ finos-waltz/0 ┃
 ┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
 │ metadata         │        endpoint │ 'db'                                       │ 'db'          │
 │                  │          leader │ True                                       │ True          │
 ├──────────────────┼─────────────────┼────────────────────────────────────────────┼───────────────┤
-│ application data │ allowed-subnets │ 10.152.183.22/32                           │               │
-│                  │   allowed-units │ finos-waltz/0                              │               │
+│ application data │ allowed-subnets │ 10.152.183.122/32                          │               │
+│                  │   allowed-units │ pgbouncer-k8s-operator/0                   │               │
 │                  │        database │ waltz                                      │ waltz         │
 │                  │            host │ pgbouncer-k8s-operator-0.pgbouncer-k8s-op… │               │
 │                  │          master │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
 │                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
-│                  │                 │ password=ZFz5RnH7hyvTpgu1wE0O9uoi          │               │
+│                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH          │               │
 │                  │                 │ fallback_application_name=finos-waltz      │               │
-│                  │        password │ ZFz5RnH7hyvTpgu1wE0O9uoi                   │               │
+│                  │        password │ BjWDKjvZyClvTl4d5VDOK3mH                   │               │
 │                  │            port │ 6432                                       │               │
 │                  │        standbys │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
-│                  │                 │ dbname=waltz port=6432                     │               │
+│                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
+│                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH          │               │
 │                  │                 │ fallback_application_name=finos-waltz      │               │
-│                  │                 │ user=relation_id_3 password=ZFz5RnH7hyvTp… │               │
 │                  │           state │ master                                     │               │
 │                  │            user │ relation_id_3                              │               │
-│                  │         version │ 12                                         │               │
-│ unit data        │ allowed-subnets │ 10.152.183.22/32                           │               │
-│                  │   allowed-units │ finos-waltz/0                              │               │
+│                  │         version │ 12.11                                      │               │
+│ unit data        │ allowed-subnets │ 10.152.183.122/32                          │               │
+│                  │   allowed-units │ pgbouncer-k8s-operator/0                   │               │
 │                  │        database │ waltz                                      │ waltz         │
 │                  │            host │ pgbouncer-k8s-operator-0.pgbouncer-k8s-op… │               │
 │                  │          master │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
 │                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
-│                  │                 │ password=ZFz5RnH7hyvTpgu1wE0O9uoi          │               │
+│                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH          │               │
 │                  │                 │ fallback_application_name=finos-waltz      │               │
-│                  │        password │ ZFz5RnH7hyvTpgu1wE0O9uoi                   │               │
+│                  │        password │ BjWDKjvZyClvTl4d5VDOK3mH                   │               │
 │                  │            port │ 6432                                       │               │
 │                  │        standbys │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
-│                  │                 │ dbname=waltz port=6432                     │               │
+│                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
+│                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH          │               │
 │                  │                 │ fallback_application_name=finos-waltz      │               │
-│                  │                 │ user=relation_id_3 password=ZFz5RnH7hyvTp… │               │
 │                  │           state │ master                                     │               │
 │                  │            user │ relation_id_3                              │               │
-│                  │         version │ 12                                         │               │
+│                  │         version │ 12.11                                      │               │
 └──────────────────┴─────────────────┴────────────────────────────────────────────┴───────────────┘
-
 """
 
 import logging
@@ -122,7 +121,11 @@ class DbProvides(Object):
         self.admin = admin
 
     def _on_relation_joined(self, join_event: RelationJoinedEvent):
-        """Handle db-relation-joined event."""
+        """Handle db-relation-joined event.
+
+        If the backend relation is fully initialised and available, we generate the proposed
+        database and create a user on the postgres charm, and add preliminary data to the databag.
+        """
         if not self.charm.unit.is_leader():
             return
 
@@ -205,8 +208,11 @@ class DbProvides(Object):
     def _on_relation_changed(self, change_event: RelationChangedEvent):
         """Handle db-relation-changed event.
 
-        Takes information from the db relation databag and copies it into the pgbouncer.ini
-        config.
+        Takes information from the pgbouncer db app relation databag and copies it into the
+        pgbouncer.ini config.
+
+        This relation will defer if the backend relation isn't fully available, and if the
+        relation_joined hook isn't completed.
         """
         if not self.charm.unit.is_leader():
             return
@@ -221,8 +227,6 @@ class DbProvides(Object):
         logger.warning(
             f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
         )
-
-        cfg = self.charm.read_pgb_config()
 
         pgb_unit_databag = change_event.relation.data[self.charm.unit]
         pgb_app_databag = change_event.relation.data[self.charm.app]
@@ -239,16 +243,15 @@ class DbProvides(Object):
             change_event.defer()
             return
 
-        backend_endpoint = self.charm.backend_relation_app_databag.get("endpoints")
-        primary_host = backend_endpoint.split(":")[0]
-        primary_port = backend_endpoint.split(":")[1]
-
+        # In postgres, "endpoints" will only ever have one value. Other databases using the library
+        # can have more, but that's not planned for the postgres charm.
+        postgres_endpoint = self.charm.backend_relation_app_databag.get("endpoints")
+        cfg = self.charm.read_pgb_config()
         cfg["databases"][database] = {
-            "host": primary_host,
+            "host": postgres_endpoint.split(":")[0],
             "dbname": database,
-            "port": primary_port,
+            "port": postgres_endpoint.split(":")[1],
         }
-
         read_only_endpoint = self._get_read_only_endpoint()
         if read_only_endpoint:
             cfg["databases"][f"{database}_standby"] = {
@@ -256,6 +259,8 @@ class DbProvides(Object):
                 "dbname": database,
                 "port": read_only_endpoint.split(":")[1],
             }
+        # Write config data to charm filesystem
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         dbconnstr = pgb.parse_dict_to_kv_string(
             {
@@ -267,9 +272,6 @@ class DbProvides(Object):
                 "fallback_application_name": self.get_external_app(change_event.relation).name,
             }
         )
-
-        # Write config data to charm filesystem
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         # Populate databags
         for databag in [pgb_app_databag, pgb_unit_databag]:
@@ -326,8 +328,6 @@ class DbProvides(Object):
 
         Removes relevant information from pgbouncer config when db relation is removed. This
         function assumes that relation databags are destroyed when the relation itself is removed.
-
-        This doesn't delete users or tables, following the design of the legacy charm.
         """
         logger.info("db relation removed - updating config")
         logger.warning(
@@ -343,7 +343,11 @@ class DbProvides(Object):
     def _on_relation_broken(self, broken_event: RelationBrokenEvent):
         """Handle db-relation-broken event.
 
-        Removes all traces of the given application from the pgbouncer config.
+        Removes all traces of the given application from the pgbouncer config, and removes relation
+        user if its unused by any other relations.
+
+        This doesn't delete any tables so we aren't deleting a user's entire database with one
+        command.
         """
         app_databag = broken_event.relation.data[self.charm.app]
 

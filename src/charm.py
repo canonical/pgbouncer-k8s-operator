@@ -102,6 +102,7 @@ class PgBouncerK8sCharm(CharmBase):
             logger.error(config_err_msg)
             self.unit.status = WaitingStatus(config_err_msg)
             event.defer()
+            self.on.install.emit()
             return
 
         config["pgbouncer"]["pool_mode"] = self.config["pool_mode"]
