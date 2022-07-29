@@ -193,7 +193,6 @@ class DbProvides(Object):
             err_msg = f"failed to create database or user for {self.relation_name}"
             logger.error(err_msg)
             self.charm.unit.status = BlockedStatus(err_msg)
-            join_event.defer()
             return
 
         for databag in [pgb_app_databag, pgb_unit_databag]:
@@ -350,16 +349,29 @@ class DbProvides(Object):
         command.
         """
         app_databag = broken_event.relation.data[self.charm.app]
+        user = app_databag.get("user")
+        database = app_databag.get("database")
+
+        # TODO this implies that if we delete the backend relation first, this relation becomes
+        # defunct.
+        if not self.charm.backend_postgres and None in [user, database]:
+            # this relation was never created, so wait for it to be initialised before removing
+            # everything.
+            logger.warning(
+                f"backend relation not yet available - deferring {self.relation_name}-relation-broken event."
+            )
+            broken_event.defer()
+            return
 
         cfg = self.charm.read_pgb_config()
-        user = app_databag["user"]
-        database = app_databag["database"]
 
         # delete user
         self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
         try:
-            logging.error(self.charm.backend_postgres.delete_user)
-            self.charm.backend_postgres.delete_user(user, if_exists=True)
+            if self.charm.backend_postgres:
+                # Try to delete user if backend database still exists. If not, postgres will handle
+                # it in their own relation-broken hook.
+                self.charm.backend_postgres.delete_user(user, if_exists=True)
         except PostgreSQLDeleteUserError:
             blockedmsg = f"failed to delete user for {self.relation_name}"
             logger.error(blockedmsg)
