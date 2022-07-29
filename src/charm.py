@@ -22,7 +22,6 @@ from ops.model import (
     BlockedStatus,
     MaintenanceStatus,
     Relation,
-    TooManyRelatedAppsError,
     WaitingStatus,
 )
 from ops.pebble import Layer, PathError

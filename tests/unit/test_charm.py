@@ -4,7 +4,7 @@
 # Learn more about testing at: https://juju.is/docs/sdk/testing
 
 import unittest
-from unittest.mock import call, patch
+from unittest.mock import patch
 
 from charms.pgbouncer_operator.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from ops.model import ActiveStatus, WaitingStatus
@@ -228,4 +228,3 @@ class TestCharm(unittest.TestCase):
         assert user not in cfg[PGB]["stats_users"]
         _render_userlist.assert_called_with({})
         _render_cfg.assert_called_with(cfg, True)
-
