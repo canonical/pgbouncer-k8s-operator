@@ -88,7 +88,7 @@ class PgBouncerK8sCharm(CharmBase):
         container = self.unit.get_container(PGB)
         if not container.can_connect():
             container_err_msg = "waiting for pgbouncer workload container."
-            logger.error(container_err_msg)
+            logger.info(container_err_msg)
             self.unit.status = WaitingStatus(container_err_msg)
             event.defer()
             return
@@ -194,7 +194,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
-            logger.error("unable to connect to container")
+            logger.warning("unable to connect to container")
             self.unit.status = WaitingStatus(
                 "Unable to push config to container - container unavailable."
             )
@@ -241,7 +241,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
-            logger.error("unable to connect to container")
+            logger.warning("unable to connect to container")
             self.unit.status = WaitingStatus(
                 "Unable to push config to container - container unavailable."
             )

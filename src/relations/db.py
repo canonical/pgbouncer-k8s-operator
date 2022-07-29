@@ -22,7 +22,7 @@ Some example relation data is below. All values are examples, generated in a run
 │                  │                 │ password=ZFz5RnH7hyvTpgu1wE0O9uoi          │               │
 │                  │                 │ fallback_application_name=finos-waltz      │               │
 │                  │        password │ ZFz5RnH7hyvTpgu1wE0O9uoi                   │               │
-│                  │            port │ 5432                                       │               │
+│                  │            port │ 6432                                       │               │
 │                  │        standbys │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
 │                  │                 │ dbname=waltz port=6432                     │               │
 │                  │                 │ fallback_application_name=finos-waltz      │               │
@@ -39,7 +39,7 @@ Some example relation data is below. All values are examples, generated in a run
 │                  │                 │ password=ZFz5RnH7hyvTpgu1wE0O9uoi          │               │
 │                  │                 │ fallback_application_name=finos-waltz      │               │
 │                  │        password │ ZFz5RnH7hyvTpgu1wE0O9uoi                   │               │
-│                  │            port │ 5432                                       │               │
+│                  │            port │ 6432                                       │               │
 │                  │        standbys │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
 │                  │                 │ dbname=waltz port=6432                     │               │
 │                  │                 │ fallback_application_name=finos-waltz      │               │
@@ -84,6 +84,7 @@ class DbProvides(Object):
     """Defines functionality for the 'provides' side of the 'db' relation.
 
     Hook events observed:
+        - relation-joined
         - relation-changed
         - relation-departed
         - relation-broken

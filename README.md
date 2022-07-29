@@ -10,8 +10,6 @@ As this charm is not yet published, you need to follow the build and deploy inst
 
 ## Relations
 
-Please only create relations on charms that are in active-idle status. Removing relations does not delete data.
-
 - `backend:postgresql-client`
   - Provides a relation to the corresponding [postgresql-k8s-operator charm](https://github.com/canonical/postgresql-k8s-operator).
   - Makes use of the [data-platform-libs DatabaseRequires library](https://github.com/canonical/data-platform-libs/blob/main/lib/charms/data_platform_libs/v0/database_provides.py).
@@ -33,7 +31,7 @@ The following relations provide support for the [LMA charm bundle](https://juju.
 
 ## OCI Images
 
-This charm uses the canonical pgbouncer-container docker image, available [here](https://github.com/canonical/pgbouncer-container), stored in dockerhub.
+This charm uses the canonical pgbouncer-container docker image, available [here](https://github.com/canonical/pgbouncer-container), stored in [dockerhub](https://hub.docker.com/r/dataplatformoci/pgbouncer).
 
 ## License
 

@@ -30,8 +30,6 @@ logger = logging.getLogger(__name__)
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
 PG = "postgresql-k8s"
-PSQL = "psql"
-APPS = [PG, PGB, PSQL]
 
 
 @pytest.mark.abort_on_fail

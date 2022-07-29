@@ -4,7 +4,9 @@
 options:
   listen_port:
     default: 6432
-    description: The port where pgbouncer listens fix this later
+    description: |
+      The port on which pgbouncer listens for traffic. Corresponds to
+      listen_port in pgbouncer config.
     type: int
   pool_mode:
     default: session

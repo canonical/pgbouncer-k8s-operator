@@ -104,11 +104,6 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             timeout=1000,
         )
 
-        cfg = await get_cfg(ops_test)
-        logger.info(cfg)
-        logger.info(await pgbouncer_app.get_config())
-        assert cfg["pgbouncer"]["listen_port"] == port
-
         finos_unit = ops_test.model.applications[FINOS_WALTZ].units[0]
         finos_app_databag = await get_app_relation_databag(
             ops_test, finos_unit.name, finos_relation.id
