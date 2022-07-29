@@ -352,7 +352,7 @@ class DbProvides(Object):
         user = app_databag.get("user")
         database = app_databag.get("database")
 
-        if not self.charm.backend_postgres or None in [user, database]:
+        if not self.charm.backend_postgres and None in [user, database]:
             # this relation was never created, so wait for it to be initialised before removing
             # everything.
             logger.warning(
