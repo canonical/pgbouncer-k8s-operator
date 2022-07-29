@@ -133,7 +133,9 @@ class DbProvides(Object):
 
         if not self.charm.backend_postgres:
             # We can't relate an app to the backend database without a backend postgres relation
-            logger.warning("waiting for backend-database relation to connect")
+            wait_str = "waiting for backend-database relation to connect"
+            logger.warning(wait_str)
+            self.charm.unit.status = WaitingStatus(wait_str)
             join_event.defer()
             return
 
