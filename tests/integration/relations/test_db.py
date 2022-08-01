@@ -127,7 +127,6 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             apps=[PG, PGB, FINOS_WALTZ, ANOTHER_FINOS_WALTZ],
             status="active",
             timeout=1000,
-            raise_on_error=False,
         )
 
         finos_unit = ops_test.model.applications[FINOS_WALTZ].units[0]

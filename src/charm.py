@@ -455,13 +455,15 @@ class PgBouncerK8sCharm(CharmBase):
 
         # # TODO self.model.relations.get() is having trouble accessing relations when they don't
         # # exist.
-        # if not self.model.relations or len(self.model.relations) == 0:
+        # if not self.model.relations:
         #     return
 
         for relation in self.model.relations.get("db", []):
+            logger.info(relation)
             self.on.db_relation_changed.emit(relation)
 
-        for relation in self.model.relations.get("db_admin", []):
+        for relation in self.model.relations.get("db-admin", []):
+            logger.info(relation)
             self.on.db_admin_relation_changed.emit(relation)
 
     @property
