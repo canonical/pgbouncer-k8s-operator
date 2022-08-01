@@ -52,7 +52,6 @@ RELATION_NAME = "backend-database"
 logger = logging.getLogger(__name__)
 
 
-# TODO rename for postgres
 class BackendDatabaseRequires(Object):
     """Defines functionality for the 'requires' side of the 'backend-database' relation, which
     points to the backend PostgreSQL charm.
