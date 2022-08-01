@@ -10,8 +10,8 @@ import os
 import socket
 from typing import Dict
 
-from charms.pgbouncer_operator.v0 import pgb
-from charms.pgbouncer_operator.v0.pgb import PgbConfig
+from charms.pgbouncer_k8s_operator.v0 import pgb
+from charms.pgbouncer_k8s_operator.v0.pgb import PgbConfig
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent, PebbleReadyEvent
 from ops.framework import StoredState
@@ -124,7 +124,8 @@ class PgBouncerK8sCharm(CharmBase):
             logging.info(f"restarted {PGB} service")
         self.unit.status = ActiveStatus()
 
-        self.trigger_db_relations()
+        if self.unit.is_leader():
+            self.trigger_db_relations()
 
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.

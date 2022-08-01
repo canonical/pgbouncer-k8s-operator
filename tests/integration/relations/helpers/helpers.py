@@ -5,7 +5,7 @@
 import json
 from typing import Dict
 
-from charms.pgbouncer_operator.v0 import pgb
+from charms.pgbouncer_k8s_operator.v0 import pgb
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
