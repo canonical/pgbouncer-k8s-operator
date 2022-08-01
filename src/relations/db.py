@@ -81,9 +81,11 @@ logger = logging.getLogger(__name__)
 
 
 class DbProvides(Object):
-    """Defines functionality for the 'provides' side of the 'db' relation, which relates to client
-    applications. This relation provides database services in an identical way to the same relation
-    in the PostgreSQL charm, to the point where they should be indistinguishable to the client app.
+    """Defines functionality for the 'provides' side of the 'db' relation.
+
+    This relation connectss to client applications, providing database services in an identical way
+    to the same relation in the PostgreSQL charm, to the point where they should be
+    indistinguishable to the client app.
 
     Hook events observed:
         - relation-joined

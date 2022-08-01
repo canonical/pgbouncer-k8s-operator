@@ -53,8 +53,9 @@ logger = logging.getLogger(__name__)
 
 
 class BackendDatabaseRequires(Object):
-    """Defines functionality for the 'requires' side of the 'backend-database' relation, which
-    points to the backend PostgreSQL charm.
+    """Defines functionality for the 'requires' side of the 'backend-database' relation.
+
+    The data created in this relation allows the pgbouncer charm to connect to the postgres charm.
 
     Hook events observed:
         - database-created
