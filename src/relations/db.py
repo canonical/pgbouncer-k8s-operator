@@ -396,6 +396,9 @@ class DbProvides(Object):
         del cfg["databases"][database]
         cfg["databases"].pop(f"{database}_standby")
 
+        # Write config data to charm filesystem
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+
     def get_allowed_subnets(self, relation: Relation) -> str:
         """Gets the allowed subnets from this relation."""
 

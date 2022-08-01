@@ -171,3 +171,6 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         logger.info(cfg)
         assert finos_user not in cfg["pgbouncer"]["admin_users"]
         assert another_finos_user not in cfg["pgbouncer"]["admin_users"]
+
+        assert "waltz" not in cfg["databases"].keys()
+        assert "waltz_standby" not in cfg["databases"].keys()
