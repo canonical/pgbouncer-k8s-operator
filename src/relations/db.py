@@ -131,9 +131,6 @@ class DbProvides(Object):
         If the backend relation is fully initialised and available, we generate the proposed
         database and create a user on the postgres charm, and add preliminary data to the databag.
         """
-        if not self.charm.unit.is_leader():
-            return
-
         if not self.charm.backend_postgres:
             # We can't relate an app to the backend database without a backend postgres relation
             wait_str = "waiting for backend-database relation to connect"
@@ -152,7 +149,7 @@ class DbProvides(Object):
         relation_data = join_event.relation.data
         pgb_unit_databag = relation_data[self.charm.unit]
         pgb_app_databag = relation_data[self.charm.app]
-        remote_app_databag = relation_data[join_event.app]
+        remote_app_databag = relation_data[self.get_external_app(join_event.relation)]
 
         # Do not allow apps requesting extensions to be installed.
         if "extensions" in remote_app_databag:
@@ -184,6 +181,23 @@ class DbProvides(Object):
             reload_pgbouncer=True,
         )
 
+        is_leader = self.charm.unit.is_leader()
+
+        databags = [pgb_unit_databag]
+        if is_leader:
+            databags += pgb_app_databag
+        for databag in databags:
+            databag.update(
+                {
+                    "user": user,
+                    "password": password,
+                    "database": database,
+                }
+            )
+
+        if not is_leader:
+            return
+
         # Create user and database in backend postgresql database
         try:
             init_msg = f"initialising database and user for {self.relation_name} relation"
@@ -194,22 +208,13 @@ class DbProvides(Object):
             self.charm.backend_postgres.create_database(database, user)
 
             created_msg = f"database and user for {self.relation_name} relation created"
-            self.charm.unit.status = ActiveStatus(created_msg)
+            self.charm.app.status = ActiveStatus(created_msg)
             logger.info(created_msg)
         except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
             err_msg = f"failed to create database or user for {self.relation_name}"
             logger.error(err_msg)
-            self.charm.unit.status = BlockedStatus(err_msg)
+            self.charm.app.status = BlockedStatus(err_msg)
             return
-
-        for databag in [pgb_app_databag, pgb_unit_databag]:
-            databag.update(
-                {
-                    "user": user,
-                    "password": password,
-                    "database": database,
-                }
-            )
 
     def _on_relation_changed(self, change_event: RelationChangedEvent):
         """Handle db-relation-changed event.
@@ -220,9 +225,6 @@ class DbProvides(Object):
         This relation will defer if the backend relation isn't fully available, and if the
         relation_joined hook isn't completed.
         """
-        if not self.charm.unit.is_leader():
-            return
-
         if not self.charm.backend_postgres:
             # We can't relate an app to the backend database without a backend postgres relation
             wait_str = "waiting for backend-database relation to connect"
@@ -281,8 +283,12 @@ class DbProvides(Object):
             }
         )
 
+        databags = [pgb_unit_databag]
+        if self.charm.unit.is_leader():
+            databags += pgb_app_databag
+
         # Populate databags
-        for databag in [pgb_app_databag, pgb_unit_databag]:
+        for databag in databags:
             updates = {
                 "allowed-subnets": self.get_allowed_subnets(change_event.relation),
                 "allowed-units": self.get_allowed_units(change_event.relation),
@@ -342,10 +348,15 @@ class DbProvides(Object):
             f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
         )
 
-        app_databag = departed_event.relation.data[self.charm.app]
-        unit_databag = departed_event.relation.data[self.charm.unit]
+        pgb_app_databag = departed_event.relation.data[self.charm.app]
+        pgb_unit_databag = departed_event.relation.data[self.charm.unit]
 
-        for databag in [app_databag, unit_databag]:
+        databags = [pgb_unit_databag]
+        if self.charm.unit.is_leader():
+            databags += pgb_app_databag
+
+        # Populate databags
+        for databag in databags:
             databag["allowed-units"] = self.get_allowed_units(departed_event.relation)
 
     def _on_relation_broken(self, broken_event: RelationBrokenEvent):
@@ -392,6 +403,11 @@ class DbProvides(Object):
 
         # delete user
         self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
+
+        if not self.charm.unit.is_leader():
+            # leave postgres user deletion to the leader.
+            return
+
         try:
             if self.charm.backend_postgres:
                 # Try to delete user if backend database still exists. If not, postgres has been

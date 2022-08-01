@@ -91,8 +91,8 @@ class BackendDatabaseRequires(Object):
                 reload_pgbouncer=True,
                 render_cfg=True,
             )
-
-            self.charm.trigger_db_relations()
+            if self.charm.unit.is_leader():
+                self.charm.trigger_db_relations()
 
         except FileNotFoundError:
             event.defer()
@@ -107,7 +107,8 @@ class BackendDatabaseRequires(Object):
             user = self.charm.backend_postgres.user
             self.charm.remove_user(user, cfg=cfg, reload_pgbouncer=True, render_cfg=True)
 
-            self.charm.trigger_db_relations()
+            if self.charm.unit.is_leader():
+                self.charm.trigger_db_relations()
 
         except FileNotFoundError:
             logging.error("failed to access config file")

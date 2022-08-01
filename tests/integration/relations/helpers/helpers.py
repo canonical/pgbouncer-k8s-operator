@@ -60,26 +60,26 @@ async def get_app_relation_databag(ops_test: OpsTest, unit_name: str, relation_i
     return None
 
 
-async def get_userlist(ops_test: OpsTest) -> Dict[str, str]:
+async def get_userlist(ops_test: OpsTest, unit_name: str) -> Dict[str, str]:
     """Gets pgbouncer userlist.txt from pgbouncer container."""
     cat_userlist = await ops_test.juju(
         "ssh",
         "--container",
         "pgbouncer",
-        "pgbouncer-k8s-operator/0",
+        unit_name,
         "cat",
         f"{pgb.PGB_DIR}/userlist.txt",
     )
     return pgb.parse_userlist(cat_userlist[1])
 
 
-async def get_cfg(ops_test: OpsTest) -> pgb.PgbConfig:
+async def get_cfg(ops_test: OpsTest, unit_name) -> pgb.PgbConfig:
     """Gets pgbouncer config from pgbouncer container."""
     cat_cfg = await ops_test.juju(
         "ssh",
         "--container",
         "pgbouncer",
-        "pgbouncer-k8s-operator/0",
+        unit_name,
         "cat",
         f"{pgb.PGB_DIR}/pgbouncer.ini",
     )
@@ -138,3 +138,19 @@ def relation_exited(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> 
         if endpoint_one not in endpoints and endpoint_two not in endpoints:
             return True
     return False
+
+
+async def scale_application(ops_test: OpsTest, application_name: str, scale: int) -> None:
+    """Scale a given application to a specific unit count.
+    Args:
+        ops_test: The ops test framework instance
+        application_name: The name of the application
+        scale: The number of units to scale to
+    """
+    await ops_test.model.applications[application_name].scale(scale)
+    await ops_test.model.wait_for_idle(
+        apps=[application_name],
+        status="active",
+        timeout=1000,
+        wait_for_exact_units=scale,
+    )
