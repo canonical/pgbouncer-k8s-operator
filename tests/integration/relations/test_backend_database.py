@@ -58,8 +58,8 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
         wait_for_relation_joined_between(ops_test, PG, PGB)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),
 
-        userlist = await get_userlist(ops_test, "pgbouncer-k8s-operator/0")
-        cfg = await get_cfg(ops_test, "pgbouncer-k8s-operator/0")
+        userlist = await get_userlist(ops_test, f"{PGB}/0")
+        cfg = await get_cfg(ops_test, f"{PGB}/0")
         pgb_user = f"relation_id_{relation.id}"
         pgb_password = userlist[pgb_user]
         assert pgb_user in cfg["pgbouncer"]["admin_users"]
@@ -77,8 +77,8 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
         try:
             for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
                 with attempt:
-                    userlist = await get_userlist(ops_test)
-                    cfg = await get_cfg(ops_test)
+                    userlist = await get_userlist(ops_test, f"{PGB}/0")
+                    cfg = await get_cfg(ops_test, f"{PGB}/0")
                     if (
                         pgb_user not in userlist.keys()
                         and pgb_user not in cfg["pgbouncer"]["admin_users"]
@@ -110,14 +110,14 @@ async def test_pgbouncer_scaling(ops_test: OpsTest):
         )
 
         username = f"relation_id_{relation.id}"
-        cfg_0 = get_cfg(ops_test, "pgbouncer-k8s-operator/0")
-        userlist_0 = get_userlist(ops_test, "pgbouncer-k8s-operator/0")
+        cfg_0 = get_cfg(ops_test, f"{PGB}/0")
+        userlist_0 = get_userlist(ops_test, f"{PGB}/0")
 
         assert username in cfg_0["admin_users"]
         assert username in userlist_0.keys()
 
         for unit_id in [1, 2]:
-            unit_name = f"pgbouncer-k8s-operator/{unit_id}"
+            unit_name = f"{PGB}/{unit_id}"
             cfg = get_cfg(ops_test, unit_name)
             userlist = get_userlist(ops_test, unit_name)
             assert username in cfg["admin_users"]
