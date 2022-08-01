@@ -369,6 +369,24 @@ class DbProvides(Object):
 
         cfg = self.charm.read_pgb_config()
 
+        # check database can be deleted from pgb config, and if so, delete it. Database is kept on
+        # postgres application because we don't want to delete all user data with one command.
+        delete_db = False
+        for relname in ["db", "db-admin"]:
+            for relation in self.charm.model.relations.get(relname, []):
+                if relation.id == broken_event.relation.id:
+                    continue
+                if relation.data.get(self.charm.app, {}).get("database") == database:
+                    # There's multiple applications using this database, so don't remove it until
+                    # we can guarantee this is the last one.
+                    delete_db = True
+                    break
+
+            if delete_db:
+                del cfg["databases"][database]
+                cfg["databases"].pop(f"{database}_standby")
+                break
+
         # delete user
         self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
         try:
@@ -381,23 +399,6 @@ class DbProvides(Object):
             logger.error(blockedmsg)
             self.charm.unit.status = BlockedStatus(blockedmsg)
             return
-
-        # check database can be deleted from pgb config, and if so, delete it. Database is kept on
-        # postgres application because we don't want to delete all user data with one command.
-        for relname in ["db", "db-admin"]:
-            for relation in self.charm.model.relations.get(relname):
-                if relation.id == broken_event.relation.id:
-                    continue
-                if relation.data.get(self.charm.app, {}).get("database") == database:
-                    # There's multiple applications using this database, so don't remove it until
-                    # we can guarantee this is the last one.
-                    return
-
-        del cfg["databases"][database]
-        cfg["databases"].pop(f"{database}_standby")
-
-        # Write config data to charm filesystem
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
     def get_allowed_subnets(self, relation: Relation) -> str:
         """Gets the allowed subnets from this relation."""

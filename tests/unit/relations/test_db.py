@@ -282,5 +282,5 @@ class TestDb(unittest.TestCase):
         )
         _delete_user.assert_called_with(username, if_exists=True)
 
-        assert database not in input_cfg["databases"].keys()
-        assert f"{database}_standby" not in input_cfg["databases"].keys()
+        assert database not in [input_cfg["databases"]]
+        assert f"{database}_standby" not in [input_cfg["databases"]]
