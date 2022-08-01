@@ -453,11 +453,6 @@ class PgBouncerK8sCharm(CharmBase):
         if not self.backend_postgres:
             return
 
-        # # TODO self.model.relations.get() is having trouble accessing relations when they don't
-        # # exist.
-        # if not self.model.relations:
-        #     return
-
         for relation in self.model.relations.get("db", []):
             logger.info(relation)
             self.on.db_relation_changed.emit(relation)
