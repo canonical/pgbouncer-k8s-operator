@@ -29,7 +29,7 @@ resources:
 
 peers:
   pgbouncer-replicas:
-    interface: pgbouncer-replicas
+    interface: pgbouncer_replicas
 
 provides:
   # Legacy relations - these will be deprecated in a future release
@@ -42,5 +42,5 @@ provides:
 
 requires:
   backend-database:
-    interface: postgresql-client
+    interface: postgresql_client
     optional: false

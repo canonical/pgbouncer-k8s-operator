@@ -53,7 +53,7 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
             ),
         )
 
-        relation = await ops_test.model.relate(f"{PGB}:{RELATION}", f"{PG}:database")
+        relation = await ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database")
         wait_for_relation_joined_between(ops_test, PG, PGB)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),
 

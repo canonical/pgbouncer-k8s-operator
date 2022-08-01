@@ -449,12 +449,14 @@ class PgBouncerK8sCharm(CharmBase):
 
     def trigger_db_relations(self):
         """Triggers every instance of client relations db and db-admin, if they exist."""
+        # Skip triggering relations if backend_postgres doesn't exist yet.
         if not self.backend_postgres:
             return
 
-        # TODO self.model.relations.get() is having trouble accessing relations when they don't exist.
-        if not self.model.relations or len(self.model.relations) == 0:
-            return
+        # # TODO self.model.relations.get() is having trouble accessing relations when they don't
+        # # exist.
+        # if not self.model.relations or len(self.model.relations) == 0:
+        #     return
 
         for relation in self.model.relations.get("db", []):
             self.on.db_relation_changed.emit(relation)
