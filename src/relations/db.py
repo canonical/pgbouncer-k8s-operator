@@ -80,9 +80,10 @@ from ops.model import (
 logger = logging.getLogger(__name__)
 
 
-# name is confusing
 class DbProvides(Object):
-    """Defines functionality for the 'provides' side of the 'db' relation.
+    """Defines functionality for the 'provides' side of the 'db' relation, which relates to client
+    applications. This relation provides database services in an identical way to the same relation
+    in the PostgreSQL charm, to the point where they should be indistinguishable to the client app.
 
     Hook events observed:
         - relation-joined

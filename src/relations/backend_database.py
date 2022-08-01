@@ -1,9 +1,10 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Postgres backend-db-admin relation hooks & helpers.
+"""Pgbouncer backend-database relation hooks & helpers.
 
-This relation uses the pgsql interface.
+This relation expects that usernames and passwords are generated and provided by the PostgreSQL
+charm.
 
 Some example relation data is below. The only parts of this we actually need are the "endpoints"
 and "read-only-endpoints" fields. All values are examples taken from a test deployment, and are
@@ -53,7 +54,8 @@ logger = logging.getLogger(__name__)
 
 # TODO rename for postgres
 class BackendDatabaseRequires(Object):
-    """Defines functionality for the 'requires' side of the 'backend' relation.
+    """Defines functionality for the 'requires' side of the 'backend-database' relation, which
+    points to the backend PostgreSQL charm.
 
     Hook events observed:
         - database-created
