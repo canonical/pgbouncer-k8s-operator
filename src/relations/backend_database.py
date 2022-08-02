@@ -86,7 +86,6 @@ class BackendDatabaseRequires(Object):
             self.charm.add_user(
                 user=event.username,
                 cfg=cfg,
-                password=event.password,
                 admin=True,
                 reload_pgbouncer=True,
                 render_cfg=True,

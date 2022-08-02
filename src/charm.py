@@ -229,6 +229,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
         logger.info("reloading pgbouncer application")
         pgb_container = self.unit.get_container(PGB)
+        # TODO update to reload pgbouncer application directly, rather than reloading container
         pgb_container.restart(PGB)
         self.unit.status = ActiveStatus("PgBouncer Reloaded")
 

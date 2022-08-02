@@ -177,7 +177,6 @@ class DbProvides(Object):
         # Create user in pgbouncer config
         self.charm.add_user(
             user,
-            password=password,
             admin=self.admin,
             cfg=cfg,
             render_cfg=True,
@@ -300,6 +299,7 @@ class DbProvides(Object):
 
     def generate_username(self, event):
         """Generates a username for this relation."""
+        # TODO assert relation id is unique across cross-model relations
         return f"relation_id_{event.relation.id}"
 
     def _get_read_only_endpoint(self):
