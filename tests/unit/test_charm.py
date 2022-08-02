@@ -31,12 +31,13 @@ class TestCharm(unittest.TestCase):
 
         # Assert userlist is created with the generated password
         userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual('"juju-admin" "pw"', userlist)
+        self.assertEqual('"juju_admin" "pw"', userlist)
         _gen_pw.assert_called_once()
 
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.trigger_db_relations")
     @patch("ops.model.Container.restart")
-    def test_on_config_changed(self, _restart, _read):
+    def test_on_config_changed(self, _restart, _trigger_db_relations, _read):
         self.harness.update_config()
 
         mock_cores = 1
@@ -50,15 +51,18 @@ class TestCharm(unittest.TestCase):
             max_db_connections=max_db_connections,
             pgb_instances=mock_cores,
         )
+        test_config["pgbouncer"]["listen_port"] = "6464"
 
         self.harness.update_config(
             {
                 "pool_mode": "transaction",
                 "max_db_connections": max_db_connections,
+                "listen_port": "6464",
             }
         )
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
         _restart.assert_called()
+        _trigger_db_relations.assert_called()
 
         # Test changing charm config propagates to container config file.
         pgb_container = self.harness.model.unit.get_container(PGB)

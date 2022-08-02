@@ -7,6 +7,7 @@
 
 import logging
 import os
+import socket
 from typing import Dict
 
 from charms.pgbouncer_operator.v0 import pgb
@@ -17,6 +18,7 @@ from ops.framework import StoredState
 from ops.main import main
 from ops.model import (
     ActiveStatus,
+    Application,
     BlockedStatus,
     MaintenanceStatus,
     Relation,
@@ -26,6 +28,7 @@ from ops.pebble import Layer, PathError
 
 from relations.backend_database import RELATION_NAME as BACKEND_RELATION_NAME
 from relations.backend_database import BackendDatabaseRequires
+from relations.db import DbProvides
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +52,8 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
         self.backend = BackendDatabaseRequires(self)
+        self.legacy_db_relation = DbProvides(self, admin=False)
+        self.legacy_db_admin_relation = DbProvides(self, admin=True)
 
         self._cores = os.cpu_count()
 
@@ -82,15 +87,22 @@ class PgBouncerK8sCharm(CharmBase):
         """Handle changes in configuration."""
         container = self.unit.get_container(PGB)
         if not container.can_connect():
-            self.unit.status = WaitingStatus("waiting for pgbouncer workload container.")
+            container_err_msg = "waiting for pgbouncer workload container."
+            logger.info(container_err_msg)
+            self.unit.status = WaitingStatus(container_err_msg)
             event.defer()
             return
 
         try:
             config = self.read_pgb_config()
         except FileNotFoundError:
-            self.unit.status = WaitingStatus("waiting for pgbouncer install hook to finish")
+            # TODO this may need to change to a Blocked or Error status, depending on why the
+            # config can't be found.
+            config_err_msg = "Unable to read config. Waiting for pgbouncer install hook to finish"
+            logger.error(config_err_msg)
+            self.unit.status = WaitingStatus(config_err_msg)
             event.defer()
+            self.on.install.emit()
             return
 
         config["pgbouncer"]["pool_mode"] = self.config["pool_mode"]
@@ -98,6 +110,7 @@ class PgBouncerK8sCharm(CharmBase):
             self.config["max_db_connections"],
             self._cores,
         )
+        config["pgbouncer"]["listen_port"] = self.config["listen_port"]
         self._render_pgb_config(config)
 
         # Create an updated pebble layer for the pgbouncer container, and apply it if there are
@@ -110,6 +123,8 @@ class PgBouncerK8sCharm(CharmBase):
             container.restart(PGB)
             logging.info(f"restarted {PGB} service")
         self.unit.status = ActiveStatus()
+
+        self.trigger_db_relations()
 
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
@@ -141,20 +156,32 @@ class PgBouncerK8sCharm(CharmBase):
 
         TODO verify pgbouncer is actually running in this hook
         """
-        if not self.backend_relation:
-            self.unit.status = BlockedStatus("waiting for backend database relation")
+        if not self.backend_postgres:
+            self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
 
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Define and start pgbouncer workload."""
+        try:
+            # Check config is available before running pgbouncer.
+            self.read_pgb_config()
+        except FileNotFoundError:
+            # TODO this may need to change to a Blocked or Error status, depending on why the
+            # config can't be found.
+            config_err_msg = "Unable to read config. Waiting for pgbouncer install hook to finish"
+            logger.error(config_err_msg)
+            self.unit.status = WaitingStatus(config_err_msg)
+            event.defer()
+            return
+
         container = event.workload
         pebble_layer = self._pgbouncer_layer()
         container.add_layer(PGB, pebble_layer, combine=True)
         container.autostart()
         self.unit.status = ActiveStatus()
 
-    # ===================================
-    #  PgBouncer-Specific Utilities
-    # ===================================
+    # =============================
+    #  PgBouncer Config Management
+    # =============================
 
     def _render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
@@ -168,6 +195,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
+            logger.warning("unable to connect to container")
             self.unit.status = WaitingStatus(
                 "Unable to push config to container - container unavailable."
             )
@@ -214,6 +242,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
+            logger.warning("unable to connect to container")
             self.unit.status = WaitingStatus(
                 "Unable to push config to container - container unavailable."
             )
@@ -246,6 +275,32 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_container = self.unit.get_container(PGB)
         pgb_container.restart(PGB)
         self.unit.status = ActiveStatus("PgBouncer Reloaded")
+
+    def _read_file(self, filepath: str) -> str:
+        """Reads file from pgbouncer container as a string.
+
+        Args:
+            filepath: the filepath to be read
+
+        Returns:
+            A string containing the file located at the given filepath.
+
+        Raises:
+            FileNotFoundError: if there is no file at the given path.
+        """
+        pgb_container = self.unit.get_container(PGB)
+        if not pgb_container.can_connect():
+            inaccessible = f"pgbouncer container not accessible, cannot find {filepath}"
+            logger.info(inaccessible)
+            raise FileNotFoundError(inaccessible)
+
+        try:
+            file_contents = pgb_container.pull(filepath).read()
+        except FileNotFoundError as e:
+            raise e
+        except PathError as e:
+            raise FileNotFoundError(str(e))
+        return file_contents
 
     # =================
     #  User Management
@@ -289,13 +344,13 @@ class PgBouncerK8sCharm(CharmBase):
             return
 
         userlist[user] = password
+        self._render_userlist(userlist)
 
         if admin and (user not in cfg[PGB]["admin_users"]):
             cfg[PGB]["admin_users"].append(user)
         if stats and (user not in cfg[PGB]["stats_users"]):
             cfg[PGB]["stats_users"].append(user)
 
-        self._render_userlist(userlist)
         if render_cfg:
             self._render_pgb_config(cfg, reload_pgbouncer)
 
@@ -333,38 +388,17 @@ class PgBouncerK8sCharm(CharmBase):
             self._render_pgb_config(cfg, reload_pgbouncer)
 
     # =====================
-    #  K8s Charm Utilities
+    #  Relation Utilities
     # =====================
-
-    def _read_file(self, filepath: str) -> str:
-        """Reads file from pgbouncer container as a string.
-
-        Args:
-            filepath: the filepath to be read
-
-        Returns:
-            A string containing the file located at the given filepath.
-
-        Raises:
-            FileNotFoundError: if there is no file at the given path.
-        """
-        pgb_container = self.unit.get_container(PGB)
-        if not pgb_container.can_connect():
-            inaccessible = f"pgbouncer container not accessible, cannot find {filepath}"
-            logger.info(inaccessible)
-            raise FileNotFoundError(inaccessible)
-
-        try:
-            file_contents = pgb_container.pull(filepath).read()
-        except FileNotFoundError as e:
-            raise e
-        except PathError as e:
-            raise FileNotFoundError(str(e))
-        return file_contents
 
     @property
     def backend_relation(self) -> Relation:
-        """Returns the relation to the postgresql backend.
+        """Returns the relation object pointing to the postgresql backend.
+
+        This only returns the relation object, and does no verification that the relation is
+        initialised or functional. For situations where the relation has to be fully initialised
+        and usable, self.backend_postgres will only return a valid value if the relation is
+        initialised.
 
         Returns:
             Relation object for the backend relation.
@@ -376,19 +410,61 @@ class PgBouncerK8sCharm(CharmBase):
             return backend_relation
 
     @property
-    def backend_postgres(self) -> PostgreSQL:
-        """Returns PostgreSQL representation of backend database, as defined in relation."""
+    def backend_relation_app_databag(self) -> Dict:
+        """Wrapper around accessing the remote application databag for the backend relation.
+
+        Returns None if backend_relation is none.
+
+        Since we can trigger db-relation-changed on backend-changed, we need to be able to easily
+        access the backend app relation databag.
+        """
         backend_relation = self.backend_relation
-        if not backend_relation:
+        if backend_relation:
+            for key, databag in backend_relation.data.items():
+                if isinstance(key, Application) and key != self.app:
+                    return databag
+
+        return None
+
+    @property
+    def backend_postgres(self) -> PostgreSQL:
+        """Returns PostgreSQL representation of backend database, as defined in relation.
+
+        Returns None if backend relation is not fully initialised.
+        """
+        if not self.backend_relation:
             return None
 
-        backend_data = backend_relation.data[backend_relation.app]
-        host = backend_data.get("endpoints")
-        user = backend_data.get("user")
-        password = backend_data.get("password")
-        database = backend_data.get("database")
+        endpoint = self.backend_relation_app_databag.get("endpoints")
+        user = self.backend_relation_app_databag.get("username")
+        password = self.backend_relation_app_databag.get("password")
+        database = self.backend_relation.data[self.app].get("database")
+
+        if None in [endpoint, user, password, database]:
+            return None
+
+        host = endpoint.split(":")[0]
 
         return PostgreSQL(host=host, user=user, password=password, database=database)
+
+    def trigger_db_relations(self):
+        """Triggers every instance of client relations db and db-admin, if they exist."""
+        # Skip triggering relations if backend_postgres doesn't exist yet.
+        if not self.backend_postgres:
+            return
+
+        for relation in self.model.relations.get("db", []):
+            logger.info(relation)
+            self.on.db_relation_changed.emit(relation)
+
+        for relation in self.model.relations.get("db-admin", []):
+            logger.info(relation)
+            self.on.db_admin_relation_changed.emit(relation)
+
+    @property
+    def unit_pod_hostname(self, name="") -> str:
+        """Creates the pod hostname from its name."""
+        return socket.getfqdn(name)
 
 
 if __name__ == "__main__":

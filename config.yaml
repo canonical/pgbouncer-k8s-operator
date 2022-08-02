@@ -2,6 +2,12 @@
 # See LICENSE file for licensing details.
 
 options:
+  listen_port:
+    default: 6432
+    description: |
+      The port on which pgbouncer listens for traffic. Corresponds to
+      listen_port in pgbouncer config.
+    type: int
   pool_mode:
     default: session
     description: |

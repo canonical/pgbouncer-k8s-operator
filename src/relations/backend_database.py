@@ -1,9 +1,10 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Postgres backend-db-admin relation hooks & helpers.
+"""Pgbouncer backend-database relation hooks & helpers.
 
-This relation uses the pgsql interface.
+This relation expects that usernames and passwords are generated and provided by the PostgreSQL
+charm.
 
 Some example relation data is below. The only parts of this we actually need are the "endpoints"
 and "read-only-endpoints" fields. All values are examples taken from a test deployment, and are
@@ -52,7 +53,9 @@ logger = logging.getLogger(__name__)
 
 
 class BackendDatabaseRequires(Object):
-    """Defines functionality for the 'requires' side of the 'backend' relation.
+    """Defines functionality for the 'requires' side of the 'backend-database' relation.
+
+    The data created in this relation allows the pgbouncer charm to connect to the postgres charm.
 
     Hook events observed:
         - database-created
@@ -88,6 +91,9 @@ class BackendDatabaseRequires(Object):
                 reload_pgbouncer=True,
                 render_cfg=True,
             )
+
+            self.charm.trigger_db_relations()
+
         except FileNotFoundError:
             event.defer()
 
@@ -100,6 +106,9 @@ class BackendDatabaseRequires(Object):
             cfg = self.charm.read_pgb_config()
             user = self.charm.backend_postgres.user
             self.charm.remove_user(user, cfg=cfg, reload_pgbouncer=True, render_cfg=True)
+
+            self.charm.trigger_db_relations()
+
         except FileNotFoundError:
             logging.error("failed to access config file")
             event.defer()
