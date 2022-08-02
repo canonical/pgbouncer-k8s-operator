@@ -79,10 +79,6 @@ class PgBouncerK8sCharm(CharmBase):
         config = PgbConfig(pgb.DEFAULT_CONFIG)
         self._render_pgb_config(config)
 
-        # Initialise userlist, generating passwords for initial users. All config files use the
-        # same userlist, so we only need one.
-        self._render_userlist(pgb.initialise_userlist_from_ini(config))
-
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
         container = self.unit.get_container(PGB)
@@ -96,14 +92,7 @@ class PgBouncerK8sCharm(CharmBase):
         try:
             config = self.read_pgb_config()
         except FileNotFoundError:
-            # TODO this may need to change to a Blocked or Error status, depending on why the
-            # config can't be found.
-            config_err_msg = "Unable to read config. Waiting for pgbouncer install hook to finish"
-            logger.error(config_err_msg)
-            self.unit.status = WaitingStatus(config_err_msg)
-            event.defer()
-            self.on.install.emit()
-            return
+            config = PgbConfig(pgb.DEFAULT_CONFIG)
 
         config["pgbouncer"]["pool_mode"] = self.config["pool_mode"]
         config.set_max_db_connection_derivatives(
@@ -167,10 +156,11 @@ class PgBouncerK8sCharm(CharmBase):
         except FileNotFoundError:
             # TODO this may need to change to a Blocked or Error status, depending on why the
             # config can't be found.
-            config_err_msg = "Unable to read config. Waiting for pgbouncer install hook to finish"
+            config_err_msg = "Unable to read config. Waiting for pgbouncer config-changed hook to finish"
             logger.error(config_err_msg)
             self.unit.status = WaitingStatus(config_err_msg)
             event.defer()
+            self.on.config_changed.emit()
             return
 
         container = event.workload
@@ -230,40 +220,6 @@ class PgBouncerK8sCharm(CharmBase):
             logger.error("pgbouncer config not found")
             raise e
 
-    def _render_userlist(self, userlist: Dict, reload_pgbouncer: bool = False) -> None:
-        """Generate userlist.txt from the given userlist dict, and deploy it to the container.
-
-        Args:
-            userlist: a dictionary of usernames and passwords
-            reload_pgbouncer: A boolean defining whether or not to reload the pgbouncer application
-                in the container. When config files are updated, pgbouncer must be restarted for
-                the changes to take effect. However, these config updates can be done in batches,
-                minimising the amount of necessary restarts.
-        """
-        pgb_container = self.unit.get_container(PGB)
-        if not pgb_container.can_connect():
-            logger.warning("unable to connect to container")
-            self.unit.status = WaitingStatus(
-                "Unable to push config to container - container unavailable."
-            )
-            return
-
-        pgb_container.push(
-            USERLIST_PATH,
-            pgb.generate_userlist(userlist),
-            user=PG_USER,
-            permissions=0o600,
-            make_dirs=True,
-        )
-        logging.info("pushed new userlist to pgbouncer container")
-
-        if reload_pgbouncer:
-            self._reload_pgbouncer()
-
-    def _read_userlist(self) -> Dict[str, str]:
-        """Reads userlist.txt into a dictionary of strings."""
-        return pgb.parse_userlist(self._read_file(USERLIST_PATH))
-
     def _reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
 
@@ -310,7 +266,6 @@ class PgBouncerK8sCharm(CharmBase):
         self,
         user: str,
         cfg: PgbConfig,
-        password: str = None,
         admin: bool = False,
         stats: bool = False,
         reload_pgbouncer: bool = False,
@@ -323,7 +278,6 @@ class PgBouncerK8sCharm(CharmBase):
         Args:
             user: the username for the intended user
             cfg: A PgbConfig object. Modified during this method.
-            password: intended password for the user
             admin: whether or not the user has admin permissions
             stats: whether or not the user has stats permissions
             reload_pgbouncer: whether or not to restart pgbouncer after changing config. Must be
@@ -333,23 +287,13 @@ class PgBouncerK8sCharm(CharmBase):
         Raises:
             FileNotFoundError when userlist cannot be found.
         """
-        userlist = self._read_userlist()
+        admin_users = cfg[PGB].get("admin_users", [])
+        if admin and (user not in admin_users):
+            cfg[PGB]["admin_users"] = admin_users.append(user)
 
-        # Userlist is key-value dict of users and passwords.
-        if not password:
-            password = pgb.generate_password()
-
-        # Return early if user and password are already set to the correct values
-        if userlist.get(user) == password:
-            return
-
-        userlist[user] = password
-        self._render_userlist(userlist)
-
-        if admin and (user not in cfg[PGB]["admin_users"]):
-            cfg[PGB]["admin_users"].append(user)
-        if stats and (user not in cfg[PGB]["stats_users"]):
-            cfg[PGB]["stats_users"].append(user)
+        stats_users = cfg[PGB].get("stats_users", [])
+        if stats and (user not in stats_users):
+            cfg[PGB]["stats_users"] = stats_users.append(user)
 
         if render_cfg:
             self._render_pgb_config(cfg, reload_pgbouncer)
@@ -373,15 +317,9 @@ class PgBouncerK8sCharm(CharmBase):
         Raises:
             FileNotFoundError when userlist can't be found.
         """
-        userlist = self._read_userlist()
-
-        if user in userlist.keys():
-            del userlist[user]
-            self._render_userlist(userlist)
-
-        if user in cfg[PGB]["admin_users"]:
+        if user in cfg[PGB].get("admin_users", []):
             cfg[PGB]["admin_users"].remove(user)
-        if user in cfg[PGB]["stats_users"]:
+        if user in cfg[PGB].get("stats_users", []):
             cfg[PGB]["stats_users"].remove(user)
 
         if render_cfg:

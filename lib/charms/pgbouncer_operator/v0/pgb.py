@@ -41,8 +41,8 @@ DEFAULT_CONFIG = {
         "listen_port": "6432",
         "logfile": f"{PGB_DIR}/pgbouncer.log",
         "pidfile": f"{PGB_DIR}/pgbouncer.pid",
-        "admin_users": ["juju_admin"],
-        "stats_users": ["juju_admin"],
+        "admin_users": [],
+        "stats_users": [],
         "auth_file": f"{PGB_DIR}/userlist.txt",
         "user": "postgres",
         "max_client_conn": "10000",
@@ -375,64 +375,3 @@ def generate_pgbouncer_ini(config) -> str:
     """
     return PgbConfig(config).render()
 
-
-def initialise_userlist_from_ini(
-    ini: PgbConfig, existing_users: Dict[str, str] = {}
-) -> Dict[str, str]:
-    """Helper function to generate userlist dict from users in ini config file.
-
-    Args:
-        ini: a PgbConfig object containing the current pgbouncer config
-        existing_users: an existing userlist, which will have new users appended to it.
-
-    Returns:
-        a new userlist, updated with new users.
-    """
-    users = []
-    for user_type in ini.user_types:
-        users += ini[ini.pgb_section].get(user_type, [])
-
-    for user in users:
-        if user not in existing_users:
-            existing_users[user] = generate_password()
-
-    return existing_users
-
-
-def generate_userlist(users: Dict[str, str]) -> str:
-    """Generate valid userlist.txt from the given dictionary of usernames:passwords.
-
-    Args:
-        users: a dictionary of usernames and passwords
-    Returns:
-        A multiline string, containing each pair of usernames and passwords in double quotes,
-        separated by a space, one pair per line.
-    """
-    return "\n".join([f'"{username}" "{password}"' for username, password in users.items()])
-
-
-def parse_userlist(userlist: str) -> Dict[str, str]:
-    """Parse userlist.txt into a dictionary of usernames and passwords.
-
-    Args:
-        userlist: a multiline string of users and passwords, formatted thusly:
-        '''
-        "test-user" "password"
-        "juju-admin" "asdf1234"
-        '''
-    Returns:
-        users: a dictionary of valid usernames and passwords
-    """
-    parsed_userlist = {}
-    # Each line in userlist can only be two space-separated substrings, wrapped in double quotes.
-    valid_userlist_regex = re.compile(r'^"[^"]*" "[^"]*"$')
-    for line in userlist.split("\n"):
-        line = line.strip()
-        if valid_userlist_regex.fullmatch(line) is None:
-            logger.warning("unable to parse line in userlist file - user not imported")
-            continue
-        # Userlist is formatted '"username" "password"'
-        username, password = line.replace('"', "").split(" ")
-        parsed_userlist[username] = password
-
-    return parsed_userlist
