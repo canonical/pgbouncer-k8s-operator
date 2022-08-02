@@ -270,6 +270,8 @@ class PgBouncerK8sCharm(CharmBase):
 
         Pgbouncer will not apply configuration changes without reloading, so this must be called
         after each time config files are changed.
+
+        # TODO reload pgbouncer without restarting container
         """
         self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
         logger.info("reloading pgbouncer application")

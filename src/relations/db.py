@@ -306,6 +306,7 @@ class DbProvides(Object):
 
     def generate_username(self, event):
         """Generates a username for this relation."""
+        # TODO verify this isn't duplicated across models - consider model id or adding a hash
         return f"relation_id_{event.relation.id}"
 
     def _get_read_only_endpoint(self):
@@ -385,6 +386,9 @@ class DbProvides(Object):
 
         # check database can be deleted from pgb config, and if so, delete it. Database is kept on
         # postgres application because we don't want to delete all user data with one command.
+        # TODO add config toggle to allow db deletion
+        # TODO what if a user forgets to toggle the option before doing it?
+        # TODO what if database is duplicated?
         delete_db = False
         for relname in ["db", "db-admin"]:
             for relation in self.charm.model.relations.get(relname, []):
