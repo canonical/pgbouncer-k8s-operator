@@ -87,7 +87,6 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
         except RetryError:
             assert False, "pgbouncer config files failed to update in 3 minutes "
 
-
 async def test_pgbouncer_scaling(ops_test: OpsTest):
     async with ops_test.fast_forward():
         relation = await ops_test.model.relate(f"{PGB}:{RELATION}", f"{PG}:database")
@@ -110,17 +109,17 @@ async def test_pgbouncer_scaling(ops_test: OpsTest):
         )
 
         username = f"relation_id_{relation.id}"
-        cfg_0 = get_cfg(ops_test, f"{PGB}/0")
-        userlist_0 = get_userlist(ops_test, f"{PGB}/0")
+        cfg_0 = await get_cfg(ops_test, f"{PGB}/0")
+        userlist_0 = await get_userlist(ops_test, f"{PGB}/0")
 
-        assert username in cfg_0["admin_users"]
+        assert username in cfg_0["pgbouncer"]["admin_users"]
         assert username in userlist_0.keys()
 
         for unit_id in [1, 2]:
             unit_name = f"{PGB}/{unit_id}"
-            cfg = get_cfg(ops_test, unit_name)
-            userlist = get_userlist(ops_test, unit_name)
-            assert username in cfg["admin_users"]
+            cfg = await get_cfg(ops_test, unit_name)
+            userlist = await get_userlist(ops_test, unit_name)
+            assert username in cfg["pgbouncer"]["admin_users"]
             assert username in userlist.keys()
 
             assert cfg == cfg_0
@@ -137,7 +136,6 @@ async def test_pgbouncer_scaling(ops_test: OpsTest):
                 apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
             ),
         )
-
 
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
