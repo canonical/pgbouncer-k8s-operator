@@ -13,7 +13,6 @@ from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 from tests.integration.relations.helpers.helpers import (
     get_backend_user_pass,
     get_cfg,
-    get_userlist,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
 )
@@ -28,7 +27,7 @@ PGB = METADATA["name"]
 PG = "postgresql-k8s"
 RELATION = "backend-database"
 
-
+@pytest.mark.skip
 @pytest.mark.abort_on_fail
 async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -85,7 +84,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         except RetryError:
             assert False, "pgbouncer config files failed to update in 3 minutes "
 
-
+@pytest.mark.skip
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
         await ops_test.model.relate(f"{PGB}:{RELATION}", f"{PG}:database")
