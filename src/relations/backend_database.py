@@ -39,9 +39,9 @@ Example:
 
 import logging
 
-import psycopg2
-from psycopg2 import sql
 
+
+from charms.pgbouncer_operator.v0 import pgb
 from charms.data_platform_libs.v0.database_requires import (
     DatabaseCreatedEvent,
     DatabaseRequires,
@@ -127,7 +127,8 @@ class BackendDatabaseRequires(Object):
         conn.close()
 
         # TODO generate and hash password
-        self.charm.push_file(file_string='"pgbouncer" "pgbouncer-password', path=USERLIST_PATH, perms = 0o600)
+        password = pgb.generate_password()
+        self.charm.push_file(file_string=f'"pgbouncer" "{password}"', path=USERLIST_PATH, perms = 0o600)
         cfg = self.charm.read_pgb_config()
         cfg["pgbouncer"]["auth_user"] = "pgbouncer", # defined in src/relations/pgbouncer-install.sql
         cfg["pgbouncer"]["auth_query"] = "SELECT username, password FROM pgbouncer.get_auth($1)",

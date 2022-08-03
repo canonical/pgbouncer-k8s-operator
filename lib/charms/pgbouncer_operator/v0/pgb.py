@@ -352,12 +352,14 @@ def parse_dict_to_kv_string(dictionary: Dict[str, str]) -> str:
     return " ".join([f"{key}={value}" for key, value in dictionary.items()])
 
 
-def generate_password() -> str:
+def generate_password(hash=False) -> str:
     """Generates a secure password of alphanumeric characters.
 
     Passwords are alphanumeric only, to ensure compatibility with the userlist.txt format -
     specifically, spaces and double quotes may interfere with parsing this file.
 
+    Args:
+        hash: a boolean defining whether or not to md5 hash the password.
     Returns:
         A random 24-character string of letters and numbers.
     """
