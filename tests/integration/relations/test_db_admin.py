@@ -11,6 +11,8 @@ from pytest_operator.plugin import OpsTest
 
 from tests.integration.relations.helpers.helpers import (
     get_backend_user_pass,
+    get_legacy_relation_username,
+    get_userlist,
     wait_for_relation_joined_between,
 )
 from tests.integration.relations.helpers.postgresql_helpers import (
@@ -101,7 +103,10 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
         # await check_database_creation(
         #     ops_test, "discourse-k8s", user=pgb_user, password=pgb_password
         # )
-        discourse_users = [f"relation_id_{first_discourse_relation.id}"]
+        await check_database_creation(
+            ops_test, "discourse-k8s", user=pgb_user, password=pgb_password
+        )
+        discourse_users = [get_legacy_relation_username(ops_test, first_discourse_relation.id)]
         await check_database_users_existence(
             ops_test,
             discourse_users,
@@ -150,9 +155,16 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
         #     ops_test, "discourse-charmers-discourse-k8s", user=pgb_user, password=pgb_password
         # )
         discourse_users = [f"relation_id_{second_discourse_relation.id}"]
+
+        second_discourse_users = [
+            get_legacy_relation_username(ops_test, second_discourse_relation.id)
+        ]
+        await check_database_creation(
+            ops_test, "discourse-charmers-discourse-k8s", user=pgb_user, password=pgb_password
+        )
         await check_database_users_existence(
             ops_test,
-            discourse_users,
+            second_discourse_users,
             [],
             admin=True,
             pg_user=pgb_user,

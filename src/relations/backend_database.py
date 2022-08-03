@@ -87,20 +87,17 @@ class BackendDatabaseRequires(Object):
         """
         logger.info("initialising postgres and pgbouncer relations")
         try:
-            cfg = self.charm.read_pgb_config()
-            logging.error(cfg)
-            logging.error(event.username)
             self.charm.add_user(
                 user=event.username,
-                cfg=cfg,
+                cfg=self.charm.read_pgb_config(),
+                password=event.password,
                 admin=True,
                 render_cfg=True,
             )
-            logging.error(cfg)
 
             self.init_auth_user()
 
-            self.charm.trigger_db_relations()
+            self.charm.update_postgres_endpoints()
 
         except FileNotFoundError:
             logger.error("failed to access config file")
@@ -116,7 +113,9 @@ class BackendDatabaseRequires(Object):
             user = self.charm.backend_postgres.user
             self.charm.remove_user(user, cfg=cfg, reload_pgbouncer=True, render_cfg=True)
 
-            self.charm.trigger_db_relations()
+            # TODO this doesn't update the endpoints yet, because they're only updated when this
+            # hook ends.
+            self.charm.update_postgres_endpoints()
 
         except FileNotFoundError:
             logger.error("failed to access config file")

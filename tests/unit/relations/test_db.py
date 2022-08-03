@@ -36,37 +36,7 @@ class TestDb(unittest.TestCase):
         assert self.charm.legacy_db_admin_relation.relation_name == "db-admin"
         assert self.charm.legacy_db_admin_relation.admin is True
 
-    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
-    @patch("ops.charm.EventBase.defer")
-    @patch("relations.db.DbProvides.get_external_app")
-    def test_on_relation_changed_early_returns(self, _get_app, _defer, _read_cfg):
-        """Validate the various cases where we want _on_relation_changed to return early."""
-        mock_event = MagicMock()
-        mock_event.defer = _defer
-
-        # changed-hook returns early if charm is not leader
-        self.db_relation._on_relation_changed(mock_event)
-        _read_cfg.assert_not_called()
-
-        # changed-hook returns early if charm cfg[databases][pg_master] doesn't exist
-        self.harness.set_leader(True)
-        self.db_relation._on_relation_changed(mock_event)
-        _defer.assert_called_once()
-        _defer.reset_mock()
-
-        # changed-hook returns early if relation data doesn't contain a database name
-        mock_event.relation.data = {}
-        mock_event.relation.data[self.db_admin_relation.charm.unit] = None
-        mock_event.relation.data[self.charm.app] = {"database": None}
-        mock_event.relation.data[_get_app] = {"database": None}
-
-        _read_cfg.return_value["databases"]["pg_master"] = {"test": "value"}
-        self.db_relation._on_relation_changed(mock_event)
-        _defer.assert_called_once()
-
-    @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.backend_postgres", new_callable=PropertyMock)
-    @patch("charm.PgBouncerK8sCharm.backend_relation_app_databag", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charms.pgbouncer_operator.v0.pgb.generate_password", return_value="test_pass")
     @patch("charm.PgBouncerK8sCharm.add_user")
@@ -83,9 +53,7 @@ class TestDb(unittest.TestCase):
         _add_user,
         _gen_pw,
         _read_cfg,
-        _backend_dbag,
         _backend_pg,
-        _backend,
     ):
         self.harness.set_leader(True)
 
@@ -96,14 +64,13 @@ class TestDb(unittest.TestCase):
         mock_event.relation.id = 1
 
         database = "test_db"
-        user = f"relation_id_{mock_event.relation.id}"
+        user = "pgbouncer_k8s_operator_user_id_1_None"
         password = _gen_pw.return_value
 
         relation_data = mock_event.relation.data = {}
         relation_data[self.charm.unit] = {}
         relation_data[self.charm.app] = {}
         relation_data[mock_event.app] = {"database": database}
-        _backend_dbag.return_value = {"endpoints": "test_endpoint:9999"}
         _backend_pg.return_value = _postgres
         _postgres.create_user = _create_user
         _postgres.create_database = _create_database
@@ -197,6 +164,7 @@ class TestDb(unittest.TestCase):
         external_app.name = "external_test_app"
 
         _backend_postgres.return_value = _postgres
+        _postgres.get_postgresql_version.return_value = "12"
 
         # Call the function
         self.db_relation._on_relation_changed(mock_event)
@@ -220,7 +188,7 @@ class TestDb(unittest.TestCase):
             assert databag["master"] == dbconnstr
             assert databag["port"] == str(self.charm.config["listen_port"])
             assert databag["standbys"] == dbconnstr
-            assert databag["version"] == _postgres.get_postgresql_version()
+            assert databag["version"] == "12"
             assert databag["user"] == user
             assert databag["password"] == password
             assert databag["database"] == database

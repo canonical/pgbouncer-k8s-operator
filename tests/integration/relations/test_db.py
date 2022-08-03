@@ -13,6 +13,8 @@ from tests.integration.relations.helpers.helpers import (
     get_app_relation_databag,
     get_backend_user_pass,
     get_cfg,
+    get_legacy_relation_username,
+    get_userlist,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
 )
@@ -84,7 +86,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             apps=[PG, PGB, FINOS_WALTZ], status="active", timeout=1000
         )
         await check_database_creation(ops_test, "waltz", pgb_user, pgb_password)
-        finos_user = f"relation_id_{finos_relation.id}"
+        finos_user = get_legacy_relation_username(ops_test, finos_relation.id)
         await check_database_users_existence(ops_test, [finos_user], [], pgb_user, pgb_password)
 
         # Deploy second finos
@@ -111,7 +113,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         # In this case, the database name is the same as in the first deployment
         # because it's a fixed value in Finos Waltz charm.
         await check_database_creation(ops_test, "waltz", pgb_user, pgb_password)
-        another_finos_user = f"relation_id_{another_finos_relation.id}"
+        another_finos_user = get_legacy_relation_username(ops_test, another_finos_relation.id)
         logger.info([finos_user, another_finos_user])
         await check_database_users_existence(
             ops_test, [finos_user, another_finos_user], [], pgb_user, pgb_password

@@ -31,7 +31,7 @@ The following relations provide support for the [LMA charm bundle](https://juju.
 
 ## OCI Images
 
-This charm uses the canonical pgbouncer-container docker image, available [here](https://github.com/canonical/pgbouncer-container), stored in [dockerhub](https://hub.docker.com/r/dataplatformoci/pgbouncer).
+This charm uses the canonical pgbouncer-container docker image, available [here](https://code.launchpad.net/~data-platform/+git/pgbouncer), stored in [dockerhub](https://hub.docker.com/r/dataplatformoci/pgbouncer).
 
 ## License
 
