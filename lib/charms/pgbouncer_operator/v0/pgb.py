@@ -168,7 +168,7 @@ class PgbConfig(MutableMapping):
 
         for user_type in PgbConfig.user_types:
             users = self[pgb].get(user_type, "").split(",")
-            users.remove("")
+            if "" in users: users.remove("")
             self[pgb][user_type] = users
 
     def render(self) -> str:

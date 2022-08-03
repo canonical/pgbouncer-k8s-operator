@@ -156,7 +156,9 @@ class PgBouncerK8sCharm(CharmBase):
         except FileNotFoundError:
             # TODO this may need to change to a Blocked or Error status, depending on why the
             # config can't be found.
-            config_err_msg = "Unable to read config. Waiting for pgbouncer config-changed hook to finish"
+            config_err_msg = (
+                "Unable to read config. Waiting for pgbouncer config-changed hook to finish"
+            )
             logger.error(config_err_msg)
             self.unit.status = WaitingStatus(config_err_msg)
             event.defer()
@@ -183,7 +185,7 @@ class PgBouncerK8sCharm(CharmBase):
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
         """
-        self.push_file(path = INI_PATH, file_string=config.render(), perms = 0o600)
+        self.push_file(path=INI_PATH, file_string=config.render(), perms=0o600)
         logging.info("pushed new pgbouncer.ini config file to pgbouncer container")
 
         if reload_pgbouncer:
@@ -292,12 +294,14 @@ class PgBouncerK8sCharm(CharmBase):
             FileNotFoundError when userlist cannot be found.
         """
         admin_users = cfg[PGB].get("admin_users", [])
+        logging.error(admin_users)
         if admin and (user not in admin_users):
-            cfg[PGB]["admin_users"] = admin_users.append(user)
+            cfg[PGB]["admin_users"] = admin_users + [user]
+            logging.error(cfg[PGB]["admin_users"] )
 
         stats_users = cfg[PGB].get("stats_users", [])
         if stats and (user not in stats_users):
-            cfg[PGB]["stats_users"] = stats_users.append(user)
+            cfg[PGB]["stats_users"] = stats_users + [user]
 
         if render_cfg:
             self._render_pgb_config(cfg, reload_pgbouncer)

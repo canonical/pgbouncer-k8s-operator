@@ -11,7 +11,6 @@ from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from tests.integration.relations.helpers.helpers import (
-    get_app_relation_databag,
     get_backend_user_pass,
     get_cfg,
     get_userlist,
@@ -31,7 +30,7 @@ RELATION = "backend-database"
 
 
 @pytest.mark.abort_on_fail
-async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
+async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
     charm = await ops_test.build_charm(".")
@@ -59,14 +58,13 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
         wait_for_relation_joined_between(ops_test, PG, PGB)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),
 
-
-        userlist = await get_userlist(ops_test)
+        # userlist = await get_userlist(ops_test)
         cfg = await get_cfg(ops_test)
-        logging.info(userlist)
+        # logging.info(userlist)
         logging.info(cfg.render())
         pgb_user, pgb_password = await get_backend_user_pass(ops_test, relation)
         assert pgb_user in cfg["pgbouncer"]["admin_users"]
-        assert pgb_user not in userlist
+        # assert pgb_user not in userlist
 
         await check_database_users_existence(ops_test, [pgb_user], [], pgb_user, pgb_password)
 

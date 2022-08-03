@@ -3,14 +3,13 @@
 # See LICENSE file for licensing details.
 
 import json
-import yaml
 from pathlib import Path
 from typing import Dict
 
+import yaml
 from charms.pgbouncer_operator.v0 import pgb
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
-
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
@@ -68,9 +67,7 @@ async def get_app_relation_databag(ops_test: OpsTest, unit_name: str, relation_i
 
 async def get_backend_user_pass(ops_test, backend_relation):
     pgb_unit = ops_test.model.applications[PGB].units[0]
-    backend_databag = await get_app_relation_databag(
-        ops_test, pgb_unit.name, backend_relation.id
-    )
+    backend_databag = await get_app_relation_databag(ops_test, pgb_unit.name, backend_relation.id)
     pgb_user = backend_databag["username"]
     pgb_password = backend_databag["password"]
     return (pgb_user, pgb_password)
