@@ -9,6 +9,8 @@ from charms.pgbouncer_operator.v0 import pgb
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
+PGB = "pgbouncer-k8s-operator"
+
 
 def get_backend_relation(ops_test: OpsTest):
     """Gets the backend-database relation used to connect pgbouncer to the backend."""
@@ -17,6 +19,13 @@ def get_backend_relation(ops_test: OpsTest):
             return rel
 
     return None
+
+
+def get_legacy_relation_username(ops_test: OpsTest, relation_id: int):
+    """Gets a username as it should be generated in the db and db-admin legacy relations."""
+    app_name = ops_test.model.applications[PGB].name
+    model_name = ops_test.model_name
+    return f"{app_name}_user_id_{relation_id}_{model_name}".replace("-", "_")
 
 
 async def get_unit_info(ops_test: OpsTest, unit_name: str) -> Dict:

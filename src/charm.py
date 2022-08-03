@@ -102,7 +102,6 @@ class PgBouncerK8sCharm(CharmBase):
             logger.error(config_err_msg)
             self.unit.status = WaitingStatus(config_err_msg)
             event.defer()
-            self.on.install.emit()
             return
 
         config["pgbouncer"]["pool_mode"] = self.config["pool_mode"]
@@ -110,7 +109,13 @@ class PgBouncerK8sCharm(CharmBase):
             self.config["max_db_connections"],
             self._cores,
         )
-        config["pgbouncer"]["listen_port"] = self.config["listen_port"]
+
+        if config["pgbouncer"]["listen_port"] != self.config["listen_port"]:
+            # This emits relation-changed events to every client relation, so only do it when
+            # necessary
+            self.update_backend_relation_port(self.config["listen_port"])
+            config["pgbouncer"]["listen_port"] = self.config["listen_port"]
+
         self._render_pgb_config(config)
 
         # Create an updated pebble layer for the pgbouncer container, and apply it if there are
@@ -123,8 +128,6 @@ class PgBouncerK8sCharm(CharmBase):
             container.restart(PGB)
             logging.info(f"restarted {PGB} service")
         self.unit.status = ActiveStatus()
-
-        self.trigger_db_relations()
 
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
@@ -167,7 +170,7 @@ class PgBouncerK8sCharm(CharmBase):
         except FileNotFoundError:
             # TODO this may need to change to a Blocked or Error status, depending on why the
             # config can't be found.
-            config_err_msg = "Unable to read config. Waiting for pgbouncer install hook to finish"
+            config_err_msg = "Unable to read config."
             logger.error(config_err_msg)
             self.unit.status = WaitingStatus(config_err_msg)
             event.defer()
@@ -418,9 +421,8 @@ class PgBouncerK8sCharm(CharmBase):
         Since we can trigger db-relation-changed on backend-changed, we need to be able to easily
         access the backend app relation databag.
         """
-        backend_relation = self.backend_relation
-        if backend_relation:
-            for key, databag in backend_relation.data.items():
+        if self.backend_relation:
+            for key, databag in self.backend_relation.data.items():
                 if isinstance(key, Application) and key != self.app:
                     return databag
 
@@ -447,19 +449,29 @@ class PgBouncerK8sCharm(CharmBase):
 
         return PostgreSQL(host=host, user=user, password=password, database=database)
 
-    def trigger_db_relations(self):
-        """Triggers every instance of client relations db and db-admin, if they exist."""
-        # Skip triggering relations if backend_postgres doesn't exist yet.
+    def update_backend_relation_port(self, port):
+        """Update ports in backend relations to match updated pgbouncer port."""
+        # Skip updates if backend_postgres doesn't exist yet.
         if not self.backend_postgres:
             return
 
         for relation in self.model.relations.get("db", []):
-            logger.info(relation)
-            self.on.db_relation_changed.emit(relation)
+            self.legacy_db_relation.update_port(relation, port)
 
         for relation in self.model.relations.get("db-admin", []):
-            logger.info(relation)
-            self.on.db_admin_relation_changed.emit(relation)
+            self.legacy_db_admin_relation.update_port(relation, port)
+
+    def update_postgres_endpoints(self):
+        """Update postgres endpoints in relation config values."""
+        # Skip updates if backend_postgres doesn't exist yet.
+        if not self.backend_postgres:
+            return
+
+        for relation in self.model.relations.get("db", []):
+            self.legacy_db_relation.update_postgres_endpoints(relation)
+
+        for relation in self.model.relations.get("db-admin", []):
+            self.legacy_db_admin_relation.update_postgres_endpoints(relation)
 
     @property
     def unit_pod_hostname(self, name="") -> str:
