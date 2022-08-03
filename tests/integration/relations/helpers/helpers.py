@@ -86,7 +86,7 @@ async def get_userlist(ops_test: OpsTest) -> Dict[str, str]:
         "cat",
         f"{pgb.PGB_DIR}/userlist.txt",
     )
-    return pgb.parse_userlist(cat_userlist[1])
+    return cat_userlist[1]
 
 
 async def get_cfg(ops_test: OpsTest) -> pgb.PgbConfig:

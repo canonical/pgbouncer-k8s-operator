@@ -163,19 +163,13 @@ class PgbConfig(MutableMapping):
         except KeyError as err:
             raise PgbConfig.ConfigParsingError(source=str(err))
 
-        try:
-            for name, cfg_string in self[users].items():
-                self[users][name] = parse_kv_string_to_dict(cfg_string)
-        except KeyError:
-            # [users] section is not compulsory, so continue.
-            pass
+        for name, cfg_string in self.get(users, {}).items():
+            self[users][name] = parse_kv_string_to_dict(cfg_string)
 
         for user_type in PgbConfig.user_types:
-            try:
-                self[pgb][user_type] = self[pgb][user_type].split(",")
-            except KeyError:
-                # user type fields are not compulsory, so continue
-                pass
+            users = self[pgb].get(user_type, "").split(",")
+            users.remove("")
+            self[pgb][user_type] = users
 
     def render(self) -> str:
         """Returns a valid pgbouncer.ini file as a string.
@@ -352,7 +346,7 @@ def parse_dict_to_kv_string(dictionary: Dict[str, str]) -> str:
     return " ".join([f"{key}={value}" for key, value in dictionary.items()])
 
 
-def generate_password(hash=False) -> str:
+def generate_password() -> str:
     """Generates a secure password of alphanumeric characters.
 
     Passwords are alphanumeric only, to ensure compatibility with the userlist.txt format -

@@ -48,6 +48,7 @@ from charms.data_platform_libs.v0.database_requires import (
 )
 from ops.charm import CharmBase, RelationBrokenEvent
 from ops.framework import Object
+import hashlib
 
 RELATION_NAME = "backend-database"
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
@@ -93,7 +94,7 @@ class BackendDatabaseRequires(Object):
                 user=event.username,
                 cfg=cfg,
                 admin=True,
-                render_cfg=False,
+                render_cfg=True,
             )
             logging.error(cfg)
 
@@ -102,6 +103,7 @@ class BackendDatabaseRequires(Object):
             self.charm.trigger_db_relations()
 
         except FileNotFoundError:
+            logger.error("failed to access config file")
             event.defer()
 
     def _on_relation_broken(self, event: RelationBrokenEvent):
@@ -117,18 +119,19 @@ class BackendDatabaseRequires(Object):
             self.charm.trigger_db_relations()
 
         except FileNotFoundError:
-            logging.error("failed to access config file")
+            logger.error("failed to access config file")
             event.defer()
 
     def init_auth_user(self):
+        logger.error("initialising auth user")
         with self.charm.backend_postgres.connect_to_database() as conn, conn.cursor() as cursor:
             sql_file = open('src/relations/pgbouncer-install.sql', 'r')
             cursor.execute(sql_file.read())
         conn.close()
 
-        # TODO generate and hash password
-        password = pgb.generate_password()
-        self.charm.push_file(file_string=f'"pgbouncer" "{password}"', path=USERLIST_PATH, perms = 0o600)
+        # generate a hashed password. Postgres and pgbouncer both hash passwords
+        # hashed_password = hashlib.md5(f"{pgb.generate_password()}pgbouncer".encode()).hexdigest()
+        # self.charm.push_file(file_string=f'"pgbouncer" "md5{hashed_password}"', path=USERLIST_PATH, perms = 0o600)
         cfg = self.charm.read_pgb_config()
         cfg["pgbouncer"]["auth_user"] = "pgbouncer", # defined in src/relations/pgbouncer-install.sql
         cfg["pgbouncer"]["auth_query"] = "SELECT username, password FROM pgbouncer.get_auth($1)",

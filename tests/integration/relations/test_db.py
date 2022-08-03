@@ -13,7 +13,6 @@ from tests.integration.relations.helpers.helpers import (
     get_app_relation_databag,
     get_cfg,
     get_backend_user_pass,
-    get_userlist,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
 )
@@ -30,7 +29,7 @@ ANOTHER_FINOS_WALTZ = "another-finos-waltz"
 
 logger = logging.getLogger(__name__)
 
-
+@pytest.mark.skip
 @pytest.mark.abort_on_fail
 async def test_create_db_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -69,8 +68,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         wait_for_relation_joined_between(ops_test, PGB, PG)
         await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
 
-        userlist = await get_userlist(ops_test)
-        pgb_user, pgb_password = get_backend_user_pass(ops_test, backend_relation)
+        pgb_user, pgb_password = await get_backend_user_pass(ops_test, backend_relation)
         await check_database_users_existence(
             ops_test,
             [pgb_user],

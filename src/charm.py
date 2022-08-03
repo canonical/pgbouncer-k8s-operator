@@ -292,7 +292,6 @@ class PgBouncerK8sCharm(CharmBase):
             FileNotFoundError when userlist cannot be found.
         """
         admin_users = cfg[PGB].get("admin_users", [])
-        logger.error(admin_users)
         if admin and (user not in admin_users):
             cfg[PGB]["admin_users"] = admin_users.append(user)
 

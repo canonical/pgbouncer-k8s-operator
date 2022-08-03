@@ -10,7 +10,6 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from tests.integration.relations.helpers.helpers import (
-    get_userlist,
     get_backend_user_pass,
     wait_for_relation_joined_between,
 )
@@ -32,7 +31,7 @@ METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
 PG = "postgresql-k8s"
 
-
+@pytest.mark.skip
 @pytest.mark.abort_on_fail
 @pytest.mark.legacy_relations
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
@@ -66,7 +65,7 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
             apps=[PG, PGB, REDIS_APP_NAME], status="active", timeout=1000
         )
 
-        pgb_user, pgb_password = get_backend_user_pass(ops_test, backend_relation)
+        pgb_user, pgb_password = await get_backend_user_pass(ops_test, backend_relation)
         await check_database_users_existence(
             ops_test,
             [pgb_user],

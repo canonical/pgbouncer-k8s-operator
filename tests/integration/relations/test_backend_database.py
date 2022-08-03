@@ -62,9 +62,11 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
 
         userlist = await get_userlist(ops_test)
         cfg = await get_cfg(ops_test)
-        pgb_user, pgb_password = get_backend_user_pass(ops_test, relation)
+        logging.info(userlist)
+        logging.info(cfg.render())
+        pgb_user, pgb_password = await get_backend_user_pass(ops_test, relation)
         assert pgb_user in cfg["pgbouncer"]["admin_users"]
-        assert pgb_user not in userlist.keys()
+        assert pgb_user not in userlist
 
         await check_database_users_existence(ops_test, [pgb_user], [], pgb_user, pgb_password)
 
