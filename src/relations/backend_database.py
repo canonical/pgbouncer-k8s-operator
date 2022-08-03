@@ -123,17 +123,20 @@ class BackendDatabaseRequires(Object):
             event.defer()
 
     def init_auth_user(self):
-        logger.error("initialising auth user")
+        logger.info("initialising auth user")
         with self.charm.backend_postgres.connect_to_database() as conn, conn.cursor() as cursor:
             sql_file = open("src/relations/pgbouncer-install.sql", "r")
             cursor.execute(sql_file.read())
         conn.close()
+        logger.info("auth user created")
 
         # generate a hashed password. Postgres and pgbouncer both hash passwords
         # hashed_password = hashlib.md5(f"{pgb.generate_password()}pgbouncer".encode()).hexdigest()
         # self.charm.push_file(file_string=f'"pgbouncer" "md5{hashed_password}"', path=USERLIST_PATH, perms = 0o600)
         cfg = self.charm.read_pgb_config()
-        cfg["pgbouncer"]["auth_user"] = "pgbouncer" # defined in src/relations/pgbouncer-install.sql
+        cfg["pgbouncer"][
+            "auth_user"
+        ] = "pgbouncer"  # defined in src/relations/pgbouncer-install.sql
         cfg["pgbouncer"]["auth_query"] = "SELECT username, password FROM pgbouncer.get_auth($1)"
 
         logging.error(cfg)

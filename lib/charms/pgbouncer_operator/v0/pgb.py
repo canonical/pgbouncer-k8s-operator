@@ -31,6 +31,7 @@ from typing import Dict, Union
 
 logger = logging.getLogger(__name__)
 
+PGB = "pgbouncer"
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
 INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
 
@@ -305,6 +306,36 @@ class PgbConfig(MutableMapping):
         self[pgb]["default_pool_size"] = str(math.ceil(effective_db_connections / 2))
         self[pgb]["min_pool_size"] = str(math.ceil(effective_db_connections / 4))
         self[pgb]["reserve_pool_size"] = str(math.ceil(effective_db_connections / 4))
+
+    def add_user( self, user: str, admin: bool = False, stats: bool = False):
+        """Adds a user.
+
+        Users are added to userlist.txt and pgbouncer.ini config files
+
+        Args:
+            user: the username for the intended user
+            admin: whether or not the user has admin permissions
+            stats: whether or not the user has stats permissions
+        """
+        admin_users = self[PGB].get("admin_users", [])
+        if admin and (user not in admin_users):
+            self[PGB]["admin_users"] = admin_users + [user]
+
+        stats_users = self[PGB].get("stats_users", [])
+        if stats and (user not in stats_users):
+            self[PGB]["stats_users"] = stats_users + [user]
+
+
+    def remove_user(self, user: str):
+        """Removes a user from config files.
+
+        Args:
+            user: the username for the intended user.
+        """
+        if user in self[PGB].get("admin_users", []):
+            self[PGB]["admin_users"].remove(user)
+        if user in self[PGB].get("stats_users", []):
+            self[PGB]["stats_users"].remove(user)
 
     class ConfigParsingError(ParsingError):
         """Error raised when parsing config fails."""
