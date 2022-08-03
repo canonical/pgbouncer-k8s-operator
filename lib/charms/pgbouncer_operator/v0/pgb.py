@@ -44,9 +44,7 @@ DEFAULT_CONFIG = {
         "admin_users": [],
         "stats_users": [],
         "auth_type": "md5",
-        "auth_user": "pgbouncer", # defined in src/relations/pgbouncer-install.sql
         "auth_file": f"{PGB_DIR}/userlist.txt",
-        "auth_query": "SELECT username, password FROM pgbouncer.get_auth($1)",
         "user": "postgres",
         "max_client_conn": "10000",
         "ignore_startup_parameters": "extra_float_digits",
@@ -195,6 +193,8 @@ class PgbConfig(MutableMapping):
                     output_dict[section][option] = parse_dict_to_kv_string(config_value)
                 elif isinstance(config_value, list):
                     output_dict[section][option] = ",".join(config_value)
+                else:
+                    output_dict[section][option] = str(config_value)
 
         # Populate parser object with local data.
         parser = ConfigParser()

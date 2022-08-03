@@ -183,6 +183,13 @@ class PgBouncerK8sCharm(CharmBase):
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
         """
+        self.push_file(path = INI_PATH, file_string=config.render(), perms = 0o600)
+        logging.info("pushed new pgbouncer.ini config file to pgbouncer container")
+
+        if reload_pgbouncer:
+            self._reload_pgbouncer()
+
+    def push_file(self, path, file_string, perms):
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
             logger.warning("unable to connect to container")
@@ -192,16 +199,12 @@ class PgBouncerK8sCharm(CharmBase):
             return
 
         pgb_container.push(
-            INI_PATH,
-            config.render(),
+            path,
+            file_string,
             user=PG_USER,
-            permissions=0o600,
+            permissions=perms,
             make_dirs=True,
         )
-        logging.info("pushed new pgbouncer.ini config file to pgbouncer container")
-
-        if reload_pgbouncer:
-            self._reload_pgbouncer()
 
     def read_pgb_config(self) -> PgbConfig:
         """Get config object from pgbouncer.ini file stored on container.
@@ -289,6 +292,7 @@ class PgBouncerK8sCharm(CharmBase):
             FileNotFoundError when userlist cannot be found.
         """
         admin_users = cfg[PGB].get("admin_users", [])
+        logger.error(admin_users)
         if admin and (user not in admin_users):
             cfg[PGB]["admin_users"] = admin_users.append(user)
 
@@ -382,6 +386,7 @@ class PgBouncerK8sCharm(CharmBase):
         if None in [endpoint, user, password, database]:
             return None
 
+        # TODO experiment with deleting this
         host = endpoint.split(":")[0]
 
         return PostgreSQL(host=host, user=user, password=password, database=database)

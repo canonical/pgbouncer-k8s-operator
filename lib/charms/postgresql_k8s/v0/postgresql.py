@@ -66,7 +66,7 @@ class PostgreSQL:
         self.password = password
         self.database = database
 
-    def _connect_to_database(self, database: str = None) -> psycopg2.extensions.connection:
+    def connect_to_database(self, database: str = None) -> psycopg2.extensions.connection:
         """Creates a connection to the database.
         Args:
             database: database to connect to (defaults to the database

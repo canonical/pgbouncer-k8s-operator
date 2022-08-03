@@ -50,6 +50,8 @@ from ops.charm import CharmBase, RelationBrokenEvent
 from ops.framework import Object
 
 RELATION_NAME = "backend-database"
+PGB_DIR = "/var/lib/postgresql/pgbouncer"
+USERLIST_PATH = f"{PGB_DIR}/userlist.txt"
 
 
 logger = logging.getLogger(__name__)
@@ -86,13 +88,16 @@ class BackendDatabaseRequires(Object):
         """
         try:
             cfg = self.charm.read_pgb_config()
+            logging.error(cfg)
             self.charm.add_user(
                 user=event.username,
                 cfg=cfg,
                 admin=True,
-                reload_pgbouncer=True,
-                render_cfg=True,
+                render_cfg=False,
             )
+            logging.error(cfg)
+
+            self.init_auth_user()
 
             self.charm.trigger_db_relations()
 
@@ -116,9 +121,16 @@ class BackendDatabaseRequires(Object):
             event.defer()
 
     def init_auth_user(self):
-        conn = psycopg2.connect('database')
-        cursor = conn.cursor()
-        sql_file = open('src/relations/pgbouncer-install.sql', 'r')
-        cursor.execute(sql_file.read())
+        with self.charm.backend_postgres.connect_to_database() as conn, conn.cursor() as cursor:
+            sql_file = open('src/relations/pgbouncer-install.sql', 'r')
+            cursor.execute(sql_file.read())
+        conn.close()
 
-        self.charm.
+        # TODO generate and hash password
+        self.charm.push_file(file_string='"pgbouncer" "pgbouncer-password', path=USERLIST_PATH, perms = 0o600)
+        cfg = self.charm.read_pgb_config()
+        cfg["pgbouncer"]["auth_user"] = "pgbouncer", # defined in src/relations/pgbouncer-install.sql
+        cfg["pgbouncer"]["auth_query"] = "SELECT username, password FROM pgbouncer.get_auth($1)",
+
+        logging.error(cfg)
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)

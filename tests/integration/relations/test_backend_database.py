@@ -11,6 +11,8 @@ from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from tests.integration.relations.helpers.helpers import (
+    get_app_relation_databag,
+    get_backend_user_pass,
     get_cfg,
     get_userlist,
     wait_for_relation_joined_between,
@@ -57,11 +59,12 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
         wait_for_relation_joined_between(ops_test, PG, PGB)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),
 
+
         userlist = await get_userlist(ops_test)
         cfg = await get_cfg(ops_test)
-        pgb_user = f"relation_id_{relation.id}"
-        pgb_password = userlist[pgb_user]
+        pgb_user, pgb_password = get_backend_user_pass(ops_test, relation)
         assert pgb_user in cfg["pgbouncer"]["admin_users"]
+        assert pgb_user not in userlist.keys()
 
         await check_database_users_existence(ops_test, [pgb_user], [], pgb_user, pgb_password)
 
@@ -76,12 +79,8 @@ async def test_create_backend_db_admin_legacy_relation(ops_test: OpsTest):
         try:
             for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
                 with attempt:
-                    userlist = await get_userlist(ops_test)
                     cfg = await get_cfg(ops_test)
-                    if (
-                        pgb_user not in userlist.keys()
-                        and pgb_user not in cfg["pgbouncer"]["admin_users"]
-                    ):
+                    if pgb_user not in cfg["pgbouncer"]["admin_users"]:
                         break
         except RetryError:
             assert False, "pgbouncer config files failed to update in 3 minutes "
