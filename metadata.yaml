@@ -27,10 +27,6 @@ resources:
     description: OCI image for pgbouncer
     upstream-source: docker.io/dataplatformoci/pgbouncer:latest
 
-peers:
-  pgbouncer-replicas:
-    interface: pgbouncer-replicas
-
 provides:
   # Legacy relations - these will be deprecated in a future release
   db:
@@ -42,5 +38,5 @@ provides:
 
 requires:
   backend-database:
-    interface: postgresql-client
+    interface: postgresql_client
     optional: false
