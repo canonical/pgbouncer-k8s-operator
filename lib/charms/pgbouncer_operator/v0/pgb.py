@@ -41,8 +41,12 @@ DEFAULT_CONFIG = {
         "listen_port": "6432",
         "logfile": f"{PGB_DIR}/pgbouncer.log",
         "pidfile": f"{PGB_DIR}/pgbouncer.pid",
+        "admin_users": [],
+        "stats_users": [],
+        "auth_type": "md5",
+        "auth_user": "pgbouncer", # defined in src/relations/pgbouncer-install.sql
         "auth_file": f"{PGB_DIR}/userlist.txt",
-        "auth_file": "md5",
+        "auth_query": "SELECT username, password FROM pgbouncer.get_auth($1)",
         "user": "postgres",
         "max_client_conn": "10000",
         "ignore_startup_parameters": "extra_float_digits",

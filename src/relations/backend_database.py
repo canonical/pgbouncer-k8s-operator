@@ -39,6 +39,9 @@ Example:
 
 import logging
 
+import psycopg2
+from psycopg2 import sql
+
 from charms.data_platform_libs.v0.database_requires import (
     DatabaseCreatedEvent,
     DatabaseRequires,
@@ -111,3 +114,11 @@ class BackendDatabaseRequires(Object):
         except FileNotFoundError:
             logging.error("failed to access config file")
             event.defer()
+
+    def init_auth_user(self):
+        conn = psycopg2.connect('database')
+        cursor = conn.cursor()
+        sql_file = open('src/relations/pgbouncer-install.sql', 'r')
+        cursor.execute(sql_file.read())
+
+        self.charm.
