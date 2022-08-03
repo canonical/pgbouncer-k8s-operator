@@ -87,16 +87,14 @@ class BackendDatabaseRequires(Object):
         """
         logger.info("initialising postgres and pgbouncer relations")
         try:
-            self.charm.add_user(
-                user=event.username,
-                cfg=self.charm.read_pgb_config(),
-                password=event.password,
-                admin=True,
-                render_cfg=True,
-            )
+            cfg = self.charm.read_pgb_config()
+            cfg.add_user(user=event.username, admin=True)
+            #TODO maybe don't reload if we're updating endpoints
+            self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
             self.init_auth_user()
 
+            # TODO this doesn't do anything yet. Get endpoints from relation
             self.charm.update_postgres_endpoints()
 
         except FileNotFoundError:
@@ -110,8 +108,9 @@ class BackendDatabaseRequires(Object):
         """
         try:
             cfg = self.charm.read_pgb_config()
-            user = self.charm.backend_postgres.user
-            self.charm.remove_user(user, cfg=cfg, reload_pgbouncer=True, render_cfg=True)
+            cfg.remove_user(self.charm.backend_postgres.user)
+            #TODO maybe don't reload if we're updating endpoints
+            self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
             # TODO this doesn't update the endpoints yet, because they're only updated when this
             # hook ends.

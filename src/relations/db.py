@@ -171,13 +171,9 @@ class DbProvides(Object):
         password = pgb.generate_password()
 
         # Create user in pgbouncer config
-        self.charm.add_user(
-            user,
-            admin=self.admin,
-            cfg=self.charm.read_pgb_config(),
-            render_cfg=True,
-            reload_pgbouncer=True,
-        )
+        cfg = self.charm.read_pgb_config()
+        cfg.add_user(user, admin=self.admin)
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         # Create user and database in backend postgresql database
         try:
@@ -419,7 +415,9 @@ class DbProvides(Object):
             cfg["databases"].pop(f"{database}_standby")
 
         # delete user
-        self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
+        cfg.remove_user(user)
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+
         try:
             if self.charm.backend_postgres:
                 # Try to delete user if backend database still exists. If not, postgres has been
