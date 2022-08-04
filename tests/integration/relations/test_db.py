@@ -14,7 +14,6 @@ from tests.integration.relations.helpers.helpers import (
     get_backend_user_pass,
     get_cfg,
     get_legacy_relation_username,
-    get_userlist,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
 )
@@ -31,7 +30,7 @@ ANOTHER_FINOS_WALTZ = "another-finos-waltz"
 
 logger = logging.getLogger(__name__)
 
-
+@pytest.mark.skip
 @pytest.mark.abort_on_fail
 async def test_create_db_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""

@@ -63,10 +63,14 @@ class PgBouncerK8sCharm(CharmBase):
 
     def _on_install(self, event: InstallEvent) -> None:
         """On install hook.
-        # TODO delete and see what happens
 
         This imports any users from the juju config, and initialises userlist and pgbouncer.ini
         config files that are essential for pgbouncer to run.
+
+        # TODO delete and see what happens
+        # TODO at worst I'll need to have a "make pgb config out of nothing" method, which will
+        # take data from config, defaults, and relations, and build new config. maybe not a bad
+        # thing to have.
         """
         container = self.unit.get_container(PGB)
         if not container.can_connect():
@@ -120,8 +124,6 @@ class PgBouncerK8sCharm(CharmBase):
             logging.info(f"restarted {PGB} service")
         self.unit.status = ActiveStatus()
 
-        self.trigger_db_relations()
-
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
 
@@ -152,7 +154,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         TODO verify pgbouncer is actually running in this hook
         """
-        if not self.backend_postgres:
+        if self.backend_postgres == None:
             self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
 
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
@@ -227,7 +229,11 @@ class PgBouncerK8sCharm(CharmBase):
             return pgb.PgbConfig(config)
         except FileNotFoundError as e:
             logger.error("pgbouncer config not found")
-            raise e
+            return self._generate_new_config()
+
+    def _generate_new_config(self):
+        """FIXME this is a stub """
+        return PgbConfig(pgb.DEFAULT_CONFIG)
 
     def _reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
