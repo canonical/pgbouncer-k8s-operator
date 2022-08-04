@@ -112,6 +112,7 @@ class BackendDatabaseRequires(Object):
 
         Removes all traces of this relation from pgbouncer config.
         """
+        #from pdb import set_trace; set_trace()
         self.remove_auth_user()
 
         cfg = self.charm.read_pgb_config()
@@ -139,12 +140,13 @@ class BackendDatabaseRequires(Object):
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
     def remove_auth_user(self):
-        logger.info("removing auth user")
-        with self.charm.backend_postgres.connect_to_database() as conn, conn.cursor() as cursor:
-            sql_file = open("src/relations/pgbouncer-uninstall.sql", "r")
-            cursor.execute(sql_file.read())
-        conn.close()
-        logger.info("auth user removed")
+        # TODO this part has to run before postgresql relation-broken hook
+        # logger.info("removing auth user")
+        # with self.charm.backend_postgres.connect_to_database() as conn, conn.cursor() as cursor:
+        #     sql_file = open("src/relations/pgbouncer-uninstall.sql", "r")
+        #     cursor.execute(sql_file.read())
+        # conn.close()
+        # logger.info("auth user removed")
 
         cfg = self.charm.read_pgb_config()
         del cfg["pgbouncer"]["auth_user"]
