@@ -23,6 +23,7 @@
 
 /**
  * First, check that there is a "pgbouncer" administrative user
+ * TODO change pgbouncer to unique relation name
  */
 DO $$
 BEGIN
@@ -36,7 +37,6 @@ BEGIN
     END IF;
 END
 $$;
-
 
 /**
  * We also want to explicitly ensure that the pgbouncer user can only
