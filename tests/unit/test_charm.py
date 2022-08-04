@@ -6,7 +6,7 @@
 import unittest
 from unittest.mock import patch
 
-from charms.pgbouncer_operator.v0.pgb import DEFAULT_CONFIG, PgbConfig
+from charms.pgbouncer_k8s_operator.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from ops.model import ActiveStatus, WaitingStatus
 from ops.testing import Harness
 
@@ -20,7 +20,7 @@ class TestCharm(unittest.TestCase):
         self.harness.begin()
         self.charm = self.harness.charm
 
-    @patch("charms.pgbouncer_operator.v0.pgb.generate_password", return_value="pw")
+    @patch("charms.pgbouncer_k8s_operator.v0.pgb.generate_password", return_value="pw")
     def test_on_install(self, _gen_pw):
         self.charm.on.install.emit()
         pgb_container = self.harness.model.unit.get_container(PGB)
@@ -155,7 +155,7 @@ class TestCharm(unittest.TestCase):
         self.assertIsInstance(self.charm.unit.status, ActiveStatus)
         _restart.assert_called_once()
 
-    @patch("charms.pgbouncer_operator.v0.pgb.generate_password", return_value="default-pass")
+    @patch("charms.pgbouncer_k8s_operator.v0.pgb.generate_password", return_value="default-pass")
     @patch("charm.PgBouncerK8sCharm._read_userlist", return_value={})
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm._render_userlist")

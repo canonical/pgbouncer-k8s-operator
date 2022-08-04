@@ -53,7 +53,7 @@ Some example relation data is below. All values are examples, generated in a run
 import logging
 from typing import Dict, Iterable
 
-from charms.pgbouncer_operator.v0 import pgb
+from charms.pgbouncer_k8s_operator.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import (
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
