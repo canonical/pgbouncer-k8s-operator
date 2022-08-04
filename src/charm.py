@@ -232,7 +232,7 @@ class PgBouncerK8sCharm(CharmBase):
             return self._generate_new_config()
 
     def _generate_new_config(self):
-        """FIXME this is a stub """
+        """FIXME this is a stub"""
         return PgbConfig(pgb.DEFAULT_CONFIG)
 
     def _reload_pgbouncer(self) -> None:

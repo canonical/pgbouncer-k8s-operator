@@ -41,9 +41,9 @@ import logging
 
 from charms.data_platform_libs.v0.database_requires import (
     DatabaseCreatedEvent,
-    DatabaseRequires,
-    DatabaseReadOnlyEndpointsChangedEvent,
     DatabaseEndpointsChangedEvent,
+    DatabaseReadOnlyEndpointsChangedEvent,
+    DatabaseRequires,
 )
 from charms.pgbouncer_operator.v0 import pgb
 from ops.charm import CharmBase, RelationBrokenEvent
@@ -91,7 +91,7 @@ class BackendDatabaseRequires(Object):
         logger.info("initialising postgres and pgbouncer relations")
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user=event.username, admin=True)
-        #TODO maybe don't reload if we're updating endpoints
+        # TODO maybe don't reload if we're updating endpoints
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         self.init_auth_user()
@@ -112,12 +112,12 @@ class BackendDatabaseRequires(Object):
 
         Removes all traces of this relation from pgbouncer config.
         """
-        #from pdb import set_trace; set_trace()
+        # from pdb import set_trace; set_trace()
         self.remove_auth_user()
 
         cfg = self.charm.read_pgb_config()
         cfg.remove_user(self.charm.backend_postgres.user)
-        #TODO maybe don't reload if we're updating endpoints
+        # TODO maybe don't reload if we're updating endpoints
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         # TODO this doesn't update the endpoints yet, because they're only updated when this

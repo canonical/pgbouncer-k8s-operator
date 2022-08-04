@@ -33,6 +33,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
         )
         await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)
 
+
 @pytest.mark.skip
 async def test_config_updates(ops_test: OpsTest):
     """Test updating charm config updates pgbouncer config."""
