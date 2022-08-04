@@ -127,6 +127,7 @@ class BackendDatabaseRequires(Object):
     def init_auth_user(self):
         logger.info("initialising auth user")
         with self.charm.backend_postgres.connect_to_database() as conn, conn.cursor() as cursor:
+            # TODO prepend a unique username to this file
             sql_file = open("src/relations/pgbouncer-install.sql", "r")
             cursor.execute(sql_file.read())
         conn.close()
@@ -143,12 +144,14 @@ class BackendDatabaseRequires(Object):
         # TODO this part has to run before postgresql relation-broken hook
         # logger.info("removing auth user")
         # with self.charm.backend_postgres.connect_to_database() as conn, conn.cursor() as cursor:
+        #     # TODO prepend a unique username to this file
         #     sql_file = open("src/relations/pgbouncer-uninstall.sql", "r")
         #     cursor.execute(sql_file.read())
         # conn.close()
         # logger.info("auth user removed")
 
         cfg = self.charm.read_pgb_config()
+        # TODO pop these instead.
         del cfg["pgbouncer"]["auth_user"]
         del cfg["pgbouncer"]["auth_query"]
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
