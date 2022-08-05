@@ -32,15 +32,17 @@ from typing import Dict, Union
 logger = logging.getLogger(__name__)
 
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
+INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
 
 DEFAULT_CONFIG = {
     "databases": {},
     "pgbouncer": {
+        "listen_addr": "*",
         "listen_port": "6432",
         "logfile": f"{PGB_DIR}/pgbouncer.log",
         "pidfile": f"{PGB_DIR}/pgbouncer.pid",
-        "admin_users": ["juju-admin"],
-        "stats_users": ["juju-admin"],
+        "admin_users": ["juju_admin"],
+        "stats_users": ["juju_admin"],
         "auth_file": f"{PGB_DIR}/userlist.txt",
         "user": "postgres",
         "max_client_conn": "10000",
@@ -101,6 +103,10 @@ class PgbConfig(MutableMapping):
     def __len__(self):
         """Gets number of key-value pairs in internal mapping."""
         return len(self.__dict__)
+
+    def __str__(self):
+        """String representation of PgbConfig object."""
+        return str(self.__dict__)
 
     def read_dict(self, input: Dict) -> None:
         """Populates this object from a dictionary.
@@ -421,6 +427,7 @@ def parse_userlist(userlist: str) -> Dict[str, str]:
     # Each line in userlist can only be two space-separated substrings, wrapped in double quotes.
     valid_userlist_regex = re.compile(r'^"[^"]*" "[^"]*"$')
     for line in userlist.split("\n"):
+        line = line.strip()
         if valid_userlist_regex.fullmatch(line) is None:
             logger.warning("unable to parse line in userlist file - user not imported")
             continue

@@ -14,7 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Install dependencies
-        run: python3 -m pip install tox
+        run: python -m pip install tox
       - name: Run linters
         run: tox -e lint
   unit-test:
@@ -39,11 +39,9 @@ jobs:
         with:
           provider: microk8s
       - name: Run integration tests
-        # set a predictable model name so it can be consumed by charm-logdump-action
         run: tox -e integration
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
         if: failure()
         with:
           app: pgbouncer-k8s-operator
-
