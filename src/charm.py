@@ -110,7 +110,6 @@ class PgBouncerK8sCharm(CharmBase):
             self._cores,
         )
 
-
         if config["pgbouncer"]["listen_port"] != self.config["listen_port"]:
             # This emits relation-changed events to every client relation, so only do it when
             # necessary
