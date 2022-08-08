@@ -75,7 +75,7 @@ async def get_userlist(ops_test: OpsTest) -> Dict[str, str]:
         "ssh",
         "--container",
         "pgbouncer",
-        "pgbouncer-k8s/0",
+        f"{PGB}/0",
         "cat",
         f"{pgb.PGB_DIR}/userlist.txt",
     )
@@ -88,7 +88,7 @@ async def get_cfg(ops_test: OpsTest) -> pgb.PgbConfig:
         "ssh",
         "--container",
         "pgbouncer",
-        "pgbouncer-k8s/0",
+        f"{PGB}/0",
         "cat",
         f"{pgb.PGB_DIR}/pgbouncer.ini",
     )
