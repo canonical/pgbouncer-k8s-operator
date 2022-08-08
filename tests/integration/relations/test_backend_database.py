@@ -58,15 +58,16 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         wait_for_relation_joined_between(ops_test, PG, PGB)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),
 
-        # userlist = await get_userlist(ops_test)
         cfg = await get_cfg(ops_test)
-        # logging.info(userlist)
         logging.info(cfg.render())
         pgb_user, pgb_password = await get_backend_user_pass(ops_test, relation)
         assert pgb_user in cfg["pgbouncer"]["admin_users"]
-        # assert pgb_user not in userlist
+        assert cfg["pgbouncer"]["auth_query"]
+        assert cfg["pgbouncer"]["auth_user"]
 
-        await check_database_users_existence(ops_test, [pgb_user], [], pgb_user, pgb_password)
+        await check_database_users_existence(
+            ops_test, [pgb_user], [], pgb_user, pgb_password
+        )
 
         # Remove relation but keep pg application because we're going to need it for future tests.
         await ops_test.model.applications[PG].remove_relation(
@@ -78,11 +79,17 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000),
 
         # Wait for pgbouncer charm to update its config files.
+
         try:
             for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
                 with attempt:
                     cfg = await get_cfg(ops_test)
-                    if pgb_user not in cfg["pgbouncer"]["admin_users"]:
+                    logging.error(cfg.render())
+                    if (
+                        pgb_user not in cfg["pgbouncer"]["admin_users"]
+                        and not cfg["pgbouncer"].get("auth_query", None) == None
+                        and not cfg["pgbouncer"].get("auth_user", None) == None
+                    ):
                         break
         except RetryError:
             assert False, "pgbouncer config files failed to update in 3 minutes "

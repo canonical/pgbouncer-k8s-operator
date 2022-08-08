@@ -102,7 +102,9 @@ class BackendDatabaseRequires(Object):
         logger.error(dir(event))
         logger.error(event.relation.app)
 
-        postgres = self.get_postgres(event.endpoints.split(":")[0], event.username, event.password, self.database.database)
+        postgres = self.get_postgres(
+            event.endpoints.split(":")[0], event.username, event.password, self.database.database
+        )
         # TODO this may be bad
         if postgres == None:
             event.defer()
@@ -139,12 +141,17 @@ class BackendDatabaseRequires(Object):
             return
 
         logger.info("removing auth user")
+
         databag = event.relation.data[event.app]
-        postgres = self.get_postgres(databag.get("endpoints"), databag.get("username"), databag.get("password"), databag.get("database"))
+        username = databag.get("username")
+        postgres = self.get_postgres(
+            databag.get("endpoints"), username, databag.get("password"), databag.get("database")
+        )
+        sql_file = open("src/relations/pgbouncer-uninstall.sql", "r").read()
+        auth_user = f"pgbouncer_auth_{username}"
         with postgres.connect_to_database() as conn, conn.cursor() as cursor:
             # TODO prepend a unique username to this file
-            sql_file = open("src/relations/pgbouncer-uninstall.sql", "r")
-            cursor.execute(sql_file.read())
+            cursor.execute(sql_file.replace("auth_user", auth_user))
         conn.close()
         logger.info("auth user removed")
 

@@ -191,7 +191,6 @@ class PgBouncerK8sCharm(CharmBase):
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
         """
-        logging.error(config.render())
         self.push_file(path=INI_PATH, file_string=config.render(), perms=0o600)
         logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
 
@@ -227,7 +226,6 @@ class PgBouncerK8sCharm(CharmBase):
         """
         try:
             config = self._read_file(INI_PATH)
-            logging.error(pgb.PgbConfig(config).render())
             return pgb.PgbConfig(config)
         except FileNotFoundError as e:
             logger.error("pgbouncer config not found")
@@ -331,7 +329,9 @@ class PgBouncerK8sCharm(CharmBase):
         if None in [endpoint, user, password, database]:
             return None
 
-        return PostgreSQL(host=endpoint, user=user, password=password, database=database)
+        host = endpoint.split(":")[0]
+
+        return PostgreSQL(host=host, user=user, password=password, database=database)
 
     def update_backend_relation_port(self, port):
         """Update ports in backend relations to match updated pgbouncer port."""
