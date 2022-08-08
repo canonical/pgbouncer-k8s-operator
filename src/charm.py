@@ -191,6 +191,7 @@ class PgBouncerK8sCharm(CharmBase):
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
         """
+        logging.error(config.render())
         self.push_file(path=INI_PATH, file_string=config.render(), perms=0o600)
         logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
 
@@ -226,6 +227,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         try:
             config = self._read_file(INI_PATH)
+            logging.error(pgb.PgbConfig(config).render())
             return pgb.PgbConfig(config)
         except FileNotFoundError as e:
             logger.error("pgbouncer config not found")

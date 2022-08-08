@@ -412,7 +412,7 @@ class DbProvides(Object):
 
         if delete_db:
             del cfg["databases"][database]
-            cfg["databases"].pop(f"{database}_standby")
+            cfg["databases"].pop(f"{database}_standby", None)
 
         # delete user
         cfg.remove_user(user)

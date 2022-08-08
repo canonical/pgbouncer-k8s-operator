@@ -27,7 +27,7 @@ Example:
 │                  │                  │ "relation_id_18… │                  │
 │                  │                  │ "version":       │                  │
 │                  │                  │ "12.9"}          │                  │
-│                  │         database │ postgresql       │                  │
+│                  │         database │ pgbouncer        │                  │
 │                  │        endpoints │                  │ postgresql-k8s-… │
 │                  │ extra-user-roles │ SUPERUSER        │                  │
 │                  │         password │                  │ 18cqKCp19xOPBhk9 │
@@ -79,7 +79,7 @@ class BackendDatabaseRequires(Object):
         self.database = DatabaseRequires(
             self.charm,
             relation_name=RELATION_NAME,
-            database_name="postgresql",
+            database_name="pgbouncer",
             extra_user_roles="SUPERUSER",
         )
 
@@ -99,19 +99,27 @@ class BackendDatabaseRequires(Object):
         logger.info("initialising auth user")
 
         logger.error(event.relation.data)
-        postgres = self.get_postgres(event.relation.data[event.app])
+        logger.error(dir(event))
+        logger.error(event.relation.app)
+
+        postgres = self.get_postgres(event.endpoints.split(":")[0], event.username, event.password, self.database.database)
+        # TODO this may be bad
+        if postgres == None:
+            event.defer()
+            logging.error("deferring database-created hook - postgres database not ready")
+            return
+
+        auth_user = f"pgbouncer_auth_{event.username}"
+        install_script = open("src/relations/pgbouncer-install.sql", "r").read()
 
         with postgres.connect_to_database() as conn, conn.cursor() as cursor:
-            # TODO prepend a unique username to this file
-            sql_file = open("src/relations/pgbouncer-install.sql", "r")
-            cursor.execute(sql_file.read())
+            cursor.execute(install_script.replace("pgbouncer", auth_user))
         conn.close()
 
-        auth_user = "pgbouncer"
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user=event.username, admin=True)
         cfg["pgbouncer"]["auth_user"] = auth_user  # defined in src/relations/pgbouncer-install.sql
-        cfg["pgbouncer"]["auth_query"] = "SELECT username, password FROM pgbouncer.get_auth($1)"
+        cfg["pgbouncer"]["auth_query"] = f"SELECT username, password FROM {auth_user}.get_auth($1)"
         # TODO maybe don't reload if we're updating endpoints
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
@@ -131,7 +139,8 @@ class BackendDatabaseRequires(Object):
             return
 
         logger.info("removing auth user")
-        postgres = self.get_postgres(event.relation.data[event.app])
+        databag = event.relation.data[event.app]
+        postgres = self.get_postgres(databag.get("endpoints"), databag.get("username"), databag.get("password"), databag.get("database"))
         with postgres.connect_to_database() as conn, conn.cursor() as cursor:
             # TODO prepend a unique username to this file
             sql_file = open("src/relations/pgbouncer-uninstall.sql", "r")
@@ -148,8 +157,9 @@ class BackendDatabaseRequires(Object):
 
         cfg = self.charm.read_pgb_config()
         cfg.remove_user(self.charm.backend_postgres.user)
-        cfg["pgbouncer"].pop("auth_user")
-        cfg["pgbouncer"].pop("auth_query")
+        # TODO pop still gets keyerror?
+        cfg["pgbouncer"].pop("auth_user", None)
+        cfg["pgbouncer"].pop("auth_query", None)
         # TODO maybe don't reload if we're updating endpoints
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
@@ -157,12 +167,7 @@ class BackendDatabaseRequires(Object):
         # hook ends.
         self.charm.update_postgres_endpoints()
 
-    def get_postgres(databag):
-        host = databag.get("endpoints")
-        user = databag.get("username")
-        password = databag.get("password")
-        database = databag.get("database")
-
+    def get_postgres(self, host, user, password, database):
         if None in [host, user, password, database]:
             return None
 

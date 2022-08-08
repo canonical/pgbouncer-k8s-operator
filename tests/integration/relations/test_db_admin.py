@@ -12,7 +12,6 @@ from pytest_operator.plugin import OpsTest
 from tests.integration.relations.helpers.helpers import (
     get_backend_user_pass,
     get_legacy_relation_username,
-    get_userlist,
     wait_for_relation_joined_between,
 )
 from tests.integration.relations.helpers.postgresql_helpers import (

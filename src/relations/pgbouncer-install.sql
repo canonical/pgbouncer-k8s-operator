@@ -27,13 +27,13 @@
  */
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'pgbouncer') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'auth_user') THEN
         /**
          * NOTE: we disallow login here as we are only enabling the ability
          * for the PostgreSQL Operator to use pgBouncer. We require that the
          * user/Operator explicitly turns on
          */
-        CREATE ROLE pgbouncer NOLOGIN;
+        CREATE ROLE auth_user NOLOGIN;
     END IF;
 END
 $$;
@@ -47,19 +47,19 @@ $$;
  * wants to have the pgbouncer user access the public schema...well, open up
  * an issue on GitHub and we can chat.
  */
-REVOKE ALL PRIVILEGES ON SCHEMA public FROM pgbouncer;
+REVOKE ALL PRIVILEGES ON SCHEMA public FROM auth_user;
 
 /**
  * All of the administrative functions for pgbouncer will live in its own
  * schema, conveniently titled "pgbouncer"
  */
-CREATE SCHEMA IF NOT EXISTS pgbouncer;
+CREATE SCHEMA IF NOT EXISTS auth_user;
 /**
  * ...but even though pgbouncer gets its own schema, lock down what it can do
  * on it
  */
-REVOKE ALL PRIVILEGES ON SCHEMA pgbouncer FROM pgbouncer;
-GRANT USAGE ON SCHEMA pgbouncer TO pgbouncer;
+REVOKE ALL PRIVILEGES ON SCHEMA auth_user FROM auth_user;
+GRANT USAGE ON SCHEMA auth_user TO auth_user;
 
 /**
  * The "get_auth" function allows us to return the appropriate login credentials
@@ -68,7 +68,7 @@ GRANT USAGE ON SCHEMA pgbouncer TO pgbouncer;
  *
  * See: http://www.pgbouncer.org/config.html#auth_query
  */
-CREATE OR REPLACE FUNCTION pgbouncer.get_auth(username TEXT)
+CREATE OR REPLACE FUNCTION auth_user.get_auth(username TEXT)
 RETURNS TABLE(username TEXT, password TEXT) AS
 $$
   SELECT rolname::TEXT, rolpassword::TEXT
@@ -77,7 +77,7 @@ $$
     /** NOT pg_authid.rolsuper AND */
     NOT pg_authid.rolreplication AND
     pg_authid.rolcanlogin AND
-    pg_authid.rolname <> 'pgbouncer' AND (
+    pg_authid.rolname <> 'auth_user' AND (
       pg_authid.rolvaliduntil IS NULL OR
       pg_authid.rolvaliduntil >= CURRENT_TIMESTAMP
     ) AND
@@ -89,5 +89,5 @@ LANGUAGE SQL STABLE SECURITY DEFINER;
  * As mentioned, the pgbouncer user will only be able to access its one function
  * and all it can do is execute. Here is where it does exactly that
  */
-REVOKE ALL ON FUNCTION pgbouncer.get_auth(username TEXT) FROM PUBLIC, pgbouncer;
-GRANT EXECUTE ON FUNCTION pgbouncer.get_auth(username TEXT) TO pgbouncer;
+REVOKE ALL ON FUNCTION auth_user.get_auth(username TEXT) FROM PUBLIC, auth_user;
+GRANT EXECUTE ON FUNCTION auth_user.get_auth(username TEXT) TO auth_user;
