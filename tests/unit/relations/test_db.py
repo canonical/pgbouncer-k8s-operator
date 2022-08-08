@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
-from lib.charms.pgbouncer_k8s_operator.v0.pgb import (
+from lib.charms.pgbouncer_k8s.v0.pgb import (
     DEFAULT_CONFIG,
     PgbConfig,
     parse_dict_to_kv_string,
@@ -38,7 +38,7 @@ class TestDb(unittest.TestCase):
 
     @patch("charm.PgBouncerK8sCharm.backend_postgres", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
-    @patch("charms.pgbouncer_k8s_operator.v0.pgb.generate_password", return_value="test_pass")
+    @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="test_pass")
     @patch("charm.PgBouncerK8sCharm.add_user")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_user")
@@ -64,7 +64,7 @@ class TestDb(unittest.TestCase):
         mock_event.relation.id = 1
 
         database = "test_db"
-        user = "pgbouncer_k8s_operator_user_id_1_None"
+        user = "pgbouncer_k8s_user_id_1_None"
         password = _gen_pw.return_value
 
         relation_data = mock_event.relation.data = {}
