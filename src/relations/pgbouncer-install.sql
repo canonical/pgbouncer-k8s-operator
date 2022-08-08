@@ -74,7 +74,7 @@ $$
   SELECT rolname::TEXT, rolpassword::TEXT
   FROM pg_authid
   WHERE
-    NOT pg_authid.rolsuper AND
+    /** NOT pg_authid.rolsuper AND */
     NOT pg_authid.rolreplication AND
     pg_authid.rolcanlogin AND
     pg_authid.rolname <> 'pgbouncer' AND (

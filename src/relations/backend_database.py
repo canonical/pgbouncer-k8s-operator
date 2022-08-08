@@ -98,6 +98,7 @@ class BackendDatabaseRequires(Object):
         logger.info("initialising postgres and pgbouncer relations")
         logger.info("initialising auth user")
 
+        logger.error(event.relation.data)
         postgres = self.get_postgres(event.relation.data[event.app])
 
         with postgres.connect_to_database() as conn, conn.cursor() as cursor:
@@ -157,17 +158,12 @@ class BackendDatabaseRequires(Object):
         self.charm.update_postgres_endpoints()
 
     def get_postgres(databag):
-        host=databag.get("endpoints")
-        user=databag.get("username")
-        password=databag.get("password")
-        database=databag.get("database")
+        host = databag.get("endpoints")
+        user = databag.get("username")
+        password = databag.get("password")
+        database = databag.get("database")
 
         if None in [host, user, password, database]:
             return None
 
-        return PostgreSQL(
-            host=host,
-            user=user,
-            password=password,
-            database=database
-        )
+        return PostgreSQL(host=host, user=user, password=password, database=database)

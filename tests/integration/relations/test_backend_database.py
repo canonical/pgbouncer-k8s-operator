@@ -29,7 +29,6 @@ PG = "postgresql-k8s"
 RELATION = "backend-database"
 
 
-@pytest.mark.skip
 @pytest.mark.abort_on_fail
 async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -89,12 +88,6 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
             assert False, "pgbouncer config files failed to update in 3 minutes "
 
 
-@pytest.mark.skip
-async def test_multiple_pgbouncer_connect_to_one_postgres(ops_test: OpsTest):
-    assert False
-
-
-@pytest.mark.skip
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
         await ops_test.model.relate(f"{PGB}:{RELATION}", f"{PG}:database")
