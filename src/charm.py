@@ -192,7 +192,7 @@ class PgBouncerK8sCharm(CharmBase):
                 minimising the amount of necessary restarts.
         """
         self.push_file(path=INI_PATH, file_string=config.render(), perms=0o600)
-        logging.info("pushed new pgbouncer.ini config file to pgbouncer container")
+        logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
 
         if reload_pgbouncer:
             self._reload_pgbouncer()
@@ -329,10 +329,7 @@ class PgBouncerK8sCharm(CharmBase):
         if None in [endpoint, user, password, database]:
             return None
 
-        # TODO experiment with deleting this, host works fine with port attached
-        host = endpoint.split(":")[0]
-
-        return PostgreSQL(host=host, user=user, password=password, database=database)
+        return PostgreSQL(host=endpoint, user=user, password=password, database=database)
 
     def update_backend_relation_port(self, port):
         """Update ports in backend relations to match updated pgbouncer port."""

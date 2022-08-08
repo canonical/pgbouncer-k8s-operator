@@ -45,7 +45,6 @@ DEFAULT_CONFIG = {
         "admin_users": [],
         "stats_users": [],
         "auth_type": "md5",
-        "auth_file": f"{PGB_DIR}/userlist.txt",
         "user": "postgres",
         "max_client_conn": "10000",
         "ignore_startup_parameters": "extra_float_digits",
