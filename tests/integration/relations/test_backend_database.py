@@ -14,6 +14,7 @@ from tests.integration.relations.helpers.helpers import (
     get_app_relation_databag,
     get_backend_user_pass,
     get_cfg,
+    get_pgb_log,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
 )
@@ -65,9 +66,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         assert cfg["pgbouncer"]["auth_query"]
         assert cfg["pgbouncer"]["auth_user"]
 
-        await check_database_users_existence(
-            ops_test, [pgb_user], [], pgb_user, pgb_password
-        )
+        await check_database_users_existence(ops_test, [pgb_user], [], pgb_user, pgb_password)
 
         # Remove relation but keep pg application because we're going to need it for future tests.
         await ops_test.model.applications[PG].remove_relation(
@@ -87,12 +86,14 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
                     logging.error(cfg.render())
                     if (
                         pgb_user not in cfg["pgbouncer"]["admin_users"]
-                        and not cfg["pgbouncer"].get("auth_query", None) == None
-                        and not cfg["pgbouncer"].get("auth_user", None) == None
+                        and "auth_query" not in cfg["pgbouncer"].keys()
+                        and "auth_user" not in cfg["pgbouncer"].keys()
                     ):
                         break
         except RetryError:
-            assert False, "pgbouncer config files failed to update in 3 minutes "
+            assert False, "pgbouncer config files failed to update in 3 minutes"
+
+        logger.info(get_pgb_log(ops_test))
 
 
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):

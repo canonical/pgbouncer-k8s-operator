@@ -168,7 +168,8 @@ class PgbConfig(MutableMapping):
 
         for user_type in PgbConfig.user_types:
             users = self[pgb].get(user_type, "").split(",")
-            if "" in users: users.remove("")
+            if "" in users:
+                users.remove("")
             self[pgb][user_type] = users
 
     def render(self) -> str:
@@ -306,7 +307,7 @@ class PgbConfig(MutableMapping):
         self[pgb]["min_pool_size"] = str(math.ceil(effective_db_connections / 4))
         self[pgb]["reserve_pool_size"] = str(math.ceil(effective_db_connections / 4))
 
-    def add_user( self, user: str, admin: bool = False, stats: bool = False):
+    def add_user(self, user: str, admin: bool = False, stats: bool = False):
         """Adds a user.
 
         Users are added to userlist.txt and pgbouncer.ini config files
@@ -323,7 +324,6 @@ class PgbConfig(MutableMapping):
         stats_users = self[PGB].get("stats_users", [])
         if stats and (user not in stats_users):
             self[PGB]["stats_users"] = stats_users + [user]
-
 
     def remove_user(self, user: str):
         """Removes a user from config files.
@@ -403,4 +403,3 @@ def generate_pgbouncer_ini(config) -> str:
         A valid pgbouncer.ini file, represented as a string.
     """
     return PgbConfig(config).render()
-

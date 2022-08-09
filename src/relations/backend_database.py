@@ -120,7 +120,7 @@ class BackendDatabaseRequires(Object):
 
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user=event.username, admin=True)
-        cfg["pgbouncer"]["auth_user"] = auth_user  # defined in src/relations/pgbouncer-install.sql
+        cfg["pgbouncer"]["auth_user"] = auth_user
         cfg["pgbouncer"]["auth_query"] = f"SELECT username, password FROM {auth_user}.get_auth($1)"
         # TODO maybe don't reload if we're updating endpoints
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
@@ -131,7 +131,7 @@ class BackendDatabaseRequires(Object):
         self.charm.update_postgres_endpoints()
 
     def _on_endpoints_changed(
-        self, event: Union[DatabaseEndpointsChangedEvent, DatabaseReadOnlyEndpointsChangedEvent]
+        self, _: Union[DatabaseEndpointsChangedEvent, DatabaseReadOnlyEndpointsChangedEvent]
     ):
         # TODO this doesn't do anything yet. Get endpoints from relation
         self.charm.update_postgres_endpoints()
@@ -145,7 +145,10 @@ class BackendDatabaseRequires(Object):
         databag = event.relation.data[event.app]
         username = databag.get("username")
         postgres = self.get_postgres(
-            databag.get("endpoints"), username, databag.get("password"), databag.get("database")
+            databag.get("endpoints").split(":")[0],
+            username,
+            databag.get("password"),
+            databag.get("database"),
         )
         sql_file = open("src/relations/pgbouncer-uninstall.sql", "r").read()
         auth_user = f"pgbouncer_auth_{username}"
@@ -155,7 +158,7 @@ class BackendDatabaseRequires(Object):
         conn.close()
         logger.info("auth user removed")
 
-    def _on_relation_broken(self, event: RelationBrokenEvent):
+    def _on_relation_broken(self, _: RelationBrokenEvent):
         """Handle backend-database-relation-broken event.
 
         Removes all traces of this relation from pgbouncer config.

@@ -12,6 +12,7 @@ from pytest_operator.plugin import OpsTest
 from tests.integration.relations.helpers.helpers import (
     get_backend_user_pass,
     get_legacy_relation_username,
+    get_pgb_log,
     wait_for_relation_joined_between,
 )
 from tests.integration.relations.helpers.postgresql_helpers import (
@@ -34,7 +35,6 @@ PG = "postgresql-k8s"
 
 
 @pytest.mark.dev
-@pytest.mark.abort_on_fail
 @pytest.mark.legacy_relations
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
     # Build, deploy, and relate charms.
@@ -168,3 +168,5 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
             pg_user=pgb_user,
             pg_user_password=pgb_password,
         )
+
+        logger.info(get_pgb_log(ops_test))
