@@ -7,13 +7,12 @@ from pathlib import Path
 from typing import Dict
 
 import yaml
-from charms.pgbouncer_operator.v0 import pgb
+from charms.pgbouncer_k8s.v0 import pgb
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
-PGB = "pgbouncer-k8s-operator"
 
 
 def get_backend_relation(ops_test: OpsTest):

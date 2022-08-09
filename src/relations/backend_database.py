@@ -46,7 +46,7 @@ from charms.data_platform_libs.v0.database_requires import (
     DatabaseReadOnlyEndpointsChangedEvent,
     DatabaseRequires,
 )
-from charms.pgbouncer_operator.v0 import pgb
+from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
