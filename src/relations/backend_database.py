@@ -98,10 +98,6 @@ class BackendDatabaseRequires(Object):
         logger.info("initialising postgres and pgbouncer relations")
         logger.info("initialising auth user")
 
-        logger.error(event.relation.data)
-        logger.error(dir(event))
-        logger.error(event.relation.app)
-
         postgres = self.get_postgres(
             event.endpoints.split(":")[0], event.username, event.password, self.database.database
         )
