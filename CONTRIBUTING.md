@@ -55,7 +55,7 @@ charmcraft pack
 ### Deploy
 
 ```bash
-juju deploy ./pgbouncer-k8s-operator_ubuntu-20.04-amd64.charm \
+juju deploy ./pgbouncer-k8s_ubuntu-20.04-amd64.charm \
     --resource pgbouncer-image=dataplatformoci/pgbouncer:latest
 ```
 
