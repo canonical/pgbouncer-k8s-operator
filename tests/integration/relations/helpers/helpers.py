@@ -19,7 +19,7 @@ PGB = "pgbouncer-k8s-operator"
 def get_backend_relation(ops_test: OpsTest):
     """Gets the backend-database relation used to connect pgbouncer to the backend."""
     for rel in ops_test.model.relations:
-        if "pgbouncer-k8s-operator" in rel.endpoints and "postgresql-k8s" in rel.endpoints:
+        if "pgbouncer-k8s" in rel.endpoints and "postgresql-k8s" in rel.endpoints:
             return rel
 
     return None
@@ -87,7 +87,7 @@ async def get_userlist(ops_test: OpsTest) -> Dict[str, str]:
         "ssh",
         "--container",
         "pgbouncer",
-        "pgbouncer-k8s-operator/0",
+        f"{PGB}/0",
         "cat",
         f"{pgb.PGB_DIR}/userlist.txt",
     )
@@ -100,7 +100,7 @@ async def get_cfg(ops_test: OpsTest) -> pgb.PgbConfig:
         "ssh",
         "--container",
         "pgbouncer",
-        "pgbouncer-k8s-operator/0",
+        f"{PGB}/0",
         "cat",
         f"{pgb.PGB_DIR}/pgbouncer.ini",
     )

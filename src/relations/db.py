@@ -8,22 +8,22 @@ the new postgres charm.
 
 Some example relation data is below. All values are examples, generated in a running test instance.
 ┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
-┃ category         ┃            keys ┃ pgbouncer-k8s-operator/0                   ┃ finos-waltz/0 ┃
+┃ category         ┃            keys ┃ pgbouncer-k8s/0                   ┃ finos-waltz/0 ┃
 ┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
 │ metadata         │        endpoint │ 'db'                                       │ 'db'          │
 │                  │          leader │ True                                       │ True          │
 ├──────────────────┼─────────────────┼────────────────────────────────────────────┼───────────────┤
 │ application data │ allowed-subnets │ 10.152.183.122/32                          │               │
-│                  │   allowed-units │ pgbouncer-k8s-operator/0                   │               │
+│                  │   allowed-units │ pgbouncer-k8s/0                            │               │
 │                  │        database │ waltz                                      │ waltz         │
-│                  │            host │ pgbouncer-k8s-operator-0.pgbouncer-k8s-op… │               │
-│                  │          master │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
+│                  │            host │ pgbouncer-k8s-0.pgbouncer-k8s-op…          │               │
+│                  │          master │ host=pgbouncer-k8s-0.pgbouncer-k…          │               │
 │                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
 │                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH          │               │
 │                  │                 │ fallback_application_name=finos-waltz      │               │
 │                  │        password │ BjWDKjvZyClvTl4d5VDOK3mH                   │               │
 │                  │            port │ 6432                                       │               │
-│                  │        standbys │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
+│                  │        standbys │ host=pgbouncer-k8s-0.pgbouncer-k…          │               │
 │                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
 │                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH          │               │
 │                  │                 │ fallback_application_name=finos-waltz      │               │
@@ -31,16 +31,16 @@ Some example relation data is below. All values are examples, generated in a run
 │                  │            user │ relation_id_3                              │               │
 │                  │         version │ 12.11                                      │               │
 │ unit data        │ allowed-subnets │ 10.152.183.122/32                          │               │
-│                  │   allowed-units │ pgbouncer-k8s-operator/0                   │               │
+│                  │   allowed-units │ pgbouncer-k8s/0                            │               │
 │                  │        database │ waltz                                      │ waltz         │
-│                  │            host │ pgbouncer-k8s-operator-0.pgbouncer-k8s-op… │               │
-│                  │          master │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
+│                  │            host │ pgbouncer-k8s-0.pgbouncer-k8s-op…          │               │
+│                  │          master │ host=pgbouncer-k8s-0.pgbouncer-k…          │               │
 │                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
 │                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH          │               │
 │                  │                 │ fallback_application_name=finos-waltz      │               │
 │                  │        password │ BjWDKjvZyClvTl4d5VDOK3mH                   │               │
 │                  │            port │ 6432                                       │               │
-│                  │        standbys │ host=pgbouncer-k8s-operator-0.pgbouncer-k… │               │
+│                  │        standbys │ host=pgbouncer-k8s-0.pgbouncer-k…          │               │
 │                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
 │                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH          │               │
 │                  │                 │ fallback_application_name=finos-waltz      │               │
@@ -53,7 +53,7 @@ Some example relation data is below. All values are examples, generated in a run
 import logging
 from typing import Dict, Iterable
 
-from charms.pgbouncer_operator.v0 import pgb
+from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import (
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
