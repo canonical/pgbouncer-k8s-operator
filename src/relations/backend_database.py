@@ -53,6 +53,7 @@ from ops.model import Application, Relation
 
 RELATION_NAME = "backend-database"
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
+PGB_DB = "pgbouncer"
 USERLIST_PATH = f"{PGB_DIR}/userlist.txt"
 
 
@@ -79,7 +80,7 @@ class BackendDatabaseRequires(Object):
         self.database = DatabaseRequires(
             self.charm,
             relation_name=RELATION_NAME,
-            database_name="pgbouncer",
+            database_name=PGB_DB,
             extra_user_roles="SUPERUSER",
         )
 
@@ -107,7 +108,7 @@ class BackendDatabaseRequires(Object):
             logging.error("deferring database-created hook - postgres database not ready")
             return
 
-        self.run_auth_function(postgres, dbname=self.database.database)
+        self.initialise_auth_function(postgres, dbname=self.database.database)
 
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user=event.username, admin=True)
@@ -123,9 +124,12 @@ class BackendDatabaseRequires(Object):
         # TODO this doesn't do anything yet. Get endpoints from relation
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
-    def run_auth_function(self, postgres, dbname=None):
+    def initialise_auth_function(self, postgres=None, dbname=PGB_DB):
         # TODO make this slightly more generic
         install_script = open("src/relations/pgbouncer-install.sql", "r").read()
+
+        if postgres == None:
+            postgres = self.postgres
 
         with postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
             cursor.execute(install_script.replace("pgbouncer", self.auth_user))
@@ -230,6 +234,6 @@ class BackendDatabaseRequires(Object):
 
         if self.relation:
             for key, databag in self.relation.data.items():
-                if isinstance(key, Application) and key != self.app:
+                if isinstance(key, Application) and key != self.charm.app:
                     return databag
         return None
