@@ -36,7 +36,6 @@ logger = logging.getLogger(__name__)
 # doesn't seem to be guaranteed
 
 
-@pytest.mark.dev
 async def test_create_db_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.

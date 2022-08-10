@@ -121,7 +121,6 @@ class BackendDatabaseRequires(Object):
 
         logger.info("auth user created")
 
-        # TODO this doesn't do anything yet. Get endpoints from relation
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def initialise_auth_function(self, postgres=None, dbname=PGB_DB):
@@ -139,7 +138,6 @@ class BackendDatabaseRequires(Object):
     def _on_endpoints_changed(
         self, _: Union[DatabaseEndpointsChangedEvent, DatabaseReadOnlyEndpointsChangedEvent]
     ):
-        # TODO this doesn't do anything yet. Get endpoints from relation
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_relation_departed(self, event: RelationDepartedEvent):
@@ -173,8 +171,6 @@ class BackendDatabaseRequires(Object):
         # TODO maybe don't reload if we're updating endpoints
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
-        # TODO this doesn't update the endpoints yet, because they're only updated when this
-        # hook ends.
         self.charm.remove_postgres_endpoints(reload_pgbouncer=True)
 
     def get_postgres(self, host, user, password, database) -> PostgreSQL:
