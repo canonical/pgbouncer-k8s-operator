@@ -167,6 +167,9 @@ class DbProvides(Object):
             join_event.defer()
             return
 
+        # set up auth function
+        self.charm.backend.run_auth_function(self.charm.backend_postgres, dbname=database)
+
         user = self._generate_username(join_event)
         password = pgb.generate_password()
 

@@ -38,7 +38,7 @@ Example:
 """
 
 import logging
-from typing import Union
+from typing import Dict, Union
 
 from charms.data_platform_libs.v0.database_requires import (
     DatabaseCreatedEvent,
@@ -49,6 +49,7 @@ from charms.data_platform_libs.v0.database_requires import (
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
+from ops.model import Application
 
 RELATION_NAME = "backend-database"
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
@@ -106,18 +107,13 @@ class BackendDatabaseRequires(Object):
             logging.error("deferring database-created hook - postgres database not ready")
             return
 
-        auth_user = self.generate_auth_username(event.username)
-        install_script = open("src/relations/pgbouncer-install.sql", "r").read()
-
-        with postgres.connect_to_database() as conn, conn.cursor() as cursor:
-            cursor.execute(install_script.replace("pgbouncer", auth_user))
-            conn.commit()
-        conn.close()
+        self.run_auth_function(postgres, dbname=self.database.database)
 
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user=event.username, admin=True)
-        cfg["pgbouncer"]["auth_user"] = auth_user
-        cfg["pgbouncer"]["auth_query"] = f"SELECT username, password FROM {auth_user}.get_auth($1)"
+        cfg["pgbouncer"]["auth_user"] = self.auth_user
+        cfg["pgbouncer"]["auth_query"] = \
+            f"SELECT username, password FROM {self.auth_user}.get_auth($1)"
         # TODO maybe don't reload if we're updating endpoints
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
@@ -126,11 +122,12 @@ class BackendDatabaseRequires(Object):
         # TODO this doesn't do anything yet. Get endpoints from relation
         self.charm.update_postgres_endpoints()
 
-    def generate_auth_function(self, postgres, auth_user):
+    def run_auth_function(self, postgres, dbname=None):
+        # TODO make this slightly more generic
         install_script = open("src/relations/pgbouncer-install.sql", "r").read()
 
-        with postgres.connect_to_database() as conn, conn.cursor() as cursor:
-            cursor.execute(install_script.replace("pgbouncer", auth_user))
+        with postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
+            cursor.execute(install_script.replace("pgbouncer", self.auth_user))
             conn.commit()
         conn.close()
 
@@ -186,5 +183,21 @@ class BackendDatabaseRequires(Object):
 
         return PostgreSQL(host=host, user=user, password=password, database=database)
 
-    def generate_auth_username(self, postgres_username):
-        return f"pgbouncer_auth_{postgres_username}"
+    @property
+    def auth_user(self):
+        return f'pgbouncer_auth_{self.app_databag.get("username")}'
+
+    @property
+    def app_databag(self) -> Dict:
+        """Wrapper around accessing the remote application databag for the backend relation.
+
+        Returns None if backend_relation is none.
+
+        Since we can trigger db-relation-changed on backend-changed, we need to be able to easily
+        access the backend app relation databag.
+        """
+        if self.backend_relation:
+            for key, databag in self.backend_relation.data.items():
+                if isinstance(key, Application) and key != self.app:
+                    return databag
+        return None

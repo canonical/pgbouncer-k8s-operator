@@ -32,6 +32,11 @@ ANOTHER_FINOS_WALTZ = "another-finos-waltz"
 logger = logging.getLogger(__name__)
 
 
+# TODO this test isn't failing accurately when we can't authenticate! Relying on app status
+# doesn't seem to be guaranteed
+
+
+@pytest.mark.dev
 async def test_create_db_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
@@ -169,4 +174,4 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         assert "waltz" not in cfg["databases"].keys()
         assert "waltz_standby" not in cfg["databases"].keys()
 
-        logger.info(get_pgb_log(ops_test))
+        logger.info(await get_pgb_log(ops_test))

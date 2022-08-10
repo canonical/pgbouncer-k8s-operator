@@ -169,4 +169,4 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
             pg_user_password=pgb_password,
         )
 
-        logger.info(get_pgb_log(ops_test))
+        logger.info(await get_pgb_log(ops_test))
