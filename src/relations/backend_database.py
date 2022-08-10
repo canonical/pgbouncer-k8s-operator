@@ -132,7 +132,7 @@ class BackendDatabaseRequires(Object):
             postgres = self.postgres
 
         with postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
-            cursor.execute(install_script.replace("pgbouncer", self.auth_user))
+            cursor.execute(install_script.replace("auth_user", self.auth_user))
             conn.commit()
         conn.close()
 
@@ -151,17 +151,9 @@ class BackendDatabaseRequires(Object):
 
         logger.info("removing auth user")
 
-        databag = event.relation.data[event.app]
-        username = databag.get("username")
-        postgres = self.get_postgres(
-            databag.get("endpoints").split(":")[0],
-            username,
-            databag.get("password"),
-            databag.get("database"),
-        )
         sql_file = open("src/relations/pgbouncer-uninstall.sql", "r").read()
-        auth_user = f"pgbouncer_auth_{username}"
-        with postgres.connect_to_database() as conn, conn.cursor() as cursor:
+        auth_user = f"pgbouncer_auth_{self.app_databag.get('username')}"
+        with self.postgres.connect_to_database() as conn, conn.cursor() as cursor:
             # TODO prepend a unique username to this file
             cursor.execute(sql_file.replace("auth_user", auth_user))
         conn.close()

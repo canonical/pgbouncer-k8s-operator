@@ -120,6 +120,7 @@ class PgBouncerK8sCharm(CharmBase):
         if services != layer["services"]:
             container.add_layer(PGB, layer, combine=True)
             logging.info("Added layer 'pgbouncer' to pebble plan")
+            # TODO restart application, not container
             container.restart(PGB)
             logging.info(f"restarted {PGB} service")
         self.unit.status = ActiveStatus()
@@ -139,7 +140,7 @@ class PgBouncerK8sCharm(CharmBase):
                 PGB: {
                     "summary": "pgbouncer service",
                     "user": PG_USER,
-                    "command": f"pgbouncer {INI_PATH}",
+                    "command": f"pgbouncer -R {INI_PATH}",
                     "startup": "enabled",
                     "override": "replace",
                 }
