@@ -46,7 +46,6 @@ from charms.data_platform_libs.v0.database_requires import (
     DatabaseReadOnlyEndpointsChangedEvent,
     DatabaseRequires,
 )
-from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
@@ -107,11 +106,12 @@ class BackendDatabaseRequires(Object):
             logging.error("deferring database-created hook - postgres database not ready")
             return
 
-        auth_user = f"pgbouncer_auth_{event.username}"
+        auth_user = self.generate_auth_username(event.username)
         install_script = open("src/relations/pgbouncer-install.sql", "r").read()
 
         with postgres.connect_to_database() as conn, conn.cursor() as cursor:
             cursor.execute(install_script.replace("pgbouncer", auth_user))
+            conn.commit()
         conn.close()
 
         cfg = self.charm.read_pgb_config()
@@ -125,6 +125,14 @@ class BackendDatabaseRequires(Object):
 
         # TODO this doesn't do anything yet. Get endpoints from relation
         self.charm.update_postgres_endpoints()
+
+    def generate_auth_function(self, postgres, auth_user):
+        install_script = open("src/relations/pgbouncer-install.sql", "r").read()
+
+        with postgres.connect_to_database() as conn, conn.cursor() as cursor:
+            cursor.execute(install_script.replace("pgbouncer", auth_user))
+            conn.commit()
+        conn.close()
 
     def _on_endpoints_changed(
         self, _: Union[DatabaseEndpointsChangedEvent, DatabaseReadOnlyEndpointsChangedEvent]
@@ -163,7 +171,6 @@ class BackendDatabaseRequires(Object):
 
         cfg = self.charm.read_pgb_config()
         cfg.remove_user(self.charm.backend_postgres.user)
-        # TODO pop still gets keyerror?
         cfg["pgbouncer"].pop("auth_user", None)
         cfg["pgbouncer"].pop("auth_query", None)
         # TODO maybe don't reload if we're updating endpoints
@@ -178,3 +185,6 @@ class BackendDatabaseRequires(Object):
             return None
 
         return PostgreSQL(host=host, user=user, password=password, database=database)
+
+    def generate_auth_username(self, postgres_username):
+        return f"pgbouncer_auth_{postgres_username}"
