@@ -12,7 +12,6 @@ from typing import Dict
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
-from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
@@ -140,7 +139,7 @@ class PgBouncerK8sCharm(CharmBase):
                 PGB: {
                     "summary": "pgbouncer service",
                     "user": PG_USER,
-                    "command": f"pgbouncer -R {INI_PATH}",
+                    "command": f"pgbouncer -R -vvv {INI_PATH}",
                     "startup": "enabled",
                     "override": "replace",
                 }

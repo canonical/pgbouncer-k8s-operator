@@ -21,22 +21,6 @@
  * database that exists at the time this script is being executed.
  */
 
-/**
- * First, check that there is a "pgbouncer" administrative user
- * TODO change pgbouncer to unique relation name
- */
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'auth_user') THEN
-        /**
-         * NOTE: we disallow login here as we are only enabling the ability
-         * for the PostgreSQL Operator to use pgBouncer. We require that the
-         * user/Operator explicitly turns on
-         */
-        CREATE ROLE auth_user NOLOGIN;
-    END IF;
-END
-$$;
 
 /**
  * We also want to explicitly ensure that the pgbouncer user can only

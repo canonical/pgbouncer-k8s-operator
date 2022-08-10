@@ -40,6 +40,8 @@ Example:
 import logging
 from typing import Dict, Union
 
+
+from charms.pgbouncer_k8s.v0 import pgb
 from charms.data_platform_libs.v0.database_requires import (
     DatabaseCreatedEvent,
     DatabaseEndpointsChangedEvent,
@@ -108,14 +110,18 @@ class BackendDatabaseRequires(Object):
             logging.error("deferring database-created hook - postgres database not ready")
             return
 
+        auth_password = pgb.generate_password()
+        postgres.create_user(self.auth_user, auth_password, admin=True)
         self.initialise_auth_function(postgres, dbname=self.database.database)
 
+        self.charm.push_file(f"{PGB_DIR}/userlist.txt", f'"{self.auth_user}" "{auth_password}"', perms=0o777)
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user=event.username, admin=True)
         cfg["pgbouncer"]["auth_user"] = self.auth_user
         cfg["pgbouncer"][
             "auth_query"
         ] = f"SELECT username, password FROM {self.auth_user}.get_auth($1)"
+        cfg["pgbouncer"]["auth_file"] = f"{PGB_DIR}/userlist.txt"
         # TODO maybe don't reload if we're updating endpoints
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
