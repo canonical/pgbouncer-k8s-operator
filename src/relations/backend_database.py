@@ -49,7 +49,7 @@ from charms.data_platform_libs.v0.database_requires import (
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
-from ops.model import Application
+from ops.model import Application, Relation
 
 RELATION_NAME = "backend-database"
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
@@ -120,7 +120,7 @@ class BackendDatabaseRequires(Object):
         logger.info("auth user created")
 
         # TODO this doesn't do anything yet. Get endpoints from relation
-        self.charm.update_postgres_endpoints()
+        self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def run_auth_function(self, postgres, dbname=None):
         # TODO make this slightly more generic
@@ -135,9 +135,12 @@ class BackendDatabaseRequires(Object):
         self, _: Union[DatabaseEndpointsChangedEvent, DatabaseReadOnlyEndpointsChangedEvent]
     ):
         # TODO this doesn't do anything yet. Get endpoints from relation
-        self.charm.update_postgres_endpoints()
+        self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_relation_departed(self, event: RelationDepartedEvent):
+        """"""
+        self.charm.update_postgres_endpoints(reload_pgbouncer=True)
+
         if event.departing_unit != self.charm.unit:
             return
 
@@ -175,17 +178,46 @@ class BackendDatabaseRequires(Object):
 
         # TODO this doesn't update the endpoints yet, because they're only updated when this
         # hook ends.
-        self.charm.update_postgres_endpoints()
+        self.charm.remove_postgres_endpoints(reload_pgbouncer=True)
 
-    def get_postgres(self, host, user, password, database):
+    def get_postgres(self, host, user, password, database) -> PostgreSQL:
         if None in [host, user, password, database]:
             return None
 
         return PostgreSQL(host=host, user=user, password=password, database=database)
 
     @property
+    def relation(self) -> Relation:
+        backend_relation = self.model.get_relation(RELATION_NAME)
+        if not backend_relation:
+            return None
+        else:
+            return backend_relation
+
+
+    @property
+    def postgres(self) -> PostgreSQL:
+        """Returns PostgreSQL representation of backend database, as defined in relation.
+
+        Returns None if backend relation is not fully initialised.
+        """
+        if not self.relation:
+            return None
+
+        endpoint = self.app_databag.get("endpoints")
+        user = self.app_databag.get("username")
+        password = self.app_databag.get("password")
+        database = self.relation.data[self.charm.app].get("database")
+
+        if endpoint is not None:
+            host = endpoint.split(":")[0]
+
+        return self.get_postgres(host=host, user=user, password=password, database=database)
+
+    @property
     def auth_user(self):
         return f'pgbouncer_auth_{self.app_databag.get("username")}'
+
 
     @property
     def app_databag(self) -> Dict:
@@ -196,8 +228,9 @@ class BackendDatabaseRequires(Object):
         Since we can trigger db-relation-changed on backend-changed, we need to be able to easily
         access the backend app relation databag.
         """
-        if self.backend_relation:
-            for key, databag in self.backend_relation.data.items():
+
+        if self.relation:
+            for key, databag in self.relation.data.items():
                 if isinstance(key, Application) and key != self.app:
                     return databag
         return None

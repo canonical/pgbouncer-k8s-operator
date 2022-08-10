@@ -278,61 +278,6 @@ class PgBouncerK8sCharm(CharmBase):
     #  Relation Utilities
     # =====================
 
-    @property
-    def backend_relation(self) -> Relation:
-        """Returns the relation object pointing to the postgresql backend.
-
-        This only returns the relation object, and does no verification that the relation is
-        initialised or functional. For situations where the relation has to be fully initialised
-        and usable, self.backend_postgres will only return a valid value if the relation is
-        initialised.
-
-        Returns:
-            Relation object for the backend relation.
-        """
-        backend_relation = self.model.get_relation(BACKEND_RELATION_NAME)
-        if not backend_relation:
-            return None
-        else:
-            return backend_relation
-
-    @property
-    def backend_relation_app_databag(self) -> Dict:
-        """Wrapper around accessing the remote application databag for the backend relation.
-
-        Returns None if backend_relation is none.
-
-        Since we can trigger db-relation-changed on backend-changed, we need to be able to easily
-        access the backend app relation databag.
-        """
-        if self.backend_relation:
-            for key, databag in self.backend_relation.data.items():
-                if isinstance(key, Application) and key != self.app:
-                    return databag
-
-        return None
-
-    @property
-    def backend_postgres(self) -> PostgreSQL:
-        """Returns PostgreSQL representation of backend database, as defined in relation.
-
-        Returns None if backend relation is not fully initialised.
-        """
-        if not self.backend_relation:
-            return None
-
-        endpoint = self.backend_relation_app_databag.get("endpoints")
-        user = self.backend_relation_app_databag.get("username")
-        password = self.backend_relation_app_databag.get("password")
-        database = self.backend_relation.data[self.app].get("database")
-
-        if None in [endpoint, user, password, database]:
-            return None
-
-        host = endpoint.split(":")[0]
-
-        return PostgreSQL(host=host, user=user, password=password, database=database)
-
     def update_backend_relation_port(self, port):
         """Update ports in backend relations to match updated pgbouncer port."""
         # Skip updates if backend_postgres doesn't exist yet.
@@ -345,17 +290,20 @@ class PgBouncerK8sCharm(CharmBase):
         for relation in self.model.relations.get("db-admin", []):
             self.legacy_db_admin_relation.update_port(relation, port)
 
-    def update_postgres_endpoints(self):
+    def update_postgres_endpoints(self, reload_pgbouncer):
         """Update postgres endpoints in relation config values."""
         # Skip updates if backend_postgres doesn't exist yet.
         if not self.backend_postgres:
             return
 
         for relation in self.model.relations.get("db", []):
-            self.legacy_db_relation.update_postgres_endpoints(relation)
+            self.legacy_db_relation.update_postgres_endpoints(relation, reload_pgbouncer=False)
 
         for relation in self.model.relations.get("db-admin", []):
-            self.legacy_db_admin_relation.update_postgres_endpoints(relation)
+            self.legacy_db_admin_relation.update_postgres_endpoints(relation, reload_pgbouncer=False)
+
+        if reload_pgbouncer:
+            self._reload_pgbouncer()
 
     @property
     def unit_pod_hostname(self, name="") -> str:

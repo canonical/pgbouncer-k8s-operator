@@ -135,7 +135,7 @@ class DbProvides(Object):
         If the backend relation is fully initialised and available, we generate the proposed
         database and create a user on the postgres charm, and add preliminary data to the databag.
         """
-        if not self.charm.backend_postgres:
+        if not self.charm.backend.postgres:
             # We can't relate an app to the backend database without a backend postgres relation
             wait_str = "waiting for backend-database relation to connect"
             logger.warning(wait_str)
@@ -168,7 +168,7 @@ class DbProvides(Object):
             return
 
         # set up auth function
-        self.charm.backend.run_auth_function(self.charm.backend_postgres, dbname=database)
+        self.charm.backend.run_auth_function(self.charm.backend.postgres, dbname=database)
 
         user = self._generate_username(join_event)
         password = pgb.generate_password()
@@ -184,8 +184,8 @@ class DbProvides(Object):
             self.charm.unit.status = MaintenanceStatus(init_msg)
             logger.info(init_msg)
 
-            self.charm.backend_postgres.create_user(user, password, admin=self.admin)
-            self.charm.backend_postgres.create_database(database, user)
+            self.charm.backend.postgres.create_user(user, password, admin=self.admin)
+            self.charm.backend.postgres.create_database(database, user)
 
             created_msg = f"database and user for {self.relation_name} relation created"
             self.charm.unit.status = ActiveStatus(created_msg)
@@ -296,7 +296,7 @@ class DbProvides(Object):
 
         # In postgres, "endpoints" will only ever have one value. Other databases using the library
         # can have more, but that's not planned for the postgres charm.
-        postgres_endpoint = self.charm.backend_relation_app_databag.get("endpoints")
+        postgres_endpoint = self.charm.backend.app_databag.get("endpoints")
 
         cfg = self.charm.read_pgb_config()
         cfg["databases"][database] = {
@@ -312,7 +312,21 @@ class DbProvides(Object):
                 "dbname": database,
                 "port": read_only_endpoint.split(":")[1],
             }
+        else:
+            cfg["databases"].pop(f"{database}_standby", None)
         # Write config data to charm filesystem
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
+
+    def remove_postgres_endpoints(self, relation:Relation, reload_pgbouncer: bool=False):
+        """Updates postgres replicas."""
+        database = relation.data[self.charm.app].get("database")
+        if database is None:
+            logger.warning("relation not fully initialised - skipping postgres endpoint deletion")
+            return
+
+        cfg = self.charm.read_pgb_config()
+        cfg["databases"].pop(database, None)
+        cfg["databases"].pop(f"{database}_standby", None)
         self.charm._render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
 
     def update_databag(self, relation, updates: Dict[str, str]):
