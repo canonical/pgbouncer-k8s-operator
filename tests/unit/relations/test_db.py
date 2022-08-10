@@ -36,7 +36,7 @@ class TestDb(unittest.TestCase):
         assert self.charm.legacy_db_admin_relation.relation_name == "db-admin"
         assert self.charm.legacy_db_admin_relation.admin is True
 
-    @patch("charm.PgBouncerK8sCharm.backend_postgres", new_callable=PropertyMock)
+    @patch("charm.PgBouncerK8sCharm.backend.postgres", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="test_pass")
     @patch("charm.PgBouncerK8sCharm.add_user")
@@ -106,8 +106,8 @@ class TestDb(unittest.TestCase):
         )
 
     @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
-    @patch("charm.PgBouncerK8sCharm.backend_relation_app_databag", new_callable=PropertyMock)
-    @patch("charm.PgBouncerK8sCharm.backend_postgres", new_callable=PropertyMock)
+    @patch("charm.PgBouncerK8sCharm.backend.app_databag", new_callable=PropertyMock)
+    @patch("charm.PgBouncerK8sCharm.backend.postgres", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch(
         "charm.PgBouncerK8sCharm.unit_pod_hostname",
@@ -219,7 +219,7 @@ class TestDb(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.remove_user")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.delete_user")
-    @patch("charm.PgBouncerK8sCharm.backend_postgres", new_callable=PropertyMock)
+    @patch("charm.PgBouncerK8sCharm.backend.postgres", new_callable=PropertyMock)
     def test_on_relation_broken(
         self, _backend_postgres, _delete_user, _postgres, _remove_user, _read
     ):

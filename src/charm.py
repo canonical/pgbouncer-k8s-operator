@@ -154,7 +154,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         TODO verify pgbouncer is actually running in this hook
         """
-        if self.backend_postgres == None:
+        if self.backend.postgres == None:
             self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
 
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
@@ -280,8 +280,8 @@ class PgBouncerK8sCharm(CharmBase):
 
     def update_backend_relation_port(self, port):
         """Update ports in backend relations to match updated pgbouncer port."""
-        # Skip updates if backend_postgres doesn't exist yet.
-        if not self.backend_postgres:
+        # Skip updates if backend.postgres doesn't exist yet.
+        if not self.backend.postgres:
             return
 
         for relation in self.model.relations.get("db", []):
@@ -292,15 +292,17 @@ class PgBouncerK8sCharm(CharmBase):
 
     def update_postgres_endpoints(self, reload_pgbouncer):
         """Update postgres endpoints in relation config values."""
-        # Skip updates if backend_postgres doesn't exist yet.
-        if not self.backend_postgres:
+        # Skip updates if backend.postgres doesn't exist yet.
+        if not self.backend.postgres:
             return
 
         for relation in self.model.relations.get("db", []):
             self.legacy_db_relation.update_postgres_endpoints(relation, reload_pgbouncer=False)
 
         for relation in self.model.relations.get("db-admin", []):
-            self.legacy_db_admin_relation.update_postgres_endpoints(relation, reload_pgbouncer=False)
+            self.legacy_db_admin_relation.update_postgres_endpoints(
+                relation, reload_pgbouncer=False
+            )
 
         if reload_pgbouncer:
             self._reload_pgbouncer()

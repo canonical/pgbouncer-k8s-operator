@@ -41,7 +41,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
             render_cfg=True,
         )
 
-    @patch("charm.PgBouncerK8sCharm.backend_postgres")
+    @patch("charm.PgBouncerK8sCharm.backend.postgres")
     @patch("charm.PgBouncerK8sCharm.read_pgb_config")
     @patch("charm.PgBouncerK8sCharm.remove_user")
     def test_relation_broken(self, _remove_user, _cfg, _backend):

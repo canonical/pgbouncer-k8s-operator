@@ -112,8 +112,9 @@ class BackendDatabaseRequires(Object):
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user=event.username, admin=True)
         cfg["pgbouncer"]["auth_user"] = self.auth_user
-        cfg["pgbouncer"]["auth_query"] = \
-            f"SELECT username, password FROM {self.auth_user}.get_auth($1)"
+        cfg["pgbouncer"][
+            "auth_query"
+        ] = f"SELECT username, password FROM {self.auth_user}.get_auth($1)"
         # TODO maybe don't reload if we're updating endpoints
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
@@ -170,7 +171,7 @@ class BackendDatabaseRequires(Object):
         # from pdb import set_trace; set_trace()
 
         cfg = self.charm.read_pgb_config()
-        cfg.remove_user(self.charm.backend_postgres.user)
+        cfg.remove_user(self.postgres.user)
         cfg["pgbouncer"].pop("auth_user", None)
         cfg["pgbouncer"].pop("auth_query", None)
         # TODO maybe don't reload if we're updating endpoints
@@ -193,7 +194,6 @@ class BackendDatabaseRequires(Object):
             return None
         else:
             return backend_relation
-
 
     @property
     def postgres(self) -> PostgreSQL:
@@ -218,12 +218,11 @@ class BackendDatabaseRequires(Object):
     def auth_user(self):
         return f'pgbouncer_auth_{self.app_databag.get("username")}'
 
-
     @property
     def app_databag(self) -> Dict:
         """Wrapper around accessing the remote application databag for the backend relation.
 
-        Returns None if backend_relation is none.
+        Returns None if relation is none.
 
         Since we can trigger db-relation-changed on backend-changed, we need to be able to easily
         access the backend app relation databag.

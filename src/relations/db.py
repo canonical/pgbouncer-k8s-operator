@@ -214,7 +214,7 @@ class DbProvides(Object):
         This relation will defer if the backend relation isn't fully available, and if the
         relation_joined hook isn't completed.
         """
-        if not self.charm.backend_postgres:
+        if not self.charm.backend.postgres:
             # We can't relate an app to the backend database without a backend postgres relation
             wait_str = "waiting for backend-database relation to connect"
             logger.warning(wait_str)
@@ -248,7 +248,7 @@ class DbProvides(Object):
             {
                 "allowed-subnets": self.get_allowed_subnets(change_event.relation),
                 "allowed-units": self.get_allowed_units(change_event.relation),
-                "version": self.charm.backend_postgres.get_postgresql_version(),
+                "version": self.charm.backend.postgres.get_postgresql_version(),
                 "host": self.charm.unit_pod_hostname,
                 "user": user,
                 "password": password,
@@ -317,7 +317,7 @@ class DbProvides(Object):
         # Write config data to charm filesystem
         self.charm._render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
 
-    def remove_postgres_endpoints(self, relation:Relation, reload_pgbouncer: bool=False):
+    def remove_postgres_endpoints(self, relation: Relation, reload_pgbouncer: bool = False):
         """Updates postgres replicas."""
         database = relation.data[self.charm.app].get("database")
         if database is None:
@@ -354,7 +354,7 @@ class DbProvides(Object):
         Though multiple readonly endpoints can be provided by the new backend relation, only one
         can be consumed by this legacy relation.
         """
-        read_only_endpoints = self.charm.backend_relation_app_databag.get("read-only-endpoints")
+        read_only_endpoints = self.charm.backend.app_databag.get("read-only-endpoints")
         if read_only_endpoints is None or len(read_only_endpoints) == 0:
             return None
         return read_only_endpoints.split(",")[0]
@@ -403,7 +403,7 @@ class DbProvides(Object):
         user = app_databag.get("user")
         database = app_databag.get("database")
 
-        if not self.charm.backend_postgres and None in [user, database]:
+        if not self.charm.backend.postgres and None in [user, database]:
             # this relation was never created, so wait for it to be initialised before removing
             # everything.
             logger.warning(
@@ -436,10 +436,10 @@ class DbProvides(Object):
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         try:
-            if self.charm.backend_postgres:
+            if self.charm.backend.postgres:
                 # Try to delete user if backend database still exists. If not, postgres has been
                 # removed and will handle user deletion in its own relation-broken hook.
-                self.charm.backend_postgres.delete_user(user, if_exists=True)
+                self.charm.backend.postgres.delete_user(user, if_exists=True)
         except PostgreSQLDeleteUserError:
             blockedmsg = f"failed to delete user for {self.relation_name}"
             logger.error(blockedmsg)
