@@ -81,9 +81,6 @@ class TestDb(unittest.TestCase):
             user,
             password=password,
             admin=True,
-            cfg=_read_cfg.return_value,
-            render_cfg=True,
-            reload_pgbouncer=True,
         )
         _create_user.assert_called_with(user, password, admin=True)
         _create_database.assert_called_with(database, user)
@@ -100,9 +97,6 @@ class TestDb(unittest.TestCase):
             user,
             password=password,
             admin=False,
-            cfg=_read_cfg.return_value,
-            render_cfg=True,
-            reload_pgbouncer=True,
         )
 
     @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)

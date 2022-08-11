@@ -21,7 +21,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         self.harness.begin()
 
         self.charm = self.harness.charm
-        self.relation = self.charm.backend_relation
+        self.relation = self.charm.backend
 
     @patch("charm.PgBouncerK8sCharm.read_pgb_config")
     @patch("charm.PgBouncerK8sCharm.add_user")
