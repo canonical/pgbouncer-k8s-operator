@@ -189,7 +189,7 @@ class DbProvides(Object):
             return
 
         # set up auth function
-        #self.charm.backend.initialise_auth_function(dbname=database)
+        self.charm.backend.initialise_auth_function(dbname=database)
 
         # Create user in pgbouncer config
         cfg = self.charm.read_pgb_config()

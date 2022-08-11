@@ -104,7 +104,7 @@ class BackendDatabaseRequires(Object):
             event.endpoints.split(":")[0], event.username, event.password, self.database.database
         )
         # TODO this may be bad
-        if postgres == None:
+        if postgres is None:
             event.defer()
             logging.error("deferring database-created hook - postgres database not ready")
             return
@@ -131,9 +131,20 @@ class BackendDatabaseRequires(Object):
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def initialise_auth_function(self, postgres=None, dbname=PGB_DB):
+        """Runs an SQL script to initialise the auth function.
+
+        This function must run in every database for authentication to work.
+
+        Args:
+            postgres: a PostgreSQL application instance. If none is provided, the default pgbouncer
+                instance will be used.
+            dbname: the name of the database to connect to.
+        """
+        logger.info("initialising auth function")
+
         install_script = open("src/relations/pgbouncer-install.sql", "r").read()
 
-        if postgres == None:
+        if postgres is None:
             postgres = self.postgres
 
         with postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
@@ -142,13 +153,21 @@ class BackendDatabaseRequires(Object):
             # TODO wait for execute
             # TODO verify execution
         conn.close()
+        logger.info("auth function initialised")
 
     def remove_auth_function(self, postgres=None, dbname=PGB_DB):
+        """Runs an SQL script to remove the auth function defined in initialise_auth_function.
+
+        Args:
+            postgres: a PostgreSQL application instance. If none is provided, the default pgbouncer
+                instance will be used.
+            dbname: the name of the database to connect to.
+        """
         logger.info("removing auth user")
 
         uninstall_script = open("src/relations/pgbouncer-install.sql", "r").read()
 
-        if postgres == None:
+        if postgres is None:
             postgres = self.postgres
 
         with postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
@@ -164,7 +183,6 @@ class BackendDatabaseRequires(Object):
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_relation_departed(self, event: RelationDepartedEvent):
-        """"""
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
         if event.departing_unit != self.charm.unit:
@@ -187,6 +205,7 @@ class BackendDatabaseRequires(Object):
         self.charm.remove_postgres_endpoints(reload_pgbouncer=True)
 
     def get_postgres(self, host, user, password, database) -> PostgreSQL:
+        """Returns a PostgreSQL application instance if none of the given variables are None."""
         if None in [host, user, password, database]:
             return None
 
@@ -194,6 +213,7 @@ class BackendDatabaseRequires(Object):
 
     @property
     def relation(self) -> Relation:
+        """Relation object for postgres backend-database relation."""
         backend_relation = self.model.get_relation(RELATION_NAME)
         if not backend_relation:
             return None
@@ -222,6 +242,7 @@ class BackendDatabaseRequires(Object):
 
     @property
     def auth_user(self):
+        """Username for auth_user."""
         return f'pgbouncer_auth_{self.app_databag.get("username")}'
 
     @property
@@ -233,7 +254,6 @@ class BackendDatabaseRequires(Object):
         Since we can trigger db-relation-changed on backend-changed, we need to be able to easily
         access the backend app relation databag.
         """
-
         if self.relation:
             for key, databag in self.relation.data.items():
                 if isinstance(key, Application) and key != self.charm.app:

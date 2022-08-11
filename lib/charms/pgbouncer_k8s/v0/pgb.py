@@ -384,6 +384,7 @@ def generate_password() -> str:
 
     Args:
         hash: a boolean defining whether or not to md5 hash the password.
+
     Returns:
         A random 24-character string of letters and numbers.
     """

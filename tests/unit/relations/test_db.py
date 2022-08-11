@@ -36,7 +36,10 @@ class TestDb(unittest.TestCase):
         assert self.charm.legacy_db_admin_relation.relation_name == "db-admin"
         assert self.charm.legacy_db_admin_relation.admin is True
 
-    @patch("relations.backend_database.BackendDatabaseRequires.backend.postgres", new_callable=PropertyMock)
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.backend.postgres",
+        new_callable=PropertyMock,
+    )
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="test_pass")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")

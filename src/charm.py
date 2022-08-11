@@ -8,24 +8,15 @@
 import logging
 import os
 import socket
-from typing import Dict
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import (
-    ActiveStatus,
-    Application,
-    BlockedStatus,
-    MaintenanceStatus,
-    Relation,
-    WaitingStatus,
-)
+from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
 from ops.pebble import Layer, PathError
 
-from relations.backend_database import RELATION_NAME as BACKEND_RELATION_NAME
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
 
@@ -151,7 +142,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         TODO verify pgbouncer is actually running in this hook
         """
-        if self.backend.postgres == None:
+        if self.backend.postgres is None:
             self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
 
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
@@ -188,13 +179,6 @@ class PgBouncerK8sCharm(CharmBase):
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
         """
-        self.push_file(path=INI_PATH, file_string=config.render(), perms=0o600)
-        logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
-
-        if reload_pgbouncer:
-            self._reload_pgbouncer()
-
-    def push_file(self, path, file_string, perms):
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
             logger.warning("unable to connect to container")
@@ -204,14 +188,19 @@ class PgBouncerK8sCharm(CharmBase):
             return
 
         pgb_container.push(
-            path,
-            file_string,
+            INI_PATH,
+            config.render(),
             user=PG_USER,
-            permissions=perms,
+            permissions=0o600,
             make_dirs=True,
         )
+        logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
+
+        if reload_pgbouncer:
+            self._reload_pgbouncer()
 
     def delete_file(self, path):
+        """Deletes the file at `path`."""
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
             logger.warning("unable to connect to container")
@@ -235,7 +224,7 @@ class PgBouncerK8sCharm(CharmBase):
         try:
             config = self._read_file(INI_PATH)
             return pgb.PgbConfig(config)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             # TODO verify if this is necessary, and update docstring.
             logger.error("pgbouncer config not found")
             return self._generate_new_config()
