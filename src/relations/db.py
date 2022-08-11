@@ -434,7 +434,6 @@ class DbProvides(Object):
         # delete user
         cfg.remove_user(user)
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
-        self.charm.backend.remove_auth_function(dbname=database)
 
         try:
             if self.charm.backend.postgres:

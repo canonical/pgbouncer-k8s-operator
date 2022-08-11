@@ -155,28 +155,6 @@ class BackendDatabaseRequires(Object):
         conn.close()
         logger.info("auth function initialised")
 
-    def remove_auth_function(self, postgres=None, dbname=PGB_DB):
-        """Runs an SQL script to remove the auth function defined in initialise_auth_function.
-
-        Args:
-            postgres: a PostgreSQL application instance. If none is provided, the default pgbouncer
-                instance will be used.
-            dbname: the name of the database to connect to.
-        """
-        logger.info("removing auth user")
-
-        uninstall_script = open("src/relations/pgbouncer-install.sql", "r").read()
-
-        if postgres is None:
-            postgres = self.postgres
-
-        with postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
-            cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
-            conn.commit()
-        conn.close()
-
-        logger.info("auth user removed")
-
     def _on_endpoints_changed(
         self, _: Union[DatabaseEndpointsChangedEvent, DatabaseReadOnlyEndpointsChangedEvent]
     ):
@@ -188,7 +166,16 @@ class BackendDatabaseRequires(Object):
         if event.departing_unit != self.charm.unit:
             return
 
-        self.remove_auth_function()
+        logger.info("removing auth user")
+
+        uninstall_script = open("src/relations/pgbouncer-install.sql", "r").read()
+
+        with self.postgres.connect_to_database(PGB_DB) as conn, conn.cursor() as cursor:
+            cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
+            conn.commit()
+        conn.close()
+
+        logger.info("auth user removed")
 
     def _on_relation_broken(self, _: RelationBrokenEvent):
         """Handle backend-database-relation-broken event.

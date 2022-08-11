@@ -14,12 +14,7 @@ from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import (
-    ActiveStatus,
-    BlockedStatus,
-    MaintenanceStatus,
-    WaitingStatus,
-)
+from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
 from ops.pebble import Layer, PathError
 
 from relations.backend_database import BackendDatabaseRequires
