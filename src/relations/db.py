@@ -167,16 +167,8 @@ class DbProvides(Object):
             join_event.defer()
             return
 
-        # set up auth function
-        self.charm.backend.initialise_auth_function(dbname=database)
-
         user = self._generate_username(join_event)
         password = pgb.generate_password()
-
-        # Create user in pgbouncer config
-        cfg = self.charm.read_pgb_config()
-        cfg.add_user(user, admin=self.admin)
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         # Create user and database in backend postgresql database
         try:
@@ -195,6 +187,14 @@ class DbProvides(Object):
             logger.error(err_msg)
             self.charm.unit.status = BlockedStatus(err_msg)
             return
+
+        # set up auth function
+        #self.charm.backend.initialise_auth_function(dbname=database)
+
+        # Create user in pgbouncer config
+        cfg = self.charm.read_pgb_config()
+        cfg.add_user(user, admin=self.admin)
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
 
         self.update_databag(
             join_event.relation,

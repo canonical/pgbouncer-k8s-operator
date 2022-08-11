@@ -36,10 +36,9 @@ class TestDb(unittest.TestCase):
         assert self.charm.legacy_db_admin_relation.relation_name == "db-admin"
         assert self.charm.legacy_db_admin_relation.admin is True
 
-    @patch("charm.PgBouncerK8sCharm.backend.postgres", new_callable=PropertyMock)
+    @patch("relations.backend_database.BackendDatabaseRequires.backend.postgres", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="test_pass")
-    @patch("charm.PgBouncerK8sCharm.add_user")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_user")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_database")
@@ -50,7 +49,6 @@ class TestDb(unittest.TestCase):
         _create_database,
         _create_user,
         _postgres,
-        _add_user,
         _gen_pw,
         _read_cfg,
         _backend_pg,
@@ -77,11 +75,6 @@ class TestDb(unittest.TestCase):
 
         self.db_admin_relation._on_relation_joined(mock_event)
 
-        _add_user.assert_called_with(
-            user,
-            password=password,
-            admin=True,
-        )
         _create_user.assert_called_with(user, password, admin=True)
         _create_database.assert_called_with(database, user)
 
@@ -93,11 +86,6 @@ class TestDb(unittest.TestCase):
         # Check admin permissions aren't present when we use db_relation
         self.db_relation._on_relation_joined(mock_event)
         _create_user.assert_called_with(user, password, admin=False)
-        _add_user.assert_called_with(
-            user,
-            password=password,
-            admin=False,
-        )
 
     @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.backend.app_databag", new_callable=PropertyMock)

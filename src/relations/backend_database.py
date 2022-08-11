@@ -131,7 +131,6 @@ class BackendDatabaseRequires(Object):
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def initialise_auth_function(self, postgres=None, dbname=PGB_DB):
-        # TODO make this slightly more generic
         install_script = open("src/relations/pgbouncer-install.sql", "r").read()
 
         if postgres == None:
