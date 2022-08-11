@@ -26,19 +26,19 @@
  * Remove the SECURITY DEFINER function that returns non-privileged and
  * non-system user credentials
  */
-DROP FUNCTION IF EXISTS pgbouncer.get_auth(username TEXT);
+DROP FUNCTION IF EXISTS auth_user.get_auth(username TEXT);
 
 /**
  * Drop the "pgbouncer" schema, and if anything exists in it, ensure it is
  * wiped out. Woe to those who used a system schema to store their own things...
  */
-DROP SCHEMA IF EXISTS pgbouncer CASCADE;
+DROP SCHEMA IF EXISTS auth_user CASCADE;
 
 /**
  * Drop anything owned by the pgbouncer user. It should be nothing at this
  * point, but better safe than sorry...
  */
-DROP OWNED BY pgbouncer CASCADE;
+DROP OWNED BY auth_user CASCADE;
 
 /**
  * So, we can't drop the pgbouncer role as this file runs on an individual
