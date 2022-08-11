@@ -66,10 +66,7 @@ class PgBouncerK8sCharm(CharmBase):
         This imports any users from the juju config, and initialises userlist and pgbouncer.ini
         config files that are essential for pgbouncer to run.
 
-        # TODO delete and see what happens
-        # TODO at worst I'll need to have a "make pgb config out of nothing" method, which will
-        # take data from config, defaults, and relations, and build new config. maybe not a bad
-        # thing to have.
+        TODO switch this to "on_start"
         """
         container = self.unit.get_container(PGB)
         if not container.can_connect():
@@ -119,7 +116,6 @@ class PgBouncerK8sCharm(CharmBase):
         if services != layer["services"]:
             container.add_layer(PGB, layer, combine=True)
             logging.info("Added layer 'pgbouncer' to pebble plan")
-            # TODO restart application, not container
             container.restart(PGB)
             logging.info(f"restarted {PGB} service")
         self.unit.status = ActiveStatus()
@@ -139,6 +135,7 @@ class PgBouncerK8sCharm(CharmBase):
                 PGB: {
                     "summary": "pgbouncer service",
                     "user": PG_USER,
+                    # -R flag reuses sockets on restart, -vvv is for maximum verbosity.
                     "command": f"pgbouncer -R -vvv {INI_PATH}",
                     "startup": "enabled",
                     "override": "replace",
@@ -214,6 +211,17 @@ class PgBouncerK8sCharm(CharmBase):
             make_dirs=True,
         )
 
+    def delete_file(self, path):
+        pgb_container = self.unit.get_container(PGB)
+        if not pgb_container.can_connect():
+            logger.warning("unable to connect to container")
+            self.unit.status = WaitingStatus(
+                "Unable to delete file from container - container unavailable."
+            )
+            return
+
+        pgb_container.remove_path(path)
+
     def read_pgb_config(self) -> PgbConfig:
         """Get config object from pgbouncer.ini file stored on container.
 
@@ -228,11 +236,12 @@ class PgBouncerK8sCharm(CharmBase):
             config = self._read_file(INI_PATH)
             return pgb.PgbConfig(config)
         except FileNotFoundError as e:
+            # TODO verify if this is necessary, and update docstring.
             logger.error("pgbouncer config not found")
             return self._generate_new_config()
 
     def _generate_new_config(self):
-        """FIXME this is a stub"""
+        """FIXME this is a stub for generating the config from existing data."""
         return PgbConfig(pgb.DEFAULT_CONFIG)
 
     def _reload_pgbouncer(self) -> None:
@@ -244,7 +253,6 @@ class PgBouncerK8sCharm(CharmBase):
         self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
         logger.info("reloading pgbouncer application")
         pgb_container = self.unit.get_container(PGB)
-        # TODO update to reload pgbouncer application directly, rather than reloading container
         pgb_container.restart(PGB)
         self.unit.status = ActiveStatus("PgBouncer Reloaded")
 
@@ -279,7 +287,10 @@ class PgBouncerK8sCharm(CharmBase):
     # =====================
 
     def update_backend_relation_port(self, port):
-        """Update ports in backend relations to match updated pgbouncer port."""
+        """Update ports in backend relations to match updated pgbouncer port.
+
+        TODO this method and the two below it are weird, fix them up
+        """
         # Skip updates if backend.postgres doesn't exist yet.
         if not self.backend.postgres:
             return

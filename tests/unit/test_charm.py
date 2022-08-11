@@ -149,4 +149,3 @@ class TestCharm(unittest.TestCase):
         self.charm._reload_pgbouncer()
         self.assertIsInstance(self.charm.unit.status, ActiveStatus)
         _restart.assert_called_once()
-

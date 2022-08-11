@@ -40,14 +40,13 @@ Example:
 import logging
 from typing import Dict, Union
 
-
-from charms.pgbouncer_k8s.v0 import pgb
 from charms.data_platform_libs.v0.database_requires import (
     DatabaseCreatedEvent,
     DatabaseEndpointsChangedEvent,
     DatabaseReadOnlyEndpointsChangedEvent,
     DatabaseRequires,
 )
+from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
@@ -114,7 +113,10 @@ class BackendDatabaseRequires(Object):
         postgres.create_user(self.auth_user, auth_password, admin=True)
         self.initialise_auth_function(postgres, dbname=self.database.database)
 
-        self.charm.push_file(f"{PGB_DIR}/userlist.txt", f'"{self.auth_user}" "{auth_password}"', perms=0o777)
+        # TODO perms 0o600
+        self.charm.push_file(
+            f"{PGB_DIR}/userlist.txt", f'"{self.auth_user}" "{auth_password}"', perms=0o777
+        )
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user=event.username, admin=True)
         cfg["pgbouncer"]["auth_user"] = self.auth_user
@@ -122,8 +124,7 @@ class BackendDatabaseRequires(Object):
             "auth_query"
         ] = f"SELECT username, password FROM {self.auth_user}.get_auth($1)"
         cfg["pgbouncer"]["auth_file"] = f"{PGB_DIR}/userlist.txt"
-        # TODO maybe don't reload if we're updating endpoints
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm._render_pgb_config(cfg)
 
         logger.info("auth user created")
 
@@ -139,7 +140,24 @@ class BackendDatabaseRequires(Object):
         with postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
             cursor.execute(install_script.replace("auth_user", self.auth_user))
             conn.commit()
+            # TODO wait for execute
+            # TODO verify execution
         conn.close()
+
+    def remove_auth_function(self, postgres=None, dbname=PGB_DB):
+        logger.info("removing auth user")
+
+        uninstall_script = open("src/relations/pgbouncer-install.sql", "r").read()
+
+        if postgres == None:
+            postgres = self.postgres
+
+        with postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
+            cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
+            conn.commit()
+        conn.close()
+
+        logger.info("auth user removed")
 
     def _on_endpoints_changed(
         self, _: Union[DatabaseEndpointsChangedEvent, DatabaseReadOnlyEndpointsChangedEvent]
@@ -153,29 +171,19 @@ class BackendDatabaseRequires(Object):
         if event.departing_unit != self.charm.unit:
             return
 
-        logger.info("removing auth user")
-
-        sql_file = open("src/relations/pgbouncer-uninstall.sql", "r").read()
-        auth_user = f"pgbouncer_auth_{self.app_databag.get('username')}"
-        with self.postgres.connect_to_database() as conn, conn.cursor() as cursor:
-            # TODO prepend a unique username to this file
-            cursor.execute(sql_file.replace("auth_user", auth_user))
-        conn.close()
-        logger.info("auth user removed")
+        self.remove_auth_function()
 
     def _on_relation_broken(self, _: RelationBrokenEvent):
         """Handle backend-database-relation-broken event.
 
         Removes all traces of this relation from pgbouncer config.
         """
-        # from pdb import set_trace; set_trace()
-
         cfg = self.charm.read_pgb_config()
         cfg.remove_user(self.postgres.user)
         cfg["pgbouncer"].pop("auth_user", None)
         cfg["pgbouncer"].pop("auth_query", None)
-        # TODO maybe don't reload if we're updating endpoints
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm._render_pgb_config(cfg)
+        self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
 
         self.charm.remove_postgres_endpoints(reload_pgbouncer=True)
 
@@ -202,9 +210,10 @@ class BackendDatabaseRequires(Object):
         if not self.relation:
             return None
 
-        endpoint = self.app_databag.get("endpoints")
-        user = self.app_databag.get("username")
-        password = self.app_databag.get("password")
+        databag = self.app_databag
+        endpoint = databag.get("endpoints")
+        user = databag.get("username")
+        password = databag.get("password")
         database = self.relation.data[self.charm.app].get("database")
 
         if endpoint is not None:

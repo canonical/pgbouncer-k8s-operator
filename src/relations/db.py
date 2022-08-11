@@ -167,6 +167,9 @@ class DbProvides(Object):
             join_event.defer()
             return
 
+        # set up auth function
+        self.charm.backend.initialise_auth_function(dbname=database)
+
         user = self._generate_username(join_event)
         password = pgb.generate_password()
 
@@ -192,9 +195,6 @@ class DbProvides(Object):
             logger.error(err_msg)
             self.charm.unit.status = BlockedStatus(err_msg)
             return
-
-        # set up auth function
-        self.charm.backend.initialise_auth_function(dbname=database)
 
         self.update_databag(
             join_event.relation,
@@ -434,12 +434,14 @@ class DbProvides(Object):
         # delete user
         cfg.remove_user(user)
         self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm.backend.remove_auth_function(dbname=database)
 
         try:
             if self.charm.backend.postgres:
                 # Try to delete user if backend database still exists. If not, postgres has been
                 # removed and will handle user deletion in its own relation-broken hook.
                 self.charm.backend.postgres.delete_user(user, if_exists=True)
+
         except PostgreSQLDeleteUserError:
             blockedmsg = f"failed to delete user for {self.relation_name}"
             logger.error(blockedmsg)

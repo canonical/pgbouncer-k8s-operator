@@ -42,8 +42,8 @@ DEFAULT_CONFIG = {
         "listen_port": "6432",
         "logfile": f"{PGB_DIR}/pgbouncer.log",
         "pidfile": f"{PGB_DIR}/pgbouncer.pid",
-        "admin_users": [],
-        "stats_users": [],
+        "admin_users": {},
+        "stats_users": {},
         "auth_type": "md5",
         "user": "postgres",
         "max_client_conn": "10000",
@@ -163,14 +163,14 @@ class PgbConfig(MutableMapping):
         except KeyError as err:
             raise PgbConfig.ConfigParsingError(source=str(err))
 
-        for name, cfg_string in self.get(users, {}).items():
+        for name, cfg_string in self.get(users, dict()).items():
             self[users][name] = parse_kv_string_to_dict(cfg_string)
 
         for user_type in PgbConfig.user_types:
             users = self[pgb].get(user_type, "").split(",")
             if "" in users:
                 users.remove("")
-            self[pgb][user_type] = users
+            self[pgb][user_type] = set(users)
 
     def render(self) -> str:
         """Returns a valid pgbouncer.ini file as a string.
@@ -186,7 +186,7 @@ class PgbConfig(MutableMapping):
             for option, config_value in subdict.items():
                 if isinstance(config_value, dict):
                     output_dict[section][option] = parse_dict_to_kv_string(config_value)
-                elif isinstance(config_value, list):
+                elif isinstance(config_value, set):
                     output_dict[section][option] = ",".join(config_value)
                 else:
                     output_dict[section][option] = str(config_value)
@@ -317,13 +317,13 @@ class PgbConfig(MutableMapping):
             admin: whether or not the user has admin permissions
             stats: whether or not the user has stats permissions
         """
-        admin_users = self[PGB].get("admin_users", [])
-        if admin and (user not in admin_users):
-            self[PGB]["admin_users"] = admin_users + [user]
+        admin_users = self[PGB].get("admin_users", set())
+        if admin:
+            self[PGB]["admin_users"] = admin_users.union({user})
 
-        stats_users = self[PGB].get("stats_users", [])
-        if stats and (user not in stats_users):
-            self[PGB]["stats_users"] = stats_users + [user]
+        stats_users = self[PGB].get("stats_users", set())
+        if stats:
+            self[PGB]["stats_users"] = stats_users.union({user})
 
     def remove_user(self, user: str):
         """Removes a user from config files.
@@ -331,9 +331,9 @@ class PgbConfig(MutableMapping):
         Args:
             user: the username for the intended user.
         """
-        if user in self[PGB].get("admin_users", []):
+        if user in self[PGB].get("admin_users", {}):
             self[PGB]["admin_users"].remove(user)
-        if user in self[PGB].get("stats_users", []):
+        if user in self[PGB].get("stats_users", {}):
             self[PGB]["stats_users"].remove(user)
 
     class ConfigParsingError(ParsingError):
@@ -389,17 +389,3 @@ def generate_password() -> str:
     """
     choices = string.ascii_letters + string.digits
     return "".join([secrets.choice(choices) for _ in range(24)])
-
-
-def generate_pgbouncer_ini(config) -> str:
-    """Generate pgbouncer.ini file from the given config options.
-
-    Args:
-        config: dict following the [pgbouncer config spec](https://pgbouncer.org/config.html).
-            Note that admin_users and stats_users must be passed in as lists of strings, not in
-            their string representation in the .ini file.
-
-    Returns:
-        A valid pgbouncer.ini file, represented as a string.
-    """
-    return PgbConfig(config).render()

@@ -3,12 +3,12 @@
 
 import string
 import unittest
-
-import pytest
 from unittest.mock import patch
 
+import pytest
+
 from lib.charms.pgbouncer_k8s.v0 import pgb
-from lib.charms.pgbouncer_k8s.v0.pgb import PgbConfig, DEFAULT_CONFIG
+from lib.charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
 
 DATA_DIR = "tests/unit/data"
 TEST_VALID_INI = f"{DATA_DIR}/test.ini"
@@ -153,7 +153,6 @@ class TestPgb(unittest.TestCase):
 
         cfg.add_user(user="test-user")
 
-
         # Test defaults
         cfg.add_user(user="test-user")
         assert cfg[PGB].get("admin_users") == default_admins
@@ -171,9 +170,7 @@ class TestPgb(unittest.TestCase):
         assert max_cfg[PGB].get("stats_users") == default_stats.add("max-test")
 
         # Test we can't duplicate stats or admin users
-        cfg.add_user(
-            user="max-test", password="max-pw", admin=True, stats=True
-        )
+        cfg.add_user(user="max-test", password="max-pw", admin=True, stats=True)
         assert max_cfg[PGB].get("admin_users") == default_admins.add("max-test")
         assert max_cfg[PGB].get("stats_users") == default_stats.add("max-test")
 
