@@ -10,7 +10,7 @@ from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from ops.model import ActiveStatus, WaitingStatus
 from ops.testing import Harness
 
-from charm import INI_PATH, PGB, USERLIST_PATH, PgBouncerK8sCharm
+from charm import INI_PATH, PGB, PgBouncerK8sCharm
 
 
 class TestCharm(unittest.TestCase):
@@ -107,7 +107,7 @@ class TestCharm(unittest.TestCase):
 
         # Assert we exit early if _can_connect returns false
         _can_connect.return_value = False
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm._render_pgb_config(cfg, reload_pgbouncer=False)
         self.assertIsInstance(self.charm.unit.status, WaitingStatus)
         _reload_pgbouncer.assert_not_called()
 
@@ -124,25 +124,6 @@ class TestCharm(unittest.TestCase):
         self.charm._render_pgb_config(test_cfg)
         read_cfg = self.charm.read_pgb_config()
         self.assertDictEqual(dict(read_cfg), dict(test_cfg))
-
-    @patch("ops.model.Container.can_connect")
-    @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
-    def test_render_userlist(self, _reload_pgbouncer, _can_connect):
-        cfg = PgbConfig(DEFAULT_CONFIG)
-
-        # Assert we exit early if _can_connect returns false
-        _can_connect.return_value = False
-        self.charm._render_userlist(cfg, reload_pgbouncer=True)
-        self.assertIsInstance(self.charm.unit.status, WaitingStatus)
-        _reload_pgbouncer.assert_not_called()
-
-        _can_connect.return_value = True
-        pgb_container = self.harness.model.unit.get_container(PGB)
-        self.charm._render_userlist({"test-user": "pw"}, reload_pgbouncer=True)
-        _reload_pgbouncer.assert_called()
-
-        userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual('"test-user" "pw"', userlist)
 
     @patch("ops.model.Container.restart")
     def test_reload_pgbouncer(self, _restart):

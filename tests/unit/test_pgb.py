@@ -147,11 +147,10 @@ class TestPgb(unittest.TestCase):
 
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="default-pass")
     def test_add_user(self, _gen_pw):
-        default_admins = DEFAULT_CONFIG[PGB]["admin_users"]
-        default_stats = DEFAULT_CONFIG[PGB]["stats_users"]
+        # TODO overhaul user tests
+        default_admins = set(DEFAULT_CONFIG[PGB]["admin_users"])
+        default_stats = set(DEFAULT_CONFIG[PGB]["stats_users"])
         cfg = PgbConfig(DEFAULT_CONFIG)
-
-        cfg.add_user(user="test-user")
 
         # Test defaults
         cfg.add_user(user="test-user")
@@ -160,30 +159,31 @@ class TestPgb(unittest.TestCase):
 
         # Test everything else
         max_cfg = PgbConfig(DEFAULT_CONFIG)
-        cfg.add_user(
+        max_cfg.add_user(
             user="max-test",
-            password="max-pw",
             admin=True,
             stats=True,
         )
-        assert max_cfg[PGB].get("admin_users") == default_admins.add("max-test")
-        assert max_cfg[PGB].get("stats_users") == default_stats.add("max-test")
+        assert max_cfg[PGB].get("admin_users") == {"max-test"}
+        assert max_cfg[PGB].get("stats_users") == {"max-test"}
 
-        # Test we can't duplicate stats or admin users
-        cfg.add_user(user="max-test", password="max-pw", admin=True, stats=True)
-        assert max_cfg[PGB].get("admin_users") == default_admins.add("max-test")
-        assert max_cfg[PGB].get("stats_users") == default_stats.add("max-test")
+        # Test we can't duplicate users
+        max_cfg.add_user(user="max-test", admin=True, stats=True)
+        assert max_cfg[PGB].get("admin_users") == {"max-test"}
+        assert max_cfg[PGB].get("stats_users") == {"max-test"}
 
     def test_remove_user(self):
+        # TODO overhaul user tests
         user = "test_user"
         cfg = PgbConfig(DEFAULT_CONFIG)
         cfg[PGB]["admin_users"].add(user)
         cfg[PGB]["stats_users"].add(user)
+        # convert to set, so we aren't just comparing two pointers to the same thing.
         admin_users = set(cfg[PGB]["admin_users"])
         stats_users = set(cfg[PGB]["stats_users"])
 
         # try to remove user that doesn't exist
-        cfg.remove_user("nonexistent-user", cfg=cfg)
+        cfg.remove_user("nonexistent-user")
         assert cfg[PGB]["admin_users"] == admin_users
         assert cfg[PGB]["stats_users"] == stats_users
 

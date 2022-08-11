@@ -26,7 +26,6 @@ PGB = "pgbouncer"
 PG_USER = "postgres"
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
 INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
-USERLIST_PATH = f"{PGB_DIR}/userlist.txt"
 
 
 class PgBouncerK8sCharm(CharmBase):
