@@ -14,7 +14,12 @@ from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
+from ops.model import (
+    ActiveStatus,
+    BlockedStatus,
+    MaintenanceStatus,
+    WaitingStatus,
+)
 from ops.pebble import Layer, PathError
 
 from relations.backend_database import BackendDatabaseRequires
@@ -179,6 +184,14 @@ class PgBouncerK8sCharm(CharmBase):
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
         """
+        self.push_file(INI_PATH, config.render(), 0o600)
+        logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
+
+        if reload_pgbouncer:
+            self._reload_pgbouncer()
+
+    def push_file(self, path, file_contents, perms):
+        """Pushes file_contents to a """
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
             logger.warning("unable to connect to container")
@@ -188,16 +201,12 @@ class PgBouncerK8sCharm(CharmBase):
             return
 
         pgb_container.push(
-            INI_PATH,
-            config.render(),
+            path,
+            file_contents,
             user=PG_USER,
-            permissions=0o600,
+            permissions=perms,
             make_dirs=True,
         )
-        logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
-
-        if reload_pgbouncer:
-            self._reload_pgbouncer()
 
     def delete_file(self, path):
         """Deletes the file at `path`."""
