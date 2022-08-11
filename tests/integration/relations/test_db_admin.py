@@ -150,10 +150,9 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
         )
 
         # Check for the correct databases and users creation.
-        # await check_database_creation(
-        #     ops_test, "discourse-charmers-discourse-k8s", user=pgb_user, password=pgb_password
-        # )
-        discourse_users = [f"relation_id_{second_discourse_relation.id}"]
+        await check_database_creation(
+            ops_test, "discourse-charmers-discourse-k8s", user=pgb_user, password=pgb_password
+        )
 
         second_discourse_users = [
             get_legacy_relation_username(ops_test, second_discourse_relation.id)

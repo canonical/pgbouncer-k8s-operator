@@ -176,7 +176,6 @@ class TestCharm(unittest.TestCase):
         _render_userlist.assert_called_with({"test-user": "default-pass"})
         _render_cfg.assert_not_called()
         assert cfg[PGB].get("admin_users") == default_admins
-        # No stats_users by default
         assert cfg[PGB].get("stats_users") == default_stats
         _read_userlist.reset_mock()
         _render_userlist.reset_mock()
@@ -193,16 +192,16 @@ class TestCharm(unittest.TestCase):
             render_cfg=True,
         )
         _render_userlist.assert_called_with({"test-user": "default-pass", "max-test": "max-pw"})
-        assert max_cfg[PGB].get("admin_users") == default_admins + ["max-test"]
-        assert max_cfg[PGB].get("stats_users") == default_stats + ["max-test"]
+        assert max_cfg[PGB].get("admin_users") == default_admins.add("max-test")
+        assert max_cfg[PGB].get("stats_users") == default_stats.add("max-test")
         _render_cfg.assert_called_with(max_cfg, True)
 
         # Test we can't duplicate stats or admin users
         self.charm.add_user(
             user="max-test", password="max-pw", cfg=max_cfg, admin=True, stats=True
         )
-        assert max_cfg[PGB].get("admin_users") == default_admins + ["max-test"]
-        assert max_cfg[PGB].get("stats_users") == default_stats + ["max-test"]
+        assert max_cfg[PGB].get("admin_users") == default_admins.add("max-test")
+        assert max_cfg[PGB].get("stats_users") == default_stats.add("max-test")
 
     @patch("charm.PgBouncerK8sCharm._read_userlist", return_value={"test_user": ""})
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
@@ -211,10 +210,10 @@ class TestCharm(unittest.TestCase):
     def test_remove_user(self, _render_cfg, _render_userlist, _read_cfg, _read_userlist):
         user = "test_user"
         cfg = PgbConfig(DEFAULT_CONFIG)
-        cfg[PGB]["admin_users"].append(user)
-        cfg[PGB]["stats_users"].append(user)
-        admin_users = list(cfg[PGB]["admin_users"])
-        stats_users = list(cfg[PGB]["stats_users"])
+        cfg[PGB]["admin_users"].add(user)
+        cfg[PGB]["stats_users"].add(user)
+        admin_users = set(cfg[PGB]["admin_users"])
+        stats_users = set(cfg[PGB]["stats_users"])
 
         # try to remove user that doesn't exist
         self.charm.remove_user("nonexistent-user", cfg=cfg)

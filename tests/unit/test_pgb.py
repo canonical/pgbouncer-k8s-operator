@@ -29,8 +29,8 @@ class TestPgb(unittest.TestCase):
             "pgbouncer": {
                 "logfile": "test/logfile",
                 "pidfile": "test/pidfile",
-                "admin_users": ["Test"],
-                "stats_users": ["Test", "test_stats"],
+                "admin_users": {"Test"},
+                "stats_users": {"Test", "test_stats"},
                 "listen_port": "4545",
             },
             "users": {
@@ -51,8 +51,8 @@ class TestPgb(unittest.TestCase):
             "pgbouncer": {
                 "logfile": "/etc/pgbouncer/pgbouncer.log",
                 "pidfile": "/etc/pgbouncer/pgbouncer.pid",
-                "admin_users": ["test"],
-                "stats_users": ["test", "stats_test"],
+                "admin_users": {"test"},
+                "stats_users": {"test", "stats_test"},
             },
             "users": {
                 "test": {"pool_mode": "session", "max_user_connections": "22"},
@@ -155,8 +155,8 @@ class TestPgb(unittest.TestCase):
             "pgbouncer": {
                 "logfile": "test/logfile",
                 "pidfile": "test/pidfile",
-                "admin_users": ["Test"],
-                "stats_users": ["Test", "test_stats"],
+                "admin_users": {"Test"},
+                "stats_users": {"Test", "test_stats"},
                 "listen_port": "4545",
             },
             "users": {

@@ -78,12 +78,10 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000),
 
         # Wait for pgbouncer charm to update its config files.
-
         try:
             for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
                 with attempt:
                     cfg = await get_cfg(ops_test)
-                    logging.info(cfg.render())
                     if (
                         pgb_user not in cfg["pgbouncer"]["admin_users"]
                         and "auth_query" not in cfg["pgbouncer"].keys()
@@ -93,6 +91,8 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         except RetryError:
             assert False, "pgbouncer config files failed to update in 3 minutes"
 
+        cfg = await get_cfg(ops_test)
+        logging.info(cfg.render())
         logger.info(await get_pgb_log(ops_test))
 
 
