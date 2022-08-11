@@ -191,7 +191,7 @@ class PgBouncerK8sCharm(CharmBase):
             self._reload_pgbouncer()
 
     def push_file(self, path, file_contents, perms):
-        """Pushes file_contents to a """
+        """Pushes file_contents to path, with the given permissions."""
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
             logger.warning("unable to connect to container")
