@@ -15,6 +15,7 @@ TEST_UNIT = {
 
 BACKEND_RELATION_NAME = "backend-database"
 
+
 class TestBackendDatabaseRelation(unittest.TestCase):
     def setUp(self):
         self.harness = Harness(PgBouncerK8sCharm)
@@ -40,8 +41,20 @@ class TestBackendDatabaseRelation(unittest.TestCase):
 
         self.charm.backend._on_database_created(mock_event)
 
+    def test_relation_departed(self):
+        self.charm.backend._on_relation_departed(MagicMock())
+
     @patch("charm.PgBouncerK8sCharm.read_pgb_config")
     def test_relation_broken(self, _cfg):
         # TODO update to use relations the way Marcelo did
         self.charm.backend._on_relation_broken(MagicMock())
 
+    def test_initialise_auth_function(self):
+        postgres = MagicMock()
+        dbname = "test-db"
+        self.charm.backend.initialise_auth_function(postgres=postgres, dbname=dbname)
+        postgres.connect_to_database.assert_called_with(dbname)
+        import logging
+
+        logging.error(postgres.connect_to_database.method_calls)
+        assert False

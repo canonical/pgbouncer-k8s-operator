@@ -48,8 +48,8 @@ class TestDb(unittest.TestCase):
 
         # Define a db-admin relation
         self.db_admin_rel_id = self.harness.add_relation(DB_ADMIN_RELATION_NAME, "postgres")
-        self.harness.add_relation_unit(self.db_adminrel_id, "admin_client/0")
-        self.harness.add_relation_unit(self.db_adminrel_id, self.unit)
+        self.harness.add_relation_unit(self.db_admin_rel_id, "admin_client/0")
+        self.harness.add_relation_unit(self.db_admin_rel_id, self.unit)
 
     def test_correct_admin_perms_set_in_constructor(self):
         assert self.charm.legacy_db_relation.relation_name == "db"
@@ -58,6 +58,7 @@ class TestDb(unittest.TestCase):
         assert self.charm.legacy_db_admin_relation.relation_name == "db-admin"
         assert self.charm.legacy_db_admin_relation.admin is True
 
+    @patch("relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="test_pass")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
@@ -72,6 +73,7 @@ class TestDb(unittest.TestCase):
         _postgres,
         _gen_pw,
         _read_cfg,
+        _backend_pg,
     ):
         self.harness.set_leader(True)
 
@@ -108,8 +110,8 @@ class TestDb(unittest.TestCase):
         _create_user.assert_called_with(user, password, admin=False)
 
     @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
-    @patch("charm.PgBouncerK8sCharm.backend.app_databag", new_callable=PropertyMock)
-    @patch("charm.PgBouncerK8sCharm.backend.postgres", new_callable=PropertyMock)
+    @patch("relations.backend_database.BackendDatabaseRequires.app_databag", new_callable=PropertyMock)
+    @patch("relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch(
         "charm.PgBouncerK8sCharm.unit_pod_hostname",
@@ -221,7 +223,7 @@ class TestDb(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.remove_user")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.delete_user")
-    @patch("charm.PgBouncerK8sCharm.backend.postgres", new_callable=PropertyMock)
+    @patch("relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock)
     def test_on_relation_broken(
         self, _backend_postgres, _delete_user, _postgres, _remove_user, _read
     ):
