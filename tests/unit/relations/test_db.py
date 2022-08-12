@@ -59,7 +59,9 @@ class TestDb(unittest.TestCase):
         assert self.charm.legacy_db_admin_relation.relation_name == "db-admin"
         assert self.charm.legacy_db_admin_relation.admin is True
 
-    @patch("relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock)
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
+    )
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="test_pass")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
@@ -110,8 +112,12 @@ class TestDb(unittest.TestCase):
         self.db_relation._on_relation_joined(mock_event)
         _create_user.assert_called_with(user, password, admin=False)
 
-    @patch("relations.backend_database.BackendDatabaseRequires.app_databag", new_callable=PropertyMock)
-    @patch("relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock)
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.app_databag", new_callable=PropertyMock
+    )
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
+    )
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch(
         "charm.PgBouncerK8sCharm.unit_pod_hostname",
@@ -221,7 +227,9 @@ class TestDb(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.delete_user")
-    @patch("relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock)
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
+    )
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_relation_broken(
         self, _backend_postgres, _delete_user, _postgres, _read, _render_cfg
