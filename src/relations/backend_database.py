@@ -119,7 +119,6 @@ class BackendDatabaseRequires(Object):
         )
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user=event.username, admin=True)
-        cfg["pgbouncer"]["auth_user"] = self.auth_user
         cfg["pgbouncer"][
             "auth_query"
         ] = f"SELECT username, password FROM {self.auth_user}.get_auth($1)"

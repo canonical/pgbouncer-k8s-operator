@@ -303,6 +303,7 @@ class DbProvides(Object):
             "host": postgres_endpoint.split(":")[0],
             "dbname": database,
             "port": postgres_endpoint.split(":")[1],
+            "auth_user": self.charm.backend.auth_user,
         }
 
         read_only_endpoint = self._get_read_only_endpoint()
@@ -311,6 +312,7 @@ class DbProvides(Object):
                 "host": read_only_endpoint.split(":")[0],
                 "dbname": database,
                 "port": read_only_endpoint.split(":")[1],
+                "auth_user": self.charm.backend.auth_user,
             }
         else:
             cfg["databases"].pop(f"{database}_standby", None)
