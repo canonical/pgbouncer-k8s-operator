@@ -33,7 +33,7 @@ class TestPgb(unittest.TestCase):
                 "logfile": "test/logfile",
                 "pidfile": "test/pidfile",
                 "admin_users": {"Test"},
-                "stats_users": {"Test", "test_stats"},
+                "stats_users": {"test_stats"},
                 "listen_port": "4545",
             },
             "users": {

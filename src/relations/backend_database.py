@@ -130,31 +130,6 @@ class BackendDatabaseRequires(Object):
 
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
-    def initialise_auth_function(self, postgres=None, dbname=PGB_DB):
-        """Runs an SQL script to initialise the auth function.
-
-        This function must run in every database for authentication to work.
-
-        Args:
-            postgres: a PostgreSQL application instance. If none is provided, the default pgbouncer
-                instance will be used.
-            dbname: the name of the database to connect to.
-        """
-        logger.info("initialising auth function")
-
-        install_script = open("src/relations/pgbouncer-install.sql", "r").read()
-
-        if postgres is None:
-            postgres = self.postgres
-
-        with postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
-            cursor.execute(install_script.replace("auth_user", self.auth_user))
-            conn.commit()
-            # TODO wait for execute
-            # TODO verify execution
-        conn.close()
-        logger.info("auth function initialised")
-
     def _on_endpoints_changed(
         self, _: Union[DatabaseEndpointsChangedEvent, DatabaseReadOnlyEndpointsChangedEvent]
     ):
@@ -190,6 +165,30 @@ class BackendDatabaseRequires(Object):
         self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
 
         self.charm.remove_postgres_endpoints(reload_pgbouncer=True)
+
+    def initialise_auth_function(self, postgres=None, dbname=PGB_DB):
+        """Runs an SQL script to initialise the auth function.
+
+        This function must run in every database for authentication to work.
+
+        Args:
+            postgres: a PostgreSQL application instance. If none is provided, the default pgbouncer
+                instance will be used.
+            dbname: the name of the database to connect to.
+        """
+        logger.info("initialising auth function")
+
+        install_script = open("src/relations/pgbouncer-install.sql", "r").read()
+
+        if postgres is None:
+            postgres = self.postgres
+
+        with postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
+            cursor.execute(install_script.replace("auth_user", self.auth_user))
+            # TODO wait for execute
+            # TODO verify execution
+        conn.close()
+        logger.info("auth function initialised")
 
     def get_postgres(self, host, user, password, database) -> PostgreSQL:
         """Returns a PostgreSQL application instance if none of the given variables are None."""

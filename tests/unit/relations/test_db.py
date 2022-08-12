@@ -18,6 +18,10 @@ TEST_UNIT = {
     "standbys": "host=standby1 port=1 dbname=testdatabase",
 }
 
+BACKEND_RELATION_NAME = "backend-database"
+DB_RELATION_NAME = "db"
+DB_ADMIN_RELATION_NAME = "db-admin"
+
 
 class TestDb(unittest.TestCase):
     def setUp(self):
@@ -26,8 +30,26 @@ class TestDb(unittest.TestCase):
         self.harness.begin()
 
         self.charm = self.harness.charm
+        self.app = self.charm.app.name
+        self.unit = self.charm.unit.name
+        self.backend = self.charm.backend
         self.db_relation = self.charm.legacy_db_relation
         self.db_admin_relation = self.charm.legacy_db_admin_relation
+
+        # Define a backend relation
+        self.backend_rel_id = self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
+        self.harness.add_relation_unit(self.backend_rel_id, "postgres/0")
+        self.harness.add_relation_unit(self.backend_rel_id, self.unit)
+
+        # Define a db relation
+        self.db_rel_id = self.harness.add_relation(DB_RELATION_NAME, "postgres")
+        self.harness.add_relation_unit(self.db_rel_id, "client/0")
+        self.harness.add_relation_unit(self.db_rel_id, self.unit)
+
+        # Define a db-admin relation
+        self.db_admin_rel_id = self.harness.add_relation(DB_ADMIN_RELATION_NAME, "postgres")
+        self.harness.add_relation_unit(self.db_adminrel_id, "admin_client/0")
+        self.harness.add_relation_unit(self.db_adminrel_id, self.unit)
 
     def test_correct_admin_perms_set_in_constructor(self):
         assert self.charm.legacy_db_relation.relation_name == "db"
@@ -36,10 +58,6 @@ class TestDb(unittest.TestCase):
         assert self.charm.legacy_db_admin_relation.relation_name == "db-admin"
         assert self.charm.legacy_db_admin_relation.admin is True
 
-    @patch(
-        "relations.backend_database.BackendDatabaseRequires.backend.postgres",
-        new_callable=PropertyMock,
-    )
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="test_pass")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
@@ -54,7 +72,6 @@ class TestDb(unittest.TestCase):
         _postgres,
         _gen_pw,
         _read_cfg,
-        _backend_pg,
     ):
         self.harness.set_leader(True)
 
