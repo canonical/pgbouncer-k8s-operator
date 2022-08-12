@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
-from lib.charms.pgbouncer_k8s.v0.pgbouncer import (
+from lib.charms.pgbouncer_k8s.v0.pgb import (
     DEFAULT_CONFIG,
     PgbConfig,
     parse_dict_to_kv_string,
