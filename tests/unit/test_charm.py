@@ -107,12 +107,12 @@ class TestCharm(unittest.TestCase):
 
         # Assert we exit early if _can_connect returns false
         _can_connect.return_value = False
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=False)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=False)
         self.assertIsInstance(self.charm.unit.status, WaitingStatus)
         _reload_pgbouncer.assert_not_called()
 
         _can_connect.return_value = True
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
         _reload_pgbouncer.assert_called()
 
         pgb_container = self.harness.model.unit.get_container(PGB)
@@ -121,7 +121,7 @@ class TestCharm(unittest.TestCase):
 
     def test_read_pgb_config(self):
         test_cfg = PgbConfig(DEFAULT_CONFIG)
-        self.charm._render_pgb_config(test_cfg)
+        self.charm.render_pgb_config(test_cfg)
         read_cfg = self.charm.read_pgb_config()
         self.assertDictEqual(dict(read_cfg), dict(test_cfg))
 

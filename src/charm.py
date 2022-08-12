@@ -68,7 +68,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         # Initialise pgbouncer.ini config files from defaults set in charm lib.
         config = PgbConfig(pgb.DEFAULT_CONFIG)
-        self._render_pgb_config(config)
+        self.render_pgb_config(config)
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
@@ -97,7 +97,7 @@ class PgBouncerK8sCharm(CharmBase):
             self.update_backend_relation_port(self.config["listen_port"])
             config["pgbouncer"]["listen_port"] = self.config["listen_port"]
 
-        self._render_pgb_config(config)
+        self.render_pgb_config(config)
 
         # Create an updated pebble layer for the pgbouncer container, and apply it if there are
         # any changes.
@@ -169,7 +169,7 @@ class PgBouncerK8sCharm(CharmBase):
     #  PgBouncer Config Management
     # =============================
 
-    def _render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
+    def render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
         Args:

@@ -123,7 +123,7 @@ class BackendDatabaseRequires(Object):
             "auth_query"
         ] = f"SELECT username, password FROM {self.auth_user}.get_auth($1)"
         cfg["pgbouncer"]["auth_file"] = f"{PGB_DIR}/userlist.txt"
-        self.charm._render_pgb_config(cfg)
+        self.charm.render_pgb_config(cfg)
 
         logger.info("auth user created")
 
@@ -160,7 +160,7 @@ class BackendDatabaseRequires(Object):
         cfg.remove_user(self.postgres.user)
         cfg["pgbouncer"].pop("auth_user", None)
         cfg["pgbouncer"].pop("auth_query", None)
-        self.charm._render_pgb_config(cfg)
+        self.charm.render_pgb_config(cfg)
         self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
 
         self.charm.remove_postgres_endpoints(reload_pgbouncer=True)

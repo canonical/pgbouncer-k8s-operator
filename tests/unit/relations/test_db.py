@@ -65,7 +65,7 @@ class TestDb(unittest.TestCase):
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_user")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_database")
-    @patch("charm.PgBouncerK8sCharm._render_pgb_config")
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_relation_joined(
         self,
         _render_cfg,
@@ -122,7 +122,7 @@ class TestDb(unittest.TestCase):
     @patch("relations.db.DbProvides.get_allowed_units", return_value="test_allowed_unit")
     @patch("relations.db.DbProvides.get_allowed_subnets", return_value="test_allowed_subnet")
     @patch("relations.db.DbProvides._get_state", return_value="test-state")
-    @patch("charm.PgBouncerK8sCharm._render_pgb_config")
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
     def test_on_relation_changed(
         self,
@@ -219,12 +219,12 @@ class TestDb(unittest.TestCase):
         self.assertDictEqual(unit_databag, expected_unit_databag)
 
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
-    @patch("charm.PgBouncerK8sCharm.remove_user")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.delete_user")
     @patch("relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock)
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_relation_broken(
-        self, _backend_postgres, _delete_user, _postgres, _remove_user, _read
+        self, _backend_postgres, _delete_user, _postgres, _read, _render_cfg
     ):
         """Test that all traces of the given app are removed from pgb config, including user."""
         database = "test_db"
@@ -248,9 +248,6 @@ class TestDb(unittest.TestCase):
 
         self.db_relation._on_relation_broken(mock_event)
 
-        _remove_user.assert_called_with(
-            username, cfg=input_cfg, render_cfg=True, reload_pgbouncer=True
-        )
         _delete_user.assert_called_with(username, if_exists=True)
 
         assert database not in [input_cfg["databases"]]

@@ -194,7 +194,7 @@ class DbProvides(Object):
         # Create user in pgbouncer config
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user, admin=self.admin)
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
 
         self.update_databag(
             join_event.relation,
@@ -317,7 +317,7 @@ class DbProvides(Object):
         else:
             cfg["databases"].pop(f"{database}_standby", None)
         # Write config data to charm filesystem
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
 
     def remove_postgres_endpoints(self, relation: Relation, reload_pgbouncer: bool = False):
         """Updates postgres replicas."""
@@ -329,7 +329,7 @@ class DbProvides(Object):
         cfg = self.charm.read_pgb_config()
         cfg["databases"].pop(database, None)
         cfg["databases"].pop(f"{database}_standby", None)
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
 
     def update_databag(self, relation, updates: Dict[str, str]):
         """Updates databag with the given dict."""
@@ -435,7 +435,7 @@ class DbProvides(Object):
 
         # delete user
         cfg.remove_user(user)
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
 
         try:
             if self.charm.backend.postgres:
