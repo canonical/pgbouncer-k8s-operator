@@ -64,7 +64,6 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         pgb_user, pgb_password = await get_backend_user_pass(ops_test, relation)
         assert pgb_user in cfg["pgbouncer"]["admin_users"]
         assert cfg["pgbouncer"]["auth_query"]
-        assert cfg["pgbouncer"]["auth_user"]
 
         await check_database_users_existence(ops_test, [pgb_user], [], pgb_user, pgb_password)
 
@@ -85,7 +84,6 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
                     if (
                         pgb_user not in cfg["pgbouncer"]["admin_users"]
                         and "auth_query" not in cfg["pgbouncer"].keys()
-                        and "auth_user" not in cfg["pgbouncer"].keys()
                     ):
                         break
         except RetryError:
