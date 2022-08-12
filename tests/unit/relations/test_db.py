@@ -36,6 +36,7 @@ class TestDb(unittest.TestCase):
         self.db_relation = self.charm.legacy_db_relation
         self.db_admin_relation = self.charm.legacy_db_admin_relation
 
+        # TODO update mocks now we're using the mock harness
         # Define a backend relation
         self.backend_rel_id = self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.add_relation_unit(self.backend_rel_id, "postgres/0")
@@ -109,7 +110,6 @@ class TestDb(unittest.TestCase):
         self.db_relation._on_relation_joined(mock_event)
         _create_user.assert_called_with(user, password, admin=False)
 
-    @patch("charm.PgBouncerK8sCharm.backend_relation", new_callable=PropertyMock)
     @patch("relations.backend_database.BackendDatabaseRequires.app_databag", new_callable=PropertyMock)
     @patch("relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
@@ -136,7 +136,6 @@ class TestDb(unittest.TestCase):
         _read_cfg,
         _backend_postgres,
         _backend_dbag,
-        _backend_relation,
     ):
         # Ensure event doesn't defer too early
         self.harness.set_leader(True)
