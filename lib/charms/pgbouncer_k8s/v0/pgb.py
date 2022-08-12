@@ -29,6 +29,14 @@ from configparser import ConfigParser, ParsingError
 from copy import deepcopy
 from typing import Dict, Union
 
+# The unique Charmhub library identifier, never change it
+LIBID = "113f4a7480c04631bfdf5fe776f760cd"
+# Increment this major API version when introducing breaking changes
+LIBAPI = 0
+# Increment this PATCH version before using `charmcraft publish-lib` or reset
+# to 0 if you are raising the major API version
+LIBPATCH = 1
+
 logger = logging.getLogger(__name__)
 
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
