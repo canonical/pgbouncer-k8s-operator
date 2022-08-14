@@ -50,11 +50,16 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         self.charm.backend._on_relation_broken(MagicMock())
 
     def test_initialise_auth_function(self):
+        install_script = open("src/relations/pgbouncer-install.sql", "r").read()
         postgres = MagicMock()
         dbname = "test-db"
-        self.charm.backend.initialise_auth_function(postgres=postgres, dbname=dbname)
-        postgres.connect_to_database.assert_called_with(dbname)
-        import logging
 
-        logging.error(postgres.connect_to_database.method_calls)
-        assert False
+        self.charm.backend.initialise_auth_function(postgres=postgres, dbname=dbname)
+
+        postgres.connect_to_database.assert_called_with(dbname)
+        conn = postgres.connect_to_database().__enter__()
+        cursor = conn.cursor().__enter__()
+        cursor.execute.assert_called_with(
+            install_script.replace("auth_user", self.charm.backend.auth_user)
+        )
+        conn.close.assert_called()

@@ -103,7 +103,7 @@ class BackendDatabaseRequires(Object):
         postgres = self.get_postgres(
             event.endpoints.split(":")[0], event.username, event.password, self.database.database
         )
-        # TODO this may be bad
+        # TODO this may be unnecessary
         if postgres is None:
             event.defer()
             logging.error("deferring database-created hook - postgres database not ready")
@@ -177,15 +177,13 @@ class BackendDatabaseRequires(Object):
         """
         logger.info("initialising auth function")
 
-        install_script = open("src/relations/pgbouncer-install.sql", "r").read()
-
         if postgres is None:
             postgres = self.postgres
 
+        install_script = open("src/relations/pgbouncer-install.sql", "r").read()
+
         with postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
             cursor.execute(install_script.replace("auth_user", self.auth_user))
-            # TODO wait for execute
-            # TODO verify execution
         conn.close()
         logger.info("auth function initialised")
 
