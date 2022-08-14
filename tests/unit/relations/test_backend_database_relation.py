@@ -2,9 +2,9 @@
 # See LICENSE file for licensing details.
 
 import unittest
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
-from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, INI_PATH, PGB_DIR, PgbConfig
+from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PGB_DIR, PgbConfig
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
@@ -19,7 +19,6 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         self.harness.begin()
 
         self.charm = self.harness.charm
-        self.app = self.charm.app.name
         self.unit = self.charm.unit.name
         self.backend = self.charm.backend
 
@@ -47,7 +46,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         postgres.create_user.assert_called_with(self.backend.auth_user, pw, admin=True)
         _init_auth.assert_called_with(postgres, dbname=self.backend.database.database)
         _push.assert_any_call(
-            f"{PGB_DIR}/userlist.txt", f'"{self.backend.auth_user}" "{pw}"', perms=0o600
+            f"{PGB_DIR}/userlist.txt", f'"{self.backend.auth_user}" "{pw}"', perms=0o777
         )
 
         cfg = _cfg.return_value
@@ -60,23 +59,50 @@ class TestBackendDatabaseRelation(unittest.TestCase):
 
         _update_endpoints.assert_called_once()
 
-    def test_relation_departed(self):
-        self.backend._on_relation_departed(MagicMock())
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
+    )
+    @patch("charm.PgBouncerK8sCharm.update_postgres_endpoints")
+    def test_relation_departed(self, _update_endpoints, _postgres):
+        postgres = _postgres.return_value
+        depart_event = MagicMock()
+        depart_event.departing_unit = self.charm.unit
+        self.backend._on_relation_departed(depart_event)
 
-        install_script = open("src/relations/pgbouncer-uninstall.sql", "r").read()
-        postgres.connect_to_database.assert_called_with(self.backend.PGB_DB)
+        uninstall_script = open("src/relations/pgbouncer-uninstall.sql", "r").read()
+
+        postgres.connect_to_database.assert_called_with("pgbouncer")
         conn = postgres.connect_to_database().__enter__()
         cursor = conn.cursor().__enter__()
         cursor.execute.assert_called_with(
-            install_script.replace("auth_user", self.backend.auth_user)
+            uninstall_script.replace("auth_user", self.backend.auth_user)
         )
         conn.close.assert_called()
-        assert False
 
-    @patch("charm.PgBouncerK8sCharm.read_pgb_config")
-    def test_relation_broken(self, _cfg):
-        # TODO update to use relations the way Marcelo did
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
+    )
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value = PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
+    @patch("charm.PgBouncerK8sCharm.delete_file")
+    @patch("charm.PgBouncerK8sCharm.remove_postgres_endpoints")
+    def test_relation_broken(self, _remove_endpoints, _delete_file, _render, _cfg, _postgres):
+        postgres = _postgres.return_value
+        postgres.user = "test_user"
+        cfg = _cfg.return_value
+        cfg.add_user(postgres.user, admin=True)
+        cfg["pgbouncer"]["auth_user"] = "test"
+        cfg["pgbouncer"]["auth_query"] = "test"
+
         self.backend._on_relation_broken(MagicMock())
+
+        assert "test_user" not in cfg["pgbouncer"]
+        assert "auth_user" not in cfg["pgbouncer"]
+        assert "auth_query" not in cfg["pgbouncer"]
+
+        _render.assert_called_with(cfg)
+        _delete_file.assert_called_with(f"{PGB_DIR}/userlist.txt")
+        _remove_endpoints.assert_called()
 
     def test_initialise_auth_function(self):
         install_script = open("src/relations/pgbouncer-install.sql", "r").read()

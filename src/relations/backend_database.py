@@ -107,7 +107,6 @@ class BackendDatabaseRequires(Object):
             return
 
         auth_password = pgb.generate_password()
-        logging.error(postgres.create_user)
         postgres.create_user(self.auth_user, auth_password, admin=True)
         self.initialise_auth_function(postgres, dbname=self.database.database)
 
@@ -137,7 +136,7 @@ class BackendDatabaseRequires(Object):
 
         logger.info("removing auth user")
 
-        uninstall_script = open("src/relations/pgbouncer-install.sql", "r").read()
+        uninstall_script = open("src/relations/pgbouncer-uninstall.sql", "r").read()
 
         with self.postgres.connect_to_database(PGB_DB) as conn, conn.cursor() as cursor:
             cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
