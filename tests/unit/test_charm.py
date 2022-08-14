@@ -85,7 +85,7 @@ class TestCharm(unittest.TestCase):
                 PGB: {
                     "summary": "pgbouncer service",
                     "user": "postgres",
-                    "command": f"pgbouncer -R -vvv {INI_PATH}",
+                    "command": f"pgbouncer -R -v {INI_PATH}",
                     "startup": "enabled",
                     "override": "replace",
                 }

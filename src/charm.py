@@ -125,8 +125,8 @@ class PgBouncerK8sCharm(CharmBase):
                 PGB: {
                     "summary": "pgbouncer service",
                     "user": PG_USER,
-                    # -R flag reuses sockets on restart, -vvv is for maximum verbosity.
-                    "command": f"pgbouncer -R -vvv {INI_PATH}",
+                    # -R flag reuses sockets on restart
+                    "command": f"pgbouncer -R -v {INI_PATH}",
                     "startup": "enabled",
                     "override": "replace",
                 }
