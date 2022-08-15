@@ -37,7 +37,8 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         new_callable=PropertyMock,
         return_value="user",
     )
-    @patch("relations.backend_database.BackendDatabaseRequires.get_postgres")
+    @patch("relations.backend_database.BackendDatabaseRequires.postgres",
+        new_callable=PropertyMock)
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
     @patch("relations.backend_database.BackendDatabaseRequires.initialise_auth_function")
     @patch("charm.PgBouncerK8sCharm.push_file")
@@ -126,15 +127,17 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         new_callable=PropertyMock,
         return_value="user",
     )
-    def test_initialise_auth_function(self, _auth_user):
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
+    )
+    def test_initialise_auth_function(self, _postgres, _auth_user):
         install_script = open("src/relations/pgbouncer-install.sql", "r").read()
-        postgres = MagicMock()
         dbname = "test-db"
 
-        self.backend.initialise_auth_function(postgres=postgres, dbname=dbname)
+        self.backend.initialise_auth_function(dbname=dbname)
 
-        postgres.connect_to_database.assert_called_with(dbname)
-        conn = postgres.connect_to_database().__enter__()
+        _postgres.return_value.connect_to_database.assert_called_with(dbname)
+        conn = _postgres.return_value.connect_to_database().__enter__()
         cursor = conn.cursor().__enter__()
         cursor.execute.assert_called_with(
             install_script.replace("auth_user", self.backend.auth_user)
