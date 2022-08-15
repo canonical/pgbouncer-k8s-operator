@@ -133,9 +133,6 @@ class BackendDatabaseRequires(Object):
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_relation_departed(self, event: RelationDepartedEvent):
-        # TODO test if this is necessary
-        # self.charm.update_postgres_endpoints(reload_pgbouncer=True)
-
         if event.departing_unit != self.charm.unit:
             return
 
