@@ -29,6 +29,14 @@ from configparser import ConfigParser, ParsingError
 from copy import deepcopy
 from typing import Dict, Union
 
+# The unique Charmhub library identifier, never change it
+LIBID = "113f4a7480c04631bfdf5fe776f760cd"
+# Increment this major API version when introducing breaking changes
+LIBAPI = 0
+# Increment this PATCH version before using `charmcraft publish-lib` or reset
+# to 0 if you are raising the major API version
+LIBPATCH = 1
+
 logger = logging.getLogger(__name__)
 
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
@@ -108,6 +116,7 @@ class PgbConfig(MutableMapping):
         """String representation of PgbConfig object."""
         return str(self.__dict__)
 
+<<<<<<<< HEAD:lib/charms/pgbouncer_k8s_operator/v0/pgb.py
     def __eq__(self, other):
         """Equality operator for PgbConfig object."""
         if not isinstance(other, PgbConfig):
@@ -125,6 +134,8 @@ class PgbConfig(MutableMapping):
     def items(self):
         return self.__dict__.items()
 
+========
+>>>>>>>> 377087954b56a9a6c2bc5114342cd59cf7e2b069:lib/charms/pgbouncer_k8s/v0/pgb.py
     def read_dict(self, input: Dict) -> None:
         """Populates this object from a dictionary.
 

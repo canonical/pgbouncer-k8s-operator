@@ -14,7 +14,8 @@ log_cli_level = "INFO"
 asyncio_mode = "auto"
 markers = [
     "smoke: quick integration tests that can be run to quickly verify that the charm builds and deploys ok.",
-    "legacy_relations: integration tests that are dedicated to the legacy relations db, db-admin, and backend-db-admin."
+    "legacy_relations: integration tests that are dedicated to the legacy relations db, db-admin, and backend-db-admin.",
+    "dev: a quick development marker to run one test"
 ]
 
 # Formatting tools configuration

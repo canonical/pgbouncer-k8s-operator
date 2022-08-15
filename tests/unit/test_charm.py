@@ -6,7 +6,7 @@
 import unittest
 from unittest.mock import patch
 
-from charms.pgbouncer_k8s_operator.v0.pgb import DEFAULT_CONFIG, PgbConfig
+from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from ops.model import ActiveStatus, WaitingStatus
 from ops.testing import Harness
 
@@ -20,7 +20,7 @@ class TestCharm(unittest.TestCase):
         self.harness.begin()
         self.charm = self.harness.charm
 
-    @patch("charms.pgbouncer_k8s_operator.v0.pgb.generate_password", return_value="pw")
+    @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
     def test_on_install(self, _gen_pw):
         self.charm.on.install.emit()
         pgb_container = self.harness.model.unit.get_container(PGB)
@@ -35,9 +35,9 @@ class TestCharm(unittest.TestCase):
         _gen_pw.assert_called_once()
 
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
-    @patch("charm.PgBouncerK8sCharm.trigger_db_relations")
+    @patch("charm.PgBouncerK8sCharm.update_backend_relation_port")
     @patch("ops.model.Container.restart")
-    def test_on_config_changed(self, _restart, _trigger_db_relations, _read):
+    def test_on_config_changed(self, _restart, _update_port, _read):
         self.harness.update_config()
 
         mock_cores = 1
@@ -62,7 +62,7 @@ class TestCharm(unittest.TestCase):
         )
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
         _restart.assert_called()
-        _trigger_db_relations.assert_called()
+        _update_port.assert_called()
 
         # Test changing charm config propagates to container config file.
         pgb_container = self.harness.model.unit.get_container(PGB)
@@ -155,7 +155,7 @@ class TestCharm(unittest.TestCase):
         self.assertIsInstance(self.charm.unit.status, ActiveStatus)
         _restart.assert_called_once()
 
-    @patch("charms.pgbouncer_k8s_operator.v0.pgb.generate_password", return_value="default-pass")
+    @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="default-pass")
     @patch("charm.PgBouncerK8sCharm._read_userlist", return_value={})
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm._render_userlist")

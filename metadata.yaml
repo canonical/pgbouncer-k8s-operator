@@ -1,7 +1,7 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-name: pgbouncer-k8s-operator
+name: pgbouncer-k8s
 display-name: |
   PgBouncer Kubernetes Operator
 description: |

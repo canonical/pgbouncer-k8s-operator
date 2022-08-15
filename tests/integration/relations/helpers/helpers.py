@@ -5,18 +5,27 @@
 import json
 from typing import Dict
 
-from charms.pgbouncer_k8s_operator.v0 import pgb
+from charms.pgbouncer_k8s.v0 import pgb
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
+
+PGB = "pgbouncer-k8s"
 
 
 def get_backend_relation(ops_test: OpsTest):
     """Gets the backend-database relation used to connect pgbouncer to the backend."""
     for rel in ops_test.model.relations:
-        if "pgbouncer-k8s-operator" in rel.endpoints and "postgresql-k8s" in rel.endpoints:
+        if "pgbouncer-k8s" in rel.endpoints and "postgresql-k8s" in rel.endpoints:
             return rel
 
     return None
+
+
+def get_legacy_relation_username(ops_test: OpsTest, relation_id: int):
+    """Gets a username as it should be generated in the db and db-admin legacy relations."""
+    app_name = ops_test.model.applications[PGB].name
+    model_name = ops_test.model_name
+    return f"{app_name}_user_id_{relation_id}_{model_name}".replace("-", "_")
 
 
 async def get_unit_info(ops_test: OpsTest, unit_name: str) -> Dict:
@@ -60,26 +69,26 @@ async def get_app_relation_databag(ops_test: OpsTest, unit_name: str, relation_i
     return None
 
 
-async def get_userlist(ops_test: OpsTest, unit_name: str) -> Dict[str, str]:
+async def get_userlist(ops_test: OpsTest) -> Dict[str, str]:
     """Gets pgbouncer userlist.txt from pgbouncer container."""
     cat_userlist = await ops_test.juju(
         "ssh",
         "--container",
         "pgbouncer",
-        unit_name,
+        f"{PGB}/0",
         "cat",
         f"{pgb.PGB_DIR}/userlist.txt",
     )
     return pgb.parse_userlist(cat_userlist[1])
 
 
-async def get_cfg(ops_test: OpsTest, unit_name) -> pgb.PgbConfig:
+async def get_cfg(ops_test: OpsTest) -> pgb.PgbConfig:
     """Gets pgbouncer config from pgbouncer container."""
     cat_cfg = await ops_test.juju(
         "ssh",
         "--container",
         "pgbouncer",
-        unit_name,
+        f"{PGB}/0",
         "cat",
         f"{pgb.PGB_DIR}/pgbouncer.ini",
     )
