@@ -20,8 +20,7 @@ class TestCharm(unittest.TestCase):
         self.harness.begin()
         self.charm = self.harness.charm
 
-    @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
-    def test_on_install(self, _gen_pw):
+    def test_on_install(self):
         self.charm.on.install.emit()
         pgb_container = self.harness.model.unit.get_container(PGB)
 

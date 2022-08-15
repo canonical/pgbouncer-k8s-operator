@@ -31,10 +31,6 @@ ANOTHER_FINOS_WALTZ = "another-finos-waltz"
 logger = logging.getLogger(__name__)
 
 
-# TODO this test isn't failing accurately when we can't authenticate! Relying on app status
-# doesn't seem to be guaranteed
-
-
 async def test_create_db_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.

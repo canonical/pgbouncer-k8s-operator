@@ -4,7 +4,12 @@
 import unittest
 from unittest.mock import MagicMock, PropertyMock, patch
 
-from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PGB_DIR, PgbConfig
+from charms.pgbouncer_k8s.v0.pgb import (
+    DEFAULT_CONFIG,
+    PGB_DIR,
+    PgbConfig,
+    get_hashed_password,
+)
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
@@ -45,8 +50,10 @@ class TestBackendDatabaseRelation(unittest.TestCase):
 
         postgres.create_user.assert_called_with(self.backend.auth_user, pw, admin=True)
         _init_auth.assert_called_with(postgres, dbname=self.backend.database.database)
+
+        hash_pw = get_hashed_password(self.backend.auth_user, pw)
         _push.assert_any_call(
-            f"{PGB_DIR}/userlist.txt", f'"{self.backend.auth_user}" "{pw}"', perms=0o644
+            f"{PGB_DIR}/userlist.txt", f'"{self.backend.auth_user}" "{hash_pw}"', perms=0o777
         )
 
         cfg = _cfg.return_value

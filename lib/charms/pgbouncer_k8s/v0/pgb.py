@@ -18,6 +18,7 @@ This charm library provides common pgbouncer-specific features for the pgbouncer
 Kubernetes charms, including automatic config management.
 """
 
+
 import io
 import logging
 import math
@@ -27,6 +28,7 @@ import string
 from collections.abc import MutableMapping
 from configparser import ConfigParser, ParsingError
 from copy import deepcopy
+from hashlib import md5
 from typing import Dict, Union
 
 # The unique Charmhub library identifier, never change it
@@ -398,3 +400,9 @@ def generate_password() -> str:
     """
     choices = string.ascii_letters + string.digits
     return "".join([secrets.choice(choices) for _ in range(24)])
+
+
+def get_hashed_password(username: str, password: str) -> str:
+    """Creates an md5 hashed password for the given user, in the format postgresql expects."""
+    hash_password = md5((password + username).encode()).hexdigest()
+    return f"md5{hash_password}"

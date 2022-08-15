@@ -235,7 +235,7 @@ class TestDb(unittest.TestCase):
     )
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_relation_broken(
-        self,  _render_cfg, _backend_postgres, _delete_user, _postgres, _read
+        self, _render_cfg, _backend_postgres, _delete_user, _postgres, _read
     ):
         """Test that all traces of the given app are removed from pgb config, including user."""
         database = "test_db"
