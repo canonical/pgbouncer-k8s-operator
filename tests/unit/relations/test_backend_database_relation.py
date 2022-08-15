@@ -46,7 +46,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         postgres.create_user.assert_called_with(self.backend.auth_user, pw, admin=True)
         _init_auth.assert_called_with(postgres, dbname=self.backend.database.database)
         _push.assert_any_call(
-            f"{PGB_DIR}/userlist.txt", f'"{self.backend.auth_user}" "{pw}"', perms=0o777
+            f"{PGB_DIR}/userlist.txt", f'"{self.backend.auth_user}" "{pw}"', perms=0o644
         )
 
         cfg = _cfg.return_value

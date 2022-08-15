@@ -67,10 +67,12 @@ class TestDb(unittest.TestCase):
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_user")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_database")
+    @patch("relations.backend_database.BackendDatabaseRequires.initialise_auth_function")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_relation_joined(
         self,
         _render_cfg,
+        _init_auth,
         _create_database,
         _create_user,
         _postgres,
@@ -81,8 +83,6 @@ class TestDb(unittest.TestCase):
         self.harness.set_leader(True)
 
         mock_event = MagicMock()
-        mock_event.unit = MagicMock()
-        mock_event.app = MagicMock()
         mock_event.app.name = "external_test_app"
         mock_event.relation.id = 1
 
@@ -102,6 +102,9 @@ class TestDb(unittest.TestCase):
 
         _create_user.assert_called_with(user, password, admin=True)
         _create_database.assert_called_with(database, user)
+        _init_auth.assert_called_with(dbname=database)
+        assert user in _read_cfg.return_value["pgbouncer"]["admin_users"]
+        _render_cfg.assert_called_with(_read_cfg.return_value, reload_pgbouncer=True)
 
         for dbag in [relation_data[self.charm.unit], relation_data[self.charm.app]]:
             assert dbag["database"] == database
@@ -232,7 +235,7 @@ class TestDb(unittest.TestCase):
     )
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_relation_broken(
-        self, _backend_postgres, _delete_user, _postgres, _read, _render_cfg
+        self,  _render_cfg, _backend_postgres, _delete_user, _postgres, _read
     ):
         """Test that all traces of the given app are removed from pgb config, including user."""
         database = "test_db"
@@ -242,7 +245,7 @@ class TestDb(unittest.TestCase):
 
         input_cfg = PgbConfig(DEFAULT_CONFIG)
         input_cfg["databases"]["some_other_db"] = {"dbname": "pgb_postgres_standby_0"}
-        input_cfg["databases"][f"{database}"] = {"dbname": f"{database}"}
+        input_cfg["databases"][database] = {"dbname": f"{database}"}
         input_cfg["databases"][f"{database}_standby"] = {"dbname": f"{database}"}
         _read.return_value = input_cfg
 
