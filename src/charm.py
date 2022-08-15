@@ -60,7 +60,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         container = self.unit.get_container(PGB)
         if not container.can_connect():
-            logger.warning(
+            logger.debug(
                 "pgbouncer config could not be rendered, waiting for container to be available."
             )
             event.defer()
@@ -75,7 +75,7 @@ class PgBouncerK8sCharm(CharmBase):
         container = self.unit.get_container(PGB)
         if not container.can_connect():
             container_err_msg = "waiting for pgbouncer workload container."
-            logger.warning(container_err_msg)
+            logger.debug(container_err_msg)
             self.unit.status = WaitingStatus(container_err_msg)
             event.defer()
             return

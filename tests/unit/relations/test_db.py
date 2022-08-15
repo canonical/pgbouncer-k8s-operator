@@ -43,12 +43,14 @@ class TestDb(unittest.TestCase):
         self.harness.add_relation_unit(self.backend_rel_id, self.unit)
 
         # Define a db relation
-        self.db_rel_id = self.harness.add_relation(DB_RELATION_NAME, "postgres")
+        self.db_rel_id = self.harness.add_relation(DB_RELATION_NAME, "client_app")
         self.harness.add_relation_unit(self.db_rel_id, "client/0")
         self.harness.add_relation_unit(self.db_rel_id, self.unit)
 
         # Define a db-admin relation
-        self.db_admin_rel_id = self.harness.add_relation(DB_ADMIN_RELATION_NAME, "postgres")
+        self.db_admin_rel_id = self.harness.add_relation(
+            DB_ADMIN_RELATION_NAME, "admin_client_app"
+        )
         self.harness.add_relation_unit(self.db_admin_rel_id, "admin_client/0")
         self.harness.add_relation_unit(self.db_admin_rel_id, self.unit)
 
