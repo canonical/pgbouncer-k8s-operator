@@ -37,8 +37,9 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         new_callable=PropertyMock,
         return_value="user",
     )
-    @patch("relations.backend_database.BackendDatabaseRequires.postgres",
-        new_callable=PropertyMock)
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
+    )
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
     @patch("relations.backend_database.BackendDatabaseRequires.initialise_auth_function")
     @patch("charm.PgBouncerK8sCharm.push_file")

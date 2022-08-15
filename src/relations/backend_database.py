@@ -203,7 +203,7 @@ class BackendDatabaseRequires(Object):
         if None in [endpoint, user, password, database]:
             return None
 
-        return self.get_postgres(
+        return PostgreSQL(
             host=endpoint.split(":")[0], user=user, password=password, database=database
         )
 
