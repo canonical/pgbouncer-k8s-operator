@@ -107,6 +107,8 @@ class BackendDatabaseRequires(Object):
             return
 
         plaintext_password = pgb.generate_password()
+        # create authentication user on postgres database, so we can authenticate other users
+        # later on
         postgres.create_user(self.auth_user, plaintext_password, admin=True)
         self.initialise_auth_function(postgres, dbname=self.database.database)
 
@@ -115,6 +117,7 @@ class BackendDatabaseRequires(Object):
             f"{PGB_DIR}/userlist.txt", f'"{self.auth_user}" "{hashed_password}"', perms=0o777
         )
         cfg = self.charm.read_pgb_config()
+        # adds user to pgb config
         cfg.add_user(user=event.username, admin=True)
         cfg["pgbouncer"][
             "auth_query"
@@ -130,7 +133,8 @@ class BackendDatabaseRequires(Object):
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_relation_departed(self, event: RelationDepartedEvent):
-        self.charm.update_postgres_endpoints(reload_pgbouncer=True)
+        # TODO test if this is necessary
+        # self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
         if event.departing_unit != self.charm.unit:
             return
@@ -141,7 +145,6 @@ class BackendDatabaseRequires(Object):
 
         with self.postgres.connect_to_database(PGB_DB) as conn, conn.cursor() as cursor:
             cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
-            conn.commit()
         conn.close()
 
         logger.info("auth user removed")
@@ -224,7 +227,11 @@ class BackendDatabaseRequires(Object):
     @property
     def auth_user(self):
         """Username for auth_user."""
-        return f'pgbouncer_auth_{self.app_databag.get("username")}'
+        username = self.app_databag.get("username")
+        if username is None:
+            return None
+
+        return f"pgbouncer_auth_{username}"
 
     @property
     def app_databag(self) -> Dict:

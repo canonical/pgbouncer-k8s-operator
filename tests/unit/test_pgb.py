@@ -145,39 +145,25 @@ class TestPgb(unittest.TestCase):
         for char in pw:
             assert char in valid_chars
 
-    @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="default-pass")
-    def test_add_user(self, _gen_pw):
-        # TODO overhaul user tests
-        default_admins = set(DEFAULT_CONFIG[PGB]["admin_users"])
-        default_stats = set(DEFAULT_CONFIG[PGB]["stats_users"])
+    def test_add_user(self):
         cfg = PgbConfig(DEFAULT_CONFIG)
-
-        # Test defaults
-        cfg.add_user(user="test-user")
-        assert cfg[PGB].get("admin_users") == default_admins
-        assert cfg[PGB].get("stats_users") == default_stats
-
-        # Test everything else
-        max_cfg = PgbConfig(DEFAULT_CONFIG)
-        max_cfg.add_user(
+        cfg.add_user(
             user="max-test",
             admin=True,
             stats=True,
         )
-        assert max_cfg[PGB].get("admin_users") == {"max-test"}
-        assert max_cfg[PGB].get("stats_users") == {"max-test"}
+        assert cfg[PGB].get("admin_users") == {"max-test"}
+        assert cfg[PGB].get("stats_users") == {"max-test"}
 
         # Test we can't duplicate users
-        max_cfg.add_user(user="max-test", admin=True, stats=True)
-        assert max_cfg[PGB].get("admin_users") == {"max-test"}
-        assert max_cfg[PGB].get("stats_users") == {"max-test"}
+        cfg.add_user(user="max-test", admin=True, stats=True)
+        assert cfg[PGB].get("admin_users") == {"max-test"}
+        assert cfg[PGB].get("stats_users") == {"max-test"}
 
     def test_remove_user(self):
-        # TODO overhaul user tests
         user = "test_user"
         cfg = PgbConfig(DEFAULT_CONFIG)
-        cfg[PGB]["admin_users"].add(user)
-        cfg[PGB]["stats_users"].add(user)
+        cfg.add_user(user, admin=True, stats=True)
         # convert to set, so we aren't just comparing two pointers to the same thing.
         admin_users = set(cfg[PGB]["admin_users"])
         stats_users = set(cfg[PGB]["stats_users"])

@@ -60,7 +60,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         container = self.unit.get_container(PGB)
         if not container.can_connect():
-            logger.debug(
+            logger.warning(
                 "pgbouncer config could not be rendered, waiting for container to be available."
             )
             event.defer()
@@ -75,7 +75,7 @@ class PgBouncerK8sCharm(CharmBase):
         container = self.unit.get_container(PGB)
         if not container.can_connect():
             container_err_msg = "waiting for pgbouncer workload container."
-            logger.info(container_err_msg)
+            logger.warning(container_err_msg)
             self.unit.status = WaitingStatus(container_err_msg)
             event.defer()
             return
@@ -83,6 +83,8 @@ class PgBouncerK8sCharm(CharmBase):
         try:
             config = self.read_pgb_config()
         except FileNotFoundError:
+            # Create a default config if we can't read one.
+            # TODO this should become unnecessary when on_install is fixed.
             config = PgbConfig(pgb.DEFAULT_CONFIG)
 
         config["pgbouncer"]["pool_mode"] = self.config["pool_mode"]
@@ -153,7 +155,7 @@ class PgBouncerK8sCharm(CharmBase):
             # TODO this may need to change to a Blocked or Error status, depending on why the
             # config can't be found.
             config_err_msg = "Unable to read config."
-            logger.error(config_err_msg)
+            logger.warning(config_err_msg)
             self.unit.status = WaitingStatus(config_err_msg)
             event.defer()
             return
@@ -225,17 +227,8 @@ class PgBouncerK8sCharm(CharmBase):
             FileNotFoundError when the config at INI_PATH isn't available, such as if this is
             called before the charm has finished installing.
         """
-        try:
-            config = self._read_file(INI_PATH)
-            return pgb.PgbConfig(config)
-        except FileNotFoundError:
-            # TODO verify if this is necessary, and update docstring.
-            logger.error("pgbouncer config not found")
-            return self._generate_new_config()
-
-    def _generate_new_config(self):
-        """FIXME this is a stub for generating the config from existing data."""
-        return PgbConfig(pgb.DEFAULT_CONFIG)
+        config = self._read_file(INI_PATH)
+        return pgb.PgbConfig(config)
 
     def _reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
@@ -264,7 +257,7 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
             inaccessible = f"pgbouncer container not accessible, cannot find {filepath}"
-            logger.info(inaccessible)
+            logger.error(inaccessible)
             raise FileNotFoundError(inaccessible)
 
         try:

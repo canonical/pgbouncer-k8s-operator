@@ -37,7 +37,7 @@ LIBID = "113f4a7480c04631bfdf5fe776f760cd"
 LIBAPI = 0
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 1
+LIBPATCH = 2
 
 logger = logging.getLogger(__name__)
 
@@ -391,9 +391,6 @@ def generate_password() -> str:
 
     Passwords are alphanumeric only, to ensure compatibility with the userlist.txt format -
     specifically, spaces and double quotes may interfere with parsing this file.
-
-    Args:
-        hash: a boolean defining whether or not to md5 hash the password.
 
     Returns:
         A random 24-character string of letters and numbers.
