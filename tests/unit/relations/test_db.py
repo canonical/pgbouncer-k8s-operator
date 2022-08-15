@@ -261,7 +261,7 @@ class TestDb(unittest.TestCase):
 
         self.db_relation._on_relation_broken(mock_event)
 
-        _delete_user.assert_called_with(username, if_exists=True)
+        _delete_user.assert_called_with(username)
 
         assert database not in [input_cfg["databases"]]
         assert f"{database}_standby" not in [input_cfg["databases"]]
