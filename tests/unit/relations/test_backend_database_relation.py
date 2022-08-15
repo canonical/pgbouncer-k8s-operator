@@ -82,7 +82,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     @patch(
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
     )
-    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value = PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.delete_file")
     @patch("charm.PgBouncerK8sCharm.remove_postgres_endpoints")

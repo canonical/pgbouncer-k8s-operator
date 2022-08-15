@@ -111,7 +111,7 @@ class BackendDatabaseRequires(Object):
         self.initialise_auth_function(postgres, dbname=self.database.database)
 
         self.charm.push_file(
-            f"{PGB_DIR}/userlist.txt", f'"{self.auth_user}" "{auth_password}"', perms=0o777
+            f"{PGB_DIR}/userlist.txt", f'"{self.auth_user}" "{auth_password}"', perms=0o644
         )
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user=event.username, admin=True)
