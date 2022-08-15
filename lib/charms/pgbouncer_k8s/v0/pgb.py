@@ -116,7 +116,6 @@ class PgbConfig(MutableMapping):
         """String representation of PgbConfig object."""
         return str(self.__dict__)
 
-<<<<<<<< HEAD:lib/charms/pgbouncer_k8s_operator/v0/pgb.py
     def __eq__(self, other):
         """Equality operator for PgbConfig object."""
         if not isinstance(other, PgbConfig):
@@ -134,8 +133,6 @@ class PgbConfig(MutableMapping):
     def items(self):
         return self.__dict__.items()
 
-========
->>>>>>>> 377087954b56a9a6c2bc5114342cd59cf7e2b069:lib/charms/pgbouncer_k8s/v0/pgb.py
     def read_dict(self, input: Dict) -> None:
         """Populates this object from a dictionary.
 

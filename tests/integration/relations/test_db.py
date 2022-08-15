@@ -46,6 +46,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 charm,
                 resources=resources,
                 application_name=PGB,
+                num_units=3,
             ),
             ops_test.model.deploy(PG, num_units=3, trust=True, channel="edge"),
             ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
@@ -63,13 +64,15 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 status="active",
                 raise_on_blocked=True,
                 timeout=1000,
+                wait_for_exact_units=3
             ),
         )
         backend_relation = await ops_test.model.relate(f"{PGB}:backend-database", f"{PG}:database")
         wait_for_relation_joined_between(ops_test, PGB, PG)
         await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
 
-        userlist = await get_userlist(ops_test)
+        userlist = await get_userlist(ops_test, f"{PGB}/0")
+        logging.info(userlist)
         pgb_user = f"relation_id_{backend_relation.id}"
         pgb_password = userlist[pgb_user]
         await check_database_users_existence(
@@ -163,12 +166,12 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
 
         await check_database_users_existence(ops_test, [], [finos_user], pgb_user, pgb_password)
 
-        userlist = await get_userlist(ops_test)
+        userlist = await get_userlist(ops_test, f"{PGB}/0")
         logger.info(userlist)
         assert finos_user not in userlist.keys()
         assert another_finos_user not in userlist.keys()
 
-        cfg = await get_cfg(ops_test)
+        cfg = await get_cfg(ops_test, f"{PGB}/0")
         logger.info(cfg)
         assert finos_user not in cfg["pgbouncer"]["admin_users"]
         assert another_finos_user not in cfg["pgbouncer"]["admin_users"]

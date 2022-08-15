@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
 
-@pytest.mark.skip
+
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test: OpsTest):
     """Build and deploy pgbouncer charm."""

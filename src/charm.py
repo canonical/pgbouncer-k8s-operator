@@ -85,14 +85,6 @@ class PgBouncerK8sCharm(CharmBase):
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
-        container = self.unit.get_container(PGB)
-        if not container.can_connect():
-            container_err_msg = "waiting for pgbouncer workload container."
-            logger.info(container_err_msg)
-            self.unit.status = WaitingStatus(container_err_msg)
-            event.defer()
-            return
-
         try:
             config = self.read_pgb_config()
         except FileNotFoundError:
@@ -110,17 +102,16 @@ class PgBouncerK8sCharm(CharmBase):
             self.config["max_db_connections"],
             self._cores,
         )
-
         if config["pgbouncer"]["listen_port"] != self.config["listen_port"]:
             # This emits relation-changed events to every client relation, so only do it when
             # necessary
             self.update_backend_relation_port(self.config["listen_port"])
             config["pgbouncer"]["listen_port"] = self.config["listen_port"]
-
         self._render_pgb_config(config)
 
         # Create an updated pebble layer for the pgbouncer container, and apply it if there are
         # any changes.
+        container = self.unit.get_container(PGB)
         layer = self._pgbouncer_layer()
         services = container.get_plan().to_dict().get("services", {})
         if services != layer["services"]:
@@ -129,9 +120,6 @@ class PgBouncerK8sCharm(CharmBase):
             container.restart(PGB)
             logging.info(f"restarted {PGB} service")
         self.unit.status = ActiveStatus()
-
-        if self.unit.is_leader():
-            self.trigger_db_relations()
 
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.

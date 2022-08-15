@@ -69,26 +69,26 @@ async def get_app_relation_databag(ops_test: OpsTest, unit_name: str, relation_i
     return None
 
 
-async def get_userlist(ops_test: OpsTest) -> Dict[str, str]:
+async def get_userlist(ops_test: OpsTest, unit_name: str) -> Dict[str, str]:
     """Gets pgbouncer userlist.txt from pgbouncer container."""
     cat_userlist = await ops_test.juju(
         "ssh",
         "--container",
         "pgbouncer",
-        f"{PGB}/0",
+        unit_name,
         "cat",
         f"{pgb.PGB_DIR}/userlist.txt",
     )
     return pgb.parse_userlist(cat_userlist[1])
 
 
-async def get_cfg(ops_test: OpsTest) -> pgb.PgbConfig:
+async def get_cfg(ops_test: OpsTest, unit_name: str) -> pgb.PgbConfig:
     """Gets pgbouncer config from pgbouncer container."""
     cat_cfg = await ops_test.juju(
         "ssh",
         "--container",
         "pgbouncer",
-        f"{PGB}/0",
+        unit_name,
         "cat",
         f"{pgb.PGB_DIR}/pgbouncer.ini",
     )
