@@ -107,7 +107,7 @@ class BackendDatabaseRequires(Object):
         # create authentication user on postgres database, so we can authenticate other users
         # later on
         self.postgres.create_user(self.auth_user, plaintext_password, admin=True)
-        self.initialise_auth_function(self.postgres, dbname=self.database.database)
+        self.initialise_auth_function(dbname=self.database.database)
 
         hashed_password = pgb.get_hashed_password(self.auth_user, plaintext_password)
         self.charm.push_file(

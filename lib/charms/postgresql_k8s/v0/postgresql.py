@@ -122,6 +122,7 @@ class PostgreSQL:
 
     def delete_user(self, user: str, if_exists: bool=False) -> None:
         """Deletes a database user.
+
         Args:
             user: user to be deleted.
             if_exists: only delete user if it exists, otherwise raise an error. Defaults to False.
