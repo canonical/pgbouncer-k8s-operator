@@ -11,8 +11,10 @@ from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from tests.integration.relations.helpers.helpers import (
+    get_app_relation_databag,
+    get_backend_user_pass,
     get_cfg,
-    get_userlist,
+    get_pgb_log,
     scale_application,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
@@ -30,7 +32,7 @@ RELATION = "backend-database"
 
 
 @pytest.mark.abort_on_fail
-async def test_create_backend_database_relation(ops_test: OpsTest):
+async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
     charm = await ops_test.build_charm(".")
@@ -58,11 +60,11 @@ async def test_create_backend_database_relation(ops_test: OpsTest):
         wait_for_relation_joined_between(ops_test, PG, PGB)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),
 
-        userlist = await get_userlist(ops_test, f"{PGB}/0")
-        cfg = await get_cfg(ops_test, f"{PGB}/0")
-        pgb_user = f"relation_id_{relation.id}"
-        pgb_password = userlist[pgb_user]
+        cfg = await get_cfg(ops_test)
+        logging.info(cfg.render())
+        pgb_user, pgb_password = await get_backend_user_pass(ops_test, relation)
         assert pgb_user in cfg["pgbouncer"]["admin_users"]
+        assert cfg["pgbouncer"]["auth_query"]
 
         await check_database_users_existence(ops_test, [pgb_user], [], pgb_user, pgb_password)
 
@@ -70,6 +72,8 @@ async def test_create_backend_database_relation(ops_test: OpsTest):
         await ops_test.model.applications[PG].remove_relation(
             f"{PGB}:{RELATION}", f"{PG}:database"
         )
+        pgb_unit = ops_test.model.applications[PGB].units[0]
+        logging.info(await get_app_relation_databag(ops_test, pgb_unit.name, relation.id))
         wait_for_relation_removed_between(ops_test, PG, PGB)
         await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000),
 
@@ -77,15 +81,18 @@ async def test_create_backend_database_relation(ops_test: OpsTest):
         try:
             for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
                 with attempt:
-                    userlist = await get_userlist(ops_test, f"{PGB}/0")
-                    cfg = await get_cfg(ops_test, f"{PGB}/0")
+                    cfg = await get_cfg(ops_test)
                     if (
-                        pgb_user not in userlist.keys()
-                        and pgb_user not in cfg["pgbouncer"]["admin_users"]
+                        pgb_user not in cfg["pgbouncer"]["admin_users"]
+                        and "auth_query" not in cfg["pgbouncer"].keys()
                     ):
                         break
         except RetryError:
-            assert False, "pgbouncer config files failed to update in 3 minutes "
+            assert False, "pgbouncer config files failed to update in 3 minutes"
+
+        cfg = await get_cfg(ops_test)
+        logging.info(cfg.render())
+        logger.info(await get_pgb_log(ops_test))
 
 async def test_pgbouncer_scaling(ops_test: OpsTest):
     async with ops_test.fast_forward():

@@ -66,7 +66,7 @@ class PostgreSQL:
         self.password = password
         self.database = database
 
-    def _connect_to_database(self, database: str = None) -> psycopg2.extensions.connection:
+    def connect_to_database(self, database: str = None) -> psycopg2.extensions.connection:
         """Creates a connection to the database.
         Args:
             database: database to connect to (defaults to the database
@@ -87,7 +87,7 @@ class PostgreSQL:
             user: user that will have access to the database.
         """
         try:
-            connection = self._connect_to_database()
+            connection = self.connect_to_database()
             cursor = connection.cursor()
             cursor.execute(f"SELECT datname FROM pg_database WHERE datname='{database}';")
             if cursor.fetchone() is None:
@@ -109,7 +109,7 @@ class PostgreSQL:
             admin: whether the user should have additional admin privileges.
         """
         try:
-            with self._connect_to_database() as connection, connection.cursor() as cursor:
+            with self.connect_to_database() as connection, connection.cursor() as cursor:
                 cursor.execute(f"SELECT TRUE FROM pg_roles WHERE rolname='{user}';")
                 user_definition = f"{user} WITH LOGIN{' SUPERUSER' if admin else ''} ENCRYPTED PASSWORD '{password}'"
                 if cursor.fetchone() is not None:
@@ -120,30 +120,30 @@ class PostgreSQL:
             logger.error(f"Failed to create user: {e}")
             raise PostgreSQLCreateUserError()
 
-    def delete_user(self, user: str, if_exists: bool=False) -> None:
+    def delete_user(self, user: str) -> None:
         """Deletes a database user.
+
         Args:
             user: user to be deleted.
-            if_exists: only delete user if it exists, otherwise raise an error. Defaults to False.
         """
         # List all databases.
         try:
-            with self._connect_to_database() as connection, connection.cursor() as cursor:
+            with self.connect_to_database() as connection, connection.cursor() as cursor:
                 cursor.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")
                 databases = [row[0] for row in cursor.fetchall()]
 
             # Existing objects need to be reassigned in each database
             # before the user can be deleted.
             for database in databases:
-                with self._connect_to_database(
+                with self.connect_to_database(
                     database
                 ) as connection, connection.cursor() as cursor:
                     cursor.execute(f"REASSIGN OWNED BY {user} TO postgres;")
                     cursor.execute(f"DROP OWNED BY {user};")
 
             # Delete the user.
-            with self._connect_to_database() as connection, connection.cursor() as cursor:
-                cursor.execute(f"DROP ROLE {'IF EXISTS' if if_exists else ''} {user};")
+            with self.connect_to_database() as connection, connection.cursor() as cursor:
+                cursor.execute(f"DROP ROLE {user};")
         except psycopg2.Error as e:
             logger.error(f"Failed to delete user: {e}")
             raise PostgreSQLDeleteUserError()
@@ -154,7 +154,7 @@ class PostgreSQL:
             PostgreSQL version number.
         """
         try:
-            with self._connect_to_database() as connection, connection.cursor() as cursor:
+            with self.connect_to_database() as connection, connection.cursor() as cursor:
                 cursor.execute("SELECT version();")
                 # Split to get only the version number.
                 return cursor.fetchone()[0].split(" ")[1]
