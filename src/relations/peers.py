@@ -11,7 +11,7 @@ import logging
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
-from ops.charm import CharmBase
+from ops.charm import CharmBase, RelationChangedEvent
 from ops.framework import Object
 
 RELATION_NAME = "pgb-peers"
@@ -36,7 +36,7 @@ class Peers(Object):
 
         self.charm = charm
 
-        self.framework.observe(self.database.on[RELATION_NAME].relation_changed, self._on_peers_changed)
+        self.framework.observe(charm.on[RELATION_NAME].relation_changed, self._on_peers_changed)
 
     @property
     def app_databag(self):
@@ -45,7 +45,7 @@ class Peers(Object):
             return None
         return peer_relation.data[self.charm.app]
 
-    def _on_peers_changed(self):
+    def _on_peers_changed(self, event: RelationChangedEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
         if self.charm.unit.is_leader():
             return
