@@ -36,7 +36,6 @@ class TestDb(unittest.TestCase):
         self.db_relation = self.charm.legacy_db_relation
         self.db_admin_relation = self.charm.legacy_db_admin_relation
 
-        # TODO update mocks now we're using the mock harness
         # Define a backend relation
         self.backend_rel_id = self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.add_relation_unit(self.backend_rel_id, "postgres/0")

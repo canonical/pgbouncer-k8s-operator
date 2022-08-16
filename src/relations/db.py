@@ -144,7 +144,12 @@ class DbProvides(Object):
 
         try:
             cfg = self.charm.read_pgb_config()
-        except FileNotFoundError
+        except FileNotFoundError:
+            wait_str = "waiting for pgbouncer to start"
+            logger.warning(wait_str)
+            self.charm.unit.status = WaitingStatus(wait_str)
+            join_event.defer()
+            return
 
         logger.info(f"Setting up {self.relation_name} relation")
         logger.warning(
@@ -205,7 +210,7 @@ class DbProvides(Object):
                 "user": user,
                 "password": password,
                 "database": database,
-            },
+            }
         )
 
     def _on_relation_changed(self, change_event: RelationChangedEvent):
