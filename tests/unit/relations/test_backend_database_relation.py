@@ -60,7 +60,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
 
         hash_pw = get_hashed_password(self.backend.auth_user, pw)
         _push.assert_any_call(
-            f"{PGB_DIR}/userlist.txt", f'"{self.backend.auth_user}" "{hash_pw}"', perms=0o400
+            f"{PGB_DIR}/userlist.txt", f'"{self.backend.auth_user}" "{hash_pw}"', perms=0o644
         )
 
         cfg = _cfg.return_value
@@ -88,7 +88,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         depart_event.departing_unit = self.charm.unit
         self.backend._on_relation_departed(depart_event)
 
-        uninstall_script = open("src/relations/pgbouncer-uninstall.sql", "r").read()
+        uninstall_script = open("src/relations/sql/pgbouncer-uninstall.sql", "r").read()
 
         postgres.connect_to_database.assert_called_with("pgbouncer")
         conn = postgres.connect_to_database().__enter__()
@@ -132,7 +132,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
     )
     def test_initialise_auth_function(self, _postgres, _auth_user):
-        install_script = open("src/relations/pgbouncer-install.sql", "r").read()
+        install_script = open("src/relations/sql/pgbouncer-install.sql", "r").read()
         dbname = "test-db"
 
         self.backend.initialise_auth_function(dbname=dbname)
