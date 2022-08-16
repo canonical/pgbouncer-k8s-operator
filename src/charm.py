@@ -167,7 +167,7 @@ class PgBouncerK8sCharm(CharmBase):
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
         """
-        self.push_file(INI_PATH, config.render(), 0o400)
+        self.push_file(INI_PATH, config.render(), 0o600)
         logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
 
         if reload_pgbouncer:

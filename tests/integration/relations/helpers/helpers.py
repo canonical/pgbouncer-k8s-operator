@@ -95,7 +95,7 @@ async def get_pgb_log(ops_test: OpsTest) -> str:
 async def cat_file(ops_test: OpsTest, filepath: str) -> str:
     """Gets a file from the pgbouncer container of a pgbouncer application unit."""
     cat_cmd = f"ssh --container pgbouncer {PGB}/0 cat {filepath}"
-    return_code, output, _ = await ops_test.juju(*cat_cmd.split(""))
+    return_code, output, _ = await ops_test.juju(*cat_cmd.split(" "))
     if return_code != 0:
         raise ProcessError(
             "Expected cat command %s to succeed instead it failed: %s", cat_cmd, return_code

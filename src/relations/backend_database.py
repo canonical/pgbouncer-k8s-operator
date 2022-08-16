@@ -112,7 +112,7 @@ class BackendDatabaseRequires(Object):
 
         hashed_password = pgb.get_hashed_password(self.auth_user, plaintext_password)
         self.charm.push_file(
-            f"{PGB_DIR}/userlist.txt", f'"{self.auth_user}" "{hashed_password}"', perms=0o400
+            f"{PGB_DIR}/userlist.txt", f'"{self.auth_user}" "{hashed_password}"', perms=0o600
         )
         cfg = self.charm.read_pgb_config()
         # adds user to pgb config
