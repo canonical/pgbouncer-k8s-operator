@@ -63,7 +63,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 status="active",
                 raise_on_blocked=True,
                 timeout=1000,
-                wait_for_exact_units=3
+                wait_for_exact_units=3,
             ),
         )
         backend_relation = await ops_test.model.relate(f"{PGB}:backend-database", f"{PG}:database")

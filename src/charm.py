@@ -12,7 +12,7 @@ import socket
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL
-from ops.charm import CharmBase, ConfigChangedEvent, StartEvent, PebbleReadyEvent
+from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, StartEvent
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
@@ -92,7 +92,7 @@ class PgBouncerK8sCharm(CharmBase):
             # necessary
             self.update_backend_relation_port(self.config["listen_port"])
             config["pgbouncer"]["listen_port"] = self.config["listen_port"]
-        self._render_pgb_config(config)
+        self.render_pgb_config(config)
 
         # Create an updated pebble layer for the pgbouncer container, and apply it if there are
         # any changes.

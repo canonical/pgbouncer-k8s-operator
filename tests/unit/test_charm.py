@@ -20,8 +20,7 @@ class TestCharm(unittest.TestCase):
         self.harness.begin()
         self.charm = self.harness.charm
 
-    @patch("charms.pgbouncer_k8s.v0.pgb.initialise_userlist_from_ini", return_value={"juju_admin": "pw"})
-    def test_on_start(self, _gen_pw):
+    def test_on_start(self):
         self.charm.on.start.emit()
         pgb_container = self.harness.model.unit.get_container(PGB)
 
@@ -68,9 +67,9 @@ class TestCharm(unittest.TestCase):
     @patch("ops.charm.ConfigChangedEvent.defer")
     def test_on_config_changed_container_cant_connect(self, can_connect, defer):
         self.harness.update_config()
-        self.assertEqual(
+        self.assertIsInstance(
             self.harness.model.unit.status,
-            WaitingStatus("waiting for pgbouncer workload container."),
+            WaitingStatus,
         )
         defer.assert_called()
 

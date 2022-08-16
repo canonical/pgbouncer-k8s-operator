@@ -94,6 +94,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         logging.info(cfg.render())
         logger.info(await get_pgb_log(ops_test))
 
+
 async def test_pgbouncer_scaling(ops_test: OpsTest):
     async with ops_test.fast_forward():
         relation = await ops_test.model.relate(f"{PGB}:{RELATION}", f"{PG}:database")
