@@ -13,7 +13,7 @@ from typing import Dict
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL
-from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent, PebbleReadyEvent
+from ops.charm import CharmBase, ConfigChangedEvent, StartEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import (
@@ -47,7 +47,7 @@ class PgBouncerK8sCharm(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self.framework.observe(self.on.install, self._on_install)
+        self.framework.observe(self.on.start, self._on_start)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
@@ -61,8 +61,8 @@ class PgBouncerK8sCharm(CharmBase):
     #  Charm Lifecycle Hooks
     # =======================
 
-    def _on_install(self, event: InstallEvent) -> None:
-        """On install hook.
+    def _on_start(self, event: StartEvent) -> None:
+        """On start hook.
 
         This imports any users from the juju config, and initialises userlist and pgbouncer.ini
         config files that are essential for pgbouncer to run.
@@ -90,11 +90,10 @@ class PgBouncerK8sCharm(CharmBase):
         except FileNotFoundError:
             # TODO this may need to change to a Blocked or Error status, depending on why the
             # config can't be found.
-            config_err_msg = "Unable to read config. Waiting for pgbouncer install hook to finish"
+            config_err_msg = "Unable to read config. Waiting for pgbouncer start hook to finish"
             logger.error(config_err_msg)
             self.unit.status = WaitingStatus(config_err_msg)
             event.defer()
-            self.on.install.emit()
             return
 
         config["pgbouncer"]["pool_mode"] = self.config["pool_mode"]
@@ -217,7 +216,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         Raises:
             FileNotFoundError when the config at INI_PATH isn't available, such as if this is
-            called before the charm has finished installing.
+            called before the charm has started.
         """
         try:
             config = self._read_file(INI_PATH)

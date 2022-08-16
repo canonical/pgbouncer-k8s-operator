@@ -21,8 +21,8 @@ class TestCharm(unittest.TestCase):
         self.charm = self.harness.charm
 
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
-    def test_on_install(self, _gen_pw):
-        self.charm.on.install.emit()
+    def test_on_start(self, _gen_pw):
+        self.charm.on.start.emit()
         pgb_container = self.harness.model.unit.get_container(PGB)
 
         # assert config is set to default - it gets updated in the config-changed hook fired later
@@ -80,8 +80,8 @@ class TestCharm(unittest.TestCase):
         defer.assert_called()
 
     def test_on_pgbouncer_pebble_ready(self):
-        # emit on install to ensure config file render
-        self.harness.charm.on.install.emit()
+        # emit on start to ensure config file render
+        self.harness.charm.on.start.emit()
         initial_plan = self.harness.get_container_pebble_plan(PGB)
         self.assertEqual(initial_plan.to_yaml(), "{}\n")
 
