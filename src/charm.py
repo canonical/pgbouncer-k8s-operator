@@ -169,7 +169,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         container = event.workload
         pebble_layer = self._pgbouncer_layer()
-
         container.add_layer(PGB, pebble_layer, combine=True)
         container.autostart()
         self.unit.status = ActiveStatus()

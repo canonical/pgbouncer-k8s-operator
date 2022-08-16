@@ -20,7 +20,7 @@ class TestCharm(unittest.TestCase):
         self.harness.begin()
         self.charm = self.harness.charm
 
-    @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
+    @patch("charms.pgbouncer_k8s.v0.pgb.initialise_userlist_from_ini", return_value={"juju_admin": "pw"})
     def test_on_start(self, _gen_pw):
         self.charm.on.start.emit()
         pgb_container = self.harness.model.unit.get_container(PGB)

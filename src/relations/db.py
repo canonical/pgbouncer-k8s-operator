@@ -157,7 +157,7 @@ class DbProvides(Object):
                 " - they should be installed through a database charm config in the future"
             )
             self.charm.unit.status = BlockedStatus(
-                "bad relation request - remote app requested extensions, which are unsupported."
+                "bad relation request - remote app requested extensions, which are unsupported. Please remove this relation."
             )
             return
 
