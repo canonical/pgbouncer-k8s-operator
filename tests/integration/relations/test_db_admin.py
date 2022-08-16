@@ -34,7 +34,6 @@ PGB = METADATA["name"]
 PG = "postgresql-k8s"
 
 
-@pytest.mark.dev
 @pytest.mark.legacy_relations
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
     # Build, deploy, and relate charms.
