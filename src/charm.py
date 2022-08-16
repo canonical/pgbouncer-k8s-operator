@@ -74,9 +74,9 @@ class PgBouncerK8sCharm(CharmBase):
         """Handle changes in configuration."""
         container = self.unit.get_container(PGB)
         if not container.can_connect():
-            container_err_msg = "waiting for pgbouncer workload container."
-            logger.debug(container_err_msg)
-            self.unit.status = WaitingStatus(container_err_msg)
+            wait_msg = "waiting for pgbouncer workload container."
+            logger.debug(wait_msg)
+            self.unit.status = WaitingStatus(wait_msg)
             event.defer()
             return
 
@@ -151,10 +151,10 @@ class PgBouncerK8sCharm(CharmBase):
         try:
             # Check config is available before running pgbouncer.
             self.read_pgb_config()
-        except FileNotFoundError:
+        except FileNotFoundError as err:
             # TODO this may need to change to a Blocked or Error status, depending on why the
             # config can't be found.
-            config_err_msg = "Unable to read config."
+            config_err_msg = f"Unable to read config, error: {err}"
             logger.warning(config_err_msg)
             self.unit.status = WaitingStatus(config_err_msg)
             event.defer()

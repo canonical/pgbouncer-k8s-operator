@@ -177,10 +177,10 @@ class PgbConfig(MutableMapping):
             self[users][name] = parse_kv_string_to_dict(cfg_string)
 
         for user_type in PgbConfig.user_types:
-            users = self[pgb].get(user_type, "").split(",")
+            users = set(self[pgb].get(user_type, "").split(","))
             if "" in users:
                 users.remove("")
-            self[pgb][user_type] = set(users)
+            self[pgb][user_type] = users
 
     def render(self) -> str:
         """Returns a valid pgbouncer.ini file as a string.

@@ -50,7 +50,6 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
                 resources=resources,
                 application_name=PGB,
             ),
-            # TODO test only deploying 2 postgres instances
             ops_test.model.deploy(PG, trust=True, num_units=3, channel="edge"),
             ops_test.model.deploy(
                 FIRST_DISCOURSE_APP_NAME, application_name=FIRST_DISCOURSE_APP_NAME
