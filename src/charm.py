@@ -50,8 +50,16 @@ class PgBouncerK8sCharm(CharmBase):
     #  Charm Lifecycle Hooks
     # =======================
 
-    def _on_start(self, _: StartEvent) -> None:
+    def _on_start(self, event: StartEvent) -> None:
         """Renders basic PGB config."""
+        container = self.unit.get_container(PGB)
+        if not container.can_connect():
+            logger.debug(
+                "pgbouncer config could not be rendered, waiting for container to be available."
+            )
+            event.defer()
+            return
+
         self.render_pgb_config(PgbConfig(pgb.DEFAULT_CONFIG))
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
