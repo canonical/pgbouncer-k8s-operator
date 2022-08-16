@@ -11,7 +11,7 @@ import socket
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
-from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent, PebbleReadyEvent
+from ops.charm import CharmBase, ConfigChangedEvent, StartEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
@@ -50,25 +50,9 @@ class PgBouncerK8sCharm(CharmBase):
     #  Charm Lifecycle Hooks
     # =======================
 
-    def _on_install(self, event: InstallEvent) -> None:
-        """On install hook.
-
-        This imports any users from the juju config, and initialises userlist and pgbouncer.ini
-        config files that are essential for pgbouncer to run.
-
-        TODO switch this to "on_start"
-        """
-        container = self.unit.get_container(PGB)
-        if not container.can_connect():
-            logger.debug(
-                "pgbouncer config could not be rendered, waiting for container to be available."
-            )
-            event.defer()
-            return
-
-        # Initialise pgbouncer.ini config files from defaults set in charm lib.
-        config = PgbConfig(pgb.DEFAULT_CONFIG)
-        self.render_pgb_config(config)
+    def _on_start(self, _: StartEvent) -> None:
+        """Renders basic PGB config"""
+        self.render_pgb_config(PgbConfig(pgb.DEFAULT_CONFIG))
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
@@ -82,10 +66,12 @@ class PgBouncerK8sCharm(CharmBase):
 
         try:
             config = self.read_pgb_config()
-        except FileNotFoundError:
-            # Create a default config if we can't read one.
-            # TODO this should become unnecessary when on_install is fixed.
-            config = PgbConfig(pgb.DEFAULT_CONFIG)
+        except FileNotFoundError as err:
+            config_err_msg = f"Unable to read config, error: {err}"
+            logger.warning(config_err_msg)
+            self.unit.status = WaitingStatus(config_err_msg)
+            event.defer()
+            return
 
         config["pgbouncer"]["pool_mode"] = self.config["pool_mode"]
         config.set_max_db_connection_derivatives(
@@ -225,7 +211,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         Raises:
             FileNotFoundError when the config at INI_PATH isn't available, such as if this is
-            called before the charm has finished installing.
+            called before the charm has started.
         """
         config = self._read_file(INI_PATH)
         return pgb.PgbConfig(config)

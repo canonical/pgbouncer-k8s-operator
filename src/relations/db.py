@@ -142,6 +142,10 @@ class DbProvides(Object):
             join_event.defer()
             return
 
+        try:
+            cfg = self.charm.read_pgb_config()
+        except FileNotFoundError
+
         logger.info(f"Setting up {self.relation_name} relation")
         logger.warning(
             f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
