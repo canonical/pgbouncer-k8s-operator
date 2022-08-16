@@ -11,7 +11,6 @@ import socket
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
-from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, StartEvent
 from ops.framework import StoredState
 from ops.main import main
@@ -20,6 +19,7 @@ from ops.pebble import Layer, PathError
 
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
+from relations.peers import Peers
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +41,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
+        self.peers = Peers(self)
         self.backend = BackendDatabaseRequires(self)
         self.legacy_db_relation = DbProvides(self, admin=False)
         self.legacy_db_admin_relation = DbProvides(self, admin=True)
@@ -176,6 +177,13 @@ class PgBouncerK8sCharm(CharmBase):
         """
         self.push_file(INI_PATH, config.render(), 0o600)
         logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
+
+        if reload_pgbouncer:
+            self._reload_pgbouncer()
+
+    def render_auth_file(self, auth_file: str, reload_pgbouncer = False):
+        self.push_file(INI_PATH, auth_file, 0o777)
+        logger.info("pushed new auth file to pgbouncer container")
 
         if reload_pgbouncer:
             self._reload_pgbouncer()

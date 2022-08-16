@@ -8,7 +8,7 @@ the new postgres charm.
 
 Some example relation data is below. All values are examples, generated in a running test instance.
 ┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
-┃ category         ┃            keys ┃ pgbouncer-k8s/0                   ┃ finos-waltz/0 ┃
+┃ category         ┃            keys ┃ pgbouncer-k8s/0                            ┃ finos-waltz/0 ┃
 ┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
 │ metadata         │        endpoint │ 'db'                                       │ 'db'          │
 │                  │          leader │ True                                       │ True          │
@@ -166,6 +166,23 @@ class DbProvides(Object):
             join_event.defer()
             return
 
+        # Create user in pgbouncer config
+        cfg = self.charm.read_pgb_config()
+        cfg.add_user(user, admin=self.admin)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
+
+        self.update_databag(
+            join_event.relation,
+            {
+                "user": user,
+                "password": password,
+                "database": database,
+            },
+        )
+
+        if not self.charm.unit.is_leader():
+            return
+
         user = self._generate_username(join_event)
         password = pgb.generate_password()
 
@@ -190,19 +207,6 @@ class DbProvides(Object):
         # set up auth function
         self.charm.backend.initialise_auth_function(dbname=database)
 
-        # Create user in pgbouncer config
-        cfg = self.charm.read_pgb_config()
-        cfg.add_user(user, admin=self.admin)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
-
-        self.update_databag(
-            join_event.relation,
-            {
-                "user": user,
-                "password": password,
-                "database": database,
-            },
-        )
 
     def _on_relation_changed(self, change_event: RelationChangedEvent):
         """Handle db-relation-changed event.
@@ -332,14 +336,15 @@ class DbProvides(Object):
 
     def update_databag(self, relation, updates: Dict[str, str]):
         """Updates databag with the given dict."""
-        pgb_unit_databag = relation.data[self.charm.unit]
-        pgb_app_databag = relation.data[self.charm.app]
+        databags = [relation.data[self.charm.unit]]
+        if self.charm.unit.is_leader():
+            databags.append(relation.data[self.charm.app])
 
         # Databag entries can only be strings
         for key, item in updates.items():
             updates[key] = str(item)
 
-        for databag in [pgb_app_databag, pgb_unit_databag]:
+        for databag in databags:
             databag.update(updates)
 
     def _generate_username(self, event):
