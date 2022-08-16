@@ -67,7 +67,7 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
         )
 
         pgb_user = f"relation_id_{backend_relation.id}"
-        userlist = await get_userlist(ops_test)
+        userlist = await get_userlist(ops_test, f"{PGB}/0")
         pgb_password = userlist[pgb_user]
         await check_database_users_existence(
             ops_test,
