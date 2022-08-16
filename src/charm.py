@@ -11,7 +11,7 @@ import socket
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
-from ops.charm import CharmBase, ConfigChangedEvent, StartEvent, PebbleReadyEvent
+from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, StartEvent
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
@@ -36,7 +36,7 @@ class PgBouncerK8sCharm(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self.framework.observe(self.on.install, self._on_install)
+        self.framework.observe(self.on.start, self._on_start)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
@@ -51,7 +51,7 @@ class PgBouncerK8sCharm(CharmBase):
     # =======================
 
     def _on_start(self, _: StartEvent) -> None:
-        """Renders basic PGB config"""
+        """Renders basic PGB config."""
         self.render_pgb_config(PgbConfig(pgb.DEFAULT_CONFIG))
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
@@ -167,7 +167,7 @@ class PgBouncerK8sCharm(CharmBase):
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
         """
-        self.push_file(INI_PATH, config.render(), 0o600)
+        self.push_file(INI_PATH, config.render(), 0o400)
         logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
 
         if reload_pgbouncer:

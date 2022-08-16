@@ -210,7 +210,7 @@ class DbProvides(Object):
                 "user": user,
                 "password": password,
                 "database": database,
-            }
+            },
         )
 
     def _on_relation_changed(self, change_event: RelationChangedEvent):
@@ -413,7 +413,7 @@ class DbProvides(Object):
         user = app_databag.get("user")
         database = app_databag.get("database")
 
-        if not self.charm.backend.postgres and None in [user, database]:
+        if not self.charm.backend.postgres or None in [user, database]:
             # this relation was never created, so wait for it to be initialised before removing
             # everything.
             logger.warning(
