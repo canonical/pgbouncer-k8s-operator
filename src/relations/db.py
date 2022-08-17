@@ -355,7 +355,7 @@ class DbProvides(Object):
         """Generates a unique username for this relation."""
         app_name = self.charm.app.name
         relation_id = event.relation.id
-        model_name = self.charm.model.name
+        model_name = self.model.name
         return f"{app_name}_user_id_{relation_id}_{model_name}".replace("-", "_")
 
     def _get_read_only_endpoint(self):
@@ -428,7 +428,7 @@ class DbProvides(Object):
         # postgres application because we don't want to delete all user data with one command.
         delete_db = True
         for relname in ["db", "db-admin"]:
-            for relation in self.charm.model.relations.get(relname, []):
+            for relation in self.model.relations.get(relname, []):
                 if relation.id == broken_event.relation.id:
                     continue
                 if relation.data.get(self.charm.app, {}).get("database") == database:
