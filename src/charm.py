@@ -179,14 +179,14 @@ class PgBouncerK8sCharm(CharmBase):
         logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
 
         if reload_pgbouncer:
-            self._reload_pgbouncer()
+            self.reload_pgbouncer()
 
     def render_auth_file(self, auth_file: str, reload_pgbouncer = False):
         self.push_file(INI_PATH, auth_file, 0o777)
         logger.info("pushed new auth file to pgbouncer container")
 
         if reload_pgbouncer:
-            self._reload_pgbouncer()
+            self.reload_pgbouncer()
 
     def push_file(self, path, file_contents, perms):
         """Pushes file_contents to path, with the given permissions."""
@@ -231,7 +231,7 @@ class PgBouncerK8sCharm(CharmBase):
         config = self._read_file(INI_PATH)
         return pgb.PgbConfig(config)
 
-    def _reload_pgbouncer(self) -> None:
+    def reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
 
         Pgbouncer will not apply configuration changes without reloading, so this must be called
@@ -311,7 +311,7 @@ class PgBouncerK8sCharm(CharmBase):
             )
 
         if reload_pgbouncer:
-            self._reload_pgbouncer()
+            self.reload_pgbouncer()
 
     def remove_postgres_endpoints(self, reload_pgbouncer):
         """Update postgres endpoints in relation config values."""
@@ -328,7 +328,7 @@ class PgBouncerK8sCharm(CharmBase):
             )
 
         if reload_pgbouncer:
-            self._reload_pgbouncer()
+            self.reload_pgbouncer()
 
     @property
     def unit_pod_hostname(self, name="") -> str:

@@ -45,16 +45,21 @@ class Peers(Object):
             return None
         return peer_relation.data[self.charm.app]
 
-    def _on_peers_changed(self, event: RelationChangedEvent):
+    def _on_peers_changed(self, _: RelationChangedEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
         if self.charm.unit.is_leader():
             return
 
-        cfg = PgbConfig(self.app_databag.get(CFG_FILE_DATABAG_KEY))
-        self.charm.render_pgb_config(cfg)
+        cfg = self.app_databag.get(CFG_FILE_DATABAG_KEY, None)
+        if cfg is not None:
+            self.charm.render_pgb_config(PgbConfig(cfg))
 
-        auth_file = self.app_databag.get(AUTH_FILE_DATABAG_KEY)
-        self.charm.push_file(auth_file)
+        auth_file = self.app_databag.get(AUTH_FILE_DATABAG_KEY, None)
+        if auth_file is not None:
+            self.charm.render_auth_file(auth_file)
+
+        if cfg is not None or auth_file is not None:
+            self.charm.reload_pgbouncer()
 
     def update_cfg(self, cfg: PgbConfig) -> None:
         """Writes cfg to app databag if leader."""

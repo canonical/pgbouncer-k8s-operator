@@ -10,7 +10,8 @@ from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from ops.model import ActiveStatus, WaitingStatus
 from ops.testing import Harness
 
-from charm import INI_PATH, PGB, PgBouncerK8sCharm
+from charm import PgBouncerK8sCharm
+from constants import INI_PATH, PGB
 
 
 class TestCharm(unittest.TestCase):
@@ -100,19 +101,19 @@ class TestCharm(unittest.TestCase):
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
 
     @patch("ops.model.Container.can_connect", return_value=False)
-    @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
-    def test_render_pgb_config(self, _reload_pgbouncer, _can_connect):
+    @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
+    def test_render_pgb_config(self, reload_pgbouncer, _can_connect):
         cfg = PgbConfig(DEFAULT_CONFIG)
 
         # Assert we exit early if _can_connect returns false
         _can_connect.return_value = False
         self.charm.render_pgb_config(cfg, reload_pgbouncer=False)
         self.assertIsInstance(self.charm.unit.status, WaitingStatus)
-        _reload_pgbouncer.assert_not_called()
+        reload_pgbouncer.assert_not_called()
 
         _can_connect.return_value = True
         self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
-        _reload_pgbouncer.assert_called()
+        reload_pgbouncer.assert_called()
 
         pgb_container = self.harness.model.unit.get_container(PGB)
         ini = pgb_container.pull(INI_PATH).read()
@@ -125,7 +126,7 @@ class TestCharm(unittest.TestCase):
         self.assertDictEqual(dict(read_cfg), dict(test_cfg))
 
     @patch("ops.model.Container.restart")
-    def test_reload_pgbouncer(self, _restart):
-        self.charm._reload_pgbouncer()
+    def testreload_pgbouncer(self, _restart):
+        self.charm.reload_pgbouncer()
         self.assertIsInstance(self.charm.unit.status, ActiveStatus)
         _restart.assert_called_once()

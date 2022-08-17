@@ -2,15 +2,17 @@
 # See LICENSE file for licensing details.
 
 import unittest
-from unittest.mock import patch, call
+from unittest.mock import patch, call, MagicMock, PropertyMock
 
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
 from lib.charms.pgbouncer_k8s.v0.pgb import (
-    PgbConfig
+    PgbConfig,
+    DEFAULT_CONFIG
 )
-from constants import PEER_RELATION_NAME, BACKEND_RELATION_NAME
+
+from relations.peers import CFG_FILE_DATABAG_KEY, AUTH_FILE_DATABAG_KEY
 
 
 class TestDb(unittest.TestCase):
@@ -23,22 +25,39 @@ class TestDb(unittest.TestCase):
         self.app = self.charm.app.name
         self.unit = self.charm.unit.name
 
-        # Define a backend relation
-        self.backend_rel_id = self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
-        self.harness.add_relation_unit(self.backend_rel_id, "postgres/0")
-        self.harness.add_relation_unit(self.backend_rel_id, self.unit)
 
-        # TODO scale pgbouncer up to three units
+    @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
+    @patch("charm.PgBouncerK8sCharm.render_auth_file")
+    @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
+    def test_on_peers_changed(self, reload_pgbouncer, render_auth_file, render_pgb_config, app_databag):
+        databag = {}
+        app_databag.return_value = databag
 
-    @patch("charm.PgBouncerK8sCharm.push_file")
-    def test_on_peers_changed(self, render_file):
         self.harness.set_leader(True)
-        self.harness.on[PEER_RELATION_NAME].relation_changed.emit()
-        render_file.assert_not_called()
+        self.charm.peers._on_peers_changed(MagicMock())
+        render_auth_file.assert_not_called()
+        render_pgb_config.assert_not_called()
+        reload_pgbouncer.assert_not_called()
 
         self.harness.set_leader(False)
-        self.harness.on[PEER_RELATION_NAME].relation_changed.emit()
-        calls = [call()]
-        render_file.assert_has_calls(calls)
+        self.charm.peers._on_peers_changed(MagicMock())
+        render_pgb_config.assert_not_called()
+        render_auth_file.assert_not_called()
+        reload_pgbouncer.assert_not_called()
+
+        databag[CFG_FILE_DATABAG_KEY] = PgbConfig(DEFAULT_CONFIG).render()
+        self.charm.peers._on_peers_changed(MagicMock())
+        render_pgb_config.assert_called_once()
+        render_auth_file.assert_not_called()
+        reload_pgbouncer.assert_called_once()
+        render_pgb_config.reset_mock()
+        reload_pgbouncer.reset_mock()
+
+        databag[AUTH_FILE_DATABAG_KEY] = '"user" "pass"'
+        self.charm.peers._on_peers_changed(MagicMock())
+        render_pgb_config.assert_called_once()
+        render_auth_file.assert_called_once()
+        reload_pgbouncer.assert_called_once()
 
     # TODO test how these interact with the changes to relations.
