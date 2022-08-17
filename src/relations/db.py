@@ -334,10 +334,10 @@ class DbProvides(Object):
             logger.warning("relation not fully initialised - skipping postgres endpoint deletion")
             return
 
-        cfg = self.charm.read_pgb_config()
-        cfg["databases"].pop(database, None)
-        cfg["databases"].pop(f"{database}_standby", None)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
+        # cfg = self.charm.read_pgb_config()
+        # cfg["databases"].pop(database, None)
+        # cfg["databases"].pop(f"{database}_standby", None)
+        # self.charm.render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
 
     def update_databag(self, relation, updates: Dict[str, str]):
         """Updates databag with the given dict."""
