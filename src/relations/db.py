@@ -431,7 +431,7 @@ class DbProvides(Object):
             for relation in self.model.relations.get(relname, []):
                 if relation.id == broken_event.relation.id:
                     continue
-                if relation.data.get(self.charm.app, {}).get("database") == database:
+                if relation.data[self.charm.app].get("database") == database:
                     # There's multiple applications using this database, so don't remove it until
                     # we can guarantee this is the last one.
                     delete_db = False
