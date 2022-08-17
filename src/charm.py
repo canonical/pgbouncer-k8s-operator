@@ -122,7 +122,7 @@ class PgBouncerK8sCharm(CharmBase):
                     "summary": "pgbouncer service",
                     "user": PG_USER,
                     # -R flag reuses sockets on restart
-                    "command": f"pgbouncer -R -v {INI_PATH}",
+                    "command": f"pgbouncer -R {INI_PATH}",
                     "startup": "enabled",
                     "override": "replace",
                 }
@@ -175,7 +175,7 @@ class PgBouncerK8sCharm(CharmBase):
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
         """
-        self.push_file(INI_PATH, config.render(), 0o440)
+        self.push_file(INI_PATH, config.render(), 0o400)
         logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
 
         if reload_pgbouncer:
@@ -195,6 +195,7 @@ class PgBouncerK8sCharm(CharmBase):
             path,
             file_contents,
             user=PG_USER,
+            group=PG_USER,
             permissions=perms,
             make_dirs=True,
         )
