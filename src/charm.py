@@ -11,7 +11,7 @@ import socket
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
-from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, InstallEvent
+from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
