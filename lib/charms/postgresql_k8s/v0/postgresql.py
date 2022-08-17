@@ -138,7 +138,7 @@ class PostgreSQL:
                 with self.connect_to_database(
                     database
                 ) as connection, connection.cursor() as cursor:
-                    cursor.execute(f"REASSIGN OWNED BY {user} TO postgres;")
+                    cursor.execute(f"REASSIGN OWNED BY {user} TO operator;")
                     cursor.execute(f"DROP OWNED BY {user};")
 
             # Delete the user.
