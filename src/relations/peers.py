@@ -54,7 +54,7 @@ class Peers(Object):
         self.charm.render_pgb_config(cfg)
 
         auth_file = self.app_databag.get(AUTH_FILE_DATABAG_KEY)
-        self.charm.render_file(auth_file)
+        self.charm.push_file(auth_file)
 
     def update_cfg(self, cfg: PgbConfig) -> None:
         """Writes cfg to app databag if leader."""

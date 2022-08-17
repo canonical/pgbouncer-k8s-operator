@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 
 import unittest
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import patch, call
 
 from ops.testing import Harness
 
@@ -10,15 +10,7 @@ from charm import PgBouncerK8sCharm
 from lib.charms.pgbouncer_k8s.v0.pgb import (
     PgbConfig
 )
-
-TEST_UNIT = {
-    "master": "host=master port=1 dbname=testdatabase",
-    "standbys": "host=standby1 port=1 dbname=testdatabase",
-}
-
-BACKEND_RELATION_NAME = "backend-database"
-DB_RELATION_NAME = "db"
-DB_ADMIN_RELATION_NAME = "db-admin"
+from constants import PEER_RELATION_NAME, BACKEND_RELATION_NAME
 
 
 class TestDb(unittest.TestCase):
@@ -37,5 +29,16 @@ class TestDb(unittest.TestCase):
         self.harness.add_relation_unit(self.backend_rel_id, self.unit)
 
         # TODO scale pgbouncer up to three units
+
+    @patch("charm.PgBouncerK8sCharm.push_file")
+    def test_on_peers_changed(self, render_file):
+        self.harness.set_leader(True)
+        self.harness.on[PEER_RELATION_NAME].relation_changed.emit()
+        render_file.assert_not_called()
+
+        self.harness.set_leader(False)
+        self.harness.on[PEER_RELATION_NAME].relation_changed.emit()
+        calls = [call()]
+        render_file.assert_has_calls(calls)
 
     # TODO test how these interact with the changes to relations.
