@@ -82,16 +82,16 @@ async def get_backend_user_pass(ops_test, backend_relation):
 
 async def get_cfg(ops_test: OpsTest, unit_name: str) -> pgb.PgbConfig:
     """Gets pgbouncer config from pgbouncer container."""
-    cat = await cat_file(ops_test, f"{pgb.PGB_DIR}/pgbouncer.ini")
+    cat = await cat_file_from_unit(ops_test, f"{pgb.PGB_DIR}/pgbouncer.ini", unit_name)
     return pgb.PgbConfig(cat)
 
 
-async def get_pgb_log(ops_test: OpsTest) -> str:
+async def get_pgb_log(ops_test: OpsTest, unit_name) -> str:
     """Gets pgbouncer logs from pgbouncer container."""
-    return await cat_file(ops_test, f"{pgb.PGB_DIR}/pgbouncer.log")
+    return await cat_file_from_unit(ops_test, f"{pgb.PGB_DIR}/pgbouncer.log", unit_name)
 
 
-async def cat_file(ops_test: OpsTest, filepath: str) -> str:
+async def cat_file_from_unit(ops_test: OpsTest, filepath: str, unit_name) -> str:
     """Gets a file from the pgbouncer container of a pgbouncer application unit."""
     cat = await ops_test.juju(
         "ssh",
