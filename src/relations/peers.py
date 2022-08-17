@@ -50,12 +50,10 @@ class Peers(Object):
         if self.charm.unit.is_leader():
             return
 
-        cfg = self.app_databag.get(CFG_FILE_DATABAG_KEY, None)
-        if cfg is not None:
+        if cfg := self.app_databag.get(CFG_FILE_DATABAG_KEY):
             self.charm.render_pgb_config(PgbConfig(cfg))
 
-        auth_file = self.app_databag.get(AUTH_FILE_DATABAG_KEY, None)
-        if auth_file is not None:
+        if auth_file := self.app_databag.get(AUTH_FILE_DATABAG_KEY):
             self.charm.render_auth_file(auth_file)
 
         if cfg is not None or auth_file is not None:

@@ -123,7 +123,7 @@ class PgBouncerK8sCharm(CharmBase):
                     "summary": "pgbouncer service",
                     "user": PG_USER,
                     # -R flag reuses sockets on restart
-                    "command": f"pgbouncer -R -v {INI_PATH}",
+                    "command": f"pgbouncer -R {INI_PATH}",
                     "startup": "enabled",
                     "override": "replace",
                 }
@@ -178,12 +178,16 @@ class PgBouncerK8sCharm(CharmBase):
         self.push_file(INI_PATH, config.render(), 0o600)
         logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
 
+        self.peers.update_cfg(config.render())
+
         if reload_pgbouncer:
             self.reload_pgbouncer()
 
     def render_auth_file(self, auth_file: str, reload_pgbouncer = False):
         self.push_file(INI_PATH, auth_file, 0o777)
         logger.info("pushed new auth file to pgbouncer container")
+
+        self.peers.update_auth_file(auth_file)
 
         if reload_pgbouncer:
             self.reload_pgbouncer()
