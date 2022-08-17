@@ -298,23 +298,6 @@ class PgBouncerK8sCharm(CharmBase):
         if reload_pgbouncer:
             self._reload_pgbouncer()
 
-    def remove_postgres_endpoints(self, reload_pgbouncer):
-        """Update postgres endpoints in relation config values."""
-        # Skip updates if backend.postgres doesn't exist yet.
-        if not self.backend.postgres:
-            return
-
-        for relation in self.model.relations.get("db", []):
-            self.legacy_db_relation.remove_postgres_endpoints(relation, reload_pgbouncer=False)
-
-        for relation in self.model.relations.get("db-admin", []):
-            self.legacy_db_admin_relation.remove_postgres_endpoints(
-                relation, reload_pgbouncer=False
-            )
-
-        if reload_pgbouncer:
-            self._reload_pgbouncer()
-
     @property
     def unit_pod_hostname(self, name="") -> str:
         """Creates the pod hostname from its name."""

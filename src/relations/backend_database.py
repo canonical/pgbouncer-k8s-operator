@@ -170,8 +170,6 @@ class BackendDatabaseRequires(Object):
 
         self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
 
-        self.charm.remove_postgres_endpoints(reload_pgbouncer=True)
-
     def initialise_auth_function(self, dbname=PGB_DB):
         """Runs an SQL script to initialise the auth function.
 
