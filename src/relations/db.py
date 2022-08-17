@@ -409,7 +409,7 @@ class DbProvides(Object):
         user = app_databag.get("user")
         database = app_databag.get("database")
 
-        if not self.charm.backend.postgres and None in [user, database]:
+        if not self.charm.backend.postgres or None in [user, database]:
             # this relation was never created, so wait for it to be initialised before removing
             # everything.
             logger.warning(
@@ -424,7 +424,7 @@ class DbProvides(Object):
         # postgres application because we don't want to delete all user data with one command.
         delete_db = True
         for relname in ["db", "db-admin"]:
-            for relation in self.charm.model.relations.get(relname, []):
+            for relation in self.model.relations.get(relname, []):
                 if relation.id == broken_event.relation.id:
                     continue
                 if relation.data.get(self.charm.app, {}).get("database") == database:
