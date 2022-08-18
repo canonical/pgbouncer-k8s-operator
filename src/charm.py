@@ -59,6 +59,7 @@ class PgBouncerK8sCharm(CharmBase):
             )
             event.defer()
             return
+
         self.render_pgb_config(PgbConfig(pgb.DEFAULT_CONFIG))
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
