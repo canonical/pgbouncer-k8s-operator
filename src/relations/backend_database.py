@@ -38,18 +38,16 @@ Example:
 """
 
 import logging
-from typing import Dict, Union
+from typing import Dict
 
 import psycopg2
 from charms.data_platform_libs.v0.database_requires import (
     DatabaseCreatedEvent,
-    DatabaseEndpointsChangedEvent,
-    DatabaseReadOnlyEndpointsChangedEvent,
     DatabaseRequires,
 )
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL
-from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
+from ops.charm import CharmBase, RelationDepartedEvent
 from ops.framework import Object
 from ops.model import Application, BlockedStatus, Relation
 
