@@ -10,7 +10,7 @@ from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from ops.model import ActiveStatus, WaitingStatus
 from ops.testing import Harness
 
-from charm import INI_PATH, PGB, USERLIST_PATH, PgBouncerK8sCharm
+from charm import INI_PATH, PGB, PgBouncerK8sCharm
 
 
 class TestCharm(unittest.TestCase):
@@ -20,19 +20,13 @@ class TestCharm(unittest.TestCase):
         self.harness.begin()
         self.charm = self.harness.charm
 
-    @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
-    def test_on_install(self, _gen_pw):
+    def test_on_install(self):
         self.charm.on.install.emit()
         pgb_container = self.harness.model.unit.get_container(PGB)
 
         # assert config is set to default - it gets updated in the config-changed hook fired later
         ini = pgb_container.pull(INI_PATH).read()
         self.assertEqual(ini, PgbConfig(DEFAULT_CONFIG).render())
-
-        # Assert userlist is created with the generated password
-        userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual('"juju_admin" "pw"', userlist)
-        _gen_pw.assert_called_once()
 
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm.update_backend_relation_port")
@@ -80,7 +74,7 @@ class TestCharm(unittest.TestCase):
         defer.assert_called()
 
     def test_on_pgbouncer_pebble_ready(self):
-        # emit on install to ensure config file render
+        # emit on start to ensure config file render
         self.harness.charm.on.install.emit()
         initial_plan = self.harness.get_container_pebble_plan(PGB)
         self.assertEqual(initial_plan.to_yaml(), "{}\n")
@@ -90,7 +84,7 @@ class TestCharm(unittest.TestCase):
                 PGB: {
                     "summary": "pgbouncer service",
                     "user": "postgres",
-                    "command": f"pgbouncer {INI_PATH}",
+                    "command": f"pgbouncer -R {INI_PATH}",
                     "startup": "enabled",
                     "override": "replace",
                 }
@@ -112,119 +106,26 @@ class TestCharm(unittest.TestCase):
 
         # Assert we exit early if _can_connect returns false
         _can_connect.return_value = False
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=False)
         self.assertIsInstance(self.charm.unit.status, WaitingStatus)
         _reload_pgbouncer.assert_not_called()
 
         _can_connect.return_value = True
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
         _reload_pgbouncer.assert_called()
 
         pgb_container = self.harness.model.unit.get_container(PGB)
         ini = pgb_container.pull(INI_PATH).read()
         self.assertEqual(cfg.render(), ini)
 
-    def testread_pgb_config(self):
+    def test_read_pgb_config(self):
         test_cfg = PgbConfig(DEFAULT_CONFIG)
-        self.charm._render_pgb_config(test_cfg)
+        self.charm.render_pgb_config(test_cfg)
         read_cfg = self.charm.read_pgb_config()
         self.assertDictEqual(dict(read_cfg), dict(test_cfg))
-
-    @patch("ops.model.Container.can_connect")
-    @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
-    def test_render_userlist(self, _reload_pgbouncer, _can_connect):
-        cfg = PgbConfig(DEFAULT_CONFIG)
-
-        # Assert we exit early if _can_connect returns false
-        _can_connect.return_value = False
-        self.charm._render_userlist(cfg, reload_pgbouncer=True)
-        self.assertIsInstance(self.charm.unit.status, WaitingStatus)
-        _reload_pgbouncer.assert_not_called()
-
-        _can_connect.return_value = True
-        pgb_container = self.harness.model.unit.get_container(PGB)
-        self.charm._render_userlist({"test-user": "pw"}, reload_pgbouncer=True)
-        _reload_pgbouncer.assert_called()
-
-        userlist = pgb_container.pull(USERLIST_PATH).read()
-        self.assertEqual('"test-user" "pw"', userlist)
 
     @patch("ops.model.Container.restart")
     def test_reload_pgbouncer(self, _restart):
         self.charm._reload_pgbouncer()
         self.assertIsInstance(self.charm.unit.status, ActiveStatus)
         _restart.assert_called_once()
-
-    @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="default-pass")
-    @patch("charm.PgBouncerK8sCharm._read_userlist", return_value={})
-    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
-    @patch("charm.PgBouncerK8sCharm._render_userlist")
-    @patch("charm.PgBouncerK8sCharm._render_pgb_config")
-    def test_add_user(self, _render_cfg, _render_userlist, _read_cfg, _read_userlist, _gen_pw):
-        default_admins = DEFAULT_CONFIG[PGB]["admin_users"]
-        default_stats = DEFAULT_CONFIG[PGB]["stats_users"]
-        cfg = PgbConfig(DEFAULT_CONFIG)
-
-        # If user already exists, assert we aren't recreating them.
-        _read_userlist.return_value = {"test-user": "test-pass"}
-        self.charm.add_user(user="test-user", cfg=cfg, password="test-pass")
-        _render_userlist.assert_not_called()
-        _read_userlist.reset_mock()
-
-        # Test defaults
-        self.charm.add_user(user="test-user", cfg=cfg)
-        _render_userlist.assert_called_with({"test-user": "default-pass"})
-        _render_cfg.assert_not_called()
-        assert cfg[PGB].get("admin_users") == default_admins
-        # No stats_users by default
-        assert cfg[PGB].get("stats_users") == default_stats
-        _read_userlist.reset_mock()
-        _render_userlist.reset_mock()
-
-        # Test everything else
-        max_cfg = PgbConfig(DEFAULT_CONFIG)
-        self.charm.add_user(
-            user="max-test",
-            password="max-pw",
-            cfg=max_cfg,
-            admin=True,
-            stats=True,
-            reload_pgbouncer=True,
-            render_cfg=True,
-        )
-        _render_userlist.assert_called_with({"test-user": "default-pass", "max-test": "max-pw"})
-        assert max_cfg[PGB].get("admin_users") == default_admins + ["max-test"]
-        assert max_cfg[PGB].get("stats_users") == default_stats + ["max-test"]
-        _render_cfg.assert_called_with(max_cfg, True)
-
-        # Test we can't duplicate stats or admin users
-        self.charm.add_user(
-            user="max-test", password="max-pw", cfg=max_cfg, admin=True, stats=True
-        )
-        assert max_cfg[PGB].get("admin_users") == default_admins + ["max-test"]
-        assert max_cfg[PGB].get("stats_users") == default_stats + ["max-test"]
-
-    @patch("charm.PgBouncerK8sCharm._read_userlist", return_value={"test_user": ""})
-    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
-    @patch("charm.PgBouncerK8sCharm._render_userlist")
-    @patch("charm.PgBouncerK8sCharm._render_pgb_config")
-    def test_remove_user(self, _render_cfg, _render_userlist, _read_cfg, _read_userlist):
-        user = "test_user"
-        cfg = PgbConfig(DEFAULT_CONFIG)
-        cfg[PGB]["admin_users"].append(user)
-        cfg[PGB]["stats_users"].append(user)
-        admin_users = list(cfg[PGB]["admin_users"])
-        stats_users = list(cfg[PGB]["stats_users"])
-
-        # try to remove user that doesn't exist
-        self.charm.remove_user("nonexistent-user", cfg=cfg)
-        _render_userlist.assert_not_called()
-        assert cfg[PGB]["admin_users"] == admin_users
-        assert cfg[PGB]["stats_users"] == stats_users
-
-        # remove user that does exist
-        self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
-        assert user not in cfg[PGB]["admin_users"]
-        assert user not in cfg[PGB]["stats_users"]
-        _render_userlist.assert_called_with({})
-        _render_cfg.assert_called_with(cfg, True)

@@ -3,13 +3,17 @@
 # See LICENSE file for licensing details.
 
 import json
+from multiprocessing import ProcessError
+from pathlib import Path
 from typing import Dict
 
+import yaml
 from charms.pgbouncer_k8s.v0 import pgb
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
-PGB = "pgbouncer-k8s"
+METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
+PGB = METADATA["name"]
 
 
 def get_backend_relation(ops_test: OpsTest):
@@ -69,30 +73,34 @@ async def get_app_relation_databag(ops_test: OpsTest, unit_name: str, relation_i
     return None
 
 
-async def get_userlist(ops_test: OpsTest) -> Dict[str, str]:
-    """Gets pgbouncer userlist.txt from pgbouncer container."""
-    cat_userlist = await ops_test.juju(
-        "ssh",
-        "--container",
-        "pgbouncer",
-        f"{PGB}/0",
-        "cat",
-        f"{pgb.PGB_DIR}/userlist.txt",
-    )
-    return pgb.parse_userlist(cat_userlist[1])
+async def get_backend_user_pass(ops_test, backend_relation):
+    pgb_unit = ops_test.model.applications[PGB].units[0]
+    backend_databag = await get_app_relation_databag(ops_test, pgb_unit.name, backend_relation.id)
+    pgb_user = backend_databag["username"]
+    pgb_password = backend_databag["password"]
+    return (pgb_user, pgb_password)
 
 
 async def get_cfg(ops_test: OpsTest) -> pgb.PgbConfig:
     """Gets pgbouncer config from pgbouncer container."""
-    cat_cfg = await ops_test.juju(
-        "ssh",
-        "--container",
-        "pgbouncer",
-        f"{PGB}/0",
-        "cat",
-        f"{pgb.PGB_DIR}/pgbouncer.ini",
-    )
-    return pgb.PgbConfig(cat_cfg[1])
+    cat = await cat_file(ops_test, f"{pgb.PGB_DIR}/pgbouncer.ini")
+    return pgb.PgbConfig(cat)
+
+
+async def get_pgb_log(ops_test: OpsTest) -> str:
+    """Gets pgbouncer logs from pgbouncer container."""
+    return await cat_file(ops_test, f"{pgb.PGB_DIR}/pgbouncer.log")
+
+
+async def cat_file(ops_test: OpsTest, filepath: str) -> str:
+    """Gets a file from the pgbouncer container of a pgbouncer application unit."""
+    cat_cmd = f"ssh --container pgbouncer {PGB}/0 cat {filepath}"
+    return_code, output, _ = await ops_test.juju(*cat_cmd.split(" "))
+    if return_code != 0:
+        raise ProcessError(
+            "Expected cat command %s to succeed instead it failed: %s", cat_cmd, return_code
+        )
+    return output
 
 
 def wait_for_relation_joined_between(

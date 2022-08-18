@@ -18,6 +18,7 @@ This charm library provides common pgbouncer-specific features for the pgbouncer
 Kubernetes charms, including automatic config management.
 """
 
+
 import io
 import logging
 import math
@@ -27,6 +28,7 @@ import string
 from collections.abc import MutableMapping
 from configparser import ConfigParser, ParsingError
 from copy import deepcopy
+from hashlib import md5
 from typing import Dict, Union
 
 # The unique Charmhub library identifier, never change it
@@ -35,10 +37,11 @@ LIBID = "113f4a7480c04631bfdf5fe776f760cd"
 LIBAPI = 0
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 1
+LIBPATCH = 2
 
 logger = logging.getLogger(__name__)
 
+PGB = "pgbouncer"
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
 INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
 
@@ -49,9 +52,9 @@ DEFAULT_CONFIG = {
         "listen_port": "6432",
         "logfile": f"{PGB_DIR}/pgbouncer.log",
         "pidfile": f"{PGB_DIR}/pgbouncer.pid",
-        "admin_users": ["juju_admin"],
-        "stats_users": ["juju_admin"],
-        "auth_file": f"{PGB_DIR}/userlist.txt",
+        "admin_users": set(),
+        "stats_users": set(),
+        "auth_type": "md5",
         "user": "postgres",
         "max_client_conn": "10000",
         "ignore_startup_parameters": "extra_float_digits",
@@ -170,19 +173,14 @@ class PgbConfig(MutableMapping):
         except KeyError as err:
             raise PgbConfig.ConfigParsingError(source=str(err))
 
-        try:
-            for name, cfg_string in self[users].items():
-                self[users][name] = parse_kv_string_to_dict(cfg_string)
-        except KeyError:
-            # [users] section is not compulsory, so continue.
-            pass
+        for name, cfg_string in self.get(users, dict()).items():
+            self[users][name] = parse_kv_string_to_dict(cfg_string)
 
         for user_type in PgbConfig.user_types:
-            try:
-                self[pgb][user_type] = self[pgb][user_type].split(",")
-            except KeyError:
-                # user type fields are not compulsory, so continue
-                pass
+            users = set(self[pgb].get(user_type, "").split(","))
+            if "" in users:
+                users.remove("")
+            self[pgb][user_type] = users
 
     def render(self) -> str:
         """Returns a valid pgbouncer.ini file as a string.
@@ -198,8 +196,10 @@ class PgbConfig(MutableMapping):
             for option, config_value in subdict.items():
                 if isinstance(config_value, dict):
                     output_dict[section][option] = parse_dict_to_kv_string(config_value)
-                elif isinstance(config_value, list):
+                elif isinstance(config_value, set):
                     output_dict[section][option] = ",".join(config_value)
+                else:
+                    output_dict[section][option] = str(config_value)
 
         # Populate parser object with local data.
         parser = ConfigParser()
@@ -317,6 +317,35 @@ class PgbConfig(MutableMapping):
         self[pgb]["min_pool_size"] = str(math.ceil(effective_db_connections / 4))
         self[pgb]["reserve_pool_size"] = str(math.ceil(effective_db_connections / 4))
 
+    def add_user(self, user: str, admin: bool = False, stats: bool = False):
+        """Adds a user.
+
+        Users are added to userlist.txt and pgbouncer.ini config files
+
+        Args:
+            user: the username for the intended user
+            admin: whether or not the user has admin permissions
+            stats: whether or not the user has stats permissions
+        """
+        admin_users = self[PGB].get("admin_users", set())
+        if admin:
+            self[PGB]["admin_users"] = admin_users.union({user})
+
+        stats_users = self[PGB].get("stats_users", set())
+        if stats:
+            self[PGB]["stats_users"] = stats_users.union({user})
+
+    def remove_user(self, user: str):
+        """Removes a user from config files.
+
+        Args:
+            user: the username for the intended user.
+        """
+        if user in self[PGB].get("admin_users", {}):
+            self[PGB]["admin_users"].remove(user)
+        if user in self[PGB].get("stats_users", {}):
+            self[PGB]["stats_users"].remove(user)
+
     class ConfigParsingError(ParsingError):
         """Error raised when parsing config fails."""
 
@@ -370,77 +399,7 @@ def generate_password() -> str:
     return "".join([secrets.choice(choices) for _ in range(24)])
 
 
-def generate_pgbouncer_ini(config) -> str:
-    """Generate pgbouncer.ini file from the given config options.
-
-    Args:
-        config: dict following the [pgbouncer config spec](https://pgbouncer.org/config.html).
-            Note that admin_users and stats_users must be passed in as lists of strings, not in
-            their string representation in the .ini file.
-
-    Returns:
-        A valid pgbouncer.ini file, represented as a string.
-    """
-    return PgbConfig(config).render()
-
-
-def initialise_userlist_from_ini(
-    ini: PgbConfig, existing_users: Dict[str, str] = {}
-) -> Dict[str, str]:
-    """Helper function to generate userlist dict from users in ini config file.
-
-    Args:
-        ini: a PgbConfig object containing the current pgbouncer config
-        existing_users: an existing userlist, which will have new users appended to it.
-
-    Returns:
-        a new userlist, updated with new users.
-    """
-    users = []
-    for user_type in ini.user_types:
-        users += ini[ini.pgb_section].get(user_type, [])
-
-    for user in users:
-        if user not in existing_users:
-            existing_users[user] = generate_password()
-
-    return existing_users
-
-
-def generate_userlist(users: Dict[str, str]) -> str:
-    """Generate valid userlist.txt from the given dictionary of usernames:passwords.
-
-    Args:
-        users: a dictionary of usernames and passwords
-    Returns:
-        A multiline string, containing each pair of usernames and passwords in double quotes,
-        separated by a space, one pair per line.
-    """
-    return "\n".join([f'"{username}" "{password}"' for username, password in users.items()])
-
-
-def parse_userlist(userlist: str) -> Dict[str, str]:
-    """Parse userlist.txt into a dictionary of usernames and passwords.
-
-    Args:
-        userlist: a multiline string of users and passwords, formatted thusly:
-        '''
-        "test-user" "password"
-        "juju-admin" "asdf1234"
-        '''
-    Returns:
-        users: a dictionary of valid usernames and passwords
-    """
-    parsed_userlist = {}
-    # Each line in userlist can only be two space-separated substrings, wrapped in double quotes.
-    valid_userlist_regex = re.compile(r'^"[^"]*" "[^"]*"$')
-    for line in userlist.split("\n"):
-        line = line.strip()
-        if valid_userlist_regex.fullmatch(line) is None:
-            logger.warning("unable to parse line in userlist file - user not imported")
-            continue
-        # Userlist is formatted '"username" "password"'
-        username, password = line.replace('"', "").split(" ")
-        parsed_userlist[username] = password
-
-    return parsed_userlist
+def get_hashed_password(username: str, password: str) -> str:
+    """Creates an md5 hashed password for the given user, in the format postgresql expects."""
+    hash_password = md5((password + username).encode()).hexdigest()
+    return f"md5{hash_password}"

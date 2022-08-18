@@ -11,9 +11,10 @@ from pytest_operator.plugin import OpsTest
 
 from tests.integration.relations.helpers.helpers import (
     get_app_relation_databag,
+    get_backend_user_pass,
     get_cfg,
     get_legacy_relation_username,
-    get_userlist,
+    get_pgb_log,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
 )
@@ -31,7 +32,7 @@ ANOTHER_FINOS_WALTZ = "another-finos-waltz"
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.abort_on_fail
+@pytest.mark.legacy_relation
 async def test_create_db_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
@@ -69,9 +70,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         wait_for_relation_joined_between(ops_test, PGB, PG)
         await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
 
-        userlist = await get_userlist(ops_test)
-        pgb_user = f"relation_id_{backend_relation.id}"
-        pgb_password = userlist[pgb_user]
+        pgb_user, pgb_password = await get_backend_user_pass(ops_test, backend_relation)
         await check_database_users_existence(
             ops_test,
             [pgb_user],
@@ -156,6 +155,12 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             ops_test, [finos_user], [another_finos_user], pgb_user, pgb_password
         )
 
+        cfg = await get_cfg(ops_test)
+        logger.info(cfg)
+        assert another_finos_user not in cfg["pgbouncer"]["admin_users"]
+        assert "waltz" in cfg["databases"].keys()
+        assert "waltz_standby" in cfg["databases"].keys()
+
         # Remove the first deployment of Finos Waltz.
         await ops_test.model.remove_application(FINOS_WALTZ)
         wait_for_relation_removed_between(ops_test, PGB, FINOS_WALTZ)
@@ -163,15 +168,10 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
 
         await check_database_users_existence(ops_test, [], [finos_user], pgb_user, pgb_password)
 
-        userlist = await get_userlist(ops_test)
-        logger.info(userlist)
-        assert finos_user not in userlist.keys()
-        assert another_finos_user not in userlist.keys()
-
         cfg = await get_cfg(ops_test)
         logger.info(cfg)
         assert finos_user not in cfg["pgbouncer"]["admin_users"]
-        assert another_finos_user not in cfg["pgbouncer"]["admin_users"]
-
         assert "waltz" not in cfg["databases"].keys()
         assert "waltz_standby" not in cfg["databases"].keys()
+
+        logger.info(await get_pgb_log(ops_test))

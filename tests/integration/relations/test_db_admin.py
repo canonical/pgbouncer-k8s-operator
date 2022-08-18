@@ -10,8 +10,9 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from tests.integration.relations.helpers.helpers import (
+    get_backend_user_pass,
     get_legacy_relation_username,
-    get_userlist,
+    get_pgb_log,
     wait_for_relation_joined_between,
 )
 from tests.integration.relations.helpers.postgresql_helpers import (
@@ -33,8 +34,7 @@ PGB = METADATA["name"]
 PG = "postgresql-k8s"
 
 
-@pytest.mark.abort_on_fail
-@pytest.mark.legacy_relations
+@pytest.mark.legacy_relation
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
     # Build, deploy, and relate charms.
     charm = await ops_test.build_charm(".")
@@ -66,9 +66,7 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
             apps=[PG, PGB, REDIS_APP_NAME], status="active", timeout=1000
         )
 
-        pgb_user = f"relation_id_{backend_relation.id}"
-        userlist = await get_userlist(ops_test)
-        pgb_password = userlist[pgb_user]
+        pgb_user, pgb_password = await get_backend_user_pass(ops_test, backend_relation)
         await check_database_users_existence(
             ops_test,
             [pgb_user],
@@ -152,9 +150,13 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
         await check_database_creation(
             ops_test, "discourse-charmers-discourse-k8s", user=pgb_user, password=pgb_password
         )
+
         second_discourse_users = [
             get_legacy_relation_username(ops_test, second_discourse_relation.id)
         ]
+        await check_database_creation(
+            ops_test, "discourse-charmers-discourse-k8s", user=pgb_user, password=pgb_password
+        )
         await check_database_users_existence(
             ops_test,
             second_discourse_users,
@@ -163,3 +165,5 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
             pg_user=pgb_user,
             pg_user_password=pgb_password,
         )
+
+        logger.info(await get_pgb_log(ops_test))

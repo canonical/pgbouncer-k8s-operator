@@ -57,7 +57,6 @@ from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import (
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
-    PostgreSQLDeleteUserError,
 )
 from ops.charm import (
     CharmBase,
@@ -135,9 +134,18 @@ class DbProvides(Object):
         If the backend relation is fully initialised and available, we generate the proposed
         database and create a user on the postgres charm, and add preliminary data to the databag.
         """
-        if not self.charm.backend_postgres:
+        if not self.charm.backend.postgres:
             # We can't relate an app to the backend database without a backend postgres relation
             wait_str = "waiting for backend-database relation to connect"
+            logger.warning(wait_str)
+            self.charm.unit.status = WaitingStatus(wait_str)
+            join_event.defer()
+            return
+
+        try:
+            cfg = self.charm.read_pgb_config()
+        except FileNotFoundError:
+            wait_str = "waiting for pgbouncer to start"
             logger.warning(wait_str)
             self.charm.unit.status = WaitingStatus(wait_str)
             join_event.defer()
@@ -170,24 +178,14 @@ class DbProvides(Object):
         user = self._generate_username(join_event)
         password = pgb.generate_password()
 
-        # Create user in pgbouncer config
-        self.charm.add_user(
-            user,
-            password=password,
-            admin=self.admin,
-            cfg=self.charm.read_pgb_config(),
-            render_cfg=True,
-            reload_pgbouncer=True,
-        )
-
         # Create user and database in backend postgresql database
         try:
             init_msg = f"initialising database and user for {self.relation_name} relation"
             self.charm.unit.status = MaintenanceStatus(init_msg)
             logger.info(init_msg)
 
-            self.charm.backend_postgres.create_user(user, password, admin=self.admin)
-            self.charm.backend_postgres.create_database(database, user)
+            self.charm.backend.postgres.create_user(user, password, admin=self.admin)
+            self.charm.backend.postgres.create_database(database, user)
 
             created_msg = f"database and user for {self.relation_name} relation created"
             self.charm.unit.status = ActiveStatus(created_msg)
@@ -197,6 +195,14 @@ class DbProvides(Object):
             logger.error(err_msg)
             self.charm.unit.status = BlockedStatus(err_msg)
             return
+
+        # set up auth function
+        self.charm.backend.initialise_auth_function(dbname=database)
+
+        # Create user in pgbouncer config
+        cfg = self.charm.read_pgb_config()
+        cfg.add_user(user, admin=self.admin)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
 
         self.update_databag(
             join_event.relation,
@@ -216,7 +222,7 @@ class DbProvides(Object):
         This relation will defer if the backend relation isn't fully available, and if the
         relation_joined hook isn't completed.
         """
-        if not self.charm.backend_postgres:
+        if not self.charm.backend.postgres:
             # We can't relate an app to the backend database without a backend postgres relation
             wait_str = "waiting for backend-database relation to connect"
             logger.warning(wait_str)
@@ -250,7 +256,7 @@ class DbProvides(Object):
             {
                 "allowed-subnets": self.get_allowed_subnets(change_event.relation),
                 "allowed-units": self.get_allowed_units(change_event.relation),
-                "version": self.charm.backend_postgres.get_postgresql_version(),
+                "version": self.charm.backend.postgres.get_postgresql_version(),
                 "host": self.charm.unit_pod_hostname,
                 "user": user,
                 "password": password,
@@ -298,13 +304,14 @@ class DbProvides(Object):
 
         # In postgres, "endpoints" will only ever have one value. Other databases using the library
         # can have more, but that's not planned for the postgres charm.
-        postgres_endpoint = self.charm.backend_relation_app_databag.get("endpoints")
+        postgres_endpoint = self.charm.backend.app_databag.get("endpoints")
 
         cfg = self.charm.read_pgb_config()
         cfg["databases"][database] = {
             "host": postgres_endpoint.split(":")[0],
             "dbname": database,
             "port": postgres_endpoint.split(":")[1],
+            "auth_user": self.charm.backend.auth_user,
         }
 
         read_only_endpoint = self._get_read_only_endpoint()
@@ -313,9 +320,12 @@ class DbProvides(Object):
                 "host": read_only_endpoint.split(":")[0],
                 "dbname": database,
                 "port": read_only_endpoint.split(":")[1],
+                "auth_user": self.charm.backend.auth_user,
             }
+        else:
+            cfg["databases"].pop(f"{database}_standby", None)
         # Write config data to charm filesystem
-        self.charm._render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
 
     def update_databag(self, relation, updates: Dict[str, str]):
         """Updates databag with the given dict."""
@@ -333,7 +343,7 @@ class DbProvides(Object):
         """Generates a unique username for this relation."""
         app_name = self.charm.app.name
         relation_id = event.relation.id
-        model_name = self.charm.model.name
+        model_name = self.model.name
         return f"{app_name}_user_id_{relation_id}_{model_name}".replace("-", "_")
 
     def _get_read_only_endpoint(self):
@@ -342,7 +352,7 @@ class DbProvides(Object):
         Though multiple readonly endpoints can be provided by the new backend relation, only one
         can be consumed by this legacy relation.
         """
-        read_only_endpoints = self.charm.backend_relation_app_databag.get("read-only-endpoints")
+        read_only_endpoints = self.charm.backend.app_databag.get("read-only-endpoints")
         if read_only_endpoints is None or len(read_only_endpoints) == 0:
             return None
         return read_only_endpoints.split(",")[0]
@@ -391,7 +401,7 @@ class DbProvides(Object):
         user = app_databag.get("user")
         database = app_databag.get("database")
 
-        if not self.charm.backend_postgres and None in [user, database]:
+        if not self.charm.backend.postgres or None in [user, database]:
             # this relation was never created, so wait for it to be initialised before removing
             # everything.
             logger.warning(
@@ -406,31 +416,21 @@ class DbProvides(Object):
         # postgres application because we don't want to delete all user data with one command.
         delete_db = True
         for relname in ["db", "db-admin"]:
-            for relation in self.charm.model.relations.get(relname, []):
+            for relation in self.model.relations.get(relname, []):
                 if relation.id == broken_event.relation.id:
                     continue
-                if relation.data.get(self.charm.app, {}).get("database") == database:
+                if relation.data[self.charm.app].get("database") == database:
                     # There's multiple applications using this database, so don't remove it until
                     # we can guarantee this is the last one.
                     delete_db = False
                     break
-
         if delete_db:
             del cfg["databases"][database]
-            cfg["databases"].pop(f"{database}_standby")
+            cfg["databases"].pop(f"{database}_standby", None)
 
-        # delete user
-        self.charm.remove_user(user, cfg=cfg, render_cfg=True, reload_pgbouncer=True)
-        try:
-            if self.charm.backend_postgres:
-                # Try to delete user if backend database still exists. If not, postgres has been
-                # removed and will handle user deletion in its own relation-broken hook.
-                self.charm.backend_postgres.delete_user(user, if_exists=True)
-        except PostgreSQLDeleteUserError:
-            blockedmsg = f"failed to delete user for {self.relation_name}"
-            logger.error(blockedmsg)
-            self.charm.unit.status = BlockedStatus(blockedmsg)
-            return
+        cfg.remove_user(user)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm.backend.postgres.delete_user(user)
 
     def get_allowed_subnets(self, relation: Relation) -> str:
         """Gets the allowed subnets from this relation."""
