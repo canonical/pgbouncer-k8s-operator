@@ -125,9 +125,7 @@ class BackendDatabaseRequires(Object):
 
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
-    def _on_endpoints_changed(
-        self, _: Union[DatabaseEndpointsChangedEvent, DatabaseReadOnlyEndpointsChangedEvent]
-    ):
+    def _on_endpoints_changed(self, _):
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_relation_departed(self, event: RelationDepartedEvent):
@@ -157,7 +155,7 @@ class BackendDatabaseRequires(Object):
 
         logger.info("auth user removed")
 
-    def _on_relation_broken(self, _: RelationBrokenEvent):
+    def _on_relation_broken(self, _):
         """Handle backend-database-relation-broken event.
 
         Removes all traces of this relation from pgbouncer config.
