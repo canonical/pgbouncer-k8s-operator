@@ -38,8 +38,9 @@ Example:
 """
 
 import logging
-from typing import Dict, Union
+from typing import Dict
 
+import psycopg2
 from charms.data_platform_libs.v0.database_requires import (
     DatabaseCreatedEvent,
     DatabaseEndpointsChangedEvent,
@@ -48,9 +49,9 @@ from charms.data_platform_libs.v0.database_requires import (
 )
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL
-from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
+from ops.charm import CharmBase, RelationDepartedEvent
 from ops.framework import Object
-from ops.model import Application, Relation
+from ops.model import Application, BlockedStatus, Relation
 
 RELATION_NAME = "backend-database"
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
@@ -110,11 +111,9 @@ class BackendDatabaseRequires(Object):
         self.initialise_auth_function(dbname=self.database.database)
 
         hashed_password = pgb.get_hashed_password(self.auth_user, plaintext_password)
-        auth_file = f'"{self.auth_user}" "{hashed_password}"'
-
-        self.charm.render_auth_file(auth_file)
-        self.charm.peers.update_auth_file(auth_file)
-
+        self.charm.push_file(
+            f"{PGB_DIR}/userlist.txt", f'"{self.auth_user}" "{hashed_password}"', perms=0o400
+        )
         cfg = self.charm.read_pgb_config()
         # adds user to pgb config
         cfg.add_user(user=event.username, admin=True)
@@ -126,26 +125,37 @@ class BackendDatabaseRequires(Object):
 
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
-    def _on_endpoints_changed(
-        self, _: Union[DatabaseEndpointsChangedEvent, DatabaseReadOnlyEndpointsChangedEvent]
-    ):
+    def _on_endpoints_changed(self, _):
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_relation_departed(self, event: RelationDepartedEvent):
+        """Runs pgbouncer-uninstall.sql and removes auth user.
+
+        pgbouncer-uninstall doesn't actually uninstall anything - it actually removes permissions
+        for the auth user.
+        """
         if event.departing_unit != self.charm.unit:
             return
 
         logger.info("removing auth user")
 
-        uninstall_script = open("src/relations/pgbouncer-uninstall.sql", "r").read()
+        uninstall_script = open("src/relations/sql/pgbouncer-uninstall.sql", "r").read()
 
-        with self.postgres.connect_to_database(PGB_DB) as conn, conn.cursor() as cursor:
-            cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
-        conn.close()
+        try:
+            with self.postgres.connect_to_database(PGB_DB) as conn, conn.cursor() as cursor:
+                cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
+            conn.close()
+        except psycopg2.Error:
+            self.charm.unit.status = BlockedStatus(
+                "failed to remove auth user when disconnecting from postgres application."
+            )
+            return
+
+        self.postgres.delete_user(self.auth_user)
 
         logger.info("auth user removed")
 
-    def _on_relation_broken(self, _: RelationBrokenEvent):
+    def _on_relation_broken(self, _):
         """Handle backend-database-relation-broken event.
 
         Removes all traces of this relation from pgbouncer config.
@@ -155,23 +165,24 @@ class BackendDatabaseRequires(Object):
         cfg["pgbouncer"].pop("auth_user", None)
         cfg["pgbouncer"].pop("auth_query", None)
         self.charm.render_pgb_config(cfg)
-        self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
 
-        self.charm.remove_postgres_endpoints(reload_pgbouncer=True)
+        self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
 
     def initialise_auth_function(self, dbname=PGB_DB):
         """Runs an SQL script to initialise the auth function.
 
-        This function must run in every database for authentication to work.
+        This function must run in every database for authentication to work correctly, and assumes
+        self.postgres is set up correctly.
 
         Args:
-            postgres: a PostgreSQL application instance. If none is provided, the default pgbouncer
-                instance will be used.
             dbname: the name of the database to connect to.
+
+        Raises:
+            psycopg2.Error if self.postgres isn't usable.
         """
         logger.info("initialising auth function")
 
-        install_script = open("src/relations/pgbouncer-install.sql", "r").read()
+        install_script = open("src/relations/sql/pgbouncer-install.sql", "r").read()
 
         with self.postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
             cursor.execute(install_script.replace("auth_user", self.auth_user))

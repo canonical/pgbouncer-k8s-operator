@@ -3,6 +3,7 @@
 # See LICENSE file for licensing details.
 
 import json
+from multiprocessing import ProcessError
 from pathlib import Path
 from typing import Dict
 

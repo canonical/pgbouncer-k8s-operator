@@ -31,6 +31,7 @@ ANOTHER_FINOS_WALTZ = "another-finos-waltz"
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.legacy_relation
 async def test_create_db_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
@@ -155,6 +156,12 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             ops_test, [finos_user], [another_finos_user], pgb_user, pgb_password
         )
 
+        cfg = await get_cfg(ops_test)
+        logger.info(cfg)
+        assert another_finos_user not in cfg["pgbouncer"]["admin_users"]
+        assert "waltz" in cfg["databases"].keys()
+        assert "waltz_standby" in cfg["databases"].keys()
+
         # Remove the first deployment of Finos Waltz.
         await ops_test.model.remove_application(FINOS_WALTZ)
         wait_for_relation_removed_between(ops_test, PGB, FINOS_WALTZ)
@@ -165,8 +172,6 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         cfg = await get_cfg(ops_test)
         logger.info(cfg)
         assert finos_user not in cfg["pgbouncer"]["admin_users"]
-        assert another_finos_user not in cfg["pgbouncer"]["admin_users"]
-
         assert "waltz" not in cfg["databases"].keys()
         assert "waltz_standby" not in cfg["databases"].keys()
 

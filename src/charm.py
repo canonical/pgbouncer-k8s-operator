@@ -11,7 +11,7 @@ import socket
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
-from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, StartEvent
+from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
@@ -37,7 +37,7 @@ class PgBouncerK8sCharm(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self.framework.observe(self.on.start, self._on_start)
+        self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
 
@@ -52,12 +52,8 @@ class PgBouncerK8sCharm(CharmBase):
     #  Charm Lifecycle Hooks
     # =======================
 
-    def _on_start(self, event: StartEvent) -> None:
-        """On start hook.
-
-        This imports any users from the juju config, and initialises userlist and pgbouncer.ini
-        config files that are essential for pgbouncer to run.
-        """
+    def _on_install(self, event: InstallEvent) -> None:
+        """Renders basic PGB config."""
         container = self.unit.get_container(PGB)
         if not container.can_connect():
             logger.debug(
@@ -66,19 +62,15 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
-        # Initialise pgbouncer.ini config files from defaults set in charm lib.
-        config = PgbConfig(pgb.DEFAULT_CONFIG)
-        self.render_pgb_config(config)
+        self.render_pgb_config(PgbConfig(pgb.DEFAULT_CONFIG))
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
         try:
             config = self.read_pgb_config()
-        except FileNotFoundError:
-            # TODO this may need to change to a Blocked or Error status, depending on why the
-            # config can't be found.
-            config_err_msg = "Unable to read config. Waiting for pgbouncer start hook to finish"
-            logger.error(config_err_msg)
+        except FileNotFoundError as err:
+            config_err_msg = f"Unable to read config, error: {err}"
+            logger.warning(config_err_msg)
             self.unit.status = WaitingStatus(config_err_msg)
             event.defer()
             return
@@ -93,6 +85,7 @@ class PgBouncerK8sCharm(CharmBase):
             # necessary
             self.update_backend_relation_port(self.config["listen_port"])
             config["pgbouncer"]["listen_port"] = self.config["listen_port"]
+
         self.render_pgb_config(config)
 
         # Create an updated pebble layer for the pgbouncer container, and apply it if there are
@@ -146,10 +139,10 @@ class PgBouncerK8sCharm(CharmBase):
         try:
             # Check config is available before running pgbouncer.
             self.read_pgb_config()
-        except FileNotFoundError:
+        except FileNotFoundError as err:
             # TODO this may need to change to a Blocked or Error status, depending on why the
             # config can't be found.
-            config_err_msg = "Unable to read config."
+            config_err_msg = f"Unable to read config, error: {err}"
             logger.warning(config_err_msg)
             self.unit.status = WaitingStatus(config_err_msg)
             event.defer()
@@ -206,6 +199,7 @@ class PgBouncerK8sCharm(CharmBase):
             path,
             file_contents,
             user=PG_USER,
+            group=PG_USER,
             permissions=perms,
             make_dirs=True,
         )
@@ -282,16 +276,55 @@ class PgBouncerK8sCharm(CharmBase):
     def update_backend_relation_port(self, port):
         """Update ports in backend relations to match updated pgbouncer port.
 
-        This only returns the relation object, and does no verification that the relation is
-        initialised or functional. For situations where the relation has to be fully initialised
-        and usable, self.backend_postgres will only return a valid value if the relation is
-        initialised.
-
-        Returns:
-            Relation object for the backend relation.
+        TODO this method and the two below it are weird, fix them up
         """
-        # Skip updates if backend.postgres doesn't exist yet.
-        if not self.backend.postgres:
+        backend_relation = self.model.get_relation(BACKEND_RELATION_NAME)
+        if not backend_relation:
+            return None
+        else:
+            return backend_relation
+
+    @property
+    def backend_relation_app_databag(self) -> Dict:
+        """Wrapper around accessing the remote application databag for the backend relation.
+
+        Returns None if backend_relation is none.
+
+        Since we can trigger db-relation-changed on backend-changed, we need to be able to easily
+        access the backend app relation databag.
+        """
+        if self.backend_relation:
+            for key, databag in self.backend_relation.data.items():
+                if isinstance(key, Application) and key != self.app:
+                    return databag
+
+        return None
+
+    @property
+    def backend_postgres(self) -> PostgreSQL:
+        """Returns PostgreSQL representation of backend database, as defined in relation.
+
+        Returns None if backend relation is not fully initialised.
+        """
+        if not self.backend_relation:
+            return None
+
+        endpoint = self.backend_relation_app_databag.get("endpoints")
+        user = self.backend_relation_app_databag.get("username")
+        password = self.backend_relation_app_databag.get("password")
+        database = self.backend_relation.data[self.app].get("database")
+
+        if None in [endpoint, user, password, database]:
+            return None
+
+        host = endpoint.split(":")[0]
+
+        return PostgreSQL(host=host, user=user, password=password, database=database)
+
+    def update_backend_relation_port(self, port):
+        """Update ports in backend relations to match updated pgbouncer port."""
+        # Skip updates if backend_postgres doesn't exist yet.
+        if not self.backend_postgres:
             return
 
         for relation in self.model.relations.get("db", []):
@@ -315,24 +348,7 @@ class PgBouncerK8sCharm(CharmBase):
             )
 
         if reload_pgbouncer:
-            self.reload_pgbouncer()
-
-    def remove_postgres_endpoints(self, reload_pgbouncer):
-        """Update postgres endpoints in relation config values."""
-        # Skip updates if backend.postgres doesn't exist yet.
-        if not self.backend.postgres:
-            return
-
-        for relation in self.model.relations.get("db", []):
-            self.legacy_db_relation.remove_postgres_endpoints(relation, reload_pgbouncer=False)
-
-        for relation in self.model.relations.get("db-admin", []):
-            self.legacy_db_admin_relation.remove_postgres_endpoints(
-                relation, reload_pgbouncer=False
-            )
-
-        if reload_pgbouncer:
-            self.reload_pgbouncer()
+            self._reload_pgbouncer()
 
     @property
     def unit_pod_hostname(self, name="") -> str:

@@ -142,6 +142,15 @@ class DbProvides(Object):
             join_event.defer()
             return
 
+        try:
+            cfg = self.charm.read_pgb_config()
+        except FileNotFoundError:
+            wait_str = "waiting for pgbouncer to start"
+            logger.warning(wait_str)
+            self.charm.unit.status = WaitingStatus(wait_str)
+            join_event.defer()
+            return
+
         logger.info(f"Setting up {self.relation_name} relation")
         logger.warning(
             f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
@@ -165,6 +174,39 @@ class DbProvides(Object):
             logger.warning("No database name provided in app databag")
             join_event.defer()
             return
+
+        user = self._generate_username(join_event)
+        password = pgb.generate_password()
+
+        # Create user and database in backend postgresql database
+        try:
+            init_msg = f"initialising database and user for {self.relation_name} relation"
+            self.charm.unit.status = MaintenanceStatus(init_msg)
+            logger.info(init_msg)
+
+            self.charm.backend.postgres.create_user(user, password, admin=self.admin)
+            self.charm.backend.postgres.create_database(database, user)
+
+            created_msg = f"database and user for {self.relation_name} relation created"
+            self.charm.unit.status = ActiveStatus(created_msg)
+            logger.info(created_msg)
+        except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
+            err_msg = f"failed to create database or user for {self.relation_name}"
+            logger.error(err_msg)
+            self.charm.unit.status = BlockedStatus(err_msg)
+            return
+>>>>>>> b28e92d6dfa2fed16d7f16faf60ecaa7dfd82677
+
+        # set up auth function
+        self.charm.backend.initialise_auth_function(dbname=database)
+
+        # Create user in pgbouncer config
+        cfg = self.charm.read_pgb_config()
+        cfg.add_user(user, admin=self.admin)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
+
+        # set up auth function
+        self.charm.backend.initialise_auth_function(dbname=database)
 
         # Create user in pgbouncer config
         cfg = self.charm.read_pgb_config()
@@ -322,18 +364,6 @@ class DbProvides(Object):
         # Write config data to charm filesystem
         self.charm.render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
 
-    def remove_postgres_endpoints(self, relation: Relation, reload_pgbouncer: bool = False):
-        """Updates postgres replicas."""
-        database = relation.data[self.charm.app].get("database")
-        if database is None:
-            logger.warning("relation not fully initialised - skipping postgres endpoint deletion")
-            return
-
-        cfg = self.charm.read_pgb_config()
-        cfg["databases"].pop(database, None)
-        cfg["databases"].pop(f"{database}_standby", None)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
-
     def update_databag(self, relation, updates: Dict[str, str]):
         """Updates databag with the given dict."""
         databags = [relation.data[self.charm.unit]]
@@ -351,7 +381,7 @@ class DbProvides(Object):
         """Generates a unique username for this relation."""
         app_name = self.charm.app.name
         relation_id = event.relation.id
-        model_name = self.charm.model.name
+        model_name = self.model.name
         return f"{app_name}_user_id_{relation_id}_{model_name}".replace("-", "_")
 
     def _get_read_only_endpoint(self):
@@ -427,7 +457,7 @@ class DbProvides(Object):
             for relation in self.model.relations.get(relname, []):
                 if relation.id == broken_event.relation.id:
                     continue
-                if relation.data.get(self.charm.app, {}).get("database") == database:
+                if relation.data[self.charm.app].get("database") == database:
                     # There's multiple applications using this database, so don't remove it until
                     # we can guarantee this is the last one.
                     delete_db = False
