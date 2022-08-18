@@ -131,9 +131,11 @@ class PgbConfig(MutableMapping):
         return not self.__eq__(other)
 
     def keys(self):
+        """Returns keys of PgbConfig object."""
         return self.__dict__.keys()
 
     def items(self):
+        """Returns items of PgbConfig object."""
         return self.__dict__.items()
 
     def read_dict(self, input: Dict) -> None:

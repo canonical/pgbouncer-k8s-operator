@@ -9,7 +9,6 @@ TODO example docs
 
 import logging
 
-from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, RelationChangedEvent
 from ops.framework import Object
@@ -43,6 +42,7 @@ class Peers(Object):
 
     @property
     def app_databag(self):
+        """Returns the app databag for the Peer relation."""
         peer_relation = self.model.get_relation(RELATION_NAME)
         if peer_relation is None:
             return None

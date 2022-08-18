@@ -5,6 +5,7 @@ import asyncio
 import logging
 from pathlib import Path
 
+import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 

@@ -12,6 +12,8 @@ from charms.pgbouncer_k8s.v0 import pgb
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
+from constants import INI_PATH, LOG_PATH, USERLIST_PATH
+
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
 
@@ -83,26 +85,29 @@ async def get_backend_user_pass(ops_test, backend_relation):
 
 async def get_cfg(ops_test: OpsTest, unit_name: str) -> pgb.PgbConfig:
     """Gets pgbouncer config from pgbouncer container."""
-    cat = await cat_file_from_unit(ops_test, f"{pgb.PGB_DIR}/pgbouncer.ini", unit_name)
+    cat = await cat_file_from_unit(ops_test, INI_PATH, unit_name)
     return pgb.PgbConfig(cat)
 
 
 async def get_pgb_log(ops_test: OpsTest, unit_name) -> str:
     """Gets pgbouncer logs from pgbouncer container."""
-    return await cat_file_from_unit(ops_test, f"{pgb.PGB_DIR}/pgbouncer.log", unit_name)
+    return await cat_file_from_unit(ops_test, LOG_PATH, unit_name)
 
 
-async def cat_file_from_unit(ops_test: OpsTest, filepath: str, unit_name) -> str:
+async def get_userlist(ops_test: OpsTest, unit_name) -> str:
+    """Gets pgbouncer logs from pgbouncer container."""
+    return await cat_file_from_unit(ops_test, USERLIST_PATH, unit_name)
+
+
+async def cat_file_from_unit(ops_test: OpsTest, filepath: str, unit_name: str) -> str:
     """Gets a file from the pgbouncer container of a pgbouncer application unit."""
-    cat = await ops_test.juju(
-        "ssh",
-        "--container",
-        "pgbouncer",
-        unit_name,
-        "cat",
-        filepath,
-    )
-    return cat[1]
+    cat_cmd = f"ssh --container pgbouncer {unit_name} cat {filepath}"
+    return_code, output, _ = await ops_test.juju(*cat_cmd.split(" "))
+    if return_code != 0:
+        raise ProcessError(
+            "Expected cat command %s to succeed instead it failed: %s", cat_cmd, return_code
+        )
+    return output
 
 
 def wait_for_relation_joined_between(
@@ -152,6 +157,7 @@ def wait_for_relation_removed_between(
 
 
 def relation_exited(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> bool:
+    """Returns true if the relation between endpoint_one and endpoint_two has been removed."""
     for rel in ops_test.model.relations:
         endpoints = [endpoint.name for endpoint in rel.endpoints]
         if endpoint_one not in endpoints and endpoint_two not in endpoints:
@@ -161,6 +167,7 @@ def relation_exited(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> 
 
 async def scale_application(ops_test: OpsTest, application_name: str, scale: int) -> None:
     """Scale a given application to a specific unit count.
+
     Args:
         ops_test: The ops test framework instance
         application_name: The name of the application

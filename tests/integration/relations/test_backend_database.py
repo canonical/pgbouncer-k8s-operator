@@ -15,6 +15,7 @@ from tests.integration.relations.helpers.helpers import (
     get_backend_user_pass,
     get_cfg,
     get_pgb_log,
+    get_userlist,
     scale_application,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
@@ -151,10 +152,3 @@ async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
 @pytest.mark.skip
 async def test_multiple_pgbouncer_connect_to_one_postgres(ops_test: OpsTest):
     assert False
-
-
-async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
-    async with ops_test.fast_forward():
-        await ops_test.model.applications[PG].remove()
-        wait_for_relation_removed_between(ops_test, PG, PGB)
-        await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)

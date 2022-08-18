@@ -8,9 +8,7 @@
 import logging
 import os
 import socket
-from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 
-from typing import Dict
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent, PebbleReadyEvent
@@ -19,16 +17,12 @@ from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
 from ops.pebble import Layer, PathError
 
+from constants import USERLIST_PATH, INI_PATH, PG_USER, PGB
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
 from relations.peers import Peers
 
 logger = logging.getLogger(__name__)
-
-PGB = "pgbouncer"
-PG_USER = "postgres"
-PGB_DIR = "/var/lib/postgresql/pgbouncer"
-INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
 
 
 class PgBouncerK8sCharm(CharmBase):
@@ -179,7 +173,8 @@ class PgBouncerK8sCharm(CharmBase):
             self.reload_pgbouncer()
 
     def render_auth_file(self, auth_file: str, reload_pgbouncer=False):
-        self.push_file(INI_PATH, auth_file, 0o777)
+        """Renders the given auth_file to the correct location."""
+        self.push_file(USERLIST_PATH, auth_file, 0o777)
         logger.info("pushed new auth file to pgbouncer container")
 
         self.peers.update_auth_file(auth_file)
@@ -280,51 +275,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         TODO this method and the two below it are weird, fix them up
         """
-        backend_relation = self.model.get_relation(BACKEND_RELATION_NAME)
-        if not backend_relation:
-            return None
-        else:
-            return backend_relation
-
-    @property
-    def backend_relation_app_databag(self) -> Dict:
-        """Wrapper around accessing the remote application databag for the backend relation.
-
-        Returns None if backend_relation is none.
-
-        Since we can trigger db-relation-changed on backend-changed, we need to be able to easily
-        access the backend app relation databag.
-        """
-        if self.backend_relation:
-            for key, databag in self.backend_relation.data.items():
-                if isinstance(key, Application) and key != self.app:
-                    return databag
-
-        return None
-
-    @property
-    def backend_postgres(self) -> PostgreSQL:
-        """Returns PostgreSQL representation of backend database, as defined in relation.
-
-        Returns None if backend relation is not fully initialised.
-        """
-        if not self.backend_relation:
-            return None
-
-        endpoint = self.backend_relation_app_databag.get("endpoints")
-        user = self.backend_relation_app_databag.get("username")
-        password = self.backend_relation_app_databag.get("password")
-        database = self.backend_relation.data[self.app].get("database")
-
-        if None in [endpoint, user, password, database]:
-            return None
-
-        host = endpoint.split(":")[0]
-
-        return PostgreSQL(host=host, user=user, password=password, database=database)
-
-    def update_backend_relation_port(self, port):
-        """Update ports in backend relations to match updated pgbouncer port."""
         # Skip updates if backend_postgres doesn't exist yet.
         if not self.backend_postgres:
             return
@@ -335,7 +285,7 @@ class PgBouncerK8sCharm(CharmBase):
         for relation in self.model.relations.get("db-admin", []):
             self.legacy_db_admin_relation.update_port(relation, port)
 
-    def update_postgres_endpoints(self, reload_pgbouncer):
+    def update_postgres_endpoints(self, reload_pgbouncer=False):
         """Update postgres endpoints in relation config values."""
         # Skip updates if backend.postgres doesn't exist yet.
         if not self.backend.postgres:
