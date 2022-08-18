@@ -104,8 +104,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.delete_file")
-    @patch("charm.PgBouncerK8sCharm.remove_postgres_endpoints")
-    def test_relation_broken(self, _remove_endpoints, _delete_file, _render, _cfg, _postgres):
+    def test_relation_broken(self, _delete_file, _render, _cfg, _postgres):
         postgres = _postgres.return_value
         postgres.user = "test_user"
         cfg = _cfg.return_value
@@ -121,7 +120,6 @@ class TestBackendDatabaseRelation(unittest.TestCase):
 
         _render.assert_called_with(cfg)
         _delete_file.assert_called_with(f"{PGB_DIR}/userlist.txt")
-        _remove_endpoints.assert_called()
 
     @patch(
         "relations.backend_database.BackendDatabaseRequires.auth_user",

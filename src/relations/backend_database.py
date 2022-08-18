@@ -43,8 +43,6 @@ from typing import Dict
 import psycopg2
 from charms.data_platform_libs.v0.database_requires import (
     DatabaseCreatedEvent,
-    DatabaseEndpointsChangedEvent,
-    DatabaseReadOnlyEndpointsChangedEvent,
     DatabaseRequires,
 )
 from charms.pgbouncer_k8s.v0 import pgb

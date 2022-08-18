@@ -8,7 +8,9 @@
 import logging
 import os
 import socket
+from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 
+from typing import Dict
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, ConfigChangedEvent, InstallEvent, PebbleReadyEvent
@@ -176,7 +178,7 @@ class PgBouncerK8sCharm(CharmBase):
         if reload_pgbouncer:
             self.reload_pgbouncer()
 
-    def render_auth_file(self, auth_file: str, reload_pgbouncer = False):
+    def render_auth_file(self, auth_file: str, reload_pgbouncer=False):
         self.push_file(INI_PATH, auth_file, 0o777)
         logger.info("pushed new auth file to pgbouncer container")
 

@@ -134,6 +134,9 @@ class DbProvides(Object):
         If the backend relation is fully initialised and available, we generate the proposed
         database and create a user on the postgres charm, and add preliminary data to the databag.
         """
+        if not self.charm.unit.is_leader():
+            return
+
         if not self.charm.backend.postgres:
             # We can't relate an app to the backend database without a backend postgres relation
             wait_str = "waiting for backend-database relation to connect"
@@ -195,15 +198,6 @@ class DbProvides(Object):
             logger.error(err_msg)
             self.charm.unit.status = BlockedStatus(err_msg)
             return
->>>>>>> b28e92d6dfa2fed16d7f16faf60ecaa7dfd82677
-
-        # set up auth function
-        self.charm.backend.initialise_auth_function(dbname=database)
-
-        # Create user in pgbouncer config
-        cfg = self.charm.read_pgb_config()
-        cfg.add_user(user, admin=self.admin)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
 
         # set up auth function
         self.charm.backend.initialise_auth_function(dbname=database)
@@ -221,34 +215,6 @@ class DbProvides(Object):
                 "database": database,
             },
         )
-
-        if not self.charm.unit.is_leader():
-            return
-
-        user = self._generate_username(join_event)
-        password = pgb.generate_password()
-
-        # Create user and database in backend postgresql database
-        try:
-            init_msg = f"initialising database and user for {self.relation_name} relation"
-            self.charm.unit.status = MaintenanceStatus(init_msg)
-            logger.info(init_msg)
-
-            self.charm.backend.postgres.create_user(user, password, admin=self.admin)
-            self.charm.backend.postgres.create_database(database, user)
-
-            created_msg = f"database and user for {self.relation_name} relation created"
-            self.charm.unit.status = ActiveStatus(created_msg)
-            logger.info(created_msg)
-        except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
-            err_msg = f"failed to create database or user for {self.relation_name}"
-            logger.error(err_msg)
-            self.charm.unit.status = BlockedStatus(err_msg)
-            return
-
-        # set up auth function
-        self.charm.backend.initialise_auth_function(dbname=database)
-
 
     def _on_relation_changed(self, change_event: RelationChangedEvent):
         """Handle db-relation-changed event.

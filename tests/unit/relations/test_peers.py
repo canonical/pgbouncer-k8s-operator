@@ -2,17 +2,13 @@
 # See LICENSE file for licensing details.
 
 import unittest
-from unittest.mock import patch, call, MagicMock, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, call, patch
 
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
-from lib.charms.pgbouncer_k8s.v0.pgb import (
-    PgbConfig,
-    DEFAULT_CONFIG
-)
-
-from relations.peers import CFG_FILE_DATABAG_KEY, AUTH_FILE_DATABAG_KEY
+from lib.charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
+from relations.peers import AUTH_FILE_DATABAG_KEY, CFG_FILE_DATABAG_KEY
 
 
 class TestDb(unittest.TestCase):
@@ -25,12 +21,13 @@ class TestDb(unittest.TestCase):
         self.app = self.charm.app.name
         self.unit = self.charm.unit.name
 
-
     @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.render_auth_file")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
-    def test_on_peers_changed(self, reload_pgbouncer, render_auth_file, render_pgb_config, app_databag):
+    def test_on_peers_changed(
+        self, reload_pgbouncer, render_auth_file, render_pgb_config, app_databag
+    ):
         databag = {}
         app_databag.return_value = databag
 
@@ -62,4 +59,3 @@ class TestDb(unittest.TestCase):
         render_pgb_config.assert_called_once()
         render_auth_file.assert_called_once()
         reload_pgbouncer.assert_called_once()
-
