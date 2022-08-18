@@ -10,7 +10,7 @@ import yaml
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
-from tests.integration.relations.helpers.helpers import (
+from tests.integration.helpers.helpers import (
     get_app_relation_databag,
     get_backend_user_pass,
     get_cfg,
@@ -20,7 +20,7 @@ from tests.integration.relations.helpers.helpers import (
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
 )
-from tests.integration.relations.helpers.postgresql_helpers import (
+from tests.integration.helpers.postgresql_helpers import (
     check_database_users_existence,
 )
 
@@ -147,8 +147,3 @@ async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
                 apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
             ),
         )
-
-
-@pytest.mark.skip
-async def test_multiple_pgbouncer_connect_to_one_postgres(ops_test: OpsTest):
-    assert False

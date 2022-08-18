@@ -18,6 +18,7 @@ markers = [
     "dev: a quick development marker to run one test",
     "standalone: integration tests that relate to standalone charm function",
     "backend: integration tests that test backend relation to postgresql",
+    "scaling: integration tests that test pgbouncer scaling",
     "legacy_relation: integration tests that test legacy client relations",
 ]
 
