@@ -16,6 +16,9 @@
 
 This charm library provides common pgbouncer-specific features for the pgbouncer machine and
 Kubernetes charms, including automatic config management.
+
+TODO add in example pgb config file
+
 """
 
 

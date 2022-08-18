@@ -164,17 +164,17 @@ class PgBouncerK8sCharm(CharmBase):
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
         """
-        self.push_file(INI_PATH, config.render(), 0o600)
+        self.push_file(INI_PATH, config.render(), 0o400)
         logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
 
-        self.peers.update_cfg(config.render())
+        self.peers.update_cfg(config)
 
         if reload_pgbouncer:
             self.reload_pgbouncer()
 
     def render_auth_file(self, auth_file: str, reload_pgbouncer=False):
         """Renders the given auth_file to the correct location."""
-        self.push_file(USERLIST_PATH, auth_file, 0o777)
+        self.push_file(USERLIST_PATH, auth_file, 0o400)
         logger.info("pushed new auth file to pgbouncer container")
 
         self.peers.update_auth_file(auth_file)
