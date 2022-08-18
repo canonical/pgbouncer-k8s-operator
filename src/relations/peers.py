@@ -29,6 +29,9 @@ class Peers(Object):
 
     Hook events observed:
         - relation-changed
+
+    TODO swapping config files around isn't really going to cut it. I need to swap the relevant
+    variables around, and nothing else, and let the update_endpoints hooks sort out the nuances.
     """
 
     def __init__(self, charm: CharmBase):
@@ -56,6 +59,8 @@ class Peers(Object):
         if auth_file := self.app_databag.get(AUTH_FILE_DATABAG_KEY):
             self.charm.render_auth_file(auth_file)
 
+        self.charm.update_postgres_endpoints()
+
         if cfg is not None or auth_file is not None:
             self.charm.reload_pgbouncer()
 
@@ -66,7 +71,7 @@ class Peers(Object):
 
         self.app_databag[CFG_FILE_DATABAG_KEY] = cfg.render()
 
-    def update_auth_file(self, auth_file:str) -> None:
+    def update_auth_file(self, auth_file: str) -> None:
         """Writes auth_file to app databag if leader."""
         if not self.charm.unit.is_leader():
             return
