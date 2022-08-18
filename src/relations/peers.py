@@ -12,6 +12,8 @@ import logging
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, RelationChangedEvent
 from ops.framework import Object
+# TODO consider writing a PgbConfig.json() function
+import json
 
 RELATION_NAME = "pgb-peers"
 CFG_FILE_DATABAG_KEY = "cfg_file"
@@ -48,7 +50,7 @@ class Peers(Object):
             return None
         return peer_relation.data[self.charm.app]
 
-    def _on_peers_changed(self, _: RelationChangedEvent):
+    def _on_peers_changed(self, _):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
         if self.charm.unit.is_leader():
             return
@@ -73,7 +75,7 @@ class Peers(Object):
             # peer relation not yet initialised
             return
 
-        self.app_databag[CFG_FILE_DATABAG_KEY] = cfg.render()
+        self.app_databag[CFG_FILE_DATABAG_KEY] = json.loads(dict(cfg))
 
     def update_auth_file(self, auth_file: str) -> None:
         """Writes auth_file to app databag if leader."""
