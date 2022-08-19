@@ -75,7 +75,7 @@ class Peers(Object):
             # peer relation not yet initialised
             return
 
-        self.app_databag[CFG_FILE_DATABAG_KEY] = cfg.to_json()
+        self.app_databag[CFG_FILE_DATABAG_KEY] = cfg.render()
 
     def update_auth_file(self, auth_file: str) -> None:
         """Writes auth_file to app databag if leader."""

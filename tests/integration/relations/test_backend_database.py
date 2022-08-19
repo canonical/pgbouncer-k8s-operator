@@ -98,7 +98,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
 @pytest.mark.backend
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
-        relation = await ops_test.model.relate(f"{PGB}:{RELATION}", f"{PG}:database")
+        relation = await ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database")
         wait_for_relation_joined_between(ops_test, PG, PGB)
         await asyncio.gather(
             ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000),

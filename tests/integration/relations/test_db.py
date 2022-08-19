@@ -68,7 +68,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 wait_for_exact_units=3,
             ),
         )
-        backend_relation = await ops_test.model.relate(f"{PGB}:backend-database", f"{PG}:database")
+        backend_relation = await ops_test.model.add_relation(f"{PGB}:backend-database", f"{PG}:database")
         wait_for_relation_joined_between(ops_test, PGB, PG)
         await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
 
@@ -82,7 +82,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             pg_user_password=pgb_password,
         )
 
-        finos_relation = await ops_test.model.relate(f"{PGB}:db", f"{FINOS_WALTZ}:db")
+        finos_relation = await ops_test.model.add_relation(f"{PGB}:db", f"{FINOS_WALTZ}:db")
         wait_for_relation_joined_between(ops_test, PGB, FINOS_WALTZ)
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, FINOS_WALTZ], status="active", timeout=1000
@@ -101,7 +101,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             raise_on_blocked=False,
             timeout=1000,
         )
-        another_finos_relation = await ops_test.model.relate(
+        another_finos_relation = await ops_test.model.add_relation(
             f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db"
         )
         wait_for_relation_joined_between(ops_test, PGB, ANOTHER_FINOS_WALTZ)

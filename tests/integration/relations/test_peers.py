@@ -28,11 +28,12 @@ METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
 PG = "postgresql-k8s"
 RELATION = "backend-database"
+FINOS_WALTZ = "finos-waltz"
 
 
 @pytest.mark.scaling
 @pytest.mark.abort_on_fail
-async def test_scale_pgbouncer(ops_test: OpsTest):
+async def deploy(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
     charm = await ops_test.build_charm(".")
@@ -41,23 +42,35 @@ async def test_scale_pgbouncer(ops_test: OpsTest):
     }
     async with ops_test.fast_forward():
         await asyncio.gather(
-            ops_test.model.deploy(charm, resources=resources, application_name=PGB, num_units=1),
+            ops_test.model.deploy(charm, resources=resources, application_name=PGB, num_units=3),
             # Edge 5 is the new postgres charm
             ops_test.model.deploy(PG, channel="edge", trust=True, num_units=3),
+            ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
+            ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database"),
+            ops_test.model.add_relation(f"{PGB}:db", f"{FINOS_WALTZ}:db"),
         )
 
-        # TODO scale up, check stuff, scale down, check more stuff
+        wait_for_relation_joined_between(ops_test, PG, PGB)
+        wait_for_relation_joined_between(ops_test, PGB, FINOS_WALTZ)
+
+        await asyncio.gather(
+            ops_test.model.wait_for_idle(apps=[PGB, FINOS_WALTZ], status="active", timeout=1000),
+            ops_test.model.wait_for_idle(
+                apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
+            ),
+        )
+
+@pytest.mark.scaling
+async def test_scale_pgb_up(ops_test: OpsTest):
+    """Test we can scale pgbouncer up without any issues."""
 
 
 @pytest.mark.scaling
-@pytest.mark.skip
-async def test_scale_pgbouncer_with_postgres(ops_test: OpsTest):
-    """Test that the pgbouncer and postgres charms can relate to one another."""
-    # Build, deploy, and relate charms.
-    async with ops_test.fast_forward():
-        await asyncio.gather(
-            # Edge is the new postgres charm
-            ops_test.model.deploy(PG, channel="edge", trust=True, num_units=3),
-        )
+async def test_operation_while_scaled_up(ops_test: OpsTest):
+    """Test we can scale pgbouncer up without any issues."""
 
-        # TODO scale up, check stuff, scale down, check more stuff
+
+@pytest.mark.scaling
+async def test_scale_pgb_down(ops_test: OpsTest):
+    """Test we can scale pgbouncer down without any issues."""
+
