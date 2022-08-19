@@ -11,11 +11,6 @@ from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from tests.integration.helpers.helpers import (
-    get_app_relation_databag,
-    get_backend_user_pass,
-    get_cfg,
-    get_pgb_log,
-    get_userlist,
     scale_application,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
@@ -32,20 +27,32 @@ FINOS_WALTZ = "finos-waltz"
 
 
 @pytest.mark.scaling
-@pytest.mark.abort_on_fail
-async def deploy(ops_test: OpsTest):
-    """Test that the pgbouncer and postgres charms can relate to one another."""
+@pytest.mark.order(1)
+async def test_deploy_at_scale(ops_test):
     # Build, deploy, and relate charms.
     charm = await ops_test.build_charm(".")
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
     async with ops_test.fast_forward():
+        await ops_test.model.deploy(charm, resources=resources, application_name=PGB, num_units=3)
+        ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000),
+
+
+@pytest.mark.scaling
+@pytest.mark.abort_on_fail
+@pytest.mark.order(2)
+async def setup_test_environment(ops_test: OpsTest):
+    """Test that the pgbouncer and postgres charms can relate to one another."""
+    # Build, deploy, and relate charms.
+    async with ops_test.fast_forward():
         await asyncio.gather(
-            ops_test.model.deploy(charm, resources=resources, application_name=PGB, num_units=3),
             # Edge 5 is the new postgres charm
             ops_test.model.deploy(PG, channel="edge", trust=True, num_units=3),
             ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
+        )
+
+        await asyncio.gather(
             ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database"),
             ops_test.model.add_relation(f"{PGB}:db", f"{FINOS_WALTZ}:db"),
         )
@@ -61,16 +68,32 @@ async def deploy(ops_test: OpsTest):
         )
 
 @pytest.mark.scaling
-async def test_scale_pgb_up(ops_test: OpsTest):
-    """Test we can scale pgbouncer up without any issues."""
+@pytest.mark.order(3)
+async def test_scaling(ops_test: OpsTest):
+    """Test data is replicated to new units after a scale up."""
+    # Ensure the initial number of units in the application.
+    initial_scale = 3
+    async with ops_test.fast_forward():
+        await scale_application(ops_test, PGB, initial_scale)
+
+        # Scale down the application.
+        await scale_application(ops_test, PGB, initial_scale - 1)
+        # TODO test config
 
 
-@pytest.mark.scaling
-async def test_operation_while_scaled_up(ops_test: OpsTest):
-    """Test we can scale pgbouncer up without any issues."""
+@pytest.mark.order(4)
+async def test_exit_relations(ops_test: OpsTest):
+    """Test that we can exit relations with multiple units without breaking anything."""
+    async with ops_test.fast_forward():
+        await ops_test.model.remove_application(FINOS_WALTZ)
+        wait_for_relation_removed_between(ops_test, PGB, FINOS_WALTZ)
+        await ops_test.model.wait_for_idle(
+            apps=[PG, PGB], status="active", timeout=1000
+        )
 
-
-@pytest.mark.scaling
-async def test_scale_pgb_down(ops_test: OpsTest):
-    """Test we can scale pgbouncer down without any issues."""
+        await ops_test.model.remove_application(PG)
+        wait_for_relation_removed_between(ops_test, PG, PGB)
+        await ops_test.model.wait_for_idle(
+            apps=[PG], status="active", timeout=1000
+        )
 

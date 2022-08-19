@@ -50,6 +50,7 @@ class PgBouncerK8sCharm(CharmBase):
 
     def _on_install(self, event: InstallEvent) -> None:
         """Renders basic PGB config."""
+
         container = self.unit.get_container(PGB)
         if not container.can_connect():
             logger.debug(
@@ -62,6 +63,9 @@ class PgBouncerK8sCharm(CharmBase):
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
+        if not self.unit.is_leader():
+            return
+
         try:
             config = self.read_pgb_config()
         except FileNotFoundError as err:
@@ -92,9 +96,8 @@ class PgBouncerK8sCharm(CharmBase):
         if services != layer["services"]:
             container.add_layer(PGB, layer, combine=True)
             logging.info("Added layer 'pgbouncer' to pebble plan")
-            container.restart(PGB)
-            logging.info(f"restarted {PGB} service")
-        self.unit.status = ActiveStatus()
+
+        self.reload_pgbouncer()
 
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
@@ -231,8 +234,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         Pgbouncer will not apply configuration changes without reloading, so this must be called
         after each time config files are changed.
-
-        # TODO reload pgbouncer without restarting container
         """
         self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
         logger.info("reloading pgbouncer application")

@@ -40,7 +40,8 @@ class Peers(Object):
 
         self.charm = charm
 
-        self.framework.observe(charm.on[RELATION_NAME].relation_changed, self._on_peers_changed)
+        self.framework.observe(charm.on[RELATION_NAME].relation_joined, self._on_changed)
+        self.framework.observe(charm.on[RELATION_NAME].relation_changed, self._on_changed)
 
     @property
     def app_databag(self):
@@ -50,7 +51,7 @@ class Peers(Object):
             return None
         return peer_relation.data[self.charm.app]
 
-    def _on_peers_changed(self, _):
+    def _on_changed(self, _):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
         if self.charm.unit.is_leader():
             return

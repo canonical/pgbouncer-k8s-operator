@@ -33,21 +33,21 @@ class TestDb(unittest.TestCase):
 
         # We don't want to write anything if we're the leader
         self.harness.set_leader(True)
-        self.charm.peers._on_peers_changed(MagicMock())
+        self.charm.peers._on_changed(MagicMock())
         render_auth_file.assert_not_called()
         render_pgb_config.assert_not_called()
         reload_pgbouncer.assert_not_called()
 
         # Don't write anything if nothing is available to write
         self.harness.set_leader(False)
-        self.charm.peers._on_peers_changed(MagicMock())
+        self.charm.peers._on_changed(MagicMock())
         render_pgb_config.assert_not_called()
         render_auth_file.assert_not_called()
         reload_pgbouncer.assert_not_called()
 
         # Assert that we're reloading pgb even if we're only changing one thing
         databag[CFG_FILE_DATABAG_KEY] = PgbConfig(DEFAULT_CONFIG).render()
-        self.charm.peers._on_peers_changed(MagicMock())
+        self.charm.peers._on_changed(MagicMock())
         render_pgb_config.assert_called_once()
         render_auth_file.assert_not_called()
         reload_pgbouncer.assert_called_once()
@@ -55,7 +55,7 @@ class TestDb(unittest.TestCase):
         reload_pgbouncer.reset_mock()
 
         databag[AUTH_FILE_DATABAG_KEY] = '"user" "pass"'
-        self.charm.peers._on_peers_changed(MagicMock())
+        self.charm.peers._on_changed(MagicMock())
         render_pgb_config.assert_called_once()
         render_auth_file.assert_called_once()
         reload_pgbouncer.assert_called_once()
