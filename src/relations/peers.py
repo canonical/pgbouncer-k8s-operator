@@ -7,13 +7,13 @@ Example:
 TODO example docs
 """
 
+# TODO consider writing a PgbConfig.json() function
+import json
 import logging
 
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, RelationChangedEvent
 from ops.framework import Object
-# TODO consider writing a PgbConfig.json() function
-import json
 
 RELATION_NAME = "pgb-peers"
 CFG_FILE_DATABAG_KEY = "cfg_file"
@@ -75,7 +75,7 @@ class Peers(Object):
             # peer relation not yet initialised
             return
 
-        self.app_databag[CFG_FILE_DATABAG_KEY] = json.loads(dict(cfg))
+        self.app_databag[CFG_FILE_DATABAG_KEY] = cfg.to_json()
 
     def update_auth_file(self, auth_file: str) -> None:
         """Writes auth_file to app databag if leader."""

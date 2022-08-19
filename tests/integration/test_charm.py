@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
 
+
 @pytest.mark.dev
 @pytest.mark.standalone
 @pytest.mark.abort_on_fail
@@ -32,6 +33,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
             application_name=PGB,
         )
         await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)
+
 
 @pytest.mark.dev
 @pytest.mark.standalone

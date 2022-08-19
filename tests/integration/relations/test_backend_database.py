@@ -20,9 +20,7 @@ from tests.integration.helpers.helpers import (
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
 )
-from tests.integration.helpers.postgresql_helpers import (
-    check_database_users_existence,
-)
+from tests.integration.helpers.postgresql_helpers import check_database_users_existence
 
 logger = logging.getLogger(__name__)
 

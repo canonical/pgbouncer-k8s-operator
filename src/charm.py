@@ -17,7 +17,7 @@ from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
 from ops.pebble import Layer, PathError
 
-from constants import USERLIST_PATH, INI_PATH, PG_USER, PGB
+from constants import INI_PATH, PG_USER, PGB, USERLIST_PATH
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
 from relations.peers import Peers
@@ -275,8 +275,8 @@ class PgBouncerK8sCharm(CharmBase):
 
         TODO this method and the two below it are weird, fix them up
         """
-        # Skip updates if backend_postgres doesn't exist yet.
-        if not self.backend_postgres:
+        # Skip updates if backend.postgres doesn't exist yet.
+        if not self.backend.postgres:
             return
 
         for relation in self.model.relations.get("db", []):

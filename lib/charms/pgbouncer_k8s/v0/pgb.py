@@ -17,12 +17,39 @@
 This charm library provides common pgbouncer-specific features for the pgbouncer machine and
 Kubernetes charms, including automatic config management.
 
-TODO add in example pgb config file
+The following is an example of a pgbouncer.ini config file output by PgbConfig.render():
 
-"""
+[databases]
+discourse-k8s = host=postgresql-k8s-primary.test-db-admin-ipve.svc.cluster.local dbname=discourse-k8s port=5432
+discourse-k8s_standby = host=postgresql-k8s-replicas.test-db-admin-ipve.svc.cluster.local dbname=discourse-k8s port=5432
+discourse-charmers-discourse-k8s = host=postgresql-k8s-primary.test-db-admin-ipve.svc.cluster.local dbname=discourse-charmers-discourse-k8s port=5432
+discourse-charmers-discourse-k8s_standby = host=postgresql-k8s-replicas.test-db-admin-ipve.svc.cluster.local dbname=discourse-charmers-discourse-k8s port=5432
 
+[pgbouncer]
+listen_addr = *
+listen_port = 5432
+logfile = /var/lib/postgresql/pgbouncer/pgbouncer.log
+pidfile = /var/lib/postgresql/pgbouncer/pgbouncer.pid
+admin_users = relation_id_1,pgbouncer_k8s_user_id_2_test_db_admin_ipve,pgbouncer_k8s_user_id_4_test_db_admin_ipve
+stats_users =
+auth_type = md5
+user = postgres
+max_client_conn = 10000
+ignore_startup_parameters = extra_float_digits
+so_reuseport = 1
+unix_socket_dir = /var/lib/postgresql/pgbouncer
+pool_mode = session
+max_db_connections = 100
+default_pool_size = 13
+min_pool_size = 7
+reserve_pool_size = 7
+auth_user = pgbouncer_auth_relation_id_1
+auth_query = SELECT username, password FROM pgbouncer_auth_relation_id_1.get_auth($1)
+
+"""  # noqa: W505
 
 import io
+import json
 import logging
 import math
 import re
@@ -140,6 +167,14 @@ class PgbConfig(MutableMapping):
     def items(self):
         """Returns items of PgbConfig object."""
         return self.__dict__.items()
+
+    def to_json(self):
+        """Returns json string representation of pgbouncer object"""
+        return json.dumps(dict(self))
+
+    def from_json(self, json_str: str):
+        """Initialises object from json string representation"""
+        self.update(json.loads(json_str))
 
     def read_dict(self, input: Dict) -> None:
         """Populates this object from a dictionary.
