@@ -82,4 +82,21 @@ jobs:
         with:
           app: pgbouncer-k8s
 
-
+  integration-scaling:
+    name: Integration tests for scaling pgbouncer (microk8s)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup operator environment
+      # This part sets the model name to "testing" (used in test run and logdump)
+        uses: charmed-kubernetes/actions-operator@main
+        with:
+          provider: microk8s
+      - name: Run integration tests
+        run: tox -e scaling-integration
+      - name: Dump logs
+        uses: canonical/charm-logdump-action@main
+        if: failure()
+        with:
+          app: pgbouncer-k8s
