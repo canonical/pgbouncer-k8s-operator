@@ -375,9 +375,7 @@ class PgbConfig(MutableMapping):
         self[pgb]["reserve_pool_size"] = str(math.ceil(effective_db_connections / 4))
 
     def add_user(self, user: str, admin: bool = False, stats: bool = False):
-        """Adds a user.
-
-        Users are added to userlist.txt and pgbouncer.ini config files
+        """Adds a user to the config.
 
         Args:
             user: the username for the intended user
@@ -393,7 +391,7 @@ class PgbConfig(MutableMapping):
             self[PGB]["stats_users"] = stats_users.union({user})
 
     def remove_user(self, user: str):
-        """Removes a user from config files.
+        """Removes a user from config.
 
         Args:
             user: the username for the intended user.
