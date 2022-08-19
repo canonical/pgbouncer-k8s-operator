@@ -36,7 +36,7 @@ async def test_deploy_at_scale(ops_test):
     }
     async with ops_test.fast_forward():
         await ops_test.model.deploy(charm, resources=resources, application_name=PGB, num_units=3)
-        ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000),
+        await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000),
 
 
 @pytest.mark.scaling

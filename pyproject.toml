@@ -14,11 +14,10 @@ log_cli_level = "INFO"
 asyncio_mode = "auto"
 markers = [
     "smoke: quick integration tests that can be run to quickly verify that the charm builds and deploys ok.",
-    "legacy_relations: integration tests that are dedicated to the legacy relations db, db-admin, and backend-db-admin.",
-    "dev: a quick development marker to run one test",
-    "standalone: integration tests that relate to standalone charm function",
-    "backend: integration tests that test backend relation to postgresql",
-    "scaling: integration tests that test pgbouncer scaling",
+    "dev: a quick development marker to run selected tests",
+    "standalone: integration tests for standalone charm function",
+    "backend: integration tests for backend relation to postgresql",
+    "scaling: integration tests for pgbouncer scaling",
     "legacy_relation: integration tests that test legacy client relations",
 ]
 

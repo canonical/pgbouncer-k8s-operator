@@ -59,6 +59,11 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
+        if not self.unit.is_leader():
+            # While we could create a config so we can start to process something, we want to
+            # ensure config is handed down from leader nodes and edited to match follower nodes.
+            return
+
         self.render_pgb_config(PgbConfig(pgb.DEFAULT_CONFIG))
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
@@ -272,10 +277,7 @@ class PgBouncerK8sCharm(CharmBase):
     # =====================
 
     def update_backend_relation_port(self, port):
-        """Update ports in backend relations to match updated pgbouncer port.
-
-        TODO this method and the two below it are weird, fix them up
-        """
+        """Update ports in backend relations to match updated pgbouncer port."""
         # Skip updates if backend.postgres doesn't exist yet.
         if not self.backend.postgres:
             return

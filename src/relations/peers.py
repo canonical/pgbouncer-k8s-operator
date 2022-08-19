@@ -12,7 +12,7 @@ import json
 import logging
 
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
-from ops.charm import CharmBase, RelationChangedEvent
+from ops.charm import CharmBase, RelationCreatedEvent
 from ops.framework import Object
 
 RELATION_NAME = "pgb-peers"
@@ -40,6 +40,7 @@ class Peers(Object):
 
         self.charm = charm
 
+        self.framework.observe(charm.on[RELATION_NAME].relation_created, self._on_created)
         self.framework.observe(charm.on[RELATION_NAME].relation_joined, self._on_changed)
         self.framework.observe(charm.on[RELATION_NAME].relation_changed, self._on_changed)
 
@@ -50,6 +51,21 @@ class Peers(Object):
         if peer_relation is None:
             return None
         return peer_relation.data[self.charm.app]
+
+    def _on_created(self, event: RelationCreatedEvent):
+        if not self.charm.unit.is_leader():
+            return
+
+        try:
+            cfg = self.read_pgb_config()
+        except FileNotFoundError:
+            # If there's no config, the charm start hook hasn't fired yet, so defer until it's
+            # available.
+            event.defer()
+            return
+
+        self.update_cfg(cfg)
+
 
     def _on_changed(self, _):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
