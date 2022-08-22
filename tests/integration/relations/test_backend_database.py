@@ -10,7 +10,7 @@ import yaml
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
-from tests.integration.relations.helpers.helpers import (
+from tests.integration.helpers.helpers import (
     get_app_relation_databag,
     get_backend_user_pass,
     get_cfg,
@@ -18,9 +18,7 @@ from tests.integration.relations.helpers.helpers import (
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
 )
-from tests.integration.relations.helpers.postgresql_helpers import (
-    check_database_users_existence,
-)
+from tests.integration.helpers.postgresql_helpers import check_database_users_existence
 
 logger = logging.getLogger(__name__)
 
