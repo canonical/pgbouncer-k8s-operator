@@ -57,7 +57,7 @@ class Peers(Object):
             return
 
         try:
-            cfg = self.read_pgb_config()
+            cfg = self.charm.read_pgb_config()
         except FileNotFoundError:
             # If there's no config, the charm start hook hasn't fired yet, so defer until it's
             # available.
