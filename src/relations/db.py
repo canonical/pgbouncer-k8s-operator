@@ -341,9 +341,7 @@ class DbProvides(Object):
             f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
         )
 
-        self.update_databag({
-            "allowed-units": self.get_allowed_units(departed_event.relation)
-        })
+        self.update_databag({"allowed-units": self.get_allowed_units(departed_event.relation)})
 
     def _on_relation_broken(self, broken_event: RelationBrokenEvent):
         """Handle db-relation-broken event.

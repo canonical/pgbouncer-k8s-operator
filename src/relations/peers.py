@@ -12,7 +12,7 @@ import json
 import logging
 
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
-from ops.charm import CharmBase, RelationCreatedEvent, RelationChangedEvent
+from ops.charm import CharmBase, RelationChangedEvent, RelationCreatedEvent
 from ops.framework import Object
 
 RELATION_NAME = "pgb-peers"
@@ -67,7 +67,6 @@ class Peers(Object):
             # update userlist only if backend relation exists.
             self.update_auth_file(self.charm.read_auth_file())
 
-
     def _on_changed(self, event: RelationChangedEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
         if self.charm.unit.is_leader():
@@ -89,7 +88,7 @@ class Peers(Object):
             self.charm.render_auth_file(auth_file)
 
         if cfg is not None or auth_file is not None:
-            #self.charm.update_postgres_endpoints(reload_pgbouncer=True)
+            # self.charm.update_postgres_endpoints(reload_pgbouncer=True)
             self.charm.reload_pgbouncer()
 
     def update_cfg(self, cfg: PgbConfig) -> None:

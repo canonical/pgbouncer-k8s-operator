@@ -68,6 +68,7 @@ async def setup_test_environment(ops_test: OpsTest):
             ),
         )
 
+
 @pytest.mark.scaling
 @pytest.mark.order(3)
 async def test_scaling(ops_test: OpsTest):
@@ -89,13 +90,8 @@ async def test_exit_relations(ops_test: OpsTest):
     async with ops_test.fast_forward():
         await ops_test.model.remove_application(FINOS_WALTZ)
         wait_for_relation_removed_between(ops_test, PGB, FINOS_WALTZ)
-        await ops_test.model.wait_for_idle(
-            apps=[PG, PGB], status="active", timeout=1000
-        )
+        await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
 
         await ops_test.model.remove_application(PG)
         wait_for_relation_removed_between(ops_test, PG, PGB)
-        await ops_test.model.wait_for_idle(
-            apps=[PG], status="active", timeout=1000
-        )
-
+        await ops_test.model.wait_for_idle(apps=[PG], status="active", timeout=1000)

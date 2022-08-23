@@ -17,7 +17,7 @@ from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
 from ops.pebble import Layer, PathError
 
-from constants import INI_PATH, PG_USER, PGB, USERLIST_PATH, AUTH_FILE_PATH
+from constants import AUTH_FILE_PATH, INI_PATH, PG_USER, PGB
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
 from relations.peers import Peers
@@ -256,7 +256,7 @@ class PgBouncerK8sCharm(CharmBase):
 
     def render_auth_file(self, auth_file: str, reload_pgbouncer=False):
         """Renders the given auth_file to the correct location."""
-        self.push_file(USERLIST_PATH, auth_file, 0o400)
+        self.push_file(AUTH_FILE_PATH, auth_file, 0o400)
         logger.info("pushed new auth file to pgbouncer container")
 
         self.peers.update_auth_file(auth_file)

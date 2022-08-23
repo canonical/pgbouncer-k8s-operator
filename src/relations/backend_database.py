@@ -47,14 +47,14 @@ from charms.data_platform_libs.v0.database_requires import (
 )
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL
-from ops.charm import CharmBase, RelationDepartedEvent, RelationBrokenEvent
+from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
 from ops.model import Application, BlockedStatus, Relation
 
 RELATION_NAME = "backend-database"
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
 PGB_DB = "pgbouncer"
-USERLIST_PATH = f"{PGB_DIR}/userlist.txt"
+AUTH_FILE_PATH = f"{PGB_DIR}/userlist.txt"
 
 
 logger = logging.getLogger(__name__)
@@ -127,7 +127,8 @@ class BackendDatabaseRequires(Object):
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_endpoints_changed(self, _):
-        self.charm.update_postgres_endpoints(reload_pgbouncer=True)
+        if self.charm.unit.is_leader():
+            self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_relation_departed(self, event: RelationDepartedEvent):
         """Runs pgbouncer-uninstall.sql and removes auth user.
