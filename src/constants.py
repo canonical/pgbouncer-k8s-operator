@@ -9,7 +9,7 @@ PG_USER = "postgres"
 
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
 INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
-USERLIST_PATH = f"{PGB_DIR}/userlist.txt"
+AUTH_FILE_PATH = f"{PGB_DIR}/userlist.txt"
 LOG_PATH = f"{PGB_DIR}/pgbouncer.log"
 
 PEER_RELATION_NAME = "pgb-peers"

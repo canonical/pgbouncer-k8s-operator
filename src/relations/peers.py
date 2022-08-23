@@ -63,6 +63,10 @@ class Peers(Object):
 
         self.update_cfg(cfg)
 
+        if self.charm.backend:
+            # update userlist only if backend relation exists.
+            self.update_auth_file(self.charm.read_auth_file())
+
 
     def _on_changed(self, event: RelationChangedEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem."""

@@ -17,7 +17,7 @@ from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
 from ops.pebble import Layer, PathError
 
-from constants import INI_PATH, PG_USER, PGB, USERLIST_PATH
+from constants import INI_PATH, PG_USER, PGB, USERLIST_PATH, AUTH_FILE_PATH
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
 from relations.peers import Peers
@@ -158,37 +158,9 @@ class PgBouncerK8sCharm(CharmBase):
         container.autostart()
         self.unit.status = ActiveStatus()
 
-    # =============================
-    #  PgBouncer Config Management
-    # =============================
-
-    def render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
-        """Generate pgbouncer.ini from juju config and deploy it to the container.
-
-        Args:
-            config: PgbConfig object containing pgbouncer config.
-            reload_pgbouncer: A boolean defining whether or not to reload the pgbouncer application
-                in the container. When config files are updated, pgbouncer must be restarted for
-                the changes to take effect. However, these config updates can be done in batches,
-                minimising the amount of necessary restarts.
-        """
-        self.push_file(INI_PATH, config.render(), 0o400)
-        logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
-
-        self.peers.update_cfg(config)
-
-        if reload_pgbouncer:
-            self.reload_pgbouncer()
-
-    def render_auth_file(self, auth_file: str, reload_pgbouncer=False):
-        """Renders the given auth_file to the correct location."""
-        self.push_file(USERLIST_PATH, auth_file, 0o400)
-        logger.info("pushed new auth file to pgbouncer container")
-
-        self.peers.update_auth_file(auth_file)
-
-        if reload_pgbouncer:
-            self.reload_pgbouncer()
+    # =================
+    #  File Management
+    # =================
 
     def push_file(self, path, file_contents, perms):
         """Pushes file_contents to path, with the given permissions."""
@@ -208,43 +180,6 @@ class PgBouncerK8sCharm(CharmBase):
             permissions=perms,
             make_dirs=True,
         )
-
-    def delete_file(self, path):
-        """Deletes the file at `path`."""
-        pgb_container = self.unit.get_container(PGB)
-        if not pgb_container.can_connect():
-            logger.warning("unable to connect to container")
-            self.unit.status = WaitingStatus(
-                "Unable to delete file from container - container unavailable."
-            )
-            return
-
-        pgb_container.remove_path(path)
-
-    def read_pgb_config(self) -> PgbConfig:
-        """Get config object from pgbouncer.ini file stored on container.
-
-        Returns:
-            PgbConfig object containing pgbouncer config.
-
-        Raises:
-            FileNotFoundError when the config at INI_PATH isn't available, such as if this is
-            called before the charm has started.
-        """
-        config = self._read_file(INI_PATH)
-        return pgb.PgbConfig(config)
-
-    def reload_pgbouncer(self) -> None:
-        """Reloads pgbouncer application.
-
-        Pgbouncer will not apply configuration changes without reloading, so this must be called
-        after each time config files are changed.
-        """
-        self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
-        logger.info("reloading pgbouncer application")
-        pgb_container = self.unit.get_container(PGB)
-        pgb_container.restart(PGB)
-        self.unit.status = ActiveStatus("PgBouncer Reloaded")
 
     def _read_file(self, filepath: str) -> str:
         """Reads file from pgbouncer container as a string.
@@ -271,6 +206,75 @@ class PgBouncerK8sCharm(CharmBase):
         except PathError as e:
             raise FileNotFoundError(str(e))
         return file_contents
+
+    def delete_file(self, path):
+        """Deletes the file at `path`."""
+        pgb_container = self.unit.get_container(PGB)
+        if not pgb_container.can_connect():
+            logger.warning("unable to connect to container")
+            self.unit.status = WaitingStatus(
+                "Unable to delete file from container - container unavailable."
+            )
+            return
+
+        pgb_container.remove_path(path)
+
+    def read_pgb_config(self) -> PgbConfig:
+        """Get config object from pgbouncer.ini file stored on container.
+
+        Returns:
+            PgbConfig object containing pgbouncer config.
+
+        Raises:
+            FileNotFoundError when the config at INI_PATH isn't available, such as if this is
+            called before the charm has started.
+        """
+        config = self._read_file(INI_PATH)
+        return pgb.PgbConfig(config)
+
+    def render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
+        """Generate pgbouncer.ini from juju config and deploy it to the container.
+
+        Args:
+            config: PgbConfig object containing pgbouncer config.
+            reload_pgbouncer: A boolean defining whether or not to reload the pgbouncer application
+                in the container. When config files are updated, pgbouncer must be restarted for
+                the changes to take effect. However, these config updates can be done in batches,
+                minimising the amount of necessary restarts.
+        """
+        self.push_file(INI_PATH, config.render(), 0o400)
+        logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
+
+        self.peers.update_cfg(config)
+
+        if reload_pgbouncer:
+            self.reload_pgbouncer()
+
+    def read_auth_file(self) -> str:
+        """Gets the auth file from the pgbouncer container."""
+        return self._read_file(AUTH_FILE_PATH)
+
+    def render_auth_file(self, auth_file: str, reload_pgbouncer=False):
+        """Renders the given auth_file to the correct location."""
+        self.push_file(USERLIST_PATH, auth_file, 0o400)
+        logger.info("pushed new auth file to pgbouncer container")
+
+        self.peers.update_auth_file(auth_file)
+
+        if reload_pgbouncer:
+            self.reload_pgbouncer()
+
+    def reload_pgbouncer(self) -> None:
+        """Reloads pgbouncer application.
+
+        Pgbouncer will not apply configuration changes without reloading, so this must be called
+        after each time config files are changed.
+        """
+        self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
+        logger.info("reloading pgbouncer application")
+        pgb_container = self.unit.get_container(PGB)
+        pgb_container.restart(PGB)
+        self.unit.status = ActiveStatus("PgBouncer Reloaded")
 
     # =====================
     #  Relation Utilities

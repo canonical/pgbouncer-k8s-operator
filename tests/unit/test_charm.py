@@ -126,7 +126,7 @@ class TestCharm(unittest.TestCase):
         self.assertDictEqual(dict(read_cfg), dict(test_cfg))
 
     @patch("ops.model.Container.restart")
-    def testreload_pgbouncer(self, _restart):
+    def test_reload_pgbouncer(self, _restart):
         self.charm.reload_pgbouncer()
         self.assertIsInstance(self.charm.unit.status, ActiveStatus)
         _restart.assert_called_once()
