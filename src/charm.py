@@ -295,7 +295,7 @@ class PgBouncerK8sCharm(CharmBase):
     def update_postgres_endpoints(self, reload_pgbouncer=False):
         """Update postgres endpoints in relation config values."""
         # Skip updates if backend.postgres doesn't exist yet.
-        if not self.backend.postgres:
+        if not self.backend.postgres or not self.unit.is_leader():
             return
 
         for relation in self.model.relations.get("db", []):

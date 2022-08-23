@@ -405,7 +405,11 @@ class DbProvides(Object):
         return f"{app_name}_user_id_{relation_id}_{model_name}".replace("-", "_")
 
     def get_databags(self, relation):
-        """Returns available databags for the given relation"""
+        """Returns available databags for the given relation.
+
+        TODO consider providing none defaults for both these databags, just in case this doesn't
+        exist yet.
+        """
         databags = [relation.data[self.charm.unit]]
         if self.charm.unit.is_leader():
             databags.append(relation.data[self.charm.app])

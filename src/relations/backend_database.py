@@ -127,8 +127,7 @@ class BackendDatabaseRequires(Object):
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_endpoints_changed(self, _):
-        if self.charm.unit.is_leader():
-            self.charm.update_postgres_endpoints(reload_pgbouncer=True)
+        self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_relation_departed(self, event: RelationDepartedEvent):
         """Runs pgbouncer-uninstall.sql and removes auth user.
