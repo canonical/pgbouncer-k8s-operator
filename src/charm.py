@@ -64,6 +64,8 @@ class PgBouncerK8sCharm(CharmBase):
             # ensure config is handed down from leader nodes and edited to match follower nodes.
             return
 
+        # TODO don't regenerate config from default when we restart containers eg after host
+        # shutdown. Instead, get config from peer databag.
         self.render_pgb_config(PgbConfig(pgb.DEFAULT_CONFIG))
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
@@ -157,6 +159,24 @@ class PgBouncerK8sCharm(CharmBase):
         container.add_layer(PGB, pebble_layer, combine=True)
         container.autostart()
         self.unit.status = ActiveStatus()
+
+    def reload_pgbouncer(self) -> None:
+        """Reloads pgbouncer application.
+
+        Pgbouncer will not apply configuration changes without reloading, so this must be called
+        after each time config files are changed.
+        """
+        pgb_container = self.unit.get_container(PGB)
+        services = pgb_container.get_services()
+        if PGB not in services.keys():
+            # pgbouncer has not been added to pebble config.
+            # TODO fail louder so we can handle an error.
+            return
+
+        self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
+        logger.info("reloading pgbouncer application")
+        pgb_container.restart(PGB)
+        self.unit.status = ActiveStatus("PgBouncer Reloaded")
 
     # =================
     #  File Management
@@ -263,18 +283,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         if reload_pgbouncer:
             self.reload_pgbouncer()
-
-    def reload_pgbouncer(self) -> None:
-        """Reloads pgbouncer application.
-
-        Pgbouncer will not apply configuration changes without reloading, so this must be called
-        after each time config files are changed.
-        """
-        self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
-        logger.info("reloading pgbouncer application")
-        pgb_container = self.unit.get_container(PGB)
-        pgb_container.restart(PGB)
-        self.unit.status = ActiveStatus("PgBouncer Reloaded")
 
     # =====================
     #  Relation Utilities
