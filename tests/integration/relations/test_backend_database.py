@@ -60,7 +60,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         wait_for_relation_joined_between(ops_test, PG, PGB)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),
 
-        cfg = await get_cfg(ops_test)
+        cfg = await get_cfg(ops_test, f"{PGB}/0")
         logging.info(cfg.render())
         pgb_user, pgb_password = await get_backend_user_pass(ops_test, relation)
         assert pgb_user in cfg["pgbouncer"]["admin_users"]
@@ -81,7 +81,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         try:
             for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
                 with attempt:
-                    cfg = await get_cfg(ops_test)
+                    cfg = await get_cfg(ops_test, f"{PGB}/0")
                     if (
                         pgb_user not in cfg["pgbouncer"]["admin_users"]
                         and "auth_query" not in cfg["pgbouncer"].keys()
@@ -90,9 +90,9 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         except RetryError:
             assert False, "pgbouncer config files failed to update in 3 minutes"
 
-        cfg = await get_cfg(ops_test)
+        cfg = await get_cfg(ops_test, f"{PGB}/0")
         logging.info(cfg.render())
-        logger.info(await get_pgb_log(ops_test))
+        logger.info(await get_pgb_log(ops_test, f"{PGB}/0"))
 
 
 @pytest.mark.backend

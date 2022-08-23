@@ -28,6 +28,7 @@ FINOS_WALTZ = "finos-waltz"
 
 @pytest.mark.scaling
 @pytest.mark.order(1)
+# TODO order marks aren't behaving
 async def test_deploy_at_scale(ops_test):
     # Build, deploy, and relate charms.
     charm = await ops_test.build_charm(".")
@@ -81,6 +82,7 @@ async def test_scaling(ops_test: OpsTest):
         # TODO test config
 
 
+@pytest.mark.scaling
 @pytest.mark.order(4)
 async def test_exit_relations(ops_test: OpsTest):
     """Test that we can exit relations with multiple units without breaking anything."""

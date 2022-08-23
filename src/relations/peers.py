@@ -12,7 +12,7 @@ import json
 import logging
 
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
-from ops.charm import CharmBase, RelationCreatedEvent
+from ops.charm import CharmBase, RelationCreatedEvent, RelationChangedEvent
 from ops.framework import Object
 
 RELATION_NAME = "pgb-peers"
@@ -30,9 +30,6 @@ class Peers(Object):
 
     Hook events observed:
         - relation-changed
-
-    TODO swapping config files around isn't really going to cut it. I need to swap the relevant
-    variables around, and nothing else, and let the update_endpoints hooks sort out the nuances.
     """
 
     def __init__(self, charm: CharmBase):
@@ -45,7 +42,7 @@ class Peers(Object):
         self.framework.observe(charm.on[RELATION_NAME].relation_changed, self._on_changed)
 
     @property
-    def app_databag(self):
+    def peer_databag(self):
         """Returns the app databag for the Peer relation."""
         peer_relation = self.model.get_relation(RELATION_NAME)
         if peer_relation is None:
@@ -67,20 +64,28 @@ class Peers(Object):
         self.update_cfg(cfg)
 
 
-    def _on_changed(self, _):
+    def _on_changed(self, event: RelationChangedEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
         if self.charm.unit.is_leader():
+            try:
+                cfg = self.charm.read_pgb_config()
+            except FileNotFoundError:
+                # If there's no config, the charm start hook hasn't fired yet, so defer until it's
+                # available.
+                event.defer()
+                return
+
+            self.update_cfg(cfg)
             return
 
-        if cfg := self.app_databag.get(CFG_FILE_DATABAG_KEY):
+        if cfg := self.peer_databag.get(CFG_FILE_DATABAG_KEY):
             self.charm.render_pgb_config(PgbConfig(cfg))
 
-        if auth_file := self.app_databag.get(AUTH_FILE_DATABAG_KEY):
+        if auth_file := self.peer_databag.get(AUTH_FILE_DATABAG_KEY):
             self.charm.render_auth_file(auth_file)
 
-        self.charm.update_postgres_endpoints()
-
         if cfg is not None or auth_file is not None:
+            #self.charm.update_postgres_endpoints(reload_pgbouncer=True)
             self.charm.reload_pgbouncer()
 
     def update_cfg(self, cfg: PgbConfig) -> None:
@@ -88,19 +93,21 @@ class Peers(Object):
         if not self.charm.unit.is_leader():
             return
 
-        if self.app_databag is None:
+        if self.peer_databag is None:
             # peer relation not yet initialised
+            # TODO fail louder
             return
 
-        self.app_databag[CFG_FILE_DATABAG_KEY] = cfg.render()
+        self.peer_databag[CFG_FILE_DATABAG_KEY] = cfg.render()
 
     def update_auth_file(self, auth_file: str) -> None:
         """Writes auth_file to app databag if leader."""
         if not self.charm.unit.is_leader():
             return
 
-        if self.app_databag is None:
+        if self.peer_databag is None:
             # peer relation not yet initialised
+            # TODO fail louder
             return
 
-        self.app_databag[AUTH_FILE_DATABAG_KEY] = auth_file
+        self.peer_databag[AUTH_FILE_DATABAG_KEY] = auth_file

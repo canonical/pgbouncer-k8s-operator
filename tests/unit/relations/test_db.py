@@ -117,7 +117,7 @@ class TestDb(unittest.TestCase):
         _create_user.assert_called_with(user, password, admin=False)
 
     @patch(
-        "relations.backend_database.BackendDatabaseRequires.app_databag", new_callable=PropertyMock
+        "relations.backend_database.BackendDatabaseRequires.postgres_databag", new_callable=PropertyMock
     )
     @patch(
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
@@ -145,7 +145,7 @@ class TestDb(unittest.TestCase):
         _hostname,
         _read_cfg,
         _backend_postgres,
-        _backend_dbag,
+        _postgres_databag,
     ):
         # Ensure event doesn't defer too early
         self.harness.set_leader(True)

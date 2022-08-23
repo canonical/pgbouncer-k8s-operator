@@ -47,7 +47,7 @@ from charms.data_platform_libs.v0.database_requires import (
 )
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL
-from ops.charm import CharmBase, RelationDepartedEvent
+from ops.charm import CharmBase, RelationDepartedEvent, RelationBrokenEvent
 from ops.framework import Object
 from ops.model import Application, BlockedStatus, Relation
 
@@ -153,12 +153,17 @@ class BackendDatabaseRequires(Object):
 
         logger.info("auth user removed")
 
-    def _on_relation_broken(self, _):
+    def _on_relation_broken(self, event: RelationBrokenEvent):
         """Handle backend-database-relation-broken event.
 
         Removes all traces of this relation from pgbouncer config.
         """
-        cfg = self.charm.read_pgb_config()
+        try:
+            cfg = self.charm.read_pgb_config()
+        except FileNotFoundError:
+            event.defer()
+            return
+
         cfg.remove_user(self.postgres.user)
         cfg["pgbouncer"].pop("auth_user", None)
         cfg["pgbouncer"].pop("auth_query", None)
@@ -205,11 +210,11 @@ class BackendDatabaseRequires(Object):
         if not self.relation:
             return None
 
-        databag = self.app_databag
+        databag = self.postgres_databag
         endpoint = databag.get("endpoints")
         user = databag.get("username")
         password = databag.get("password")
-        database = self.relation.data[self.charm.app].get("database")
+        database = self.database.database
 
         if None in [endpoint, user, password, database]:
             return None
@@ -221,14 +226,14 @@ class BackendDatabaseRequires(Object):
     @property
     def auth_user(self):
         """Username for auth_user."""
-        username = self.app_databag.get("username")
+        username = self.postgres_databag.get("username")
         if username is None:
             return None
 
         return f"pgbouncer_auth_{username}"
 
     @property
-    def app_databag(self) -> Dict:
+    def postgres_databag(self) -> Dict:
         """Wrapper around accessing the remote application databag for the backend relation.
 
         Returns None if relation is none.
