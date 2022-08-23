@@ -170,6 +170,19 @@ class DbProvides(Object):
             return
 
         database = remote_app_databag.get("database")
+        user = self._generate_username(join_event)
+
+        if self.charm.unit.is_leader():
+            password = pgb.generate_password()
+            self.charm.peers.peer_databag[user] = password
+        else:
+            password = self.charm.peers.peer_databag.get(user)
+            if password is None:
+                logger.info("leader unit has not generated password. ")
+                join_event.defer()
+                return
+
+
         if database is None:
             logger.warning("No database name provided in app databag")
             join_event.defer()
@@ -183,12 +196,6 @@ class DbProvides(Object):
                 "database": database,
             },
         )
-
-        if not self.charm.unit.is_leader():
-            return
-
-        user = self._generate_username(join_event)
-        password = pgb.generate_password()
 
         # Create user and database in backend postgresql database
         try:
