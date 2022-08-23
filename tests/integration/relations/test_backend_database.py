@@ -118,11 +118,11 @@ async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
         )
 
         username = f"relation_id_{relation.id}"
-        cfg_0 = await get_cfg(ops_test, f"{PGB}/0")
-        userlist_0 = await get_userlist(ops_test, f"{PGB}/0")
+        leader_cfg = await get_cfg(ops_test, f"{PGB}/0")
+        leader_userlist = await get_userlist(ops_test, f"{PGB}/0")
 
-        assert username in cfg_0["pgbouncer"]["admin_users"]
-        assert username in userlist_0.keys()
+        assert username in leader_cfg["pgbouncer"]["admin_users"]
+        assert username in leader_userlist.keys()
 
         for unit_id in [1, 2]:
             unit_name = f"{PGB}/{unit_id}"
@@ -131,8 +131,8 @@ async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
             assert username in cfg["pgbouncer"]["admin_users"]
             assert username in userlist.keys()
 
-            assert cfg == cfg_0
-            assert userlist == userlist_0
+            assert cfg == leader_cfg
+            assert userlist == leader_userlist
 
         # TODO test deleting leader
 
