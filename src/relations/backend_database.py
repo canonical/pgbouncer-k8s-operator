@@ -112,8 +112,8 @@ class BackendDatabaseRequires(Object):
         self.initialise_auth_function(dbname=self.database.database)
 
         hashed_password = pgb.get_hashed_password(self.auth_user, plaintext_password)
-        self.charm.push_file(
-            f"{PGB_DIR}/userlist.txt", f'"{self.auth_user}" "{hashed_password}"', perms=0o400
+        self.charm.render_auth_file(
+            f'"{self.auth_user}" "{hashed_password}"'
         )
         cfg = self.charm.read_pgb_config()
         # adds user to pgb config
