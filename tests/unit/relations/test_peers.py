@@ -11,7 +11,7 @@ from lib.charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from relations.peers import AUTH_FILE_DATABAG_KEY, CFG_FILE_DATABAG_KEY
 
 
-class TestDb(unittest.TestCase):
+class TestPeers(unittest.TestCase):
     def setUp(self):
         self.harness = Harness(PgBouncerK8sCharm)
         self.addCleanup(self.harness.cleanup)
@@ -21,15 +21,15 @@ class TestDb(unittest.TestCase):
         self.app = self.charm.app.name
         self.unit = self.charm.unit.name
 
-    @patch("relations.peers.Peers.postgres_databag", new_callable=PropertyMock)
+    @patch("relations.peers.Peers.peer_databag", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.render_auth_file")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
     def test_on_peers_changed(
-        self, reload_pgbouncer, render_auth_file, render_pgb_config, postgres_databag
+        self, reload_pgbouncer, render_auth_file, render_pgb_config, peer_databag
     ):
         databag = {}
-        postgres_databag.return_value = databag
+        peer_databag.return_value = databag
 
         # We don't want to write anything if we're the leader
         self.harness.set_leader(True)
