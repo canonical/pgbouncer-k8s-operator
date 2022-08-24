@@ -159,7 +159,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             ops_test, [finos_user], [another_finos_user], pgb_user, pgb_password
         )
 
-        cfg = await get_cfg(ops_test)
+        cfg = await get_cfg(ops_test, f"{PGB}/0")
         logger.info(cfg)
         assert another_finos_user not in cfg["pgbouncer"]["admin_users"]
         assert "waltz" in cfg["databases"].keys()
@@ -172,10 +172,10 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
 
         await check_database_users_existence(ops_test, [], [finos_user], pgb_user, pgb_password)
 
-        cfg = await get_cfg(ops_test)
+        cfg = await get_cfg(ops_test, f"{PGB}/0")
         logger.info(cfg)
         assert finos_user not in cfg["pgbouncer"]["admin_users"]
         assert "waltz" not in cfg["databases"].keys()
         assert "waltz_standby" not in cfg["databases"].keys()
 
-        logger.info(await get_pgb_log(ops_test))
+        logger.info(await get_pgb_log(ops_test, f"{PGB}/0"))

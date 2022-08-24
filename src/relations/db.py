@@ -182,7 +182,6 @@ class DbProvides(Object):
                 join_event.defer()
                 return
 
-
         if database is None:
             logger.warning("No database name provided in app databag")
             join_event.defer()
@@ -196,6 +195,9 @@ class DbProvides(Object):
                 "database": database,
             },
         )
+
+        if not self.charm.unit.is_leader():
+            return
 
         # Create user and database in backend postgresql database
         try:
@@ -384,7 +386,8 @@ class DbProvides(Object):
             for relation in self.model.relations.get(relname, []):
                 if relation.id == broken_event.relation.id:
                     continue
-                if relation.data[self.charm.app].get("database") == database:
+                # TODO here's where we have problems. How do we get other relations' databags? self.charm.unit might work
+                if relation.data[self.charm.unit].get("database") == database:
                     # There's multiple applications using this database, so don't remove it until
                     # we can guarantee this is the last one.
                     delete_db = False
