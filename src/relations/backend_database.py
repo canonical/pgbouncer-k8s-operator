@@ -100,7 +100,7 @@ class BackendDatabaseRequires(Object):
         if not self.charm.unit.is_leader():
             return
 
-        if self.postgres is None:
+        if self.postgres is None or self.relation.:
             event.defer()
             logger.error("deferring database-created hook - postgres database not ready")
             return
@@ -217,7 +217,7 @@ class BackendDatabaseRequires(Object):
         password = databag.get("password")
         database = self.database.database
 
-        if None in [endpoint, user, password, database]:
+        if None in [endpoint, user, password]:
             return None
 
         return PostgreSQL(

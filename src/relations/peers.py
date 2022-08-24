@@ -106,6 +106,15 @@ class Peers(Object):
 
         self.peer_databag[CFG_FILE_DATABAG_KEY] = cfg.render()
 
+    def get_cfg(self) -> PgbConfig:
+        if self.peer_databag is None:
+            return None
+
+        if cfg := self.peer_databag.get(CFG_FILE_DATABAG_KEY):
+            return PgbConfig(cfg)
+        else:
+            return None
+
     def update_auth_file(self, auth_file: str) -> None:
         """Writes auth_file to app databag if leader."""
         if not self.charm.unit.is_leader():

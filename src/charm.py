@@ -65,7 +65,9 @@ class PgBouncerK8sCharm(CharmBase):
 
         # TODO don't regenerate config from default when we restart containers eg after host
         # shutdown. Instead, get config from peer databag.
-        self.render_pgb_config(PgbConfig(pgb.DEFAULT_CONFIG))
+        if default_config := self.peers.get_cfg() is None:
+            default_config = PgbConfig(pgb.DEFAULT_CONFIG)
+        self.render_pgb_config(default_config)
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
