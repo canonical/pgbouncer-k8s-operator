@@ -100,11 +100,21 @@ class Peers(Object):
         if not self.charm.unit.is_leader():
             return
 
+        if self.peer_databag is None:
+            # peer relation not yet initialised
+            # TODO fail louder
+            return
+
         self.peer_databag[CFG_FILE_DATABAG_KEY] = cfg.render()
 
     def update_auth_file(self, auth_file: str) -> None:
         """Writes auth_file to app databag if leader."""
         if not self.charm.unit.is_leader():
+            return
+
+        if self.peer_databag is None:
+            # peer relation not yet initialised
+            # TODO fail louder
             return
 
         self.peer_databag[AUTH_FILE_DATABAG_KEY] = auth_file
