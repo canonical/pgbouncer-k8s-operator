@@ -108,22 +108,3 @@ class Peers(Object):
             return
 
         self.peer_databag[AUTH_FILE_DATABAG_KEY] = auth_file
-
-    def get_password(self, username: str) -> str:
-        return self.users.get(username)
-
-    def store_user(self, username: str, password: str):
-        users = self.users
-        users[username] = password
-        self.peer_databag["users"] = users
-
-    @property
-    def users(self):
-        """Property to access the "users" field of this relation databag.
-
-        This field is used to store the
-        """
-        if users := self.peer_databag.get("users"):
-            return json.loads(users)
-        else:
-            return {}
