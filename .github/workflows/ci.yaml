@@ -25,6 +25,7 @@ jobs:
       - name: Run tests
         run: tox -e unit
 
+# TODO change juju version to 2.9.29 before scale-down bug
   integration-standalone:
     name: Integration tests for standalone charm (microk8s)
     runs-on: ubuntu-latest
@@ -36,6 +37,8 @@ jobs:
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: microk8s
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
+          bootstrap-options: "--agent-version 2.9.29"
       - name: Run integration tests
         run: tox -e standalone-integration
       - name: Dump logs
@@ -55,6 +58,8 @@ jobs:
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: microk8s
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
+          bootstrap-options: "--agent-version 2.9.29"
       - name: Run integration tests
         run: tox -e backend-integration
       - name: Dump logs
@@ -74,6 +79,8 @@ jobs:
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: microk8s
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
+          bootstrap-options: "--agent-version 2.9.29"
       - name: Run integration tests
         run: tox -e legacy-relation-integration
       - name: Dump logs
@@ -93,6 +100,8 @@ jobs:
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: microk8s
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
+          bootstrap-options: "--agent-version 2.9.29"
       - name: Run integration tests
         run: tox -e scaling-integration
       - name: Dump logs

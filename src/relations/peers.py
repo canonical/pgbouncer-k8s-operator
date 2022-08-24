@@ -7,13 +7,12 @@ Example:
 TODO example docs
 """
 
-# TODO consider writing a PgbConfig.json() function
-import json
 import logging
 
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, RelationChangedEvent, RelationCreatedEvent
 from ops.framework import Object
+import json
 
 RELATION_NAME = "pgb-peers"
 CFG_FILE_DATABAG_KEY = "cfg_file"
@@ -29,6 +28,8 @@ class Peers(Object):
     The data created in this relation allows the pgbouncer charm to connect to the postgres charm.
 
     Hook events observed:
+        - relation-created
+        - relation-joined
         - relation-changed
     """
 
@@ -118,3 +119,22 @@ class Peers(Object):
             return
 
         self.peer_databag[AUTH_FILE_DATABAG_KEY] = auth_file
+
+    def get_password(self, username: str) -> str:
+        return self.users.get(username)
+
+    def store_user(self, username: str, password: str):
+        users = self.users
+        users[username] = password
+        self.peer_databag["users"] = users
+
+    @property
+    def users(self):
+        """Property to access the "users" field of this relation databag.
+
+        This field is used to store the
+        """
+        if users := self.peer_databag.get("users"):
+            return json.loads(users)
+        else:
+            return {}
