@@ -107,6 +107,7 @@ class Peers(Object):
         self.peer_databag[CFG_FILE_DATABAG_KEY] = cfg.render()
 
     def get_cfg(self) -> PgbConfig:
+        """Retrieves the pgbouncer config from the peer databag."""
         if self.peer_databag is None:
             return None
 
