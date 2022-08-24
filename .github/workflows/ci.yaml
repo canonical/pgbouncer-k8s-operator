@@ -2,6 +2,9 @@ name: Tests
 on:
   pull_request:
 
+# parameters:
+# TODO play with YAML node anchors to have a replicable integration test config - maybe setup and teardown steps?
+
 jobs:
   lint:
     name: Lint
@@ -25,7 +28,6 @@ jobs:
       - name: Run tests
         run: tox -e unit
 
-# TODO change juju version to 2.9.29 before scale-down bug
   integration-standalone:
     name: Integration tests for standalone charm (microk8s)
     runs-on: ubuntu-latest
@@ -39,7 +41,7 @@ jobs:
           provider: microk8s
           # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
           bootstrap-options: "--agent-version 2.9.29"
-      - name: Run integration tests
+      - name: Run pgbouncer standalone integration tests
         run: tox -e standalone-integration
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
@@ -60,7 +62,7 @@ jobs:
           provider: microk8s
           # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
           bootstrap-options: "--agent-version 2.9.29"
-      - name: Run integration tests
+      - name: Run backend integration tests
         run: tox -e backend-integration
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
@@ -81,7 +83,7 @@ jobs:
           provider: microk8s
           # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
           bootstrap-options: "--agent-version 2.9.29"
-      - name: Run integration tests
+      - name: Run legacy integration tests
         run: tox -e legacy-relation-integration
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
@@ -102,7 +104,7 @@ jobs:
           provider: microk8s
           # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
           bootstrap-options: "--agent-version 2.9.29"
-      - name: Run integration tests
+      - name: Run scaling integration tests
         run: tox -e scaling-integration
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
