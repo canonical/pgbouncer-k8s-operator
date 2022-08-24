@@ -177,13 +177,9 @@ class DbProvides(Object):
             self.charm.peers.peer_databag[user] = password
         else:
             password = self.charm.peers.peer_databag.get(user)
-            if password is None:
-                logger.info("leader unit has not generated password. ")
-                join_event.defer()
-                return
 
-        if database is None:
-            logger.warning("No database name provided in app databag")
+        if None in [database, password]:
+            # If database isn't available, defer
             join_event.defer()
             return
 
@@ -386,7 +382,6 @@ class DbProvides(Object):
             for relation in self.model.relations.get(relname, []):
                 if relation.id == broken_event.relation.id:
                     continue
-                # TODO here's where we have problems. How do we get other relations' databags? self.charm.unit might work
                 if relation.data[self.charm.unit].get("database") == database:
                     # There's multiple applications using this database, so don't remove it until
                     # we can guarantee this is the last one.

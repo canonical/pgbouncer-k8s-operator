@@ -12,7 +12,6 @@ import logging
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, RelationChangedEvent, RelationCreatedEvent
 from ops.framework import Object
-import json
 
 RELATION_NAME = "pgb-peers"
 CFG_FILE_DATABAG_KEY = "cfg_file"

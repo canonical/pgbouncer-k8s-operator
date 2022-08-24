@@ -49,7 +49,6 @@ auth_query = SELECT username, password FROM pgbouncer_auth_relation_id_1.get_aut
 """  # noqa: W505
 
 import io
-import json
 import logging
 import math
 import re
@@ -167,14 +166,6 @@ class PgbConfig(MutableMapping):
     def items(self):
         """Returns items of PgbConfig object."""
         return self.__dict__.items()
-
-    def to_json(self):
-        """Returns json string representation of pgbouncer object"""
-        return json.dumps(dict(self))
-
-    def from_json(self, json_str: str):
-        """Initialises object from json string representation"""
-        self.update(json.loads(json_str))
 
     def read_dict(self, input: Dict) -> None:
         """Populates this object from a dictionary.

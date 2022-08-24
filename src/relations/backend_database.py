@@ -102,7 +102,7 @@ class BackendDatabaseRequires(Object):
 
         if self.postgres is None:
             event.defer()
-            logging.error("deferring database-created hook - postgres database not ready")
+            logger.error("deferring database-created hook - postgres database not ready")
             return
 
         plaintext_password = pgb.generate_password()
@@ -112,9 +112,7 @@ class BackendDatabaseRequires(Object):
         self.initialise_auth_function(dbname=self.database.database)
 
         hashed_password = pgb.get_hashed_password(self.auth_user, plaintext_password)
-        self.charm.render_auth_file(
-            f'"{self.auth_user}" "{hashed_password}"'
-        )
+        self.charm.render_auth_file(f'"{self.auth_user}" "{hashed_password}"')
         cfg = self.charm.read_pgb_config()
         # adds user to pgb config
         cfg.add_user(user=event.username, admin=True)

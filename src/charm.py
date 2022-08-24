@@ -50,7 +50,6 @@ class PgBouncerK8sCharm(CharmBase):
 
     def _on_start(self, event: StartEvent) -> None:
         """Renders basic PGB config."""
-
         container = self.unit.get_container(PGB)
         if not container.can_connect():
             logger.debug(
