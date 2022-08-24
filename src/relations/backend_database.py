@@ -100,7 +100,7 @@ class BackendDatabaseRequires(Object):
         if not self.charm.unit.is_leader():
             return
 
-        if self.postgres is None or self.relation.:
+        if self.postgres is None or self.relation.data[self.charm.app].get("database") is None:
             event.defer()
             logger.error("deferring database-created hook - postgres database not ready")
             return
