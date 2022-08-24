@@ -27,7 +27,7 @@ FINOS_WALTZ = "finos-waltz"
 
 
 @pytest.mark.scaling
-@pytest.mark.order(1)
+@pytest.mark.run(order=1)
 # TODO order marks aren't behaving
 async def test_deploy_at_scale(ops_test):
     # Build, deploy, and relate charms.
@@ -42,8 +42,8 @@ async def test_deploy_at_scale(ops_test):
 
 @pytest.mark.scaling
 @pytest.mark.abort_on_fail
-@pytest.mark.order(2)
-async def setup_test_environment(ops_test: OpsTest):
+@pytest.mark.run(order=2)
+async def test_scaled_relations(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
     async with ops_test.fast_forward():
@@ -70,7 +70,7 @@ async def setup_test_environment(ops_test: OpsTest):
 
 
 @pytest.mark.scaling
-@pytest.mark.order(3)
+@pytest.mark.run(order=3)
 async def test_scaling(ops_test: OpsTest):
     """Test data is replicated to new units after a scale up."""
     # Ensure the initial number of units in the application.
@@ -84,7 +84,7 @@ async def test_scaling(ops_test: OpsTest):
 
 
 @pytest.mark.scaling
-@pytest.mark.order(4)
+@pytest.mark.run(order=4)
 async def test_exit_relations(ops_test: OpsTest):
     """Test that we can exit relations with multiple units without breaking anything."""
     async with ops_test.fast_forward():
