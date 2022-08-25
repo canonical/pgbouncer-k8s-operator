@@ -58,7 +58,7 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
-        if default_config := self.peers.get_cfg() is None:
+        if (default_config := self.peers.get_cfg()) is None:
             if self.unit.is_leader():
                 default_config = PgbConfig(pgb.DEFAULT_CONFIG)
             else:
