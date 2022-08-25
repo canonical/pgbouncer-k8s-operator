@@ -58,15 +58,11 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
-        if not self.unit.is_leader():
-            # While we could create a config so we can start to process something, we want to
-            # ensure config is handed down from leader nodes and edited to match follower nodes.
-            return
-
-        # TODO don't regenerate config from default when we restart containers eg after host
-        # shutdown. Instead, get config from peer databag.
         if default_config := self.peers.get_cfg() is None:
-            default_config = PgbConfig(pgb.DEFAULT_CONFIG)
+            if self.unit.is_leader():
+                default_config = PgbConfig(pgb.DEFAULT_CONFIG)
+            else:
+                event.defer()
         self.render_pgb_config(default_config)
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
