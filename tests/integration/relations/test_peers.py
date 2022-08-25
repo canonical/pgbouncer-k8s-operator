@@ -25,6 +25,7 @@ FINOS_WALTZ = "finos-waltz"
 
 
 @pytest.mark.scaling
+@pytest.mark.abort_on_fail
 @pytest.mark.run(order=1)
 # TODO order marks aren't behaving
 async def test_deploy_at_scale(ops_test):
@@ -35,7 +36,9 @@ async def test_deploy_at_scale(ops_test):
     }
     async with ops_test.fast_forward():
         await ops_test.model.deploy(charm, resources=resources, application_name=PGB, num_units=3)
-        await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000),
+        await ops_test.model.wait_for_idle(
+            apps=[PGB], status="active", timeout=1000, wait_for_exact_units=3
+        ),
 
 
 @pytest.mark.scaling
@@ -92,4 +95,4 @@ async def test_exit_relations(ops_test: OpsTest):
 
         await ops_test.model.remove_application(PG)
         wait_for_relation_removed_between(ops_test, PG, PGB)
-        await ops_test.model.wait_for_idle(apps=[PG], status="active", timeout=1000)
+        await ops_test.model.wait_for_idle(apps=[PG], status="blocked", timeout=1000)

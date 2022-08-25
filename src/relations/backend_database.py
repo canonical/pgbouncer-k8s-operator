@@ -51,10 +51,8 @@ from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
 from ops.model import Application, BlockedStatus, Relation
 
-RELATION_NAME = "backend-database"
-PGB_DIR = "/var/lib/postgresql/pgbouncer"
+from constants import BACKEND_RELATION_NAME, PGB_DIR
 PGB_DB = "pgbouncer"
-AUTH_FILE_PATH = f"{PGB_DIR}/userlist.txt"
 
 
 logger = logging.getLogger(__name__)
@@ -74,12 +72,12 @@ class BackendDatabaseRequires(Object):
     """
 
     def __init__(self, charm: CharmBase):
-        super().__init__(charm, RELATION_NAME)
+        super().__init__(charm, BACKEND_RELATION_NAME)
 
         self.charm = charm
         self.database = DatabaseRequires(
             self.charm,
-            relation_name=RELATION_NAME,
+            relation_name=BACKEND_RELATION_NAME,
             database_name=PGB_DB,
             extra_user_roles="SUPERUSER",
         )
@@ -89,7 +87,7 @@ class BackendDatabaseRequires(Object):
         self.framework.observe(
             self.database.on.read_only_endpoints_changed, self._on_endpoints_changed
         )
-        self.framework.observe(charm.on[RELATION_NAME].relation_broken, self._on_relation_broken)
+        self.framework.observe(charm.on[BACKEND_RELATION_NAME].relation_broken, self._on_relation_broken)
 
     def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
         """Handle backend-database-database-created event.
@@ -196,7 +194,7 @@ class BackendDatabaseRequires(Object):
     @property
     def relation(self) -> Relation:
         """Relation object for postgres backend-database relation."""
-        backend_relation = self.model.get_relation(RELATION_NAME)
+        backend_relation = self.model.get_relation(BACKEND_RELATION_NAME)
         if not backend_relation:
             return None
         else:

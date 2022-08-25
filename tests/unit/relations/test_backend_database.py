@@ -48,6 +48,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     def test_on_database_created(
         self, _update_endpoints, _cfg, _push, _init_auth, _gen_pw, _postgres, _auth_user
     ):
+        self.harness.set_leader(True)
         pw = _gen_pw.return_value
         postgres = _postgres.return_value
 
@@ -83,6 +84,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     )
     @patch("charm.PgBouncerK8sCharm.update_postgres_endpoints")
     def test_relation_departed(self, _update_endpoints, _postgres, _auth_user):
+        self.harness.set_leader(True)
         postgres = _postgres.return_value
         depart_event = MagicMock()
         depart_event.departing_unit = self.charm.unit

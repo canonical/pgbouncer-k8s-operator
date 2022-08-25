@@ -183,7 +183,7 @@ class DbProvides(Object):
             join_event.defer()
             return
 
-        self.update_databag(
+        self.update_databags(
             join_event.relation,
             {
                 "user": user,
@@ -259,7 +259,7 @@ class DbProvides(Object):
 
         self.update_port(change_event.relation, self.charm.config["listen_port"])
         self.update_postgres_endpoints(change_event.relation, reload_pgbouncer=True)
-        self.update_databag(
+        self.update_databags(
             change_event.relation,
             {
                 "allowed-subnets": self.get_allowed_subnets(change_event.relation),
@@ -294,7 +294,7 @@ class DbProvides(Object):
                 "fallback_application_name": self.get_external_app(relation).name,
             }
         )
-        self.update_databag(
+        self.update_databags(
             relation,
             {
                 "master": dbconnstr,
@@ -346,7 +346,7 @@ class DbProvides(Object):
             f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
         )
 
-        self.update_databag(
+        self.update_databags(
             departed_event.relation,
             {"allowed-units": self.get_allowed_units(departed_event.relation)},
         )
@@ -396,7 +396,7 @@ class DbProvides(Object):
         if self.charm.unit.is_leader():
             self.charm.backend.postgres.delete_user(user)
 
-    def update_databag(self, relation, updates: Dict[str, str]):
+    def update_databags(self, relation, updates: Dict[str, str]):
         """Updates databag with the given dict."""
         # Databag entries can only be strings
         for key, item in updates.items():

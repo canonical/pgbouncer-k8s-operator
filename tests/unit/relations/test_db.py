@@ -7,6 +7,12 @@ from unittest.mock import MagicMock, PropertyMock, patch
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
+from constants import (
+    BACKEND_RELATION_NAME,
+    DB_ADMIN_RELATION_NAME,
+    DB_RELATION_NAME,
+    PEER_RELATION_NAME,
+)
 from lib.charms.pgbouncer_k8s.v0.pgb import (
     DEFAULT_CONFIG,
     PgbConfig,
@@ -18,9 +24,7 @@ TEST_UNIT = {
     "standbys": "host=standby1 port=1 dbname=testdatabase",
 }
 
-BACKEND_RELATION_NAME = "backend-database"
-DB_RELATION_NAME = "db"
-DB_ADMIN_RELATION_NAME = "db-admin"
+# TODO write tests for when the current unit is a follower
 
 
 class TestDb(unittest.TestCase):
@@ -35,6 +39,10 @@ class TestDb(unittest.TestCase):
         self.backend = self.charm.backend
         self.db_relation = self.charm.legacy_db_relation
         self.db_admin_relation = self.charm.legacy_db_admin_relation
+
+        # Define a peer relation
+        self.peers_rel_id = self.harness.add_relation(PEER_RELATION_NAME, "postgres")
+        self.harness.add_relation_unit(self.peers_rel_id, self.unit)
 
         # Define a backend relation
         self.backend_rel_id = self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
@@ -163,15 +171,20 @@ class TestDb(unittest.TestCase):
 
         mock_event = MagicMock()
         relation_data = mock_event.relation.data = {}
-        pgb_unit_databag = relation_data[self.db_relation.charm.unit] = {}
         database = "test_db"
         user = "test_user"
         password = "test_pw"
-        pgb_app_databag = relation_data[self.charm.app] = {
-            "database": database,
-            "user": user,
-            "password": password,
-        }
+
+        pgb_app_databag = relation_data[self.charm.app] = {}
+        pgb_unit_databag = relation_data[self.charm.unit] = {}
+        self.db_relation.update_databags(
+            mock_event.relation,
+            {
+                "database": database,
+                "user": user,
+                "password": password,
+            },
+        )
 
         external_app = _external_app.return_value
         relation_data[external_app] = {}
@@ -213,6 +226,7 @@ class TestDb(unittest.TestCase):
 
     @patch("relations.db.DbProvides.get_allowed_units", return_value="test_string")
     def test_on_relation_departed(self, _get_units):
+        self.harness.set_leader(True)
         mock_event = MagicMock()
         mock_event.relation.data = {
             self.charm.app: {"allowed-units": "app"},
@@ -240,6 +254,7 @@ class TestDb(unittest.TestCase):
         self, _render_cfg, _backend_postgres, _delete_user, _postgres, _read
     ):
         """Test that all traces of the given app are removed from pgb config, including user."""
+        self.harness.set_leader(True)
         database = "test_db"
         username = "test_user"
         _backend_postgres.return_value = _postgres
@@ -252,12 +267,13 @@ class TestDb(unittest.TestCase):
         _read.return_value = input_cfg
 
         mock_event = MagicMock()
-        app_databag = {
+        databag = {
             "user": username,
             "database": database,
         }
         mock_event.relation.data = {}
-        mock_event.relation.data[self.charm.app] = app_databag
+        mock_event.relation.data[self.charm.unit] = databag
+        mock_event.relation.data[self.charm.app] = databag
 
         self.db_relation._on_relation_broken(mock_event)
 
