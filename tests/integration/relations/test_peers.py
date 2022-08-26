@@ -55,7 +55,6 @@ async def test_scaled_relations(ops_test: OpsTest):
         )
 
         await asyncio.gather(
-            ops_test.model.wait_for_idle(apps=[FINOS_WALTZ], status="active", timeout=1000),
             ops_test.model.wait_for_idle(
                 apps=[PGB], status="active", timeout=1000, wait_for_exact_units=3
             ),
