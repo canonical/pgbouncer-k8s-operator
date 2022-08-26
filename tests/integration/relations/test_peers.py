@@ -54,6 +54,16 @@ async def test_scaled_relations(ops_test: OpsTest):
             ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
         )
 
+        await asyncio.gather(
+            ops_test.model.wait_for_idle(apps=[FINOS_WALTZ], status="active", timeout=1000),
+            ops_test.model.wait_for_idle(
+                apps=[PGB], status="active", timeout=1000, wait_for_exact_units=3
+            ),
+            ops_test.model.wait_for_idle(
+                apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
+            ),
+        )
+
         await ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database")
         wait_for_relation_joined_between(ops_test, PG, PGB)
         await asyncio.gather(
@@ -84,7 +94,6 @@ async def test_scaling(ops_test: OpsTest):
 
         # Scale down the application.
         await scale_application(ops_test, PGB, initial_scale - 1)
-        # TODO test config
 
 
 @pytest.mark.scaling
