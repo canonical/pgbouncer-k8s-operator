@@ -21,7 +21,7 @@ from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, StartEven
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
-from ops.pebble import Layer, PathError
+from ops.pebble import ConnectionError, Layer, PathError
 
 from constants import AUTH_FILE_PATH, INI_PATH, PG_USER, PGB
 from relations.backend_database import BackendDatabaseRequires
