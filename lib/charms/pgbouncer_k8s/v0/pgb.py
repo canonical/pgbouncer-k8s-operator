@@ -148,17 +148,6 @@ class PgbConfig(MutableMapping):
         """String representation of PgbConfig object."""
         return str(self.__dict__)
 
-    def __eq__(self, other):
-        """Equality operator for PgbConfig object."""
-        if not isinstance(other, PgbConfig):
-            return False
-
-        return dict(self) == dict(other)
-
-    def __ne__(self, other):
-        """Not-equal operator for PgbConfig object."""
-        return not self.__eq__(other)
-
     def keys(self):
         """Returns keys of PgbConfig object."""
         return self.__dict__.keys()
