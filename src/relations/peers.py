@@ -50,7 +50,7 @@ Example:
 │                  │ ╰───────────────────╯ ╰────────────────────╯                                                     │
 └──────────────────┴──────────────────────────────────────────────────────────────────────────────────────────────────┘
 
-"""
+"""  # noqa: W505
 
 import logging
 
@@ -176,7 +176,23 @@ class Peers(Object):
         logger.debug("updated auth file in peer databag")
 
     def add_user(self, username: str, password: str):
+        """Adds user to app databag."""
+        if not self.charm.unit.is_leader():
+            return
+
+        if self.peer_databag is None:
+            # peer relation not yet initialised
+            # TODO fail louder
+            return
         self.charm.peers.peer_databag[username] = password
 
     def remove_user(self, username: str):
+        """Removes user from app databag."""
+        if not self.charm.unit.is_leader():
+            return
+
+        if self.peer_databag is None:
+            # peer relation not yet initialised
+            # TODO fail louder
+            return
         self.peer_databag.pop(username, None)
