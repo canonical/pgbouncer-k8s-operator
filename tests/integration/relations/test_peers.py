@@ -118,4 +118,4 @@ async def test_exit_relations(ops_test: OpsTest):
 
         await ops_test.model.remove_application(PG)
         wait_for_relation_removed_between(ops_test, PG, PGB)
-        await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)
+        await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)

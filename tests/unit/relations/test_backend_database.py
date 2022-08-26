@@ -18,6 +18,7 @@ BACKEND_RELATION_NAME = "backend-database"
 
 # TODO clean up mocks
 
+
 class TestBackendDatabaseRelation(unittest.TestCase):
     def setUp(self):
         self.harness = Harness(PgBouncerK8sCharm)
