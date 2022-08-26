@@ -177,7 +177,8 @@ class PgBouncerK8sCharm(CharmBase):
         services = pgb_container.get_services()
         if PGB not in services.keys():
             # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
-            raise ConnectionError
+            # TODO raise an error here so we can handle when this is called before pebble config is ready.
+            return
 
         self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
         logger.info("reloading pgbouncer application")
