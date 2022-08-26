@@ -90,9 +90,21 @@ async def test_scaling(ops_test: OpsTest):
     initial_scale = 3
     async with ops_test.fast_forward():
         await scale_application(ops_test, PGB, initial_scale)
+        await asyncio.gather(
+            ops_test.model.wait_for_idle(apps=[PGB, FINOS_WALTZ], status="active", timeout=1000),
+            ops_test.model.wait_for_idle(
+                apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
+            ),
+        )
 
         # Scale down the application.
         await scale_application(ops_test, PGB, initial_scale - 1)
+        await asyncio.gather(
+            ops_test.model.wait_for_idle(apps=[PGB, FINOS_WALTZ], status="active", timeout=1000),
+            ops_test.model.wait_for_idle(
+                apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
+            ),
+        )
 
 
 @pytest.mark.scaling
