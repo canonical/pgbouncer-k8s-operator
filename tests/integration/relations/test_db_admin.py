@@ -21,14 +21,11 @@ from tests.integration.helpers.postgresql_helpers import (
     get_unit_address,
 )
 
+logger = logging.getLogger(__name__)
+
 FIRST_DISCOURSE_APP_NAME = "discourse-k8s"
 SECOND_DISCOURSE_APP_NAME = "discourse-charmers-discourse-k8s"
 REDIS_APP_NAME = "redis-k8s"
-APPLICATION_UNITS = 1
-DATABASE_UNITS = 3
-
-logger = logging.getLogger(__name__)
-
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
 PG = "postgresql-k8s"
@@ -47,7 +44,6 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
         await asyncio.gather(
             ops_test.model.deploy(
                 charm,
-                num_units=3,
                 resources=resources,
                 application_name=PGB,
             ),
