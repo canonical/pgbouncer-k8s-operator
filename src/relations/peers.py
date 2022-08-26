@@ -174,3 +174,9 @@ class Peers(Object):
 
         self.peer_databag[AUTH_FILE_DATABAG_KEY] = auth_file
         logger.debug("updated auth file in peer databag")
+
+    def add_user(self, username: str, password: str):
+        self.charm.peers.peer_databag[username] = password
+
+    def remove_user(self, username: str):
+        self.peer_databag.pop(username, None)

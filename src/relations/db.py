@@ -174,7 +174,7 @@ class DbProvides(Object):
 
         if self.charm.unit.is_leader():
             password = pgb.generate_password()
-            self.charm.peers.peer_databag[user] = password
+            self.charm.peers.add_user(user, password)
         else:
             password = self.charm.peers.peer_databag.get(user)
 
@@ -394,6 +394,7 @@ class DbProvides(Object):
         cfg.remove_user(user)
         self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
         if self.charm.unit.is_leader():
+            self.charm.peers.remove_user(user)
             self.charm.backend.postgres.delete_user(user)
 
     def update_databags(self, relation, updates: Dict[str, str]):
