@@ -54,14 +54,17 @@ async def test_scaled_relations(ops_test: OpsTest):
             ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
         )
 
+        await ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database")
+        wait_for_relation_joined_between(ops_test, PG, PGB)
         await asyncio.gather(
-            ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database"),
-            ops_test.model.add_relation(f"{PGB}:db", f"{FINOS_WALTZ}:db"),
+            ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000),
+            ops_test.model.wait_for_idle(
+                apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
+            ),
         )
 
-        wait_for_relation_joined_between(ops_test, PG, PGB)
+        await ops_test.model.add_relation(f"{PGB}:db", f"{FINOS_WALTZ}:db")
         wait_for_relation_joined_between(ops_test, PGB, FINOS_WALTZ)
-
         await asyncio.gather(
             ops_test.model.wait_for_idle(apps=[PGB, FINOS_WALTZ], status="active", timeout=1000),
             ops_test.model.wait_for_idle(

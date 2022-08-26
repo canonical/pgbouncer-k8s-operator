@@ -105,6 +105,7 @@ class Peers(Object):
             return
 
         self.peer_databag[CFG_FILE_DATABAG_KEY] = cfg.render()
+        logger.debug("updated config file in peer databag")
 
     def get_cfg(self) -> PgbConfig:
         """Retrieves the pgbouncer config from the peer databag."""
@@ -127,3 +128,4 @@ class Peers(Object):
             return
 
         self.peer_databag[AUTH_FILE_DATABAG_KEY] = auth_file
+        logger.debug("updated auth file in peer databag")

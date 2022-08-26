@@ -68,6 +68,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 wait_for_exact_units=3,
             ),
         )
+        # TODO test adding both relations simultaneously
         backend_relation = await ops_test.model.add_relation(
             f"{PGB}:backend-database", f"{PG}:database"
         )

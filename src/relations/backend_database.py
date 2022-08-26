@@ -52,6 +52,7 @@ from ops.framework import Object
 from ops.model import Application, BlockedStatus, Relation
 
 from constants import BACKEND_RELATION_NAME, PGB_DIR
+
 PGB_DB = "pgbouncer"
 
 
@@ -87,7 +88,9 @@ class BackendDatabaseRequires(Object):
         self.framework.observe(
             self.database.on.read_only_endpoints_changed, self._on_endpoints_changed
         )
-        self.framework.observe(charm.on[BACKEND_RELATION_NAME].relation_broken, self._on_relation_broken)
+        self.framework.observe(
+            charm.on[BACKEND_RELATION_NAME].relation_broken, self._on_relation_broken
+        )
 
     def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
         """Handle backend-database-database-created event.
