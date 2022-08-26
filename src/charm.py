@@ -2,7 +2,13 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Charmed PgBouncer connection pooler."""
+"""Charmed PgBouncer connection pooler.
+
+TODO the flow of this charm is getting a bit convoluted. The backend relation has to be ready
+before the db relations, which, along with the peer relation, rely on the config file created in
+the start hook. Therefore, we're all waiting on the start hook to complete before anything, after
+which there's a chain of deferred hooks that may or may not deploy in any order.
+"""
 
 
 import logging

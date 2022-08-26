@@ -65,6 +65,9 @@ AUTH_FILE_DATABAG_KEY = "auth_file"
 
 logger = logging.getLogger(__name__)
 
+class RelationNotReadyError(Exception):
+    """Exception to be raised when a relation is not yet ready."""
+
 
 class Peers(Object):
     """Defines functionality for the pgbouncer peer relation.
@@ -151,8 +154,7 @@ class Peers(Object):
 
         if self.peer_databag is None:
             # peer relation not yet initialised
-            # TODO fail louder
-            return
+            raise RelationNotReadyError
 
         self.peer_databag[CFG_FILE_DATABAG_KEY] = cfg.render()
         logger.debug("updated config file in peer databag")
@@ -174,8 +176,7 @@ class Peers(Object):
 
         if self.peer_databag is None:
             # peer relation not yet initialised
-            # TODO fail louder
-            return
+            raise RelationNotReadyError
 
         self.peer_databag[AUTH_FILE_DATABAG_KEY] = auth_file
         logger.debug("updated auth file in peer databag")
@@ -187,8 +188,8 @@ class Peers(Object):
 
         if self.peer_databag is None:
             # peer relation not yet initialised
-            # TODO fail louder
-            return
+            raise RelationNotReadyError
+
         self.charm.peers.peer_databag[username] = password
 
     def remove_user(self, username: str):
@@ -198,6 +199,6 @@ class Peers(Object):
 
         if self.peer_databag is None:
             # peer relation not yet initialised
-            # TODO fail louder
-            return
+            raise RelationNotReadyError
+
         self.peer_databag.pop(username, None)
