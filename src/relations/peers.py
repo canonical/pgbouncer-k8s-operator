@@ -4,7 +4,52 @@
 """Pgbouncer pgb-peers relation hooks & helpers.
 
 Example:
-TODO example docs
+                                                  relation data v0.3
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ relation (id: 0) ┃ pgbouncer-k8s                                                                                    ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ relation name    │ pgb-peers                                                                                        │
+│ interface        │ pgb_peers                                                                                        │
+│ leader unit      │ 1                                                                                                │
+│ type             │ peer                                                                                             │
+├──────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ application data │ ╭──────────────────────────────────────────────────────────────────────────────────────────────╮ │
+│                  │ │                                                                                              │ │
+│                  │ │  auth_file                                "pgbouncer_auth_relation_id_2"                     │ │
+│                  │ │                                           "md558cfafb042867ba28d809ec3ff73534f"              │ │
+│                  │ │  cfg_file                                                                                    │ │
+│                  │ │                                                                                              │ │
+│                  │ │                                                                                              │ │
+│                  │ │                                           listen_addr = *                                    │ │
+│                  │ │                                           listen_port = 6432                                 │ │
+│                  │ │                                           logfile =                                          │ │
+│                  │ │                                           /var/lib/postgresql/pgbouncer/pgbouncer.log        │ │
+│                  │ │                                           pidfile =                                          │ │
+│                  │ │                                           /var/lib/postgresql/pgbouncer/pgbouncer.pid        │ │
+│                  │ │                                           admin_users =                                      │ │
+│                  │ │                                           stats_users =                                      │ │
+│                  │ │                                           auth_type = md5                                    │ │
+│                  │ │                                           user = postgres                                    │ │
+│                  │ │                                           max_client_conn = 10000                            │ │
+│                  │ │                                           ignore_startup_parameters = extra_float_digits     │ │
+│                  │ │                                           so_reuseport = 1                                   │ │
+│                  │ │                                           unix_socket_dir = /var/lib/postgresql/pgbouncer    │ │
+│                  │ │                                           pool_mode = session                                │ │
+│                  │ │                                           max_db_connections = 100                           │ │
+│                  │ │                                           default_pool_size = 13                             │ │
+│                  │ │                                           min_pool_size = 7                                  │ │
+│                  │ │                                           reserve_pool_size = 7                              │ │
+│                  │ │                                           auth_file =                                        │ │
+│                  │ │                                           /var/lib/postgresql/pgbouncer/userlist.txt         │ │
+│                  │ │                                                                                              │ │
+│                  │ │                                                                                              │ │
+│                  │ │  pgbouncer_k8s_user_id_3_test_peers_xz5n  DHj1tJXAcrQzSUNc4eVlWf18                           │ │
+│                  │ ╰──────────────────────────────────────────────────────────────────────────────────────────────╯ │
+│ unit data        │ ╭─ pgbouncer-k8s/0 ─╮ ╭─ pgbouncer-k8s/1* ─╮                                                     │
+│                  │ │ <empty>           │ │ <empty>            │                                                     │
+│                  │ ╰───────────────────╯ ╰────────────────────╯                                                     │
+└──────────────────┴──────────────────────────────────────────────────────────────────────────────────────────────────┘
+
 """
 
 import logging
