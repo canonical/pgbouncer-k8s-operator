@@ -15,7 +15,7 @@ from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, StartEven
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
-from ops.pebble import Layer, PathError
+from ops.pebble import ConnectionError, Layer, PathError
 
 from constants import AUTH_FILE_PATH, INI_PATH, PG_USER, PGB
 from relations.backend_database import BackendDatabaseRequires
@@ -163,13 +163,15 @@ class PgBouncerK8sCharm(CharmBase):
 
         Pgbouncer will not apply configuration changes without reloading, so this must be called
         after each time config files are changed.
+
+        Raises:
+            pebble.ConnectionError if pgb service isn't accessible
         """
         pgb_container = self.unit.get_container(PGB)
         services = pgb_container.get_services()
         if PGB not in services.keys():
-            # pgbouncer has not been added to pebble config.
-            # TODO fail louder so we can handle an error.
-            return
+            # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
+            raise ConnectionError
 
         self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
         logger.info("reloading pgbouncer application")

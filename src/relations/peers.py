@@ -4,7 +4,6 @@
 """Pgbouncer pgb-peers relation hooks & helpers.
 
 Example:
-                                                  relation data v0.3
 ┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ relation (id: 0) ┃ pgbouncer-k8s                                                                                    ┃
 ┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
@@ -17,9 +16,9 @@ Example:
 │                  │ │                                                                                              │ │
 │                  │ │  auth_file                                "pgbouncer_auth_relation_id_2"                     │ │
 │                  │ │                                           "md558cfafb042867ba28d809ec3ff73534f"              │ │
-│                  │ │  cfg_file                                                                                    │ │
+│                  │ │  cfg_file                                 [databases]                                        │ │
 │                  │ │                                                                                              │ │
-│                  │ │                                                                                              │ │
+│                  │ │                                           [pgbouncer]                                        │ │
 │                  │ │                                           listen_addr = *                                    │ │
 │                  │ │                                           listen_port = 6432                                 │ │
 │                  │ │                                           logfile =                                          │ │
@@ -57,6 +56,7 @@ import logging
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, RelationChangedEvent, RelationCreatedEvent
 from ops.framework import Object
+from ops.pebble import ConnectionError
 
 RELATION_NAME = "pgb-peers"
 CFG_FILE_DATABAG_KEY = "cfg_file"
@@ -137,7 +137,12 @@ class Peers(Object):
             self.charm.render_auth_file(auth_file)
 
         if cfg is not None or auth_file is not None:
-            self.charm.reload_pgbouncer()
+            try:
+                # returns an error if this is fired before on_pebble_ready.
+                self.charm.reload_pgbouncer()
+            except ConnectionError:
+                # TODO find a better error to use
+                event.defer()
 
     def update_cfg(self, cfg: PgbConfig) -> None:
         """Writes cfg to app databag if leader."""
