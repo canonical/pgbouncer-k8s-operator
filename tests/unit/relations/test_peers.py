@@ -21,7 +21,7 @@ class TestPeers(unittest.TestCase):
         self.app = self.charm.app.name
         self.unit = self.charm.unit.name
 
-    @patch("relations.peers.Peers.peer_databag", new_callable=PropertyMock)
+    @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.render_auth_file")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
