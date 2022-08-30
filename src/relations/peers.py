@@ -98,7 +98,7 @@ class Peers(Object):
 
     @property
     def unit_databag(self):
-        """Returns the app databag for the Peer relation."""
+        """Returns the unit databag for the Peer relation."""
         peer_relation = self.model.get_relation(PEER_RELATION_NAME)
         if peer_relation is None:
             return {}
@@ -140,10 +140,10 @@ class Peers(Object):
             self.update_cfg(cfg)
             return
 
-        if cfg := self.app_databag.get(CFG_FILE_DATABAG_KEY):
+        if cfg := self.get_secret("app", CFG_FILE_DATABAG_KEY):
             self.charm.render_pgb_config(PgbConfig(cfg))
 
-        if auth_file := self.app_databag.get(AUTH_FILE_DATABAG_KEY):
+        if auth_file := self.get_secret("app", AUTH_FILE_DATABAG_KEY):
             self.charm.render_auth_file(auth_file)
 
         if cfg is not None or auth_file is not None:
@@ -160,7 +160,7 @@ class Peers(Object):
         Placeholder method for Juju Secrets interface.
 
         Args:
-            scope: scope for data
+            scope: scope for data. Can be "unit" or "app".
             key: key to set value to
             value: value to be set
         """
@@ -183,7 +183,7 @@ class Peers(Object):
         Placeholder method for Juju Secrets interface.
 
         Args:
-            scope: scope for data
+            scope: scope for data. Can be "unit" or "app".
             key: key to access data
         """
         if scope == "unit":
@@ -201,7 +201,7 @@ class Peers(Object):
         Placeholder method for Juju Secrets interface.
 
         Args:
-            scope: scope for data
+            scope: scope for data. Can be "unit" or "app".
             key: key to access data
         Returns:
             value at `key` in `scope` databag.
@@ -218,12 +218,7 @@ class Peers(Object):
         if not self.charm.unit.is_leader():
             return
 
-        if self.app_databag is None:
-            # peer relation not yet initialised
-            # TODO fail louder
-            return
-
-        self.app_databag[CFG_FILE_DATABAG_KEY] = cfg.render()
+        self.set_secret("app", CFG_FILE_DATABAG_KEY, cfg.render())
         logger.debug("updated config file in peer databag")
 
     def get_cfg(self) -> PgbConfig:

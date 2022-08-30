@@ -18,7 +18,7 @@ class TestCharm(unittest.TestCase):
     def setUp(self):
         self.harness = Harness(PgBouncerK8sCharm)
         self.addCleanup(self.harness.cleanup)
-        self.harness.begin()
+        self.harness.begin_with_initial_hooks()
         self.charm = self.harness.charm
 
     def test_on_start(self):
