@@ -113,7 +113,7 @@ class Peers(Object):
         except FileNotFoundError:
             # If there's no config, the charm start hook hasn't fired yet, so defer until it's
             # available.
-            event.defer()
+            # event.defer()
             return
 
         self.update_cfg(cfg)
