@@ -58,6 +58,7 @@ from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, RelationChangedEvent, RelationCreatedEvent
 from ops.framework import Object
 from ops.pebble import ConnectionError
+
 from constants import PEER_RELATION_NAME
 
 CFG_FILE_DATABAG_KEY = "cfg_file"
@@ -153,7 +154,7 @@ class Peers(Object):
                 # TODO find a better error to use
                 event.defer()
 
-    def set_secret(self, scope:str, key:str, value:str):
+    def set_secret(self, scope: str, key: str, value: str):
         """Sets secret value.
 
         Placeholder method for Juju Secrets interface.
@@ -176,7 +177,7 @@ class Peers(Object):
         else:
             raise RuntimeError("Unknown secret scope.")
 
-    def del_secret(self, scope:str, key:str):
+    def del_secret(self, scope: str, key: str):
         """Deletes secret value.
 
         Placeholder method for Juju Secrets interface.
@@ -194,7 +195,7 @@ class Peers(Object):
         else:
             raise RuntimeError("Unknown secret scope.")
 
-    def get_secret(self, scope:str, key:str) -> Optional[str]:
+    def get_secret(self, scope: str, key: str) -> Optional[str]:
         """Gets secret value.
 
         Placeholder method for Juju Secrets interface.

@@ -41,11 +41,11 @@ class TestDb(unittest.TestCase):
         self.db_admin_relation = self.charm.legacy_db_admin_relation
 
         # Define a peer relation
-        self.peers_rel_id = self.harness.add_relation(PEER_RELATION_NAME, "postgres")
+        self.peers_rel_id = self.harness.add_relation(PEER_RELATION_NAME, "pgbouncer-k8s")
         self.harness.add_relation_unit(self.peers_rel_id, self.unit)
 
         # Define a backend relation
-        self.backend_rel_id = self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
+        self.backend_rel_id = self.harness.add_relation(BACKEND_RELATION_NAME, "postgres-k8s")
         self.harness.add_relation_unit(self.backend_rel_id, "postgres/0")
         self.harness.add_relation_unit(self.backend_rel_id, self.unit)
 

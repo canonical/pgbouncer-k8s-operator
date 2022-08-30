@@ -26,10 +26,10 @@ class TestPeers(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.render_auth_file")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
     def test_on_peers_changed(
-        self, reload_pgbouncer, render_auth_file, render_pgb_config, peer_databag
+        self, reload_pgbouncer, render_auth_file, render_pgb_config, app_databag
     ):
         databag = {}
-        peer_databag.return_value = databag
+        app_databag.return_value = databag
 
         # We don't want to write anything if we're the leader
         self.harness.set_leader(True)

@@ -176,7 +176,7 @@ class DbProvides(Object):
             password = pgb.generate_password()
             self.charm.peers.add_user(user, password)
         else:
-            password = self.charm.peers.peer_databag.get(user)
+            password = self.charm.peers.app_databag.get(user)
 
         if None in [database, password]:
             # If database isn't available, defer
