@@ -30,7 +30,7 @@ listen_addr = *
 listen_port = 5432
 logfile = /var/lib/postgresql/pgbouncer/pgbouncer.log
 pidfile = /var/lib/postgresql/pgbouncer/pgbouncer.pid
-admin_users = relation_id_1,pgbouncer_k8s_user_id_2_test_db_admin_ipve,pgbouncer_k8s_user_id_4_test_db_admin_ipve
+admin_users = relation_1,pgbouncer_k8s_user_2_test_db_admin_ipve,pgbouncer_k8s_user_4_test_db_admin_ipve
 stats_users =
 auth_type = md5
 user = postgres
@@ -43,8 +43,8 @@ max_db_connections = 100
 default_pool_size = 13
 min_pool_size = 7
 reserve_pool_size = 7
-auth_user = pgbouncer_auth_relation_id_1
-auth_query = SELECT username, password FROM pgbouncer_auth_relation_id_1.get_auth($1)
+auth_user = pgbouncer_auth_relation_1
+auth_query = SELECT username, password FROM pgbouncer_auth_relation_1.get_auth($1)
 
 """  # noqa: W505
 

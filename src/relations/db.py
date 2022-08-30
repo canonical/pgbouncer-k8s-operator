@@ -7,47 +7,47 @@ This relation uses the pgsql interface, omitting roles and extensions as they ar
 the new postgres charm.
 
 Some example relation data is below. All values are examples, generated in a running test instance.
-┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
-┃ category         ┃            keys ┃ pgbouncer-k8s/0                            ┃ finos-waltz/0 ┃
-┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
-│ metadata         │        endpoint │ 'db'                                       │ 'db'          │
-│                  │          leader │ True                                       │ True          │
-├──────────────────┼─────────────────┼────────────────────────────────────────────┼───────────────┤
-│ application data │ allowed-subnets │ 10.152.183.122/32                          │               │
-│                  │   allowed-units │ pgbouncer-k8s/0                            │               │
-│                  │        database │ waltz                                      │ waltz         │
-│                  │            host │ pgbouncer-k8s-0.pgbouncer-k8s-op…          │               │
-│                  │          master │ host=pgbouncer-k8s-0.pgbouncer-k…          │               │
-│                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
-│                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH          │               │
-│                  │                 │ fallback_application_name=finos-waltz      │               │
-│                  │        password │ BjWDKjvZyClvTl4d5VDOK3mH                   │               │
-│                  │            port │ 6432                                       │               │
-│                  │        standbys │ host=pgbouncer-k8s-0.pgbouncer-k…          │               │
-│                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
-│                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH          │               │
-│                  │                 │ fallback_application_name=finos-waltz      │               │
-│                  │           state │ master                                     │               │
-│                  │            user │ relation_id_3                              │               │
-│                  │         version │ 12.11                                      │               │
-│ unit data        │ allowed-subnets │ 10.152.183.122/32                          │               │
-│                  │   allowed-units │ pgbouncer-k8s/0                            │               │
-│                  │        database │ waltz                                      │ waltz         │
-│                  │            host │ pgbouncer-k8s-0.pgbouncer-k8s-op…          │               │
-│                  │          master │ host=pgbouncer-k8s-0.pgbouncer-k…          │               │
-│                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
-│                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH          │               │
-│                  │                 │ fallback_application_name=finos-waltz      │               │
-│                  │        password │ BjWDKjvZyClvTl4d5VDOK3mH                   │               │
-│                  │            port │ 6432                                       │               │
-│                  │        standbys │ host=pgbouncer-k8s-0.pgbouncer-k…          │               │
-│                  │                 │ dbname=waltz port=6432 user=relation_id_3  │               │
-│                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH          │               │
-│                  │                 │ fallback_application_name=finos-waltz      │               │
-│                  │           state │ master                                     │               │
-│                  │            user │ relation_id_3                              │               │
-│                  │         version │ 12.11                                      │               │
-└──────────────────┴─────────────────┴────────────────────────────────────────────┴───────────────┘
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ category         ┃            keys ┃ pgbouncer-k8s/0                        ┃ finos-waltz/0 ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ metadata         │        endpoint │ 'db'                                   │ 'db'          │
+│                  │          leader │ True                                   │ True          │
+├──────────────────┼─────────────────┼────────────────────────────────────────┼───────────────┤
+│ application data │ allowed-subnets │ 10.152.183.122/32                      │               │
+│                  │   allowed-units │ pgbouncer-k8s/0                        │               │
+│                  │        database │ waltz                                  │ waltz         │
+│                  │            host │ pgbouncer-k8s-0.pgbouncer-k8s-op…      │               │
+│                  │          master │ host=pgbouncer-k8s-0.pgbouncer-k…      │               │
+│                  │                 │ dbname=waltz port=6432 user=relation_3 │               │
+│                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH      │               │
+│                  │                 │ fallback_application_name=finos-waltz  │               │
+│                  │        password │ BjWDKjvZyClvTl4d5VDOK3mH               │               │
+│                  │            port │ 6432                                   │               │
+│                  │        standbys │ host=pgbouncer-k8s-0.pgbouncer-k…      │               │
+│                  │                 │ dbname=waltz port=6432 user=relation_3 │               │
+│                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH      │               │
+│                  │                 │ fallback_application_name=finos-waltz  │               │
+│                  │           state │ master                                 │               │
+│                  │            user │ relation_3                             │               │
+│                  │         version │ 12.11                                  │               │
+│ unit data        │ allowed-subnets │ 10.152.183.122/32                      │               │
+│                  │   allowed-units │ pgbouncer-k8s/0                        │               │
+│                  │        database │ waltz                                  │ waltz         │
+│                  │            host │ pgbouncer-k8s-0.pgbouncer-k8s-op…      │               │
+│                  │          master │ host=pgbouncer-k8s-0.pgbouncer-k…      │               │
+│                  │                 │ dbname=waltz port=6432 user=relation_3 │               │
+│                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH      │               │
+│                  │                 │ fallback_application_name=finos-waltz  │               │
+│                  │        password │ BjWDKjvZyClvTl4d5VDOK3mH               │               │
+│                  │            port │ 6432                                   │               │
+│                  │        standbys │ host=pgbouncer-k8s-0.pgbouncer-k…      │               │
+│                  │                 │ dbname=waltz port=6432 user=relation_3 │               │
+│                  │                 │ password=BjWDKjvZyClvTl4d5VDOK3mH      │               │
+│                  │                 │ fallback_application_name=finos-waltz  │               │
+│                  │           state │ master                                 │               │
+│                  │            user │ relation_3                             │               │
+│                  │         version │ 12.11                                  │               │
+└──────────────────┴─────────────────┴────────────────────────────────────────┴───────────────┘
 """
 
 import logging
@@ -411,7 +411,7 @@ class DbProvides(Object):
         app_name = self.charm.app.name
         relation_id = event.relation.id
         model_name = self.model.name
-        return f"{app_name}_user_id_{relation_id}_{model_name}".replace("-", "_")
+        return f"{app_name}_user_{relation_id}_{model_name}".replace("-", "_")
 
     def get_databags(self, relation):
         """Returns available databags for the given relation.

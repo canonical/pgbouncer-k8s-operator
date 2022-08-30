@@ -31,7 +31,7 @@ def get_legacy_relation_username(ops_test: OpsTest, relation_id: int):
     """Gets a username as it should be generated in the db and db-admin legacy relations."""
     app_name = ops_test.model.applications[PGB].name
     model_name = ops_test.model_name
-    return f"{app_name}_user_id_{relation_id}_{model_name}".replace("-", "_")
+    return f"{app_name}_user_{relation_id}_{model_name}".replace("-", "_")
 
 
 async def get_unit_info(ops_test: OpsTest, unit_name: str) -> Dict:

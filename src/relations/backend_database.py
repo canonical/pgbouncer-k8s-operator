@@ -24,7 +24,7 @@ Example:
 │                  │                  │ "read-only-endp… │                  │
 │                  │                  │ "postgresql-k8s… │                  │
 │                  │                  │ "username":      │                  │
-│                  │                  │ "relation_id_18… │                  │
+│                  │                  │ "relation_18…    │                  │
 │                  │                  │ "version":       │                  │
 │                  │                  │ "12.9"}          │                  │
 │                  │         database │ pgbouncer        │                  │
@@ -32,7 +32,7 @@ Example:
 │                  │ extra-user-roles │ SUPERUSER        │                  │
 │                  │         password │                  │ 18cqKCp19xOPBhk9 │
 │                  │ read-only-endpo… │                  │ postgresql-k8s-… │
-│                  │         username │                  │ relation_id_18   │
+│                  │         username │                  │ relation_18      │
 │                  │          version │                  │ 12.9             │
 └──────────────────┴──────────────────┴──────────────────┴──────────────────┘
 """
