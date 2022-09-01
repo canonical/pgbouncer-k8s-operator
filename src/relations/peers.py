@@ -110,21 +110,17 @@ class Peers(Object):
 
         try:
             cfg = self.charm.read_pgb_config()
+            self.update_cfg(cfg)
         except FileNotFoundError:
             # If there's no config, the charm start hook hasn't fired yet, so defer until it's
             # available.
-            # event.defer()
+            event.defer()
             return
 
-        self.update_cfg(cfg)
-
-        try:
-            if self.charm.backend:
-                # update userlist only if backend relation exists.
-                self.update_auth_file(self.charm.read_auth_file())
-        except FileNotFoundError:
-            # Auth files will be added to the databag once they're available
-            pass
+        if self.charm.backend.postgres:
+            # Update userlist only if backend relation is fully initialised. If not, it'll be added
+            # when that relation first writes it to the filesystem.
+            self.update_auth_file(self.charm.read_auth_file())
 
     def _on_changed(self, event: RelationChangedEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
