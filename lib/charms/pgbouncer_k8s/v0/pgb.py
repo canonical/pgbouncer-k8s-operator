@@ -268,7 +268,9 @@ class PgbConfig(MutableMapping):
         }
         if not set(essentials.keys()).issubset(set(self.keys())):
             missing_keys = set(essentials.keys()) - (set(self.keys()))
-            raise PgbConfig.ConfigParsingError(f"necessary sections not found in config: {missing_keys}")
+            raise PgbConfig.ConfigParsingError(
+                f"necessary sections not found in config: {missing_keys}"
+            )
 
         if not set(essentials["pgbouncer"]).issubset(set(self["pgbouncer"].keys())):
             missing_config_values = set(essentials["pgbouncer"]) - set(self["pgbouncer"].keys())
