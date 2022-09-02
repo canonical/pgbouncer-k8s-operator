@@ -3,6 +3,11 @@
 
 """Postgres db relation hooks & helpers.
 
+This relation creates the necessary databag information (an example is given below) for database
+connections, and updates the config with the correct information for pgbouncer to connect to the
+backend database. As a result, pretty much every part of this relation relies on the backend
+relation being implemented first.
+
 This relation uses the pgsql interface, omitting roles and extensions as they are unsupported in
 the new postgres charm.
 
