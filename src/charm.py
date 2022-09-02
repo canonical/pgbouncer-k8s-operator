@@ -139,6 +139,8 @@ class PgBouncerK8sCharm(CharmBase):
         if self.backend.postgres is None:
             self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
 
+        self.check_pgb_running()
+
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Define and start pgbouncer workload."""
         try:
@@ -157,7 +159,7 @@ class PgBouncerK8sCharm(CharmBase):
         pebble_layer = self._pgbouncer_layer()
         container.add_layer(PGB_APP_NAME, pebble_layer, combine=True)
         container.autostart()
-        self.unit.status = ActiveStatus()
+        self.check_pgb_running()
 
     def reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
@@ -179,13 +181,22 @@ class PgBouncerK8sCharm(CharmBase):
         self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
         logger.info("reloading pgbouncer application")
         pgb_container.restart(PGB_APP_NAME)
+        self.check_pgb_running()
+
+    def check_pgb_running(self) -> bool:
+        pgb_container = self.unit.get_container(PGB_APP_NAME)
+        services = pgb_container.get_services()
+        if PGB_APP_NAME not in services.keys():
+            # pebble_ready event hasn't fired so pgbouncer layer has not been added to pebble
+            raise ConnectionError
+
         pgb_service_status = pgb_container.get_services(PGB_APP_NAME).get(PGB_APP_NAME).current
         if pgb_service_status == ServiceStatus.ACTIVE:
-            self.unit.status = ActiveStatus("PgBouncer Reloaded")
+            self.unit.status = ActiveStatus()
         else:
-            reload_fail = "PgBouncer failed to reload"
-            self.unit.status = BlockedStatus(reload_fail)
-            logger.error(reload_fail)
+            pgb_not_running = "PgBouncer not running"
+            self.unit.status = BlockedStatus(pgb_not_running)
+            logger.error(pgb_not_running)
 
     # =================
     #  File Management
