@@ -17,8 +17,7 @@ from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
 from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
 
-from constants import AUTH_FILE_PATH, INI_PATH, PG_USER
-from constants import PGB as PGB_APP_NAME
+from constants import AUTH_FILE_PATH, INI_PATH, PG_USER, PGB
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
 from relations.peers import Peers
@@ -51,7 +50,7 @@ class PgBouncerK8sCharm(CharmBase):
 
     def _on_start(self, event: StartEvent) -> None:
         """Renders basic PGB config."""
-        container = self.unit.get_container(PGB_APP_NAME)
+        container = self.unit.get_container(PGB)
         if not container.can_connect():
             logger.debug(
                 "pgbouncer config could not be rendered, waiting for container to be available."
@@ -96,11 +95,11 @@ class PgBouncerK8sCharm(CharmBase):
 
         # Create an updated pebble layer for the pgbouncer container, and apply it if there are
         # any changes.
-        container = self.unit.get_container(PGB_APP_NAME)
+        container = self.unit.get_container(PGB)
         layer = self._pgbouncer_layer()
         services = container.get_plan().to_dict().get("services", {})
         if services != layer["services"]:
-            container.add_layer(PGB_APP_NAME, layer, combine=True)
+            container.add_layer(PGB, layer, combine=True)
             logging.info("Added layer 'pgbouncer' to pebble plan")
 
         self.reload_pgbouncer()
@@ -117,7 +116,7 @@ class PgBouncerK8sCharm(CharmBase):
             "summary": "pgbouncer layer",
             "description": "pebble config layer for pgbouncer",
             "services": {
-                PGB_APP_NAME: {
+                PGB: {
                     "summary": "pgbouncer service",
                     "user": PG_USER,
                     # -R flag reuses sockets on restart
@@ -157,7 +156,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         container = event.workload
         pebble_layer = self._pgbouncer_layer()
-        container.add_layer(PGB_APP_NAME, pebble_layer, combine=True)
+        container.add_layer(PGB, pebble_layer, combine=True)
         container.autostart()
         self.check_pgb_running()
 
@@ -170,9 +169,9 @@ class PgBouncerK8sCharm(CharmBase):
         Raises:
             pebble.ConnectionError if pgb service isn't accessible
         """
-        pgb_container = self.unit.get_container(PGB_APP_NAME)
+        pgb_container = self.unit.get_container(PGB)
         services = pgb_container.get_services()
-        if PGB_APP_NAME not in services.keys():
+        if PGB not in services.keys():
             # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
             # TODO update error handling across the charm so we aren't constantly swapping
             # deferred hooks around
@@ -180,7 +179,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
         logger.info("reloading pgbouncer application")
-        pgb_container.restart(PGB_APP_NAME)
+        pgb_container.restart(PGB)
         self.check_pgb_running()
 
     def check_pgb_running(self):
@@ -189,13 +188,13 @@ class PgBouncerK8sCharm(CharmBase):
         Raises:
             pebble.ConnectionError if pgbouncer hasn't been added to pebble config.
         """
-        pgb_container = self.unit.get_container(PGB_APP_NAME)
+        pgb_container = self.unit.get_container(PGB)
         services = pgb_container.get_services()
-        if PGB_APP_NAME not in services.keys():
+        if PGB not in services.keys():
             # pebble_ready event hasn't fired so pgbouncer layer has not been added to pebble
             raise ConnectionError
 
-        pgb_service_status = pgb_container.get_services(PGB_APP_NAME).get(PGB_APP_NAME).current
+        pgb_service_status = pgb_container.get_services(PGB).get(PGB).current
         if pgb_service_status == ServiceStatus.ACTIVE:
             self.unit.status = ActiveStatus()
         else:
@@ -209,7 +208,7 @@ class PgBouncerK8sCharm(CharmBase):
 
     def push_file(self, path, file_contents, perms):
         """Pushes file_contents to path, with the given permissions."""
-        pgb_container = self.unit.get_container(PGB_APP_NAME)
+        pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
             logger.warning("unable to connect to container")
             self.unit.status = WaitingStatus(
@@ -238,7 +237,7 @@ class PgBouncerK8sCharm(CharmBase):
         Raises:
             FileNotFoundError: if there is no file at the given path.
         """
-        pgb_container = self.unit.get_container(PGB_APP_NAME)
+        pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
             inaccessible = f"pgbouncer container not accessible, cannot find {filepath}"
             logger.error(inaccessible)
@@ -254,7 +253,7 @@ class PgBouncerK8sCharm(CharmBase):
 
     def delete_file(self, path):
         """Deletes the file at `path`."""
-        pgb_container = self.unit.get_container(PGB_APP_NAME)
+        pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
             logger.warning("unable to connect to container")
             self.unit.status = WaitingStatus(
