@@ -33,9 +33,15 @@ class TestCharm(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm.update_backend_relation_port")
     @patch("ops.model.Container.restart")
-    def test_on_config_changed(self, _restart, _update_port, _read):
+    @patch("charm.PgBouncerK8sCharm.check_pgb_running")
+    def test_on_config_changed(self, _check_pgb_running, _restart, _update_port, _read):
         self.harness.set_leader(True)
         self.harness.update_config()
+
+        def s_effect():
+            self.charm.unit.status = ActiveStatus()
+
+        _check_pgb_running.side_effect = s_effect
 
         mock_cores = 1
         self.charm._cores = mock_cores
@@ -60,6 +66,7 @@ class TestCharm(unittest.TestCase):
         self.assertIsInstance(self.harness.model.unit.status, ActiveStatus)
         _restart.assert_called()
         _update_port.assert_called()
+        _check_pgb_running.assert_called()
 
         # Test changing charm config propagates to container config file.
         pgb_container = self.harness.model.unit.get_container(PGB)

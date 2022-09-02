@@ -183,7 +183,12 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_container.restart(PGB_APP_NAME)
         self.check_pgb_running()
 
-    def check_pgb_running(self) -> bool:
+    def check_pgb_running(self):
+        """Checks that pgbouncer pebble service is running.
+
+        Raises:
+            pebble.ConnectionError if pgbouncer hasn't been added to pebble config.
+        """
         pgb_container = self.unit.get_container(PGB_APP_NAME)
         services = pgb_container.get_services()
         if PGB_APP_NAME not in services.keys():
