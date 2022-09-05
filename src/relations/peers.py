@@ -92,16 +92,12 @@ class Peers(Object):
     def app_databag(self):
         """Returns the app databag for the Peer relation."""
         peer_relation = self.model.get_relation(PEER_RELATION_NAME)
-        if peer_relation is None:
-            return {}
         return peer_relation.data[self.charm.app]
 
     @property
     def unit_databag(self):
         """Returns the unit databag for the Peer relation."""
         peer_relation = self.model.get_relation(PEER_RELATION_NAME)
-        if peer_relation is None:
-            return {}
         return peer_relation.data[self.charm.unit]
 
     def _on_created(self, event: RelationCreatedEvent):
