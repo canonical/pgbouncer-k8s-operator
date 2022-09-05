@@ -34,6 +34,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         self.harness.add_relation_unit(self.rel_id, "postgres/0")
         self.harness.add_relation_unit(self.rel_id, self.unit)
 
+    @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
     @patch(
         "relations.backend_database.BackendDatabaseRequires.auth_user",
         new_callable=PropertyMock,
@@ -60,6 +61,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         _relation,
         _postgres,
         _auth_user,
+        _app_databag
     ):
         self.harness.set_leader(True)
         pw = _gen_pw.return_value
