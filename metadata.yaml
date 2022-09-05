@@ -40,3 +40,7 @@ requires:
   backend-database:
     interface: postgresql_client
     optional: false
+
+peers:
+  pgb-peers:
+    interface: pgb_peers

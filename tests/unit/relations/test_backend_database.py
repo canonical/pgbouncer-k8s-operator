@@ -16,6 +16,8 @@ from charm import PgBouncerK8sCharm
 
 BACKEND_RELATION_NAME = "backend-database"
 
+# TODO clean up mocks
+
 
 class TestBackendDatabaseRelation(unittest.TestCase):
     def setUp(self):
@@ -32,6 +34,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         self.harness.add_relation_unit(self.rel_id, "postgres/0")
         self.harness.add_relation_unit(self.rel_id, self.unit)
 
+    @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
     @patch(
         "relations.backend_database.BackendDatabaseRequires.auth_user",
         new_callable=PropertyMock,
@@ -40,16 +43,31 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     @patch(
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
     )
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.relation", new_callable=PropertyMock
+    )
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
     @patch("relations.backend_database.BackendDatabaseRequires.initialise_auth_function")
-    @patch("charm.PgBouncerK8sCharm.push_file")
+    @patch("charm.PgBouncerK8sCharm.render_auth_file")
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm.update_postgres_endpoints")
     def test_on_database_created(
-        self, _update_endpoints, _cfg, _push, _init_auth, _gen_pw, _postgres, _auth_user
+        self,
+        _update_endpoints,
+        _cfg,
+        _render_auth_file,
+        _init_auth,
+        _gen_pw,
+        _relation,
+        _postgres,
+        _auth_user,
+        _app_databag,
     ):
+        self.harness.set_leader(True)
         pw = _gen_pw.return_value
         postgres = _postgres.return_value
+        _relation.return_value.data = {}
+        _relation.return_value.data[self.charm.app] = {"database": "database"}
 
         mock_event = MagicMock()
         mock_event.username = "mock_user"
@@ -59,9 +77,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         _init_auth.assert_called_with(dbname=self.backend.database.database)
 
         hash_pw = get_hashed_password(self.backend.auth_user, pw)
-        _push.assert_any_call(
-            f"{PGB_DIR}/userlist.txt", f'"{self.backend.auth_user}" "{hash_pw}"', perms=0o400
-        )
+        _render_auth_file.assert_any_call(f'"{self.backend.auth_user}" "{hash_pw}"')
 
         cfg = _cfg.return_value
         assert mock_event.username in cfg["pgbouncer"]["admin_users"]
@@ -83,6 +99,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     )
     @patch("charm.PgBouncerK8sCharm.update_postgres_endpoints")
     def test_relation_departed(self, _update_endpoints, _postgres, _auth_user):
+        self.harness.set_leader(True)
         postgres = _postgres.return_value
         depart_event = MagicMock()
         depart_event.departing_unit = self.charm.unit

@@ -15,6 +15,8 @@ from tests.integration.helpers.helpers import (
     get_backend_user_pass,
     get_cfg,
     get_pgb_log,
+    get_userlist,
+    scale_application,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
 )
@@ -58,7 +60,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         wait_for_relation_joined_between(ops_test, PG, PGB)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),
 
-        cfg = await get_cfg(ops_test)
+        cfg = await get_cfg(ops_test, f"{PGB}/0")
         logging.info(cfg.render())
         pgb_user, pgb_password = await get_backend_user_pass(ops_test, relation)
         assert pgb_user in cfg["pgbouncer"]["admin_users"]
@@ -79,7 +81,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         try:
             for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
                 with attempt:
-                    cfg = await get_cfg(ops_test)
+                    cfg = await get_cfg(ops_test, f"{PGB}/0")
                     if (
                         pgb_user not in cfg["pgbouncer"]["admin_users"]
                         and "auth_query" not in cfg["pgbouncer"].keys()
@@ -88,15 +90,15 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         except RetryError:
             assert False, "pgbouncer config files failed to update in 3 minutes"
 
-        cfg = await get_cfg(ops_test)
+        cfg = await get_cfg(ops_test, f"{PGB}/0")
         logging.info(cfg.render())
-        logger.info(await get_pgb_log(ops_test))
+        logger.info(await get_pgb_log(ops_test, f"{PGB}/0"))
 
 
 @pytest.mark.backend
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
-        await ops_test.model.relate(f"{PGB}:{RELATION}", f"{PG}:database")
+        relation = await ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database")
         wait_for_relation_joined_between(ops_test, PG, PGB)
         await asyncio.gather(
             ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000),
@@ -105,6 +107,41 @@ async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
             ),
         )
 
-        await ops_test.model.applications[PG].remove()
-        wait_for_relation_removed_between(ops_test, PG, PGB)
-        await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)
+        await scale_application(ops_test, PGB, 3)
+        await asyncio.gather(
+            ops_test.model.wait_for_idle(
+                apps=[PGB], status="active", timeout=1000, wait_for_exact_units=3
+            ),
+            ops_test.model.wait_for_idle(
+                apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
+            ),
+        )
+
+        username = f"relation_id_{relation.id}"
+        leader_cfg = await get_cfg(ops_test, f"{PGB}/0")
+        leader_userlist = await get_userlist(ops_test, f"{PGB}/0")
+
+        assert username in leader_cfg["pgbouncer"]["admin_users"]
+        assert username in leader_userlist
+
+        for unit_id in [1, 2]:
+            unit_name = f"{PGB}/{unit_id}"
+            cfg = await get_cfg(ops_test, unit_name)
+            userlist = await get_userlist(ops_test, unit_name)
+            assert username in cfg["pgbouncer"]["admin_users"]
+            assert username in userlist
+
+            assert cfg == leader_cfg
+            assert userlist == leader_userlist
+
+        # TODO test deleting leader
+
+        await scale_application(ops_test, PGB, 1)
+        await asyncio.gather(
+            ops_test.model.wait_for_idle(
+                apps=[PGB], status="active", timeout=1000, wait_for_exact_units=1
+            ),
+            ops_test.model.wait_for_idle(
+                apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
+            ),
+        )

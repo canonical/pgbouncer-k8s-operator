@@ -21,14 +21,11 @@ from tests.integration.helpers.postgresql_helpers import (
     get_unit_address,
 )
 
+logger = logging.getLogger(__name__)
+
 FIRST_DISCOURSE_APP_NAME = "discourse-k8s"
 SECOND_DISCOURSE_APP_NAME = "discourse-charmers-discourse-k8s"
 REDIS_APP_NAME = "redis-k8s"
-APPLICATION_UNITS = 1
-DATABASE_UNITS = 3
-
-logger = logging.getLogger(__name__)
-
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
 PG = "postgresql-k8s"
@@ -61,7 +58,9 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
         await ops_test.model.applications[PGB].set_config({"listen_port": "5432"})
         await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
 
-        backend_relation = await ops_test.model.relate(f"{PGB}:backend-database", f"{PG}:database")
+        backend_relation = await ops_test.model.add_relation(
+            f"{PGB}:backend-database", f"{PG}:database"
+        )
         wait_for_relation_joined_between(ops_test, PGB, PG)
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, REDIS_APP_NAME], status="active", timeout=1000
@@ -167,4 +166,4 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
             pg_user_password=pgb_password,
         )
 
-        logger.info(await get_pgb_log(ops_test))
+        logger.info(await get_pgb_log(ops_test, f"{PGB}/0"))

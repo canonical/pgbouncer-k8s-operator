@@ -36,7 +36,9 @@ jobs:
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: microk8s
-      - name: Run integration tests
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
+          bootstrap-options: "--agent-version 2.9.29"
+      - name: Run pgbouncer standalone integration tests
         run: tox -e standalone-integration
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
@@ -55,7 +57,9 @@ jobs:
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: microk8s
-      - name: Run integration tests
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
+          bootstrap-options: "--agent-version 2.9.29"
+      - name: Run backend integration tests
         run: tox -e backend-integration
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
@@ -74,7 +78,9 @@ jobs:
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: microk8s
-      - name: Run integration tests
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
+          bootstrap-options: "--agent-version 2.9.29"
+      - name: Run legacy integration tests
         run: tox -e legacy-relation-integration
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
@@ -82,4 +88,23 @@ jobs:
         with:
           app: pgbouncer-k8s
 
-
+  integration-scaling:
+    name: Integration tests for scaling pgbouncer (microk8s)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup operator environment
+      # This part sets the model name to "testing" (used in test run and logdump)
+        uses: charmed-kubernetes/actions-operator@main
+        with:
+          provider: microk8s
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
+          bootstrap-options: "--agent-version 2.9.29"
+      - name: Run scaling integration tests
+        run: tox -e scaling-integration
+      - name: Dump logs
+        uses: canonical/charm-logdump-action@main
+        if: failure()
+        with:
+          app: pgbouncer-k8s

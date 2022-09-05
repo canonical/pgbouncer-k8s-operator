@@ -10,17 +10,19 @@ from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from ops.model import ActiveStatus, WaitingStatus
 from ops.testing import Harness
 
-from charm import INI_PATH, PGB, PgBouncerK8sCharm
+from charm import PgBouncerK8sCharm
+from constants import INI_PATH, PGB
 
 
 class TestCharm(unittest.TestCase):
     def setUp(self):
         self.harness = Harness(PgBouncerK8sCharm)
         self.addCleanup(self.harness.cleanup)
-        self.harness.begin()
+        self.harness.begin_with_initial_hooks()
         self.charm = self.harness.charm
 
     def test_on_start(self):
+        self.harness.set_leader(True)
         self.charm.on.start.emit()
         pgb_container = self.harness.model.unit.get_container(PGB)
 
@@ -31,8 +33,15 @@ class TestCharm(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm.update_backend_relation_port")
     @patch("ops.model.Container.restart")
-    def test_on_config_changed(self, _restart, _update_port, _read):
+    @patch("charm.PgBouncerK8sCharm.check_pgb_running")
+    def test_on_config_changed(self, _check_pgb_running, _restart, _update_port, _read):
+        self.harness.set_leader(True)
         self.harness.update_config()
+
+        def s_effect():
+            self.charm.unit.status = ActiveStatus()
+
+        _check_pgb_running.side_effect = s_effect
 
         mock_cores = 1
         self.charm._cores = mock_cores
@@ -54,9 +63,10 @@ class TestCharm(unittest.TestCase):
                 "listen_port": "6464",
             }
         )
-        self.assertEqual(self.harness.model.unit.status, ActiveStatus())
+        self.assertIsInstance(self.harness.model.unit.status, ActiveStatus)
         _restart.assert_called()
         _update_port.assert_called()
+        _check_pgb_running.assert_called()
 
         # Test changing charm config propagates to container config file.
         pgb_container = self.harness.model.unit.get_container(PGB)
@@ -66,14 +76,16 @@ class TestCharm(unittest.TestCase):
     @patch("ops.model.Container.can_connect", return_value=False)
     @patch("ops.charm.ConfigChangedEvent.defer")
     def test_on_config_changed_container_cant_connect(self, can_connect, defer):
+        self.harness.set_leader(True)
         self.harness.update_config()
-        self.assertEqual(
+        self.assertIsInstance(
             self.harness.model.unit.status,
-            WaitingStatus("waiting for pgbouncer workload container."),
+            WaitingStatus,
         )
         defer.assert_called()
 
     def test_on_pgbouncer_pebble_ready(self):
+        self.harness.set_leader(True)
         # emit on start to ensure config file render
         self.harness.charm.on.start.emit()
         initial_plan = self.harness.get_container_pebble_plan(PGB)
@@ -100,19 +112,19 @@ class TestCharm(unittest.TestCase):
         self.assertEqual(self.harness.model.unit.status, ActiveStatus())
 
     @patch("ops.model.Container.can_connect", return_value=False)
-    @patch("charm.PgBouncerK8sCharm._reload_pgbouncer")
-    def test_render_pgb_config(self, _reload_pgbouncer, _can_connect):
+    @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
+    def test_render_pgb_config(self, reload_pgbouncer, _can_connect):
         cfg = PgbConfig(DEFAULT_CONFIG)
 
         # Assert we exit early if _can_connect returns false
         _can_connect.return_value = False
         self.charm.render_pgb_config(cfg, reload_pgbouncer=False)
         self.assertIsInstance(self.charm.unit.status, WaitingStatus)
-        _reload_pgbouncer.assert_not_called()
+        reload_pgbouncer.assert_not_called()
 
         _can_connect.return_value = True
         self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
-        _reload_pgbouncer.assert_called()
+        reload_pgbouncer.assert_called()
 
         pgb_container = self.harness.model.unit.get_container(PGB)
         ini = pgb_container.pull(INI_PATH).read()
@@ -126,6 +138,12 @@ class TestCharm(unittest.TestCase):
 
     @patch("ops.model.Container.restart")
     def test_reload_pgbouncer(self, _restart):
-        self.charm._reload_pgbouncer()
+        self.harness.set_leader(True)
+        # necessary hooks before we can check reloads
+        self.harness.charm.on.start.emit()
+        container = self.harness.model.unit.get_container(PGB)
+        self.charm.on.pgbouncer_pebble_ready.emit(container)
+
+        self.charm.reload_pgbouncer()
         self.assertIsInstance(self.charm.unit.status, ActiveStatus)
         _restart.assert_called_once()

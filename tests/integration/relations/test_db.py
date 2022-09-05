@@ -47,6 +47,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 charm,
                 resources=resources,
                 application_name=PGB,
+                num_units=3,
             ),
             ops_test.model.deploy(PG, num_units=3, trust=True, channel="edge"),
             ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
@@ -64,9 +65,13 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 status="active",
                 raise_on_blocked=True,
                 timeout=1000,
+                wait_for_exact_units=3,
             ),
         )
-        backend_relation = await ops_test.model.relate(f"{PGB}:backend-database", f"{PG}:database")
+        # TODO test adding both relations simultaneously
+        backend_relation = await ops_test.model.add_relation(
+            f"{PGB}:backend-database", f"{PG}:database"
+        )
         wait_for_relation_joined_between(ops_test, PGB, PG)
         await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
 
@@ -80,7 +85,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             pg_user_password=pgb_password,
         )
 
-        finos_relation = await ops_test.model.relate(f"{PGB}:db", f"{FINOS_WALTZ}:db")
+        finos_relation = await ops_test.model.add_relation(f"{PGB}:db", f"{FINOS_WALTZ}:db")
         wait_for_relation_joined_between(ops_test, PGB, FINOS_WALTZ)
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, FINOS_WALTZ], status="active", timeout=1000
@@ -99,7 +104,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             raise_on_blocked=False,
             timeout=1000,
         )
-        another_finos_relation = await ops_test.model.relate(
+        another_finos_relation = await ops_test.model.add_relation(
             f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db"
         )
         wait_for_relation_joined_between(ops_test, PGB, ANOTHER_FINOS_WALTZ)
@@ -155,7 +160,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             ops_test, [finos_user], [another_finos_user], pgb_user, pgb_password
         )
 
-        cfg = await get_cfg(ops_test)
+        cfg = await get_cfg(ops_test, f"{PGB}/0")
         logger.info(cfg)
         assert another_finos_user not in cfg["pgbouncer"]["admin_users"]
         assert "waltz" in cfg["databases"].keys()
@@ -168,10 +173,10 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
 
         await check_database_users_existence(ops_test, [], [finos_user], pgb_user, pgb_password)
 
-        cfg = await get_cfg(ops_test)
+        cfg = await get_cfg(ops_test, f"{PGB}/0")
         logger.info(cfg)
         assert finos_user not in cfg["pgbouncer"]["admin_users"]
         assert "waltz" not in cfg["databases"].keys()
         assert "waltz_standby" not in cfg["databases"].keys()
 
-        logger.info(await get_pgb_log(ops_test))
+        logger.info(await get_pgb_log(ops_test, f"{PGB}/0"))

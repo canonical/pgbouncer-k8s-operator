@@ -12,6 +12,8 @@ from charms.pgbouncer_k8s.v0 import pgb
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
+from constants import AUTH_FILE_PATH, INI_PATH, LOG_PATH
+
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
 
@@ -29,7 +31,7 @@ def get_legacy_relation_username(ops_test: OpsTest, relation_id: int):
     """Gets a username as it should be generated in the db and db-admin legacy relations."""
     app_name = ops_test.model.applications[PGB].name
     model_name = ops_test.model_name
-    return f"{app_name}_user_id_{relation_id}_{model_name}".replace("-", "_")
+    return f"{app_name}_user_{relation_id}_{model_name}".replace("-", "_")
 
 
 async def get_unit_info(ops_test: OpsTest, unit_name: str) -> Dict:
@@ -81,20 +83,25 @@ async def get_backend_user_pass(ops_test, backend_relation):
     return (pgb_user, pgb_password)
 
 
-async def get_cfg(ops_test: OpsTest) -> pgb.PgbConfig:
+async def get_cfg(ops_test: OpsTest, unit_name: str) -> pgb.PgbConfig:
     """Gets pgbouncer config from pgbouncer container."""
-    cat = await cat_file(ops_test, f"{pgb.PGB_DIR}/pgbouncer.ini")
+    cat = await cat_file_from_unit(ops_test, INI_PATH, unit_name)
     return pgb.PgbConfig(cat)
 
 
-async def get_pgb_log(ops_test: OpsTest) -> str:
+async def get_pgb_log(ops_test: OpsTest, unit_name) -> str:
     """Gets pgbouncer logs from pgbouncer container."""
-    return await cat_file(ops_test, f"{pgb.PGB_DIR}/pgbouncer.log")
+    return await cat_file_from_unit(ops_test, LOG_PATH, unit_name)
 
 
-async def cat_file(ops_test: OpsTest, filepath: str) -> str:
+async def get_userlist(ops_test: OpsTest, unit_name) -> str:
+    """Gets pgbouncer logs from pgbouncer container."""
+    return await cat_file_from_unit(ops_test, AUTH_FILE_PATH, unit_name)
+
+
+async def cat_file_from_unit(ops_test: OpsTest, filepath: str, unit_name: str) -> str:
     """Gets a file from the pgbouncer container of a pgbouncer application unit."""
-    cat_cmd = f"ssh --container pgbouncer {PGB}/0 cat {filepath}"
+    cat_cmd = f"ssh --container pgbouncer {unit_name} cat {filepath}"
     return_code, output, _ = await ops_test.juju(*cat_cmd.split(" "))
     if return_code != 0:
         raise ProcessError(
@@ -150,8 +157,26 @@ def wait_for_relation_removed_between(
 
 
 def relation_exited(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> bool:
+    """Returns true if the relation between endpoint_one and endpoint_two has been removed."""
     for rel in ops_test.model.relations:
         endpoints = [endpoint.name for endpoint in rel.endpoints]
         if endpoint_one not in endpoints and endpoint_two not in endpoints:
             return True
     return False
+
+
+async def scale_application(ops_test: OpsTest, application_name: str, scale: int) -> None:
+    """Scale a given application to a specific unit count.
+
+    Args:
+        ops_test: The ops test framework instance
+        application_name: The name of the application
+        scale: The number of units to scale to
+    """
+    await ops_test.model.applications[application_name].scale(scale)
+    await ops_test.model.wait_for_idle(
+        apps=[application_name],
+        status="active",
+        timeout=1000,
+        wait_for_exact_units=scale,
+    )

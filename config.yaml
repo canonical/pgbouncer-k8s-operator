@@ -8,6 +8,7 @@ options:
       The port on which pgbouncer listens for traffic. Corresponds to
       listen_port in pgbouncer config.
     type: int
+
   pool_mode:
     default: session
     description: |

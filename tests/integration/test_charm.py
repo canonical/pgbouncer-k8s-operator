@@ -17,6 +17,7 @@ METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
 
 
+@pytest.mark.dev
 @pytest.mark.standalone
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test: OpsTest):
@@ -34,6 +35,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
         await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)
 
 
+@pytest.mark.dev
 @pytest.mark.standalone
 async def test_config_updates(ops_test: OpsTest):
     """Test updating charm config updates pgbouncer config."""
@@ -44,7 +46,7 @@ async def test_config_updates(ops_test: OpsTest):
         await pgbouncer_app.set_config({"listen_port": port})
         await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)
 
-        cfg = await get_cfg(ops_test)
+        cfg = await get_cfg(ops_test, f"{PGB}/0")
         logger.info(cfg)
         logger.info(await pgbouncer_app.get_config())
         assert cfg["pgbouncer"]["listen_port"] == port
