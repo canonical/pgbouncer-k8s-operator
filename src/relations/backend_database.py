@@ -51,10 +51,7 @@ from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
 from ops.model import Application, BlockedStatus, Relation
 
-from constants import BACKEND_RELATION_NAME, PGB_DIR
-
-PGB_DB = "pgbouncer"
-
+from constants import BACKEND_RELATION_NAME, PGB, PGB_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +76,7 @@ class BackendDatabaseRequires(Object):
         self.database = DatabaseRequires(
             self.charm,
             relation_name=BACKEND_RELATION_NAME,
-            database_name=PGB_DB,
+            database_name=PGB,
             extra_user_roles="SUPERUSER",
         )
 
@@ -142,7 +139,7 @@ class BackendDatabaseRequires(Object):
         uninstall_script = open("src/relations/sql/pgbouncer-uninstall.sql", "r").read()
 
         try:
-            with self.postgres.connect_to_database(PGB_DB) as conn, conn.cursor() as cursor:
+            with self.postgres.connect_to_database(PGB) as conn, conn.cursor() as cursor:
                 cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
             conn.close()
         except psycopg2.Error:
@@ -173,7 +170,7 @@ class BackendDatabaseRequires(Object):
 
         self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
 
-    def initialise_auth_function(self, dbname=PGB_DB):
+    def initialise_auth_function(self, dbname=PGB):
         """Runs an SQL script to initialise the auth function.
 
         This function must run in every database for authentication to work correctly, and assumes

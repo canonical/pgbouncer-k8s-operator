@@ -132,8 +132,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         Sets BlockedStatus if we have no backend database; if we can't connect to a backend, this
         charm serves no purpose.
-
-        TODO verify pgbouncer is actually running in this hook
         """
         if self.backend.postgres is None:
             self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
