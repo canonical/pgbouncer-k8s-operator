@@ -61,7 +61,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         _relation,
         _postgres,
         _auth_user,
-        _app_databag
+        _app_databag,
     ):
         self.harness.set_leader(True)
         pw = _gen_pw.return_value
