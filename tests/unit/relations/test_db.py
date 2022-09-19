@@ -12,7 +12,6 @@ from constants import (
     DB_ADMIN_RELATION_NAME,
     DB_RELATION_NAME,
     PEER_RELATION_NAME,
-
 )
 from lib.charms.pgbouncer_k8s.v0.pgb import (
     DEFAULT_CONFIG,
@@ -203,7 +202,9 @@ class TestDb(unittest.TestCase):
         }
 
         standby_dbconnstrs = []
-        for standby_hostname in self.charm.peers.units_hostnames - {self.charm.peers.leader_hostname}:
+        for standby_hostname in self.charm.peers.units_hostnames - {
+            self.charm.peers.leader_hostname
+        }:
             standby_dbconnstr = dict(master_dbconnstr)
             standby_dbconnstr.update({"host": standby_hostname})
             standby_dbconnstrs.append(parse_dict_to_kv_string(standby_dbconnstr))
