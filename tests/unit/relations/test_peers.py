@@ -22,11 +22,12 @@ class TestPeers(unittest.TestCase):
         self.unit = self.charm.unit.name
 
     @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
+    @patch("relations.peers.Peers.unit_databag", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.render_auth_file")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
     def test_on_peers_changed(
-        self, reload_pgbouncer, render_auth_file, render_pgb_config, app_databag
+        self, reload_pgbouncer, render_auth_file, render_pgb_config, unit_databag, app_databag
     ):
         databag = {}
         app_databag.return_value = databag

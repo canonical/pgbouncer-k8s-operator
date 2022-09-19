@@ -52,17 +52,19 @@ Example:
 """  # noqa: W505
 
 import logging
-from typing import Optional
+from typing import Optional, Set
 
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, RelationChangedEvent, RelationCreatedEvent
 from ops.framework import Object
+from ops.model import Unit
 from ops.pebble import ConnectionError
 
 from constants import PEER_RELATION_NAME
 
 CFG_FILE_DATABAG_KEY = "cfg_file"
 AUTH_FILE_DATABAG_KEY = "auth_file"
+ADDRESS_KEY = "private-address"
 
 
 logger = logging.getLogger(__name__)
@@ -89,16 +91,52 @@ class Peers(Object):
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_changed, self._on_changed)
 
     @property
+    def relation(self):
+        """Returns the relations in this model , or None if peer is not initialised."""
+        return self.model.get_relation(PEER_RELATION_NAME, None)
+
+    @property
     def app_databag(self):
         """Returns the app databag for the Peer relation."""
-        peer_relation = self.model.get_relation(PEER_RELATION_NAME)
-        return peer_relation.data[self.charm.app]
+        if not self.relation:
+            return None
+        return self.relation.data[self.charm.app]
 
     @property
     def unit_databag(self):
         """Returns the unit databag for the Peer relation."""
-        peer_relation = self.model.get_relation(PEER_RELATION_NAME)
-        return peer_relation.data[self.charm.unit]
+        if not self.relation:
+            return None
+        return self.relation.data[self.charm.unit]
+
+    @property
+    def units_hostnames(self) -> Set[str]:
+        """Fetch current list of peers hostnames.
+
+        Returns:
+            A list of peers addresses (strings).
+        """
+        # Get all members IPs and remove the current unit IP from the list.
+        addresses = {self._get_unit_hostname(unit) for unit in self.relation.units}
+        addresses.add(self.charm.unit_pod_hostname)
+        return addresses
+
+    @property
+    def leader_hostname(self) -> str:
+        """Gets the hostname of the leader unit."""
+        return self.app_databag.get("leader", None)
+
+    def _get_unit_hostname(self, unit: Unit) -> Optional[str]:
+        """Get the hostname of a specific unit."""
+        # Check if host is current host.
+        if unit == self.charm.unit:
+            return self.charm.unit_pod_hostname
+        # Check if host is a peer.
+        elif unit in self.relation.data:
+            return str(self.relation.data[unit].get(ADDRESS_KEY))
+        # Return None if the unit is not a peer neither the current unit.
+        else:
+            return None
 
     def _on_created(self, event: RelationCreatedEvent):
         if not self.charm.unit.is_leader():
@@ -121,6 +159,8 @@ class Peers(Object):
 
     def _on_changed(self, event: RelationChangedEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
+        self.unit_databag[ADDRESS_KEY] = self.charm.unit_pod_hostname
+
         if self.charm.unit.is_leader():
             try:
                 cfg = self.charm.read_pgb_config()
@@ -131,6 +171,7 @@ class Peers(Object):
                 return
 
             self.update_cfg(cfg)
+            self.app_databag["leader"] = self.charm.unit_pod_hostname
             return
 
         if cfg := self.get_secret("app", CFG_FILE_DATABAG_KEY):
@@ -141,10 +182,9 @@ class Peers(Object):
 
         if cfg is not None or auth_file is not None:
             try:
-                # returns an error if this is fired before on_pebble_ready.
+                # raises an error if this is fired before on_pebble_ready.
                 self.charm.reload_pgbouncer()
             except ConnectionError:
-                # TODO find a better error to use
                 event.defer()
 
     def set_secret(self, scope: str, key: str, value: str):

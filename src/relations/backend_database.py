@@ -146,6 +146,7 @@ class BackendDatabaseRequires(Object):
             self.charm.unit.status = BlockedStatus(
                 "failed to remove auth user when disconnecting from postgres application."
             )
+            event.fail()
             return
 
         self.postgres.delete_user(self.auth_user)
