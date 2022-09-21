@@ -143,6 +143,7 @@ class Peers(Object):
             return None
 
     def _on_created(self, event: RelationCreatedEvent):
+        self.unit_databag[ADDRESS_KEY] = self.charm.unit_pod_hostname
         if not self.charm.unit.is_leader():
             return
 
@@ -189,6 +190,9 @@ class Peers(Object):
                 # raises an error if this is fired before on_pebble_ready.
                 self.charm.reload_pgbouncer()
             except ConnectionError:
+                logger.error(
+                    "failed to reload pgbouncer - deferring change_event and waiting for pebble."
+                )
                 event.defer()
 
     def _on_departed(self, _):
