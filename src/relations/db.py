@@ -262,7 +262,7 @@ class DbProvides(Object):
             change_event.defer()
             return
 
-        self.update_port(change_event.relation, self.charm.config["listen_port"])
+        self.update_connection_info(change_event.relation, self.charm.config["listen_port"])
         self.update_postgres_endpoints(change_event.relation, reload_pgbouncer=True)
         self.update_databags(
             change_event.relation,
@@ -278,8 +278,8 @@ class DbProvides(Object):
             },
         )
 
-    def update_port(self, relation: Relation, port: str):
-        """Updates databag to match new port."""
+    def update_connection_info(self, relation: Relation, port: str):
+        """Updates databag connection information."""
         databag = self.get_databags(relation)[0]
         database = databag.get("database")
         user = databag.get("user")
@@ -298,20 +298,22 @@ class DbProvides(Object):
             "fallback_application_name": self.get_external_app(relation).name,
         }
 
-        standby_dbconnstrs = []
-        for standby_ip in self.charm.peers.units_hostnames - {self.charm.peers.leader_hostname}:
-            standby_dbconnstr = dict(master_dbconnstr)
-            standby_dbconnstr.update({"host": standby_ip})
-            standby_dbconnstrs.append(pgb.parse_dict_to_kv_string(standby_dbconnstr))
+        connection_updates = {
+            "master": pgb.parse_dict_to_kv_string(master_dbconnstr),
+            "port": str(port),
+            "host": self.charm.unit_pod_hostname,
+        }
 
-        self.update_databags(
-            relation,
-            {
-                "master": pgb.parse_dict_to_kv_string(master_dbconnstr),
-                "port": str(port),
-                "standbys": ",".join(standby_dbconnstrs),
-            },
-        )
+        standby_ips = self.charm.peers.units_hostnames - {self.charm.peers.leader_hostname}
+        # Only one standby value in legacy relation on pgbouncer. There are multiple standbys on
+        # postgres, but not on the legacy pgbouncer charm.
+        if len(standby_ips) > 0:
+            standby_ip = standby_ips.pop()
+            standby_dbconnstr = dict(master_dbconnstr)
+            standby_dbconnstr.update({"host": standby_ip, "dbname": f"{database}_standby"})
+            connection_updates["standbys"] = pgb.parse_dict_to_kv_string(standby_dbconnstr)
+
+        self.update_databags(relation, connection_updates)
 
     def update_postgres_endpoints(self, relation: Relation, reload_pgbouncer: bool = False):
         """Updates postgres replicas."""
@@ -370,6 +372,11 @@ class DbProvides(Object):
         This doesn't delete any tables so we aren't deleting a user's entire database with one
         command.
         """
+        # Only delete relation data if we're the leader, and we're the last unit to leave.
+        if not self.charm.unit.is_leader() or len(self.charm.peers.units_hostnames) > 1:
+            self.charm.update_client_connection_info()
+            return
+
         databag = self.get_databags(broken_event.relation)[0]
         user = databag.get("user")
         database = databag.get("database")

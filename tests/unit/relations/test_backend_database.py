@@ -13,8 +13,7 @@ from charms.pgbouncer_k8s.v0.pgb import (
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
-
-BACKEND_RELATION_NAME = "backend-database"
+from constants import BACKEND_RELATION_NAME, PEER_RELATION_NAME
 
 # TODO clean up mocks
 
@@ -99,6 +98,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     )
     @patch("charm.PgBouncerK8sCharm.update_postgres_endpoints")
     def test_relation_departed(self, _update_endpoints, _postgres, _auth_user):
+        self.harness.add_relation(PEER_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         postgres = _postgres.return_value
         depart_event = MagicMock()

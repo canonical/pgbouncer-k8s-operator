@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
+from constants import BACKEND_RELATION_NAME
 from lib.charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from relations.peers import AUTH_FILE_DATABAG_KEY, CFG_FILE_DATABAG_KEY
 
@@ -32,6 +33,7 @@ class TestPeers(unittest.TestCase):
         databag = {}
         app_databag.return_value = databag
 
+        self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         # We don't want to write anything if we're the leader
         self.harness.set_leader(True)
         self.charm.peers._on_changed(MagicMock())

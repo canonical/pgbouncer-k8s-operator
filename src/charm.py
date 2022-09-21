@@ -8,6 +8,7 @@
 import logging
 import os
 import socket
+from typing import Optional
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
@@ -88,7 +89,7 @@ class PgBouncerK8sCharm(CharmBase):
         if config["pgbouncer"]["listen_port"] != self.config["listen_port"]:
             # This emits relation-changed events to every client relation, so only do it when
             # necessary
-            self.update_backend_relation_port(self.config["listen_port"])
+            self.update_client_connection_info(self.config["listen_port"])
             config["pgbouncer"]["listen_port"] = self.config["listen_port"]
 
         self.render_pgb_config(config)
@@ -310,17 +311,17 @@ class PgBouncerK8sCharm(CharmBase):
     #  Relation Utilities
     # =====================
 
-    def update_backend_relation_port(self, port):
-        """Update ports in backend relations to match updated pgbouncer port."""
+    def update_client_connection_info(self, port: Optional[str] = None):
+        """Update connection info in client relations."""
         # Skip updates if backend.postgres doesn't exist yet.
         if not self.backend.postgres:
             return
 
         for relation in self.model.relations.get("db", []):
-            self.legacy_db_relation.update_port(relation, port)
+            self.legacy_db_relation.update_connection_info(relation, port)
 
         for relation in self.model.relations.get("db-admin", []):
-            self.legacy_db_admin_relation.update_port(relation, port)
+            self.legacy_db_admin_relation.update_connection_info(relation, port)
 
     def update_postgres_endpoints(self, reload_pgbouncer=False):
         """Update postgres endpoints in relation config values."""

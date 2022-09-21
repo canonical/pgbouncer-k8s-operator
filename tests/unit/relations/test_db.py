@@ -128,7 +128,7 @@ class TestDb(unittest.TestCase):
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
     )
     @patch("relations.db.DbProvides.get_databags", return_value=[{}])
-    @patch("relations.db.DbProvides.update_port")
+    @patch("relations.db.DbProvides.update_connection_info")
     @patch("relations.db.DbProvides.update_postgres_endpoints")
     @patch("relations.db.DbProvides.update_databags")
     @patch("relations.db.DbProvides.get_allowed_units")
@@ -141,7 +141,7 @@ class TestDb(unittest.TestCase):
         _allowed_units,
         _update_databags,
         _update_postgres_endpoints,
-        _update_port,
+        _update_connection_info,
         _get_databags,
         _backend_postgres,
     ):
@@ -160,7 +160,9 @@ class TestDb(unittest.TestCase):
         event = MagicMock()
         self.db_relation._on_relation_changed(event)
 
-        _update_port.assert_called_with(event.relation, self.charm.config["listen_port"])
+        _update_connection_info.assert_called_with(
+            event.relation, self.charm.config["listen_port"]
+        )
         _update_postgres_endpoints.assert_called_with(event.relation, reload_pgbouncer=True)
         _update_databags.assert_called_with(
             event.relation,
@@ -179,7 +181,7 @@ class TestDb(unittest.TestCase):
     @patch("relations.db.DbProvides.get_databags", return_value=[{}])
     @patch("relations.db.DbProvides.get_external_app")
     @patch("relations.db.DbProvides.update_databags")
-    def test_update_port(self, _update_databags, _get_external_app, _get_databags):
+    def test_update_connection_info(self, _update_databags, _get_external_app, _get_databags):
         relation = MagicMock()
         database = "test_db"
         user = "test_user"
@@ -201,21 +203,20 @@ class TestDb(unittest.TestCase):
             "fallback_application_name": _get_external_app().name,
         }
 
-        standby_dbconnstrs = []
-        for standby_hostname in self.charm.peers.units_hostnames - {
-            self.charm.peers.leader_hostname
-        }:
+        standby_hostnames = self.charm.peers.units_hostnames - {self.charm.peers.leader_hostname}
+        if len(standby_hostnames) > 0:
+            standby_hostname = standby_hostnames.pop()
             standby_dbconnstr = dict(master_dbconnstr)
-            standby_dbconnstr.update({"host": standby_hostname})
-            standby_dbconnstrs.append(parse_dict_to_kv_string(standby_dbconnstr))
+            standby_dbconnstr.update({"host": standby_hostname, "dbname": f"{database}_standby"})
 
-        self.db_relation.update_port(relation, port)
+        self.db_relation.update_connection_info(relation, port)
         _update_databags.assert_called_with(
             relation,
             {
                 "master": parse_dict_to_kv_string(master_dbconnstr),
                 "port": port,
-                "standbys": ",".join(standby_dbconnstrs),
+                "host": self.charm.unit_pod_hostname,
+                "standbys": parse_dict_to_kv_string(standby_dbconnstr),
             },
         )
 

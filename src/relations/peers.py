@@ -65,6 +65,7 @@ from constants import PEER_RELATION_NAME
 CFG_FILE_DATABAG_KEY = "cfg_file"
 AUTH_FILE_DATABAG_KEY = "auth_file"
 ADDRESS_KEY = "private-address"
+LEADER_ADDRESS_KEY = "leader_hostname"
 
 
 logger = logging.getLogger(__name__)
@@ -89,11 +90,13 @@ class Peers(Object):
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_created, self._on_created)
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_joined, self._on_changed)
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_changed, self._on_changed)
+        self.framework.observe(charm.on[PEER_RELATION_NAME].relation_departed, self._on_departed)
+        self.framework.observe(charm.on.leader_elected, self._on_leader_elected)
 
     @property
     def relation(self):
         """Returns the relations in this model , or None if peer is not initialised."""
-        return self.model.get_relation(PEER_RELATION_NAME, None)
+        return self.model.get_relation(PEER_RELATION_NAME)
 
     @property
     def app_databag(self):
@@ -104,7 +107,7 @@ class Peers(Object):
 
     @property
     def unit_databag(self):
-        """Returns the unit databag for the Peer relation."""
+        """Returns this unit's databag for the Peer relation."""
         if not self.relation:
             return None
         return self.relation.data[self.charm.unit]
@@ -116,15 +119,16 @@ class Peers(Object):
         Returns:
             A list of peers addresses (strings).
         """
-        # Get all members IPs and remove the current unit IP from the list.
-        addresses = {self._get_unit_hostname(unit) for unit in self.relation.units}
-        addresses.add(self.charm.unit_pod_hostname)
-        return addresses
+        units_hostnames = {self._get_unit_hostname(unit) for unit in self.relation.units}
+        units_hostnames.discard(None)
+        units_hostnames.discard(self.leader_hostname)
+        units_hostnames.add(self.charm.unit_pod_hostname)
+        return units_hostnames
 
     @property
     def leader_hostname(self) -> str:
         """Gets the hostname of the leader unit."""
-        return self.app_databag.get("leader", None)
+        return self.app_databag.get(LEADER_ADDRESS_KEY, None)
 
     def _get_unit_hostname(self, unit: Unit) -> Optional[str]:
         """Get the hostname of a specific unit."""
@@ -171,7 +175,7 @@ class Peers(Object):
                 return
 
             self.update_cfg(cfg)
-            self.app_databag["leader"] = self.charm.unit_pod_hostname
+            self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
             return
 
         if cfg := self.get_secret("app", CFG_FILE_DATABAG_KEY):
@@ -186,6 +190,17 @@ class Peers(Object):
                 self.charm.reload_pgbouncer()
             except ConnectionError:
                 event.defer()
+
+    def _on_departed(self, _):
+        self._update_connection()
+
+    def _on_leader_elected(self, _):
+        self._update_connection()
+
+    def _update_connection(self):
+        self.charm.update_client_connection_info()
+        if self.charm.unit.is_leader():
+            self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
 
     def set_secret(self, scope: str, key: str, value: str):
         """Sets secret value.

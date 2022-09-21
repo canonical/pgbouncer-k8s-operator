@@ -11,7 +11,7 @@ from ops.model import ActiveStatus, WaitingStatus
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
-from constants import INI_PATH, PGB
+from constants import BACKEND_RELATION_NAME, INI_PATH, PGB
 
 
 class TestCharm(unittest.TestCase):
@@ -22,6 +22,7 @@ class TestCharm(unittest.TestCase):
         self.charm = self.harness.charm
 
     def test_on_start(self):
+        self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         self.charm.on.start.emit()
         pgb_container = self.harness.model.unit.get_container(PGB)
@@ -31,10 +32,10 @@ class TestCharm(unittest.TestCase):
         self.assertEqual(ini, PgbConfig(DEFAULT_CONFIG).render())
 
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
-    @patch("charm.PgBouncerK8sCharm.update_backend_relation_port")
+    @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
     @patch("ops.model.Container.restart")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
-    def test_on_config_changed(self, _check_pgb_running, _restart, _update_port, _read):
+    def test_on_config_changed(self, _check_pgb_running, _restart, _update_connection_info, _read):
         self.harness.set_leader(True)
         self.harness.update_config()
 
@@ -65,7 +66,7 @@ class TestCharm(unittest.TestCase):
         )
         self.assertIsInstance(self.harness.model.unit.status, ActiveStatus)
         _restart.assert_called()
-        _update_port.assert_called()
+        _update_connection_info.assert_called()
         _check_pgb_running.assert_called()
 
         # Test changing charm config propagates to container config file.
@@ -76,6 +77,7 @@ class TestCharm(unittest.TestCase):
     @patch("ops.model.Container.can_connect", return_value=False)
     @patch("ops.charm.ConfigChangedEvent.defer")
     def test_on_config_changed_container_cant_connect(self, can_connect, defer):
+        self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         self.harness.update_config()
         self.assertIsInstance(
@@ -85,6 +87,7 @@ class TestCharm(unittest.TestCase):
         defer.assert_called()
 
     def test_on_pgbouncer_pebble_ready(self):
+        self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         # emit on start to ensure config file render
         self.harness.charm.on.start.emit()
@@ -138,6 +141,7 @@ class TestCharm(unittest.TestCase):
 
     @patch("ops.model.Container.restart")
     def test_reload_pgbouncer(self, _restart):
+        self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         # necessary hooks before we can check reloads
         self.harness.charm.on.start.emit()
