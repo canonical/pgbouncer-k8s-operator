@@ -353,6 +353,16 @@ class DbProvides(Object):
         Removes relevant information from pgbouncer config when db relation is removed. This
         function assumes that relation databags are destroyed when the relation itself is removed.
         """
+        # Set a flag to avoid deleting database users when this unit
+        # is removed and receives relation broken events from related applications.
+        # This is needed because of https://bugs.launchpad.net/juju/+bug/1979811.
+        # Neither peer relation data nor stored state are good solutions,
+        # just a temporary solution.
+        if departed_event.departing_unit == self.charm.unit:
+            self.charm.peers.unit_databag.update({"departing": "True"})
+            # Just run the rest of the logic for departing of remote units.
+            return
+
         logger.info("db relation removed - updating config")
         logger.warning(
             f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
@@ -372,9 +382,13 @@ class DbProvides(Object):
         This doesn't delete any tables so we aren't deleting a user's entire database with one
         command.
         """
-        # Only delete relation data if we're the leader, and we're the last unit to leave.
-        if not self.charm.unit.is_leader() or len(self.charm.peers.units_hostnames) > 1:
-            self.charm.update_client_connection_info()
+        # Run this event only if this unit isn't being
+        # removed while the others from this application
+        # are still alive. This check is needed because of
+        # https://bugs.launchpad.net/juju/+bug/1979811.
+        # Neither peer relation data nor stored state
+        # are good solutions, just a temporary solution.
+        if "departing" in self.charm.peers.unit_databag:
             return
 
         databag = self.get_databags(broken_event.relation)[0]
