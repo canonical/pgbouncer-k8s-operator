@@ -22,6 +22,7 @@ from constants import AUTH_FILE_PATH, INI_PATH, PG_USER, PGB
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
 from relations.peers import Peers
+from relations.postgresql_provider import PostgreSQLProvider
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         self.peers = Peers(self)
         self.backend = BackendDatabaseRequires(self)
+        self.client_relation = PostgreSQLProvider(self)
         self.legacy_db_relation = DbProvides(self, admin=False)
         self.legacy_db_admin_relation = DbProvides(self, admin=True)
 
