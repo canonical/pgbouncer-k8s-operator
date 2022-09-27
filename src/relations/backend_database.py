@@ -143,9 +143,9 @@ class BackendDatabaseRequires(Object):
                 cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
             conn.close()
         except psycopg2.Error:
-            self.charm.unit.status = BlockedStatus(
-                "failed to remove auth user when disconnecting from postgres application."
-            )
+            auth_fail = "failed to remove auth user when disconnecting from postgres application."
+            self.charm.unit.status = BlockedStatus(auth_fail)
+            event.fail(auth_fail)
             return
 
         self.postgres.delete_user(self.auth_user)

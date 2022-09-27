@@ -262,7 +262,7 @@ class DbProvides(Object):
             change_event.defer()
             return
 
-        self.update_port(change_event.relation, self.charm.config["listen_port"])
+        self.update_connection_info(change_event.relation, self.charm.config["listen_port"])
         self.update_postgres_endpoints(change_event.relation, reload_pgbouncer=True)
         self.update_databags(
             change_event.relation,
@@ -278,8 +278,8 @@ class DbProvides(Object):
             },
         )
 
-    def update_port(self, relation: Relation, port: str):
-        """Updates databag to match new port."""
+    def update_connection_info(self, relation: Relation, port: str):
+        """Updates databag connection information."""
         databag = self.get_databags(relation)[0]
         database = databag.get("database")
         user = databag.get("user")
@@ -289,24 +289,31 @@ class DbProvides(Object):
             logger.warning("relation not fully initialised - skipping port update")
             return
 
-        dbconnstr = pgb.parse_dict_to_kv_string(
-            {
-                "host": self.charm.unit_pod_hostname,
-                "dbname": database,
-                "port": port,
-                "user": user,
-                "password": password,
-                "fallback_application_name": self.get_external_app(relation).name,
-            }
-        )
-        self.update_databags(
-            relation,
-            {
-                "master": dbconnstr,
-                "port": str(port),
-                "standbys": dbconnstr,
-            },
-        )
+        master_dbconnstr = {
+            "host": self.charm.peers.leader_hostname,
+            "dbname": database,
+            "port": port,
+            "user": user,
+            "password": password,
+            "fallback_application_name": self.get_external_app(relation).name,
+        }
+
+        connection_updates = {
+            "master": pgb.parse_dict_to_kv_string(master_dbconnstr),
+            "port": str(port),
+            "host": self.charm.unit_pod_hostname,
+        }
+
+        standby_ips = self.charm.peers.units_hostnames - {self.charm.peers.leader_hostname}
+        # Only one standby value in legacy relation on pgbouncer. There are multiple standbys on
+        # postgres, but not on the legacy pgbouncer charm.
+        if len(standby_ips) > 0:
+            standby_ip = standby_ips.pop()
+            standby_dbconnstr = dict(master_dbconnstr)
+            standby_dbconnstr.update({"host": standby_ip, "dbname": f"{database}_standby"})
+            connection_updates["standbys"] = pgb.parse_dict_to_kv_string(standby_dbconnstr)
+
+        self.update_databags(relation, connection_updates)
 
     def update_postgres_endpoints(self, relation: Relation, reload_pgbouncer: bool = False):
         """Updates postgres replicas."""
@@ -346,6 +353,16 @@ class DbProvides(Object):
         Removes relevant information from pgbouncer config when db relation is removed. This
         function assumes that relation databags are destroyed when the relation itself is removed.
         """
+        # Set a flag to avoid deleting database users when this unit
+        # is removed and receives relation broken events from related applications.
+        # This is needed because of https://bugs.launchpad.net/juju/+bug/1979811.
+        # Neither peer relation data nor stored state are good solutions,
+        # just a temporary solution.
+        if departed_event.departing_unit == self.charm.unit:
+            self.charm.peers.unit_databag.update({"departing": "True"})
+            # Just run the rest of the logic for departing of remote units.
+            return
+
         logger.info("db relation removed - updating config")
         logger.warning(
             f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
@@ -365,6 +382,15 @@ class DbProvides(Object):
         This doesn't delete any tables so we aren't deleting a user's entire database with one
         command.
         """
+        # Run this event only if this unit isn't being
+        # removed while the others from this application
+        # are still alive. This check is needed because of
+        # https://bugs.launchpad.net/juju/+bug/1979811.
+        # Neither peer relation data nor stored state
+        # are good solutions, just a temporary solution.
+        if "departing" in self.charm.peers.unit_databag:
+            return
+
         databag = self.get_databags(broken_event.relation)[0]
         user = databag.get("user")
         database = databag.get("database")
