@@ -112,7 +112,6 @@ async def execute_query_on_unit(
     password: str,
     query: str,
     database: str = "postgres",
-    port: int = 5432,
 ):
     """Execute given PostgreSQL query on a unit.
 
@@ -121,14 +120,12 @@ async def execute_query_on_unit(
         password: The PostgreSQL superuser password.
         query: Query to execute.
         database: Optional database to connect to (defaults to postgres database).
-        port: Optional database port to connect to (defaults to 5432).
 
     Returns:
         A list of rows that were potentially returned from the query.
     """
     with psycopg2.connect(
-        f"dbname='{database}' user='{user}' host='{unit_address}' port='{port}'"
-        f" password='{password}' connect_timeout=10"
+        f"dbname='{database}' user='{user}' host='{unit_address}' password='{password}' connect_timeout=10"
     ) as connection, connection.cursor() as cursor:
         cursor.execute(query)
         output = list(itertools.chain(*cursor.fetchall()))
