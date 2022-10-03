@@ -104,7 +104,6 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
 
 
 @pytest.mark.backend
-@pytest.mark.abort_on_fail
 async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
         # Relate PgBouncer to PostgreSQL.
