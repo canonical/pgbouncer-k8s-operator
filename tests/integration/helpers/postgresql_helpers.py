@@ -132,14 +132,14 @@ async def execute_query_on_unit(
     return output
 
 
-async def get_primary(ops_test: OpsTest) -> str:
-    """Get the primary unit.
+async def get_postgres_primary(ops_test: OpsTest) -> str:
+    """Get the PostgreSQL primary unit.
 
     Args:
         ops_test: ops_test instance.
 
     Returns:
-        the current primary unit.
+        the current PostgreSQL primary unit.
     """
     action = await ops_test.model.units.get(f"{PG}/0").run_action("get-primary")
     action = await action.wait()
