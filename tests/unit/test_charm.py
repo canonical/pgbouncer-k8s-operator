@@ -55,13 +55,13 @@ class TestCharm(unittest.TestCase):
             max_db_connections=max_db_connections,
             pgb_instances=mock_cores,
         )
-        test_config["pgbouncer"]["listen_port"] = "6464"
+        test_config["pgbouncer"]["listen_port"] = 6464
 
         self.harness.update_config(
             {
                 "pool_mode": "transaction",
                 "max_db_connections": max_db_connections,
-                "listen_port": "6464",
+                "listen_port": 6464,
             }
         )
         self.assertIsInstance(self.harness.model.unit.status, ActiveStatus)
@@ -137,7 +137,7 @@ class TestCharm(unittest.TestCase):
         test_cfg = PgbConfig(DEFAULT_CONFIG)
         self.charm.render_pgb_config(test_cfg)
         read_cfg = self.charm.read_pgb_config()
-        self.assertDictEqual(dict(read_cfg), dict(test_cfg))
+        self.assertEqual(PgbConfig(read_cfg).render(), test_cfg.render())
 
     @patch("ops.model.Container.restart")
     def test_reload_pgbouncer(self, _restart):

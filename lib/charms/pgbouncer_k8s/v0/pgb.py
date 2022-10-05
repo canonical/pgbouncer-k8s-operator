@@ -79,7 +79,7 @@ DEFAULT_CONFIG = {
     "databases": {},
     "pgbouncer": {
         "listen_addr": "*",
-        "listen_port": "6432",
+        "listen_port": 6432,
         "logfile": f"{PGB_DIR}/pgbouncer.log",
         "pidfile": f"{PGB_DIR}/pgbouncer.pid",
         "admin_users": set(),
