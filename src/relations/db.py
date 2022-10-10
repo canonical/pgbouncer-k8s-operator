@@ -270,7 +270,7 @@ class DbProvides(Object):
                 "allowed-subnets": self.get_allowed_subnets(change_event.relation),
                 "allowed-units": self.get_allowed_units(change_event.relation),
                 "version": self.charm.backend.postgres.get_postgresql_version(),
-                "host": self.charm.unit_pod_hostname,
+                "host": self.charm.unit_pod_hostname(),
                 "user": user,
                 "password": password,
                 "database": database,
@@ -301,7 +301,7 @@ class DbProvides(Object):
         connection_updates = {
             "master": pgb.parse_dict_to_kv_string(master_dbconnstr),
             "port": str(port),
-            "host": self.charm.unit_pod_hostname,
+            "host": self.charm.unit_pod_hostname(),
         }
 
         standby_ips = self.charm.peers.units_hostnames - {self.charm.peers.leader_hostname}

@@ -120,7 +120,7 @@ class Peers(Object):
             A list of peers addresses (strings).
         """
         units_hostnames = {self._get_unit_hostname(unit) for unit in self.relation.units}
-        units_hostnames.add(self.charm.unit_pod_hostname)
+        units_hostnames.add(self.charm.unit_pod_hostname())
         units_hostnames.discard(None)
         units_hostnames.discard(self.leader_hostname)
         return units_hostnames
@@ -134,16 +134,16 @@ class Peers(Object):
         """Get the hostname of a specific unit."""
         # Check if host is current host.
         if unit == self.charm.unit:
-            return self.charm.unit_pod_hostname
+            return self.charm.unit_pod_hostname()
         # Check if host is a peer.
         elif unit in self.relation.data:
-            return self.charm.unit_pod_hostname(self.relation.data[unit].name)
+            return self.charm.unit_pod_hostname(unit.name)
         # Return None if the unit is not a peer neither the current unit.
         else:
             return None
 
     def _on_created(self, event: RelationCreatedEvent):
-        self.unit_databag[ADDRESS_KEY] = self.charm.unit_pod_hostname
+        self.unit_databag[ADDRESS_KEY] = self.charm.unit_pod_hostname()
         if not self.charm.unit.is_leader():
             return
 
@@ -164,7 +164,7 @@ class Peers(Object):
 
     def _on_changed(self, event: RelationChangedEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
-        self.unit_databag[ADDRESS_KEY] = self.charm.unit_pod_hostname
+        self.unit_databag[ADDRESS_KEY] = self.charm.unit_pod_hostname()
 
         if self.charm.unit.is_leader():
             try:
@@ -176,7 +176,7 @@ class Peers(Object):
                 return
 
             self.update_cfg(cfg)
-            self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
+            self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname()
             return
 
         if cfg := self.get_secret("app", CFG_FILE_DATABAG_KEY):
@@ -203,7 +203,7 @@ class Peers(Object):
 
     def _update_connection(self):
         if self.charm.unit.is_leader():
-            self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
+            self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname()
         self.charm.update_client_connection_info()
 
     def set_secret(self, scope: str, key: str, value: str):

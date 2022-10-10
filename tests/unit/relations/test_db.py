@@ -170,7 +170,7 @@ class TestDb(unittest.TestCase):
                 "allowed-subnets": _allowed_subnets.return_value,
                 "allowed-units": _allowed_units.return_value,
                 "version": self.charm.backend.postgres.get_postgresql_version(),
-                "host": self.charm.unit_pod_hostname,
+                "host": self.charm.unit_pod_hostname(),
                 "user": user,
                 "password": password,
                 "database": database,
@@ -215,7 +215,7 @@ class TestDb(unittest.TestCase):
             {
                 "master": parse_dict_to_kv_string(master_dbconnstr),
                 "port": port,
-                "host": self.charm.unit_pod_hostname,
+                "host": self.charm.unit_pod_hostname(),
                 "standbys": parse_dict_to_kv_string(standby_dbconnstr),
             },
         )
