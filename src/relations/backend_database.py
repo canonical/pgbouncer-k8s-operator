@@ -89,6 +89,20 @@ class BackendDatabaseRequires(Object):
             charm.on[BACKEND_RELATION_NAME].relation_broken, self._on_relation_broken
         )
 
+    """
+    TODO
+
+    there's an authentication failure somewhere here, introduced in the following PR:
+    https://github.com/canonical/pgbouncer-k8s-operator/pulls/18
+
+    happens as soon as the relation is created. try connecting to the backend manually, then to
+    postgres
+
+    peer unit data also isn't being replicated correctly...
+
+
+    """
+
     def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
         """Handle backend-database-database-created event.
 

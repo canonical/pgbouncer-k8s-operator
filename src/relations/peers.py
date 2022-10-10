@@ -120,9 +120,9 @@ class Peers(Object):
             A list of peers addresses (strings).
         """
         units_hostnames = {self._get_unit_hostname(unit) for unit in self.relation.units}
+        units_hostnames.add(self.charm.unit_pod_hostname)
         units_hostnames.discard(None)
         units_hostnames.discard(self.leader_hostname)
-        units_hostnames.add(self.charm.unit_pod_hostname)
         return units_hostnames
 
     @property
@@ -137,7 +137,7 @@ class Peers(Object):
             return self.charm.unit_pod_hostname
         # Check if host is a peer.
         elif unit in self.relation.data:
-            return str(self.relation.data[unit].get(ADDRESS_KEY))
+            return self.charm.unit_pod_hostname(self.relation.data[unit].name)
         # Return None if the unit is not a peer neither the current unit.
         else:
             return None
@@ -202,9 +202,9 @@ class Peers(Object):
         self._update_connection()
 
     def _update_connection(self):
-        self.charm.update_client_connection_info()
         if self.charm.unit.is_leader():
             self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
+        self.charm.update_client_connection_info()
 
     def set_secret(self, scope: str, key: str, value: str):
         """Sets secret value.
