@@ -46,20 +46,15 @@ class TestDb(unittest.TestCase):
 
         # Define a backend relation
         self.backend_rel_id = self.harness.add_relation(BACKEND_RELATION_NAME, "postgres-k8s")
-        self.harness.add_relation_unit(self.backend_rel_id, "postgres/0")
-        self.harness.add_relation_unit(self.backend_rel_id, self.unit)
+        self.harness.add_relation_unit(self.backend_rel_id, "postgres-k8s/0")
 
         # Define a db relation
         self.db_rel_id = self.harness.add_relation(DB_RELATION_NAME, "client_app")
-        self.harness.add_relation_unit(self.db_rel_id, "client/0")
-        self.harness.add_relation_unit(self.db_rel_id, self.unit)
+        self.harness.add_relation_unit(self.db_rel_id, "client_app/0")
 
         # Define a db-admin relation
-        self.db_admin_rel_id = self.harness.add_relation(
-            DB_ADMIN_RELATION_NAME, "admin_client_app"
-        )
+        self.db_admin_rel_id = self.harness.add_relation(DB_ADMIN_RELATION_NAME, "admin_client")
         self.harness.add_relation_unit(self.db_admin_rel_id, "admin_client/0")
-        self.harness.add_relation_unit(self.db_admin_rel_id, self.unit)
 
     def test_correct_admin_perms_set_in_constructor(self):
         assert self.charm.legacy_db_relation.relation_name == "db"

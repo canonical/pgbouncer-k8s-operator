@@ -31,6 +31,7 @@ Example:
 │                  │ │                                       user = postgres                                  │ │
 │                  │ │                                       max_client_conn = 10000                          │ │
 │                  │ │                                       ignore_startup_parameters = extra_float_digits   │ │
+│                  │ │                                       server_tls_sslmode = prefer                      │
 │                  │ │                                       so_reuseport = 1                                 │ │
 │                  │ │                                       unix_socket_dir = /var/lib/postgresql/pgbouncer  │ │
 │                  │ │                                       pool_mode = session                              │ │
