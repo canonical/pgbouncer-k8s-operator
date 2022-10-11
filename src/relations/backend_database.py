@@ -196,6 +196,9 @@ class BackendDatabaseRequires(Object):
         Raises:
             psycopg2.Error if self.postgres isn't usable.
         """
+        if not self.charm.unit.is_leader():
+            return
+
         logger.info("initialising auth function")
 
         install_script = open("src/relations/sql/pgbouncer-install.sql", "r").read()
