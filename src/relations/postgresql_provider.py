@@ -19,7 +19,7 @@ from charms.postgresql_k8s.v0.postgresql import (
 )
 from ops.charm import CharmBase, RelationBrokenEvent
 from ops.framework import Object
-from ops.model import BlockedStatus
+from ops.model import BlockedStatus, WaitingStatus
 
 logger = logging.getLogger(__name__)
 
@@ -65,11 +65,11 @@ class PostgreSQLProvider(Object):
 
         Generate password and handle user and database creation for the related application.
         """
-        # Check for some conditions before trying to access the PostgreSQL instance.
-        if (
-            "cluster_initialised" not in self.charm._peers.data[self.charm.app]
-            or not self.charm._patroni.member_started
-        ):
+        if not self.charm.backend.postgres:
+            # We can't relate an app to the backend database without a backend postgres relation
+            wait_str = "waiting for backend-database relation to connect"
+            logger.warning(wait_str)
+            self.charm.unit.status = WaitingStatus(wait_str)
             event.defer()
             return
 
