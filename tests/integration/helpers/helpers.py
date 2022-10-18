@@ -16,14 +16,15 @@ from constants import AUTH_FILE_PATH, INI_PATH, LOG_PATH
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
+PG = "postgresql-k8s"
 
 
 def get_backend_relation(ops_test: OpsTest):
     """Gets the backend-database relation used to connect pgbouncer to the backend."""
     for rel in ops_test.model.relations:
-        if "pgbouncer-k8s" in rel.endpoints and "postgresql-k8s" in rel.endpoints:
+        apps = [endpoint["application-name"] for endpoint in rel.data["endpoints"]]
+        if PGB in apps and PG in apps:
             return rel
-
     return None
 
 

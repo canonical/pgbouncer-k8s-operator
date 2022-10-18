@@ -12,6 +12,7 @@ from tenacity import RetryError, Retrying, stop_after_attempt, wait_exponential
 
 """TODO move this all into tests/integration/helpers.py or postgresql_helpers.py """
 
+
 async def build_connection_string(
     ops_test: OpsTest,
     application_name: str,

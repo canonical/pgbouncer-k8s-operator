@@ -10,15 +10,13 @@ from charms.data_platform_libs.v0.database_provides import (
     DatabaseProvides,
     DatabaseRequestedEvent,
 )
+from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import (
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
     PostgreSQLDeleteUserError,
     PostgreSQLGetPostgreSQLVersionError,
 )
-
-from charms.pgbouncer_k8s.v0 import pgb
-
 from ops.charm import CharmBase, RelationBrokenEvent
 from ops.framework import Object
 from ops.model import BlockedStatus
@@ -30,6 +28,7 @@ logger = logging.getLogger(__name__)
 - Add checks for backend relation
 - add connections to backend relation
 """
+
 
 class PostgreSQLProvider(Object):
     """Defines functionality for the 'provides' side of the 'postgresql-client' relation.

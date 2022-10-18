@@ -36,7 +36,7 @@ async def test_database_relation_with_charm_libraries(
     ops_test: OpsTest, application_charm, database_charm
 ):
     # TODO insert pgbouncer in here.
-    assert 1==0
+    assert 1 == 0
     """Test basic functionality of database relation interface."""
     # Deploy both charms (multiple units for each application to test that later they correctly
     # set data in the relation application databag using only the leader unit).

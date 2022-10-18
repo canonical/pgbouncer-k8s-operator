@@ -36,6 +36,7 @@ auth_type = md5
 user = postgres
 max_client_conn = 10000
 ignore_startup_parameters = extra_float_digits
+server_tls_sslmode = prefer
 so_reuseport = 1
 unix_socket_dir = /var/lib/postgresql/pgbouncer
 pool_mode = session
@@ -78,7 +79,7 @@ DEFAULT_CONFIG = {
     "databases": {},
     "pgbouncer": {
         "listen_addr": "*",
-        "listen_port": "6432",
+        "listen_port": 6432,
         "logfile": f"{PGB_DIR}/pgbouncer.log",
         "pidfile": f"{PGB_DIR}/pgbouncer.pid",
         "admin_users": set(),
@@ -87,6 +88,7 @@ DEFAULT_CONFIG = {
         "user": "postgres",
         "max_client_conn": "10000",
         "ignore_startup_parameters": "extra_float_digits",
+        "server_tls_sslmode": "prefer",
         "so_reuseport": "1",
         "unix_socket_dir": PGB_DIR,
     },
