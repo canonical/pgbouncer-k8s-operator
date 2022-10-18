@@ -84,8 +84,11 @@ class PostgreSQLProvider(Object):
             # Creates the user and the database for this specific relation.
             user = f"relation_id_{event.relation.id}"
             password = pgb.generate_password()
-            self.charm.postgresql.create_user(user, password, extra_user_roles=extra_user_roles)
-            self.charm.postgresql.create_database(database, user)
+            self.charm.backend.postgres.create_user(
+                user, password, extra_user_roles=extra_user_roles
+            )
+            self.charm.peers.add_user(user, password)
+            self.charm.backend.postgres.create_database(database, user)
 
             # Share the credentials with the application.
             self.database_provides.set_credentials(event.relation.id, user, password)
@@ -101,7 +104,7 @@ class PostgreSQLProvider(Object):
 
             # Set the database version.
             self.database_provides.set_version(
-                event.relation.id, self.charm.postgresql.get_postgresql_version()
+                event.relation.id, self.charm.backend.postgres.get_postgresql_version()
             )
         except (
             PostgreSQLCreateDatabaseError,
@@ -116,10 +119,11 @@ class PostgreSQLProvider(Object):
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
         """Remove the user created for this relation."""
         # Check for some conditions before trying to access the PostgreSQL instance.
-        if (
-            "cluster_initialised" not in self.charm._peers.data[self.charm.app]
-            or not self.charm._patroni.member_started
-        ):
+        if not self.charm.backend.postgres:
+            # We can't relate an app to the backend database without a backend postgres relation
+            wait_str = "waiting for backend-database relation to connect"
+            logger.warning(wait_str)
+            self.charm.unit.status = WaitingStatus(wait_str)
             event.defer()
             return
 
