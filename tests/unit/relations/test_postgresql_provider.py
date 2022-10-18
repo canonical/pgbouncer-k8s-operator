@@ -2,29 +2,11 @@
 # See LICENSE file for licensing details.
 
 import unittest
-from unittest.mock import MagicMock, PropertyMock, patch
 
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
-from constants import (
-    BACKEND_RELATION_NAME,
-    DB_ADMIN_RELATION_NAME,
-    DB_RELATION_NAME,
-    PEER_RELATION_NAME,
-)
-from lib.charms.pgbouncer_k8s.v0.pgb import (
-    DEFAULT_CONFIG,
-    PgbConfig,
-    parse_dict_to_kv_string,
-)
-
-TEST_UNIT = {
-    "master": "host=master port=1 dbname=testdatabase",
-    "standbys": "host=standby1 port=1 dbname=testdatabase",
-}
-
-# TODO write tests for when the current unit is a follower
+from constants import BACKEND_RELATION_NAME, PEER_RELATION_NAME
 
 
 class TestDb(unittest.TestCase):

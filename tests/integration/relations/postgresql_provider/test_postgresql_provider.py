@@ -10,6 +10,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
+from constants import PGB
 from tests.integration.helpers import check_database_users_existence, scale_application
 from tests.integration.new_relations.helpers import (
     build_connection_string,
@@ -20,9 +21,8 @@ from tests.integration.new_relations.helpers import (
 logger = logging.getLogger(__name__)
 
 APPLICATION_APP_NAME = "application"
-DATABASE_APP_NAME = "database"
-ANOTHER_DATABASE_APP_NAME = "another-database"
-APP_NAMES = [APPLICATION_APP_NAME, DATABASE_APP_NAME, ANOTHER_DATABASE_APP_NAME]
+PG = "postgresql-k8s"
+APP_NAMES = [APPLICATION_APP_NAME, PG, PGB]
 DATABASE_APP_METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 FIRST_DATABASE_RELATION_NAME = "first-database"
 SECOND_DATABASE_RELATION_NAME = "second-database"
@@ -32,14 +32,13 @@ ALIASED_MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME = "aliased-multiple-database-cl
 
 @pytest.mark.abort_on_fail
 @pytest.mark.database_relation_tests
-async def test_database_relation_with_charm_libraries(
-    ops_test: OpsTest, application_charm, database_charm
-):
+async def test_database_relation_with_charm_libraries(ops_test: OpsTest, application_charm):
     # TODO insert pgbouncer in here.
     assert 1 == 0
     """Test basic functionality of database relation interface."""
     # Deploy both charms (multiple units for each application to test that later they correctly
     # set data in the relation application databag using only the leader unit).
+    pgb_charm = await ops_test.build_charm(".")
     async with ops_test.fast_forward():
         await asyncio.gather(
             ops_test.model.deploy(
@@ -48,31 +47,25 @@ async def test_database_relation_with_charm_libraries(
                 num_units=2,
             ),
             ops_test.model.deploy(
-                database_charm,
+                pgb_charm,
                 resources={
-                    "postgresql-image": DATABASE_APP_METADATA["resources"]["postgresql-image"][
+                    "pgbouncer-image": DATABASE_APP_METADATA["resources"]["pgbouncer-image"][
                         "upstream-source"
                     ]
                 },
-                application_name=DATABASE_APP_NAME,
+                application_name=PGB,
                 num_units=3,
-                trust=True,
             ),
             ops_test.model.deploy(
-                database_charm,
-                resources={
-                    "postgresql-image": DATABASE_APP_METADATA["resources"]["postgresql-image"][
-                        "upstream-source"
-                    ]
-                },
-                application_name=ANOTHER_DATABASE_APP_NAME,
+                PG,
+                application_name=PG,
                 num_units=3,
                 trust=True,
             ),
         )
         # Relate the charms and wait for them exchanging some connection data.
         await ops_test.model.add_relation(
-            f"{APPLICATION_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", DATABASE_APP_NAME
+            f"{APPLICATION_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PG
         )
         await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
 
@@ -162,7 +155,7 @@ async def test_two_applications_doesnt_share_the_same_relation_data(
     # Relate the new application with the database
     # and wait for them exchanging some connection data.
     await ops_test.model.add_relation(
-        f"{another_application_app_name}:{FIRST_DATABASE_RELATION_NAME}", DATABASE_APP_NAME
+        f"{another_application_app_name}:{FIRST_DATABASE_RELATION_NAME}", PG
     )
     await ops_test.model.wait_for_idle(apps=all_app_names, status="active")
 
@@ -185,11 +178,11 @@ async def test_an_application_can_connect_to_multiple_database_clusters(
     # Relate the application with both database clusters
     # and wait for them exchanging some connection data.
     first_cluster_relation = await ops_test.model.add_relation(
-        f"{APPLICATION_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}", DATABASE_APP_NAME
+        f"{APPLICATION_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}", PG
     )
     second_cluster_relation = await ops_test.model.add_relation(
         f"{APPLICATION_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}",
-        ANOTHER_DATABASE_APP_NAME,
+        PG,
     )
     await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active")
 
@@ -220,11 +213,11 @@ async def test_an_application_can_connect_to_multiple_aliased_database_clusters(
     await asyncio.gather(
         ops_test.model.add_relation(
             f"{APPLICATION_APP_NAME}:{ALIASED_MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}",
-            DATABASE_APP_NAME,
+            PG,
         ),
         ops_test.model.add_relation(
             f"{APPLICATION_APP_NAME}:{ALIASED_MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}",
-            ANOTHER_DATABASE_APP_NAME,
+            PG,
         ),
     )
     await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active")
@@ -251,7 +244,7 @@ async def test_an_application_can_request_multiple_databases(ops_test: OpsTest, 
     """Test that an application can request additional databases using the same interface."""
     # Relate the charms using another relation and wait for them exchanging some connection data.
     await ops_test.model.add_relation(
-        f"{APPLICATION_APP_NAME}:{SECOND_DATABASE_RELATION_NAME}", DATABASE_APP_NAME
+        f"{APPLICATION_APP_NAME}:{SECOND_DATABASE_RELATION_NAME}", PG
     )
     await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active")
 
@@ -272,7 +265,7 @@ async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
     """Test that there is no read-only endpoint in a standalone cluster."""
     async with ops_test.fast_forward():
         # Scale down the database.
-        await scale_application(ops_test, DATABASE_APP_NAME, 1)
+        await scale_application(ops_test, PG, 1)
 
         # Try to get the connection string of the database using the read-only endpoint.
         # It should not be available anymore.
@@ -290,7 +283,7 @@ async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
     """Test that there is read-only endpoint in a scaled up cluster."""
     async with ops_test.fast_forward():
         # Scale up the database.
-        await scale_application(ops_test, DATABASE_APP_NAME, 3)
+        await scale_application(ops_test, PG, 3)
 
         # Try to get the connection string of the database using the read-only endpoint.
         # It should be available again.
@@ -313,12 +306,10 @@ async def test_relation_broken(ops_test: OpsTest):
         )
 
         # Break the relation.
-        await ops_test.model.applications[DATABASE_APP_NAME].remove_relation(
-            f"{DATABASE_APP_NAME}", f"{APPLICATION_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}"
+        await ops_test.model.applications[PG].remove_relation(
+            f"{PG}", f"{APPLICATION_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}"
         )
         await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
 
         # Check that the relation user was removed from the database.
-        await check_database_users_existence(
-            ops_test, [], [relation_user], database_app_name=DATABASE_APP_NAME
-        )
+        await check_database_users_existence(ops_test, [], [relation_user], database_app_name=PG)

@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 class PostgreSQLProvider(Object):
     """Defines functionality for the 'provides' side of the 'postgresql-client' relation.
+
     Hook events observed:
         - database-requested
         - relation-broken
@@ -39,6 +40,7 @@ class PostgreSQLProvider(Object):
 
     def __init__(self, charm: CharmBase, relation_name: str = "database") -> None:
         """Constructor for PostgreSQLClientProvides object.
+
         Args:
             charm: the charm for which this relation is provided
             relation_name: the name of the relation
@@ -60,6 +62,7 @@ class PostgreSQLProvider(Object):
 
     def _on_database_requested(self, event: DatabaseRequestedEvent) -> None:
         """Handle the legacy postgresql-client relation changed event.
+
         Generate password and handle user and database creation for the related application.
         """
         # Check for some conditions before trying to access the PostgreSQL instance.
@@ -90,7 +93,7 @@ class PostgreSQLProvider(Object):
             # Set the read/write endpoint.
             self.database_provides.set_endpoints(
                 event.relation.id,
-                f"{self.charm.primary_endpoint}:{DATABASE_PORT}",
+                f"{self.charm.primary_endpoint}:{self.charm.config['listen_port']}",
             )
 
             # Update the read-only endpoint.
@@ -140,7 +143,7 @@ class PostgreSQLProvider(Object):
 
         # If there are no replicas, remove the read-only endpoint.
         endpoints = (
-            f"{self.charm.replicas_endpoint}:{DATABASE_PORT}"
+            f"{self.charm.replicas_endpoint}:{self.charm.config['listen_port']}"
             if len(self.charm._peers.units) > 0
             else ""
         )
