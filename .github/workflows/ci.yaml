@@ -114,7 +114,7 @@ jobs:
           provider: microk8s
           # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
           bootstrap-options: "--agent-version 2.9.29"
-      - name: Run legacy integration tests
+      - name: Run client integration tests
         run: tox -e client-relation-integration
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
