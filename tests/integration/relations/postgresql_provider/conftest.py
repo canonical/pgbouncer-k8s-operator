@@ -10,12 +10,10 @@ from pytest_operator.plugin import OpsTest
 async def application_charm(ops_test: OpsTest):
     """Build the application charm."""
     charm_path = "tests/integration/relations/postgresql_provider/application-charm"
-    charm = await ops_test.build_charm(charm_path)
-    return charm
+    return await ops_test.build_charm(charm_path)
 
 
 @pytest.fixture(scope="module")
 async def database_charm(ops_test: OpsTest):
     """Build the database charm."""
-    charm = await ops_test.build_charm(".")
-    return charm
+    return await ops_test.build_charm(".")
