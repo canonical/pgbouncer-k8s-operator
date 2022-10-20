@@ -24,13 +24,7 @@ from ops.model import Application, BlockedStatus, WaitingStatus
 logger = logging.getLogger(__name__)
 
 
-"""TODO:
-- Add checks for backend relation
-- add connections to backend relation
-"""
-
-
-class PostgreSQLProvider(Object):
+class PgBouncerProvider(Object):
     """Defines functionality for the 'provides' side of the 'postgresql-client' relation.
 
     Hook events observed:

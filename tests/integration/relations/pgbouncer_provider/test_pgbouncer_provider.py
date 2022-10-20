@@ -13,7 +13,7 @@ from pytest_operator.plugin import OpsTest
 from constants import PGB
 from tests.integration.helpers.helpers import scale_application
 from tests.integration.helpers.postgresql_helpers import check_database_users_existence
-from tests.integration.relations.postgresql_provider.helpers import (
+from tests.integration.relations.pgbouncer_provider.helpers import (
     build_connection_string,
     check_relation_data_existence,
     get_application_relation_data,

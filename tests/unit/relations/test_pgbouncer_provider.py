@@ -2,6 +2,7 @@
 # See LICENSE file for licensing details.
 
 import unittest
+from unittest.mock import PropertyMock, patch
 
 from ops.testing import Harness
 
@@ -30,8 +31,18 @@ class TestDb(unittest.TestCase):
         self.backend_rel_id = self.harness.add_relation(BACKEND_RELATION_NAME, "postgres-k8s")
         self.harness.add_relation_unit(self.backend_rel_id, "postgres-k8s/0")
 
-    # def test_on_database_requested(self):
-    #     assert False
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
+    )
+    @patch("charms.data_platform_libs.v0.database_provides.DatabaseRequestedEvent.defer")
+    def test_on_database_requested(self, _backend_postgres, _defer):
+        _backend_postgres.return_value = False
+
+        # _defer.assert_called()
+
+        _backend_postgres.return_value = True
+
+        # _defer.assert_not_called()
 
     # def test_on_relation_broken(self):
     #     assert False
