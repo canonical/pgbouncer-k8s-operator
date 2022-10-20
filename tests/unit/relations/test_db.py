@@ -221,7 +221,10 @@ class TestDb(unittest.TestCase):
         new_callable=PropertyMock,
         return_value={},
     )
-    @patch("relations.db.DbProvides._get_read_only_endpoint", return_value=None)
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.get_read_only_endpoint",
+        return_value=None,
+    )
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_update_postgres_endpoints(

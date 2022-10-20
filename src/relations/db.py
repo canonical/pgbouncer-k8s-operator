@@ -334,7 +334,7 @@ class DbProvides(Object):
             "auth_user": self.charm.backend.auth_user,
         }
 
-        read_only_endpoint = self._get_read_only_endpoint()
+        read_only_endpoint = self.charm.backend.get_read_only_endpoint()
         if read_only_endpoint:
             cfg["databases"][f"{database}_standby"] = {
                 "host": read_only_endpoint.split(":")[0],
@@ -454,17 +454,6 @@ class DbProvides(Object):
         if self.charm.unit.is_leader():
             databags.append(relation.data[self.charm.app])
         return databags
-
-    def _get_read_only_endpoint(self):
-        """Get a read-only-endpoint from backend relation.
-
-        Though multiple readonly endpoints can be provided by the new backend relation, only one
-        can be consumed by this legacy relation.
-        """
-        read_only_endpoints = self.charm.backend.postgres_databag.get("read-only-endpoints")
-        if read_only_endpoints is None or len(read_only_endpoints) == 0:
-            return None
-        return read_only_endpoints.split(",")[0]
 
     def _get_state(self) -> str:
         """Gets the given state for this unit.

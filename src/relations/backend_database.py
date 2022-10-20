@@ -245,3 +245,14 @@ class BackendDatabaseRequires(Object):
                 if isinstance(key, Application) and key != self.charm.app:
                     return databag
         return None
+
+    def get_read_only_endpoint(self) -> str:
+        """Get a read-only-endpoint from backend relation.
+
+        Though multiple readonly endpoints can be provided by the new backend relation, only one
+        can be consumed by this legacy relation.
+        """
+        read_only_endpoints = self.postgres_databag.get("read-only-endpoints")
+        if read_only_endpoints is None or len(read_only_endpoints) == 0:
+            return None
+        return read_only_endpoints.split(",")[0]

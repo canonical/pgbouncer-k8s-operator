@@ -28,8 +28,13 @@ class TestDb(unittest.TestCase):
 
         # Define a backend relation
         self.backend_rel_id = self.harness.add_relation(BACKEND_RELATION_NAME, "postgres-k8s")
-        self.harness.add_relation_unit(self.backend_rel_id, "postgres/0")
-        self.harness.add_relation_unit(self.backend_rel_id, self.unit)
+        self.harness.add_relation_unit(self.backend_rel_id, "postgres-k8s/0")
 
-    def write_some_tests(self):
-        assert False
+    # def test_on_database_requested(self):
+    #     assert False
+
+    # def test_on_relation_broken(self):
+    #     assert False
+
+    # def test_update_read_only_endpoint(self):
+    #     assert False

@@ -141,7 +141,7 @@ class PostgreSQLProvider(Object):
         # version 1.17, therefore after the snap) this entry will point to multiple endpoints,
         # which will be automatically load balanced by default. Incidentally, this _standby suffix
         # should therefore be removed.
-        read_only_endpoint = self._get_read_only_endpoint()
+        read_only_endpoint = self.charm.backend.get_read_only_endpoint()
         if read_only_endpoint:
             cfg["databases"][f"{database}_standby"] = {
                 "host": read_only_endpoint.split(":")[0],
@@ -205,19 +205,6 @@ class PostgreSQLProvider(Object):
                 relation.id,
                 endpoints,
             )
-
-    def _get_read_only_endpoint(self):
-        """Get a read-only-endpoint from backend relation.
-
-        Though multiple readonly endpoints can be provided by the new backend relation, only one
-        can be consumed by this legacy relation.
-
-        TODO this is copy-pasted from the db relation, clean it up a bit.
-        """
-        read_only_endpoints = self.charm.backend.postgres_databag.get("read-only-endpoints")
-        if read_only_endpoints is None or len(read_only_endpoints) == 0:
-            return None
-        return read_only_endpoints.split(",")[0]
 
     def get_external_app(self, relation):
         """Gets external application, as an Application object.
