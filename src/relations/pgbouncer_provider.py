@@ -130,7 +130,9 @@ class PgBouncerProvider(Object):
 
         read_only_endpoints = self.charm.backend.get_read_only_endpoints()
         if len(read_only_endpoints) > 0:
-            # remove ports from endpoints
+            # remove ports from endpoints, and convert to comma-separated list.
+            # NOTE: comma-separated readonly hosts are only valid in pgbouncer v1.17. This will
+            # enable load balancing once the snap is implemented.
             r_hosts = ",".join([host.split(":")[0] for host in read_only_endpoints])
             cfg["databases"][f"{database}_readonly"] = {
                 "host": r_hosts,
@@ -153,7 +155,7 @@ class PgBouncerProvider(Object):
         cfg = self.charm.read_pgb_config()
         database = event.relation.data[self.get_external_app(event.relation)].get("database")
         cfg["databases"].pop(database, None)
-        cfg["databases"].pop(f"{database}_standby", None)
+        cfg["databases"].pop(f"{database}_readonly", None)
         user = f"relation_id_{event.relation.id}"
         cfg.remove_user(user)
         self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
@@ -166,6 +168,7 @@ class PgBouncerProvider(Object):
             self.charm.unit.status = BlockedStatus(
                 f"Failed to delete user during {self.relation_name} relation broken event"
             )
+            raise
 
     def update_read_only_endpoint(self, event: DatabaseRequestedEvent = None) -> None:
         """Set the read-only endpoint only if there are replicas."""

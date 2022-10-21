@@ -78,12 +78,14 @@ class TestPgbouncerProvider(unittest.TestCase):
         event.extra_user_roles = "SUPERUSER"
         user = f"relation_id_{rel_id}"
 
+        # check we exit immediately if backend doesn't exist.
         _check_backend.return_value = False
         self.client_relation._on_database_requested(event)
         _pg.create_user.assert_not_called()
 
         _check_backend.return_value = True
         self.client_relation._on_database_requested(event)
+
         # Verify we've called everything we should
         _pg().create_user.assert_called_with(
             user, _password(), extra_user_roles=event.extra_user_roles
@@ -91,11 +93,13 @@ class TestPgbouncerProvider(unittest.TestCase):
         _pg().create_database.assert_called_with(database, user)
         assert self.charm.peers.get_secret("app", user) == _password()
         _dbp_set_credentials.assert_called_with(rel_id, user, _password())
+        _dbp_set_version.assert_called_with(rel_id, _pg().get_postgresql_version())
         _dbp_set_endpoints.assert_called_with(
             rel_id, f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}"
         )
         _update_read_only_endpoint.assert_called()
-        _dbp_set_version.assert_called_with(rel_id, _pg().get_postgresql_version())
+        _render_cfg.assert_called_with(_cfg(), reload_pgbouncer=True)
+
         # Verify config contains what we want
         postgres_endpoint = self.charm.backend.postgres_databag.get("endpoints")
         assert _cfg()["databases"][database] == {
@@ -116,7 +120,6 @@ class TestPgbouncerProvider(unittest.TestCase):
             "port": postgres_endpoint.split(":")[1],
             "auth_user": self.charm.backend.auth_user,
         }
-
         read_only_endpoints = self.charm.backend.get_read_only_endpoints()
         r_hosts = ",".join([host.split(":")[0] for host in read_only_endpoints])
         assert _cfg()["databases"][f"{database}_readonly"] == {
@@ -126,8 +129,62 @@ class TestPgbouncerProvider(unittest.TestCase):
             "auth_user": self.charm.backend.auth_user,
         }
 
-    # def test_on_relation_broken(self):
-    #     assert False
+    @patch("relations.pgbouncer_provider.PgBouncerProvider._check_backend")
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
+    )
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
+    def test_on_relation_broken(self, _render_cfg, _cfg, _pg, _check_backend):
+        self.harness.set_leader()
+
+        event = MagicMock()
+        rel_id = event.relation.id = 1
+        external_app = self.charm.client_relation.get_external_app(event.relation)
+        event.relation.data = {external_app: {"database": "test_db"}}
+        database = event.relation.data[external_app]["database"]
+        user = f"relation_id_{rel_id}"
+
+        _cfg.return_value["databases"][database] = {
+            "host": "host",
+            "dbname": database,
+            "port": "1111",
+            "auth_user": self.charm.backend.auth_user,
+        }
+        _cfg.return_value["databases"][f"{database}_readonly"] = {
+            "host": "host2",
+            "dbname": database,
+            "port": "1111",
+            "auth_user": self.charm.backend.auth_user,
+        }
+        _cfg.return_value["pgbouncer"]["admin_users"].add(user)
+        _cfg.return_value["pgbouncer"]["stats_users"].add(user)
+
+        # check we exit immediately if backend doesn't exist.
+        _check_backend.return_value = False
+        self.client_relation._on_relation_broken(event)
+        _cfg.assert_not_called()
+
+        _check_backend.return_value = True
+        self.client_relation._on_relation_broken(event)
+        _cfg.assert_called()
+        assert user not in _cfg()["pgbouncer"]["admin_users"]
+        assert user not in _cfg()["pgbouncer"]["stats_users"]
+        assert not _cfg()["databases"].get(database)
+        assert not _cfg()["databases"].get(f"{database}_readonly")
+        _render_cfg.assert_called_with(_cfg(), reload_pgbouncer=True)
+        _pg().delete_user.assert_called_with(user)
+
+        # Test again without readonly node
+        _cfg.return_value["databases"][database] = {
+            "host": "host",
+            "dbname": database,
+            "port": "1111",
+            "auth_user": self.charm.backend.auth_user,
+        }
+        self.client_relation._on_relation_broken(event)
+        assert not _cfg()["databases"].get(database)
+        assert not _cfg()["databases"].get(f"{database}_readonly")
 
     # def test_update_read_only_endpoint(self):
     #     assert False
