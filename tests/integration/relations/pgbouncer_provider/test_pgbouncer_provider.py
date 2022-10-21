@@ -10,7 +10,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from constants import PGB
+from constants import BACKEND_RELATION_NAME, PGB
 from tests.integration.helpers.helpers import scale_application
 from tests.integration.helpers.postgresql_helpers import check_database_users_existence
 from tests.integration.relations.pgbouncer_provider.helpers import (
@@ -34,8 +34,6 @@ ALIASED_MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME = "aliased-multiple-database-cl
 @pytest.mark.abort_on_fail
 @pytest.mark.client_relation
 async def test_database_relation_with_charm_libraries(ops_test: OpsTest, application_charm):
-    # TODO insert pgbouncer in here.
-    assert 1 == 0
     """Test basic functionality of database relation interface."""
     # Deploy both charms (multiple units for each application to test that later they correctly
     # set data in the relation application databag using only the leader unit).
@@ -64,9 +62,11 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
                 trust=True,
             ),
         )
+        await ops_test.model.add_relation(f"{PGB}:{BACKEND_RELATION_NAME}", f"{PG}:database")
+        await ops_test.model.wait_for_idle(raise_on_blocked=True)
         # Relate the charms and wait for them exchanging some connection data.
         await ops_test.model.add_relation(
-            f"{APPLICATION_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PG
+            f"{APPLICATION_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB
         )
         await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
 
