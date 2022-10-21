@@ -59,6 +59,7 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
                 PG,
                 application_name=PG,
                 num_units=3,
+                channel="edge",
                 trust=True,
             ),
         )
