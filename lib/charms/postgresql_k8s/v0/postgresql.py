@@ -79,7 +79,7 @@ class PostgreSQL:
         self.password = password
         self.database = database
 
-    def _connect_to_database(
+    def connect_to_database(
         self, database: str = None, connect_to_current_host: bool = False
     ) -> psycopg2.extensions.connection:
         """Creates a connection to the database.
@@ -109,7 +109,7 @@ class PostgreSQL:
             user: user that will have access to the database.
         """
         try:
-            connection = self._connect_to_database()
+            connection = self.connect_to_database()
             cursor = connection.cursor()
             cursor.execute(f"SELECT datname FROM pg_database WHERE datname='{database}';")
             if cursor.fetchone() is None:
@@ -135,7 +135,7 @@ class PostgreSQL:
             extra_user_roles: additional roles to be assigned to the user.
         """
         try:
-            with self._connect_to_database() as connection, connection.cursor() as cursor:
+            with self.connect_to_database() as connection, connection.cursor() as cursor:
                 cursor.execute(f"SELECT TRUE FROM pg_roles WHERE rolname='{user}';")
                 user_definition = (
                     f"WITH LOGIN{' SUPERUSER' if admin else ''} ENCRYPTED PASSWORD '{password}'"
@@ -161,14 +161,14 @@ class PostgreSQL:
         """
         # List all databases.
         try:
-            with self._connect_to_database() as connection, connection.cursor() as cursor:
+            with self.connect_to_database() as connection, connection.cursor() as cursor:
                 cursor.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")
                 databases = [row[0] for row in cursor.fetchall()]
 
             # Existing objects need to be reassigned in each database
             # before the user can be deleted.
             for database in databases:
-                with self._connect_to_database(
+                with self.connect_to_database(
                     database
                 ) as connection, connection.cursor() as cursor:
                     cursor.execute(
@@ -179,7 +179,7 @@ class PostgreSQL:
                     cursor.execute(sql.SQL("DROP OWNED BY {};").format(sql.Identifier(user)))
 
             # Delete the user.
-            with self._connect_to_database() as connection, connection.cursor() as cursor:
+            with self.connect_to_database() as connection, connection.cursor() as cursor:
                 cursor.execute(sql.SQL("DROP ROLE {};").format(sql.Identifier(user)))
         except psycopg2.Error as e:
             logger.error(f"Failed to delete user: {e}")
@@ -192,7 +192,7 @@ class PostgreSQL:
             PostgreSQL version number.
         """
         try:
-            with self._connect_to_database() as connection, connection.cursor() as cursor:
+            with self.connect_to_database() as connection, connection.cursor() as cursor:
                 cursor.execute("SELECT version();")
                 # Split to get only the version number.
                 return cursor.fetchone()[0].split(" ")[1]
@@ -211,7 +211,7 @@ class PostgreSQL:
             whether TLS is enabled.
         """
         try:
-            with self._connect_to_database(
+            with self.connect_to_database(
                 connect_to_current_host=check_current_host
             ) as connection, connection.cursor() as cursor:
                 cursor.execute("SHOW ssl;")
@@ -227,7 +227,7 @@ class PostgreSQL:
             List of PostgreSQL database users.
         """
         try:
-            with self._connect_to_database() as connection, connection.cursor() as cursor:
+            with self.connect_to_database() as connection, connection.cursor() as cursor:
                 cursor.execute("SELECT usename FROM pg_catalog.pg_user;")
                 usernames = cursor.fetchall()
                 return {username[0] for username in usernames}
@@ -246,7 +246,7 @@ class PostgreSQL:
             PostgreSQLUpdateUserPasswordError if the password couldn't be changed.
         """
         try:
-            with self._connect_to_database() as connection, connection.cursor() as cursor:
+            with self.connect_to_database() as connection, connection.cursor() as cursor:
                 cursor.execute(
                     sql.SQL("ALTER USER {} WITH ENCRYPTED PASSWORD '" + password + "';").format(
                         sql.Identifier(username)
