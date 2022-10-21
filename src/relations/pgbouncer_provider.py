@@ -21,6 +21,8 @@ from ops.charm import CharmBase, RelationBrokenEvent
 from ops.framework import Object
 from ops.model import Application, BlockedStatus, WaitingStatus
 
+from constants import CLIENT_RELATION_NAME
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,7 +34,7 @@ class PgBouncerProvider(Object):
         - relation-broken
     """
 
-    def __init__(self, charm: CharmBase, relation_name: str = "database") -> None:
+    def __init__(self, charm: CharmBase, relation_name: str = CLIENT_RELATION_NAME) -> None:
         """Constructor for PostgreSQLClientProvides object.
 
         Args:
@@ -59,38 +61,33 @@ class PgBouncerProvider(Object):
 
         Generate password and handle user and database creation for the related application.
         """
-        if not self.charm.backend.postgres:
-            # We can't relate an app to the backend database without a backend postgres relation
-            wait_str = "waiting for backend-database relation to connect"
-            logger.warning(wait_str)
-            self.charm.unit.status = WaitingStatus(wait_str)
-            event.defer()
+        if not self._check_backend(event):
             return
-
         if not self.charm.unit.is_leader():
             return
 
         # Retrieve the database name and extra user roles using the charm library.
         database = event.database
         extra_user_roles = event.extra_user_roles
+        rel_id = event.relation.id
 
         try:
             # Creates the user and the database for this specific relation.
-            user = f"relation_id_{event.relation.id}"
+            user = f"relation_id_{rel_id}"
             password = pgb.generate_password()
             self.charm.backend.postgres.create_user(
                 user, password, extra_user_roles=extra_user_roles
             )
-            self.charm.peers.add_user(user, password)
             self.charm.backend.postgres.create_database(database, user)
+            self.charm.peers.add_user(user, password)
 
             # Share the credentials with the application.
-            self.database_provides.set_credentials(event.relation.id, user, password)
+            self.database_provides.set_credentials(rel_id, user, password)
 
             # Set the read/write endpoint.
             self.database_provides.set_endpoints(
-                event.relation.id,
-                f"{self.charm.primary_endpoint}:{self.charm.config['listen_port']}",
+                rel_id,
+                f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}",
             )
 
             # Update the read-only endpoint.
@@ -98,7 +95,7 @@ class PgBouncerProvider(Object):
 
             # Set the database version.
             self.database_provides.set_version(
-                event.relation.id, self.charm.backend.postgres.get_postgresql_version()
+                rel_id, self.charm.backend.postgres.get_postgresql_version()
             )
         except (
             PostgreSQLCreateDatabaseError,
@@ -131,33 +128,25 @@ class PgBouncerProvider(Object):
             "auth_user": self.charm.backend.auth_user,
         }
 
-        # TODO should postgres scaling be handled by this relation? Ideally, in future (after pgb
-        # version 1.17, therefore after the snap) this entry will point to multiple endpoints,
-        # which will be automatically load balanced by default. Incidentally, this _standby suffix
-        # should therefore be removed.
-        read_only_endpoint = self.charm.backend.get_read_only_endpoint()
-        if read_only_endpoint:
-            cfg["databases"][f"{database}_standby"] = {
-                "host": read_only_endpoint.split(":")[0],
+        read_only_endpoints = self.charm.backend.get_read_only_endpoints()
+        if len(read_only_endpoints) > 0:
+            # remove ports from endpoints
+            r_hosts = ",".join([host.split(":")[0] for host in read_only_endpoints])
+            cfg["databases"][f"{database}_readonly"] = {
+                "host": r_hosts,
                 "dbname": database,
-                "port": read_only_endpoint.split(":")[1],
+                "port": read_only_endpoints[0].split(":")[1],
                 "auth_user": self.charm.backend.auth_user,
             }
         else:
-            cfg["databases"].pop(f"{database}_standby", None)
+            cfg["databases"].pop(f"{database}_readonly", None)
         # Write config data to charm filesystem
         self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
 
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
         """Remove the user created for this relation, and revoke connection permissions."""
-        if not self.charm.backend.postgres:
-            # We can't relate an app to the backend database without a backend postgres relation
-            wait_str = "waiting for backend-database relation to connect"
-            logger.warning(wait_str)
-            self.charm.unit.status = WaitingStatus(wait_str)
-            event.defer()
+        if not self._check_backend(event):
             return
-
         if not self.charm.unit.is_leader():
             return
 
@@ -186,7 +175,7 @@ class PgBouncerProvider(Object):
         # If there are no replicas, remove the read-only endpoint.
         endpoints = (
             f"{self.charm.replicas_endpoint}:{self.charm.config['listen_port']}"
-            if len(self.charm._peers.units) > 0
+            if len(self.charm.peers.relation.units) > 0
             else ""
         )
 
@@ -208,3 +197,18 @@ class PgBouncerProvider(Object):
         for entry in relation.data.keys():
             if isinstance(entry, Application) and entry != self.charm.app:
                 return entry
+
+    def _check_backend(self, event) -> bool:
+        """Verifies backend is ready, defers event if not.
+
+        Returns:
+            bool signifying whether backend is ready or not
+        """
+        if not self.charm.backend.postgres:
+            # We can't relate an app to the backend database without a backend postgres relation
+            wait_str = "waiting for backend-database relation to connect"
+            logger.warning(wait_str)
+            self.charm.unit.status = WaitingStatus(wait_str)
+            event.defer()
+            return False
+        return True

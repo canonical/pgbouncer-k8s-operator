@@ -140,7 +140,7 @@ class TestDb(unittest.TestCase):
         _get_databags,
         _backend_postgres,
     ):
-        self.harness.set_leader(True)
+        self.harness.set_leader()
 
         database = "test_db"
         user = "test_user"

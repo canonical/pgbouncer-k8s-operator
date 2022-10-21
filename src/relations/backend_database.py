@@ -38,7 +38,7 @@ Example:
 """
 
 import logging
-from typing import Dict
+from typing import Dict, List
 
 import psycopg2
 from charms.data_platform_libs.v0.database_requires import (
@@ -246,13 +246,17 @@ class BackendDatabaseRequires(Object):
                     return databag
         return None
 
-    def get_read_only_endpoint(self) -> str:
+    def get_read_only_endpoint(self) -> List[str]:
         """Get a read-only-endpoint from backend relation.
 
         Though multiple readonly endpoints can be provided by the new backend relation, only one
-        can be consumed by this legacy relation.
+        can be consumed by the legacy relation.
         """
-        read_only_endpoints = self.postgres_databag.get("read-only-endpoints")
-        if read_only_endpoints is None or len(read_only_endpoints) == 0:
-            return None
-        return read_only_endpoints.split(",")[0]
+        return self.get_read_only_endpoints()[0]
+
+    def get_read_only_endpoints(self) -> List[str]:
+        """Get read-only-endpoints from backend relation."""
+        read_only_endpoints = self.postgres_databag.get("read-only-endpoints", None)
+        if not read_only_endpoints:
+            return []
+        return read_only_endpoints.split(",")

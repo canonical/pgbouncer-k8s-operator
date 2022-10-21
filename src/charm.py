@@ -347,6 +347,11 @@ class PgBouncerK8sCharm(CharmBase):
         """Creates the pod hostname from its name."""
         return socket.getfqdn(name)
 
+    @property
+    def leader_hostname(self) -> str:
+        """Gets leader hostname."""
+        return self.peers.leader_hostname
+
 
 if __name__ == "__main__":
     main(PgBouncerK8sCharm)
