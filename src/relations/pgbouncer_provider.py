@@ -91,7 +91,7 @@ class PgBouncerProvider(Object):
             )
 
             # Update the read-only endpoint.
-            self.update_read_only_endpoint(event)
+            self.update_read_only_endpoints(event)
 
             # Set the database version.
             self.database_provides.set_version(
@@ -170,17 +170,10 @@ class PgBouncerProvider(Object):
             )
             raise
 
-    def update_read_only_endpoint(self, event: DatabaseRequestedEvent = None) -> None:
+    def update_read_only_endpoints(self, event: DatabaseRequestedEvent = None) -> None:
         """Set the read-only endpoint only if there are replicas."""
         if not self.charm.unit.is_leader():
             return
-
-        # If there are no replicas, remove the read-only endpoint.
-        endpoints = (
-            f"{self.charm.replicas_endpoint}:{self.charm.config['listen_port']}"
-            if len(self.charm.peers.relation.units) > 0
-            else ""
-        )
 
         # Get the current relation or all the relations
         # if this is triggered by another type of event.
@@ -189,7 +182,7 @@ class PgBouncerProvider(Object):
         for relation in relations:
             self.database_provides.set_read_only_endpoints(
                 relation.id,
-                endpoints,
+                self.charm.peers.units_hostnames,
             )
 
     def get_external_app(self, relation):

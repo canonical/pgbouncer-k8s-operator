@@ -50,7 +50,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         return_value="test_auth_user",
     )
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="test_pass")
-    @patch("relations.pgbouncer_provider.PgBouncerProvider.update_read_only_endpoint")
+    @patch("relations.pgbouncer_provider.PgBouncerProvider.update_read_only_endpoints")
     @patch("charms.data_platform_libs.v0.database_provides.DatabaseProvides.set_credentials")
     @patch("charms.data_platform_libs.v0.database_provides.DatabaseProvides.set_endpoints")
     @patch("charms.data_platform_libs.v0.database_provides.DatabaseProvides.set_version")
@@ -63,7 +63,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         _dbp_set_version,
         _dbp_set_endpoints,
         _dbp_set_credentials,
-        _update_read_only_endpoint,
+        _update_read_only_endpoints,
         _password,
         _auth_user,
         _pg_databag,
@@ -97,7 +97,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         _dbp_set_endpoints.assert_called_with(
             rel_id, f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}"
         )
-        _update_read_only_endpoint.assert_called()
+        _update_read_only_endpoints.assert_called()
         _render_cfg.assert_called_with(_cfg(), reload_pgbouncer=True)
 
         # Verify config contains what we want
@@ -186,8 +186,14 @@ class TestPgbouncerProvider(unittest.TestCase):
         assert not _cfg()["databases"].get(database)
         assert not _cfg()["databases"].get(f"{database}_readonly")
 
-    # def test_update_read_only_endpoint(self):
-    #     assert False
+    @patch(
+        "charms.data_platform_libs.v0.database_provides.DatabaseProvides.set_read_only_endpoints"
+    )
+    def test_update_read_only_endpoints(self, _set_read_only_endpoints):
+        self.harness.set_leader()
+        event = MagicMock()
+        self.client_relation.update_read_only_endpoints(event)
+        _set_read_only_endpoints.assert_called()
 
     @patch(
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
