@@ -68,34 +68,29 @@ class PostgreSQL:
     def __init__(
         self,
         primary_host: str,
-        current_host: str,
         user: str,
         password: str,
         database: str,
     ):
         self.primary_host = primary_host
-        self.current_host = current_host
         self.user = user
         self.password = password
         self.database = database
 
     def connect_to_database(
-        self, database: str = None, connect_to_current_host: bool = False
+        self, database: str = None
     ) -> psycopg2.extensions.connection:
         """Creates a connection to the database.
 
         Args:
             database: database to connect to (defaults to the database
                 provided when the object for this class was created).
-            connect_to_current_host: whether to connect to the current host
-                instead of the primary host.
 
         Returns:
              psycopg2 connection object.
         """
-        host = self.current_host if connect_to_current_host else self.primary_host
         connection = psycopg2.connect(
-            f"dbname='{database if database else self.database}' user='{self.user}' host='{host}'"
+            f"dbname='{database if database else self.database}' user='{self.user}' host='{self.primary_host}'"
             f"password='{self.password}' connect_timeout=1"
         )
         connection.autocommit = True
@@ -199,26 +194,6 @@ class PostgreSQL:
         except psycopg2.Error as e:
             logger.error(f"Failed to get PostgreSQL version: {e}")
             raise PostgreSQLGetPostgreSQLVersionError()
-
-    def is_tls_enabled(self, check_current_host: bool = False) -> bool:
-        """Returns whether TLS is enabled.
-
-        Args:
-            check_current_host: whether to check the current host
-                instead of the primary host.
-
-        Returns:
-            whether TLS is enabled.
-        """
-        try:
-            with self.connect_to_database(
-                connect_to_current_host=check_current_host
-            ) as connection, connection.cursor() as cursor:
-                cursor.execute("SHOW ssl;")
-                return "on" in cursor.fetchone()[0]
-        except psycopg2.Error:
-            # Connection errors happen when PostgreSQL has not started yet.
-            return False
 
     def list_users(self) -> Set[str]:
         """Returns the list of PostgreSQL database users.
