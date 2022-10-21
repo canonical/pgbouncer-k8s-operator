@@ -156,7 +156,7 @@ async def test_two_applications_doesnt_share_the_same_relation_data(
     # Relate the new application with the database
     # and wait for them exchanging some connection data.
     await ops_test.model.add_relation(
-        f"{another_application_app_name}:{FIRST_DATABASE_RELATION_NAME}", PG
+        f"{another_application_app_name}:{FIRST_DATABASE_RELATION_NAME}", PGB
     )
     await ops_test.model.wait_for_idle(apps=all_app_names, status="active")
 
@@ -172,18 +172,16 @@ async def test_two_applications_doesnt_share_the_same_relation_data(
 
 
 @pytest.mark.client_relation
-async def test_an_application_can_connect_to_multiple_database_clusters(
-    ops_test: OpsTest, database_charm
-):
+async def test_an_application_can_connect_to_multiple_database_clusters(ops_test: OpsTest):
     """Test that an application can connect to different clusters of the same database."""
     # Relate the application with both database clusters
     # and wait for them exchanging some connection data.
     first_cluster_relation = await ops_test.model.add_relation(
-        f"{APPLICATION_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}", PG
+        f"{APPLICATION_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}", PGB
     )
     second_cluster_relation = await ops_test.model.add_relation(
         f"{APPLICATION_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}",
-        PG,
+        PGB,
     )
     await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active")
 
@@ -205,9 +203,7 @@ async def test_an_application_can_connect_to_multiple_database_clusters(
 
 
 @pytest.mark.client_relation
-async def test_an_application_can_connect_to_multiple_aliased_database_clusters(
-    ops_test: OpsTest, database_charm
-):
+async def test_an_application_can_connect_to_multiple_aliased_database_clusters(ops_test: OpsTest):
     """Test that an application can connect to different clusters of the same database."""
     # Relate the application with both database clusters
     # and wait for them exchanging some connection data.
@@ -245,7 +241,7 @@ async def test_an_application_can_request_multiple_databases(ops_test: OpsTest, 
     """Test that an application can request additional databases using the same interface."""
     # Relate the charms using another relation and wait for them exchanging some connection data.
     await ops_test.model.add_relation(
-        f"{APPLICATION_APP_NAME}:{SECOND_DATABASE_RELATION_NAME}", PG
+        f"{APPLICATION_APP_NAME}:{SECOND_DATABASE_RELATION_NAME}", PGB
     )
     await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active")
 
@@ -266,7 +262,7 @@ async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
     """Test that there is no read-only endpoint in a standalone cluster."""
     async with ops_test.fast_forward():
         # Scale down the database.
-        await scale_application(ops_test, PG, 1)
+        await scale_application(ops_test, PGB, 1)
 
         # Try to get the connection string of the database using the read-only endpoint.
         # It should not be available anymore.
@@ -284,7 +280,7 @@ async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
     """Test that there is read-only endpoint in a scaled up cluster."""
     async with ops_test.fast_forward():
         # Scale up the database.
-        await scale_application(ops_test, PG, 3)
+        await scale_application(ops_test, PGB, 3)
 
         # Try to get the connection string of the database using the read-only endpoint.
         # It should be available again.
@@ -307,8 +303,8 @@ async def test_relation_broken(ops_test: OpsTest):
         )
 
         # Break the relation.
-        await ops_test.model.applications[PG].remove_relation(
-            f"{PG}", f"{APPLICATION_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}"
+        await ops_test.model.applications[PGB].remove_relation(
+            f"{PGB}", f"{APPLICATION_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}"
         )
         await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
 
