@@ -182,7 +182,7 @@ class PgBouncerProvider(Object):
         for relation in relations:
             self.database_provides.set_read_only_endpoints(
                 relation.id,
-                self.charm.peers.units_hostnames,
+                ",".join(list(self.charm.peers.units_hostnames)),
             )
 
     def get_external_app(self, relation):
