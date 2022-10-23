@@ -218,9 +218,8 @@ class BackendDatabaseRequires(Object):
         if None in [endpoint, user, password]:
             return None
 
-        return PostgreSQL(
-            primary_host=endpoint.split(":")[0], user=user, password=password, database=database
-        )
+        host = endpoint.split(":")[0]
+        return PostgreSQL(primary_host=host, user=user, password=password, database=database)
 
     @property
     def auth_user(self):
