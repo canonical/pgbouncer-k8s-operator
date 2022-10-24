@@ -17,7 +17,6 @@ async def build_connection_string(
     ops_test: OpsTest,
     application_name: str,
     relation_name: str,
-    *,
     relation_id: str = None,
     relation_alias: str = None,
     read_only_endpoint: bool = False,

@@ -181,3 +181,21 @@ async def scale_application(ops_test: OpsTest, application_name: str, scale: int
         timeout=1000,
         wait_for_exact_units=scale,
     )
+
+
+async def build_pgb_connstr(ops_test: OpsTest):
+    pgb_unit = ops_test.model.applications[PGB].units[0]
+    backend_relation = get_backend_relation(ops_test)
+    pgb_app_databag = await get_app_relation_databag(
+        ops_test, unit_name=pgb_unit.name, relation_id=backend_relation.id
+    )
+    database = pgb_app_databag.get("database")
+    client_app_databag = await get_app_relation_databag(
+        ops_test, unit_name=pgb_unit.name, relation_id=backend_relation.id
+    )
+    user = client_app_databag.get("username")
+    password = client_app_databag.get("password")
+    host = client_app_databag.get("endpoints")
+    return (
+        f"dbname='{database}' user='{user}' host='{host}' password='{password}' connect_timeout=10"
+    )
