@@ -185,9 +185,7 @@ async def scale_application(ops_test: OpsTest, application_name: str, scale: int
 
 async def build_pgb_connstr(ops_test: OpsTest, readonly: bool = False):
     pgb_unit = ops_test.model.applications[PGB].units[0]
-    import logging
-
-    logging.info(pgb_unit)
+    pgb_unit_address = await get_unit_address(ops_test, pgb_unit)
     backend_relation = get_backend_relation(ops_test)
     pgb_app_databag = await get_app_relation_databag(
         ops_test, unit_name=pgb_unit.name, relation_id=backend_relation.id
@@ -198,9 +196,23 @@ async def build_pgb_connstr(ops_test: OpsTest, readonly: bool = False):
     )
     user = client_app_databag.get("username")
     password = client_app_databag.get("password")
-    host = (
-        client_app_databag.get("read-only-endpoints")
-        if readonly
-        else client_app_databag.get("endpoints")
-    )
-    return f"dbname='{database}' user='{user}' host='{host}' password='{password}' connect_timeout=10 port=6432"
+    # host = (
+    #     client_app_databag.get("read-only-endpoints")
+    #     if readonly
+    #     else client_app_databag.get("endpoints")
+    # )
+    return f"dbname='{database}' user='{user}' host='{pgb_unit_address}' password='{password}' connect_timeout=10 port=6432"
+
+
+async def get_unit_address(ops_test: OpsTest, unit_name: str) -> str:
+    """Get unit IP address.
+
+    Args:
+        ops_test: The ops test framework instance
+        unit_name: The name of the unit
+
+    Returns:
+        IP address of the unit
+    """
+    status = await ops_test.model.get_status()
+    return status["applications"][unit_name.split("/")[0]].units[unit_name]["address"]
