@@ -183,19 +183,20 @@ async def scale_application(ops_test: OpsTest, application_name: str, scale: int
     )
 
 
-async def build_pgb_connstr(ops_test: OpsTest, readonly: bool = False):
-    pgb_unit = ops_test.model.applications[PGB].units[0]
-    pgb_unit_address = await get_unit_address(ops_test, pgb_unit)
+# TODO update this to match the old one perfectly.
+async def build_connection_string(ops_test: OpsTest, readonly: bool = False):
+    pgb_unit = ops_test.model.applications[PGB].units[0].name
+    pgb_unit_address = await get_unit_address(ops_test, pgb_unit, app_name="pgbouncer-k8s")
     backend_relation = get_backend_relation(ops_test)
     pgb_app_databag = await get_app_relation_databag(
-        ops_test, unit_name=pgb_unit.name, relation_id=backend_relation.id
+        ops_test, unit_name=pgb_unit, relation_id=backend_relation.id
     )
-    database = pgb_app_databag.get("database")
-    client_app_databag = await get_app_relation_databag(
-        ops_test, unit_name=pgb_unit.name, relation_id=backend_relation.id
-    )
-    user = client_app_databag.get("username")
-    password = client_app_databag.get("password")
+    user = pgb_app_databag.get("username")
+    password = pgb_app_databag.get("password")
+    database = json.loads(pgb_app_databag.get("data")).get("database")
+    import logging
+
+    logging.info(pgb_app_databag)
     # host = (
     #     client_app_databag.get("read-only-endpoints")
     #     if readonly
@@ -204,7 +205,7 @@ async def build_pgb_connstr(ops_test: OpsTest, readonly: bool = False):
     return f"dbname='{database}' user='{user}' host='{pgb_unit_address}' password='{password}' connect_timeout=10 port=6432"
 
 
-async def get_unit_address(ops_test: OpsTest, unit_name: str) -> str:
+async def get_unit_address(ops_test: OpsTest, unit_name: str, app_name: str = None) -> str:
     """Get unit IP address.
 
     Args:
@@ -215,4 +216,6 @@ async def get_unit_address(ops_test: OpsTest, unit_name: str) -> str:
         IP address of the unit
     """
     status = await ops_test.model.get_status()
-    return status["applications"][unit_name.split("/")[0]].units[unit_name]["address"]
+    if not app_name:
+        app_name = unit_name.split("/")[0]
+    return status["applications"][app_name].units[unit_name]["address"]

@@ -11,7 +11,7 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from constants import BACKEND_RELATION_NAME
-from tests.integration.helpers.helpers import build_pgb_connstr, scale_application
+from tests.integration.helpers.helpers import scale_application
 from tests.integration.helpers.postgresql_helpers import check_database_users_existence
 from tests.integration.relations.pgbouncer_provider.helpers import (
     build_connection_string,
@@ -68,10 +68,14 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
         await ops_test.model.wait_for_idle(raise_on_blocked=True)
         # Relate the charms and wait for them exchanging some connection data.
         await ops_test.model.add_relation(f"{CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB)
-        await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
 
-    connstr = await build_pgb_connstr(ops_test)
+    await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
+    connstr = await build_connection_string(
+        ops_test, CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME
+    )
 
+    # TODO for one reason or another, we can't access the correct user on this port.
+    # TODO forget this, connect to PG and check the database directly.
     # Connect to the database using the read/write endpoint.
     with psycopg2.connect(connstr) as connection, connection.cursor() as cursor:
         # Check that it's possible to write and read data from the database that
@@ -96,7 +100,7 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
         assert version == data
 
     # Get the connection string to connect to the database using the read-only endpoint.
-    connstr = await build_pgb_connstr(ops_test, readonly=True)
+    connstr = await build_connection_string(ops_test, readonly=True)
 
     # Connect to the database using the read-only endpoint.
     with psycopg2.connect(connstr) as connection, connection.cursor() as cursor:
@@ -114,7 +118,9 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
 async def test_user_with_extra_roles(ops_test: OpsTest):
     """Test superuser actions and the request for more permissions."""
     # Get the connection string to connect to the database.
-    connstr = await build_pgb_connstr(ops_test)
+    connstr = await build_connection_string(
+        ops_test, CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME
+    )
 
     # Connect to the database.
     connection = psycopg2.connect(connstr)
