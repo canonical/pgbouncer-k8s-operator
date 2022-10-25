@@ -51,6 +51,7 @@ class TestPgbouncerProvider(unittest.TestCase):
     )
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="test_pass")
     @patch("relations.pgbouncer_provider.PgBouncerProvider.update_read_only_endpoints")
+    @patch("relations.pgbouncer_provider.PgBouncerProvider.get_database", return_value="test-db")
     @patch("charms.data_platform_libs.v0.database_provides.DatabaseProvides.set_credentials")
     @patch("charms.data_platform_libs.v0.database_provides.DatabaseProvides.set_endpoints")
     @patch("charms.data_platform_libs.v0.database_provides.DatabaseProvides.set_version")
@@ -63,6 +64,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         _dbp_set_version,
         _dbp_set_endpoints,
         _dbp_set_credentials,
+        _get_database,
         _update_read_only_endpoints,
         _password,
         _auth_user,
@@ -136,6 +138,7 @@ class TestPgbouncerProvider(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_relation_broken(self, _render_cfg, _cfg, _pg, _check_backend):
+        _pg.return_value.get_postgresql_version.return_value = "10"
         self.harness.set_leader()
 
         event = MagicMock()
@@ -199,6 +202,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
     )
     def test_check_backend(self, _backend_postgres):
+        _backend_postgres.return_value.get_postgresql_version.return_value = "10"
         self.harness.set_leader()
         _backend_postgres.return_value = None
         event = MagicMock()

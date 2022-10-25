@@ -183,8 +183,11 @@ async def scale_application(ops_test: OpsTest, application_name: str, scale: int
     )
 
 
-async def build_pgb_connstr(ops_test: OpsTest):
+async def build_pgb_connstr(ops_test: OpsTest, readonly: bool = False):
     pgb_unit = ops_test.model.applications[PGB].units[0]
+    import logging
+
+    logging.info(pgb_unit)
     backend_relation = get_backend_relation(ops_test)
     pgb_app_databag = await get_app_relation_databag(
         ops_test, unit_name=pgb_unit.name, relation_id=backend_relation.id
@@ -195,7 +198,9 @@ async def build_pgb_connstr(ops_test: OpsTest):
     )
     user = client_app_databag.get("username")
     password = client_app_databag.get("password")
-    host = client_app_databag.get("endpoints")
-    return (
-        f"dbname='{database}' user='{user}' host='{host}' password='{password}' connect_timeout=10"
+    host = (
+        client_app_databag.get("read-only-endpoints")
+        if readonly
+        else client_app_databag.get("endpoints")
     )
+    return f"dbname='{database}' user='{user}' host='{host}' password='{password}' connect_timeout=10 port=6432"

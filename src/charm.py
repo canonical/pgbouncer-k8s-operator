@@ -18,7 +18,7 @@ from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
 from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
 
-from constants import AUTH_FILE_PATH, INI_PATH, PG_USER, PGB
+from constants import AUTH_FILE_PATH, CLIENT_RELATION_NAME, INI_PATH, PG_USER, PGB
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
 from relations.peers import Peers
@@ -325,6 +325,9 @@ class PgBouncerK8sCharm(CharmBase):
         for relation in self.model.relations.get("db-admin", []):
             self.legacy_db_admin_relation.update_connection_info(relation, port)
 
+        for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
+            self.client_relation.update_connection_info(relation)
+
     def update_postgres_endpoints(self, reload_pgbouncer=False):
         """Update postgres endpoints in relation config values."""
         # Skip updates if backend.postgres doesn't exist yet.
@@ -338,6 +341,9 @@ class PgBouncerK8sCharm(CharmBase):
             self.legacy_db_admin_relation.update_postgres_endpoints(
                 relation, reload_pgbouncer=False
             )
+
+        for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
+            self.client_relation.update_postgres_endpoints(relation, reload_pgbouncer=False)
 
         if reload_pgbouncer:
             self.reload_pgbouncer()

@@ -1,7 +1,11 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Postgres client relation hooks & helpers."""
+"""Postgres client relation hooks & helpers.
+
+Importantly, this relation doesn't handle scaling the same way others do. All PgBouncer nodes are
+read/writes, and they expose the read/write nodes of the backend database by
+"""
 
 
 import logging
@@ -11,6 +15,7 @@ from charms.data_platform_libs.v0.database_provides import (
     DatabaseRequestedEvent,
 )
 from charms.pgbouncer_k8s.v0 import pgb
+from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from charms.postgresql_k8s.v0.postgresql import (
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
@@ -19,7 +24,7 @@ from charms.postgresql_k8s.v0.postgresql import (
 )
 from ops.charm import CharmBase, RelationBrokenEvent
 from ops.framework import Object
-from ops.model import Application, BlockedStatus, WaitingStatus
+from ops.model import Application, BlockedStatus, Relation, WaitingStatus
 
 from constants import CLIENT_RELATION_NAME
 
@@ -84,19 +89,7 @@ class PgBouncerProvider(Object):
             # Share the credentials with the application.
             self.database_provides.set_credentials(rel_id, user, password)
 
-            # Set the read/write endpoint.
-            self.database_provides.set_endpoints(
-                rel_id,
-                f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}",
-            )
-
-            # Update the read-only endpoint.
-            self.update_read_only_endpoints(event)
-
-            # Set the database version.
-            self.database_provides.set_version(
-                rel_id, self.charm.backend.postgres.get_postgresql_version()
-            )
+            self.update_connection_info(event.relation)
         except (
             PostgreSQLCreateDatabaseError,
             PostgreSQLCreateUserError,
@@ -116,11 +109,72 @@ class PgBouncerProvider(Object):
         cfg.add_user(user, admin=True if "SUPERUSER" in extra_user_roles else False)
 
         # Update endpoints
+        self.update_postgres_endpoints(event.relation, cfg=cfg)
+
+        # Write config data to charm filesystem
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
+
+    def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
+        """Remove the user created for this relation, and revoke connection permissions."""
+        if not self._check_backend(event):
+            return
+        if not self.charm.unit.is_leader():
+            return
+
+        cfg = self.charm.read_pgb_config()
+        database = self.get_database(event.relation)
+        cfg["databases"].pop(database, None)
+        cfg["databases"].pop(f"{database}_readonly", None)
+        user = f"relation_id_{event.relation.id}"
+        cfg.remove_user(user)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
+
+        # Delete the user.
+        try:
+            self.charm.backend.postgres.delete_user(user)
+        except PostgreSQLDeleteUserError as e:
+            logger.exception(e)
+            self.charm.unit.status = BlockedStatus(
+                f"Failed to delete user during {self.relation_name} relation broken event"
+            )
+            raise
+
+    def update_connection_info(self, relation):
+        """Updates client-facing relation information."""
+        # Set the read/write endpoint.
+        self.database_provides.set_endpoints(
+            relation.id,
+            f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}",
+        )
+
+        # Update the read-only endpoint.
+        self.update_read_only_endpoints()
+
+        # Set the database version.
+        self.database_provides.set_version(
+            relation.id, self.charm.backend.postgres.get_postgresql_version()
+        )
+
+    def update_postgres_endpoints(
+        self,
+        relation: Relation,
+        cfg: PgbConfig = None,
+        render_cfg: bool = True,
+        reload_pgbouncer: bool = False,
+    ):
+        """Updates postgres replicas."""
+        database = self.get_database(relation)
+        if database is None:
+            logger.warning("relation not fully initialised - skipping postgres endpoint update")
+            return
+
+        if not cfg:
+            cfg = self.charm.read_pgb_config()
+            render_cfg = True
 
         # In postgres, "endpoints" will only ever have one value. Other databases using the library
         # can have more, but that's not planned for the postgres charm.
         postgres_endpoint = self.charm.backend.postgres_databag.get("endpoints")
-        cfg = self.charm.read_pgb_config()
         cfg["databases"][database] = {
             "host": postgres_endpoint.split(":")[0],
             "dbname": database,
@@ -142,33 +196,10 @@ class PgBouncerProvider(Object):
             }
         else:
             cfg["databases"].pop(f"{database}_readonly", None)
+
         # Write config data to charm filesystem
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
-
-    def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
-        """Remove the user created for this relation, and revoke connection permissions."""
-        if not self._check_backend(event):
-            return
-        if not self.charm.unit.is_leader():
-            return
-
-        cfg = self.charm.read_pgb_config()
-        database = event.relation.data[self.get_external_app(event.relation)].get("database")
-        cfg["databases"].pop(database, None)
-        cfg["databases"].pop(f"{database}_readonly", None)
-        user = f"relation_id_{event.relation.id}"
-        cfg.remove_user(user)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
-
-        # Delete the user.
-        try:
-            self.charm.backend.postgres.delete_user(user)
-        except PostgreSQLDeleteUserError as e:
-            logger.exception(e)
-            self.charm.unit.status = BlockedStatus(
-                f"Failed to delete user during {self.relation_name} relation broken event"
-            )
-            raise
+        if render_cfg:
+            self.charm.render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
 
     def update_read_only_endpoints(self, event: DatabaseRequestedEvent = None) -> None:
         """Set the read-only endpoint only if there are replicas."""
@@ -184,6 +215,10 @@ class PgBouncerProvider(Object):
                 relation.id,
                 ",".join(list(self.charm.peers.units_hostnames)),
             )
+
+    def get_database(self, relation):
+        """Gets database name from relation."""
+        return relation.data.get(self.get_external_app(relation)).get("database", None)
 
     def get_external_app(self, relation):
         """Gets external application, as an Application object.
