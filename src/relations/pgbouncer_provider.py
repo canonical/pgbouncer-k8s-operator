@@ -66,7 +66,7 @@ class PgBouncerProvider(Object):
 
         Generate password and handle user and database creation for the related application.
         """
-        if not self._check_backend(event):
+        if not self._check_backend():
             event.defer()
             return
         if not self.charm.unit.is_leader():
@@ -117,7 +117,8 @@ class PgBouncerProvider(Object):
 
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
         """Remove the user created for this relation, and revoke connection permissions."""
-        if not self._check_backend(event):
+        if not self._check_backend():
+            event.defer()
             return
         if not self.charm.unit.is_leader():
             return
@@ -230,17 +231,16 @@ class PgBouncerProvider(Object):
             if isinstance(entry, Application) and entry != self.charm.app:
                 return entry
 
-    def _check_backend(self, event) -> bool:
+    def _check_backend(self) -> bool:
         """Verifies backend is ready, defers event if not.
 
         Returns:
             bool signifying whether backend is ready or not
         """
-        if not self.charm.backend.postgres:
+        if not self.charm.backend.ready:
             # We can't relate an app to the backend database without a backend postgres relation
             wait_str = "waiting for backend-database relation to connect"
             logger.warning(wait_str)
             self.charm.unit.status = WaitingStatus(wait_str)
-            event.defer()
             return False
         return True

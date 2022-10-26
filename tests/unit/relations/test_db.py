@@ -63,6 +63,7 @@ class TestDb(unittest.TestCase):
         assert self.charm.legacy_db_admin_relation.relation_name == "db-admin"
         assert self.charm.legacy_db_admin_relation.admin is True
 
+    @patch("relations.db.DbProvides._check_backend", return_value=True)
     @patch(
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
     )
@@ -83,6 +84,7 @@ class TestDb(unittest.TestCase):
         _gen_pw,
         _read_cfg,
         _backend_pg,
+        _check_backend,
     ):
         self.harness.set_leader(True)
 
@@ -119,6 +121,7 @@ class TestDb(unittest.TestCase):
         self.db_relation._on_relation_joined(mock_event)
         _create_user.assert_called_with(user, password, admin=False)
 
+    @patch("relations.db.DbProvides._check_backend", return_value=True)
     @patch(
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
     )
@@ -139,6 +142,7 @@ class TestDb(unittest.TestCase):
         _update_connection_info,
         _get_databags,
         _backend_postgres,
+        _check_backend,
     ):
         self.harness.set_leader()
 
@@ -215,6 +219,7 @@ class TestDb(unittest.TestCase):
             },
         )
 
+    @patch("relations.db.DbProvides._check_backend", return_value=True)
     @patch("relations.db.DbProvides.get_databags", return_value=[{}])
     @patch(
         "relations.backend_database.BackendDatabaseRequires.postgres_databag",
@@ -222,13 +227,19 @@ class TestDb(unittest.TestCase):
         return_value={},
     )
     @patch(
-        "relations.backend_database.BackendDatabaseRequires.get_read_only_endpoint",
-        return_value=None,
+        "relations.backend_database.BackendDatabaseRequires.get_read_only_endpoints",
+        return_value=[],
     )
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_update_postgres_endpoints(
-        self, _render_cfg, _read_cfg, _read_only_endpoint, _pg_databag, _get_databags
+        self,
+        _render_cfg,
+        _read_cfg,
+        _read_only_endpoint,
+        _pg_databag,
+        _get_databags,
+        _check_backend,
     ):
         database = "test_db"
         _get_databags.return_value[0] = {"database": database}
@@ -242,7 +253,7 @@ class TestDb(unittest.TestCase):
         assert database in cfg["databases"].keys()
         assert f"{database}_standby" not in cfg["databases"].keys()
         _render_cfg.assert_called_with(cfg, reload_pgbouncer=reload_pgbouncer)
-        _read_only_endpoint.return_value = "readonly:endpoint"
+        _read_only_endpoint.return_value = ["readonly:endpoint"]
 
         self.db_relation.update_postgres_endpoints(relation, reload_pgbouncer)
         assert database in cfg["databases"].keys()
@@ -267,6 +278,7 @@ class TestDb(unittest.TestCase):
         self.assertDictEqual(app_databag, expected_app_databag)
         self.assertDictEqual(unit_databag, expected_unit_databag)
 
+    @patch("relations.db.DbProvides._check_backend", return_value=True)
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.delete_user")
@@ -275,7 +287,7 @@ class TestDb(unittest.TestCase):
     )
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_relation_broken(
-        self, _render_cfg, _backend_postgres, _delete_user, _postgres, _read
+        self, _render_cfg, _backend_postgres, _delete_user, _postgres, _read, _check_backend
     ):
         """Test that all traces of the given app are removed from pgb config, including user."""
         self.harness.set_leader(True)

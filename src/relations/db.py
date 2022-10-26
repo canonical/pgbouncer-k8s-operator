@@ -139,11 +139,8 @@ class DbProvides(Object):
         If the backend relation is fully initialised and available, we generate the proposed
         database and create a user on the postgres charm, and add preliminary data to the databag.
         """
-        if not self.charm.backend.postgres:
+        if not self._check_backend():
             # We can't relate an app to the backend database without a backend postgres relation
-            wait_str = "waiting for backend-database relation to connect"
-            logger.warning(wait_str)
-            self.charm.unit.status = WaitingStatus(wait_str)
             join_event.defer()
             return
 
@@ -235,11 +232,8 @@ class DbProvides(Object):
         This relation will defer if the backend relation isn't fully available, and if the
         relation_joined hook isn't completed.
         """
-        if not self.charm.backend.postgres:
+        if not self._check_backend():
             # We can't relate an app to the backend database without a backend postgres relation
-            wait_str = "waiting for backend-database relation to connect"
-            logger.warning(wait_str)
-            self.charm.unit.status = WaitingStatus(wait_str)
             change_event.defer()
             return
 
@@ -334,8 +328,10 @@ class DbProvides(Object):
             "auth_user": self.charm.backend.auth_user,
         }
 
-        read_only_endpoint = self.charm.backend.get_read_only_endpoint()
-        if read_only_endpoint:
+        # Only one backend endpoint available in legacy relations
+        r_endpoints = self.charm.backend.get_read_only_endpoints()
+        if len(r_endpoints) > 0:
+            read_only_endpoint = r_endpoints[0]
             cfg["databases"][f"{database}_standby"] = {
                 "host": read_only_endpoint.split(":")[0],
                 "dbname": database,
@@ -395,7 +391,7 @@ class DbProvides(Object):
         user = databag.get("user")
         database = databag.get("database")
 
-        if not self.charm.backend.postgres or None in [user, database]:
+        if not self._check_backend() or None in [user, database]:
             # this relation was never created, so wait for it to be initialised before removing
             # everything.
             logger.warning(
@@ -504,3 +500,17 @@ class DbProvides(Object):
         for entry in relation.data.keys():
             if isinstance(entry, Application) and entry != self.charm.app:
                 return entry
+
+    def _check_backend(self) -> bool:
+        """Verifies backend is ready, defers event if not.
+
+        Returns:
+            bool signifying whether backend is ready or not
+        """
+        if not self.charm.backend.ready:
+            # We can't relate an app to the backend database without a backend postgres relation
+            wait_str = "waiting for backend-database relation to connect"
+            logger.warning(wait_str)
+            self.charm.unit.status = WaitingStatus(wait_str)
+            return False
+        return True

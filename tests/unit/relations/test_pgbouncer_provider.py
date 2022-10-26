@@ -166,7 +166,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         # check we exit immediately if backend doesn't exist.
         _check_backend.return_value = False
         self.client_relation._on_relation_broken(event)
-        _cfg.assert_not_called()
+        event.defer.assert_called()
 
         _check_backend.return_value = True
         self.client_relation._on_relation_broken(event)
@@ -197,19 +197,3 @@ class TestPgbouncerProvider(unittest.TestCase):
         event = MagicMock()
         self.client_relation.update_read_only_endpoints(event)
         _set_read_only_endpoints.assert_called()
-
-    @patch(
-        "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
-    )
-    def test_check_backend(self, _backend_postgres):
-        _backend_postgres.return_value.get_postgresql_version.return_value = "10"
-        self.harness.set_leader()
-        _backend_postgres.return_value = None
-        event = MagicMock()
-        assert not self.client_relation._check_backend(event)
-        event.defer.assert_called()
-
-        _backend_postgres.return_value = True
-        event = MagicMock()
-        assert self.client_relation._check_backend(event)
-        event.defer.assert_not_called()

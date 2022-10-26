@@ -247,13 +247,17 @@ class BackendDatabaseRequires(Object):
                     return databag
         return None
 
-    def get_read_only_endpoint(self) -> List[str]:
-        """Get a read-only-endpoint from backend relation.
+    @property
+    def ready(self) -> bool:
+        """A boolean signifying whether the backend relation is fully initialised & ready."""
+        if not self.postgres:
+            return False
 
-        Though multiple readonly endpoints can be provided by the new backend relation, only one
-        can be consumed by the legacy relation.
-        """
-        return self.get_read_only_endpoints()[0]
+        cfg = self.charm.read_pgb_config()
+        if "auth_user" not in cfg["pgbouncer"].keys():
+            return False
+
+        return True
 
     def get_read_only_endpoints(self) -> List[str]:
         """Get read-only-endpoints from backend relation."""
