@@ -114,6 +114,7 @@ class BackendDatabaseRequires(Object):
         cfg = self.charm.read_pgb_config()
         # adds user to pgb config
         cfg.add_user(user=event.username, admin=True)
+        cfg["pgbouncer"]["auth_user"] = self.auth_user
         cfg["pgbouncer"][
             "auth_query"
         ] = f"SELECT username, password FROM {self.auth_user}.get_auth($1)"
@@ -166,6 +167,7 @@ class BackendDatabaseRequires(Object):
         cfg.remove_user(self.postgres.user)
         cfg["pgbouncer"].pop("auth_user", None)
         cfg["pgbouncer"].pop("auth_query", None)
+        cfg["pgbouncer"].pop("auth_file", None)
         self.charm.render_pgb_config(cfg)
 
         self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
