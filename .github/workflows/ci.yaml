@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup operator environment
       # This part sets the model name to "testing" (used in test run and logdump)
         uses: charmed-kubernetes/actions-operator@main
@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup operator environment
       # This part sets the model name to "testing" (used in test run and logdump)
         uses: charmed-kubernetes/actions-operator@main
@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup operator environment
       # This part sets the model name to "testing" (used in test run and logdump)
         uses: charmed-kubernetes/actions-operator@main
@@ -106,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup operator environment
       # This part sets the model name to "testing" (used in test run and logdump)
         uses: charmed-kubernetes/actions-operator@main
@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup operator environment
       # This part sets the model name to "testing" (used in test run and logdump)
         uses: charmed-kubernetes/actions-operator@main

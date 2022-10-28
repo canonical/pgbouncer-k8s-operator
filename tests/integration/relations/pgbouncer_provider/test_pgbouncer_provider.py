@@ -98,7 +98,9 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
         assert version == data
 
     # Get the connection string to connect to the database using the read-only endpoint.
-    connstr = await build_connection_string(ops_test, readonly=True)
+    connstr = await build_connection_string(
+        ops_test, CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME, read_only_endpoint=True
+    )
 
     # Connect to the database using the read-only endpoint.
     with psycopg2.connect(connstr) as connection, connection.cursor() as cursor:

@@ -2,11 +2,10 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 import json
+import socket
 from typing import Optional
 
 import yaml
-from lightkube.core.client import AsyncClient
-from lightkube.resources.core_v1 import Service
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_attempt, wait_exponential
 
@@ -56,13 +55,18 @@ async def build_connection_string(
         relation_id,
         relation_alias,
     )
+    endpoint = endpoints.split(",")[0]
+    ip = socket.gethostbyname(endpoint)
 
+    # First try
     # Translate the service hostname to an IP address.
     # model = ops_test.model.info
     # client = AsyncClient(namespace=model.name)
     # service = await client.get(Service, name=pg_app_name)
     # ip = service.spec.clusterIP
-    ip = ops_test.model.applications[pg_app_name].units[0].public_address
+
+    # Another try
+    # ip = ops_test.model.applications[pg_app_name].units[0].public_address
 
     # Build the complete connection string to connect to the database.
     return f"dbname='{database}' user='{username}' host='{ip}' password='{password}' connect_timeout=10 port={pg_port}"
