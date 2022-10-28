@@ -8,14 +8,16 @@ This charm is meant to be used only for testing
 of the libraries in this repository.
 """
 
+import json
 import logging
 
+import psycopg2
 from charms.data_platform_libs.v0.database_requires import (
     DatabaseCreatedEvent,
     DatabaseEndpointsChangedEvent,
     DatabaseRequires,
 )
-from ops.charm import CharmBase
+from ops.charm import ActionEvent, CharmBase
 from ops.main import main
 from ops.model import ActiveStatus
 
@@ -103,6 +105,8 @@ class ApplicationCharm(CharmBase):
             self._on_cluster2_endpoints_changed,
         )
 
+        self.framework.observe(self.on.run_sql_action, self._on_run_sql_action)
+
     def _on_start(self, _) -> None:
         """Only sets an Active status."""
         self.unit.status = ActiveStatus()
@@ -166,6 +170,42 @@ class ApplicationCharm(CharmBase):
     def _on_cluster2_endpoints_changed(self, event: DatabaseEndpointsChangedEvent) -> None:
         """Event triggered when the read/write endpoints of the database change."""
         logger.info(f"cluster2 endpoints have been changed to: {event.endpoints}")
+
+    def _on_run_sql_action(self, event: ActionEvent):
+        relation_id = event.params["relation-id"]
+        databag = self.first_database.fetch_relation_data()[relation_id]
+
+        dbname = event.params["dbname"]
+        query = event.params["query"]
+        user = databag.get("username")
+        password = databag.get("password")
+        endpoint = databag.get("endpoints").split(",")[0].split(":")[0]
+
+        with self.connect_to_database(
+            database=dbname, user=user, password=password, host=endpoint
+        ) as connection, connection.cursor() as cursor:
+            cursor.execute(query)
+            results = cursor.fetchall()
+
+        event.set_results({"results": json.dumps(results)})
+
+    def connect_to_database(
+        self, database: str = None, user: str = None, host: str = None, password: str = None
+    ) -> psycopg2.extensions.connection:
+        """Creates a connection to the database.
+
+        Args:
+            database: database to connect to (defaults to the database
+                provided when the object for this class was created).
+
+        Returns:
+             psycopg2 connection object.
+        """
+        connection = psycopg2.connect(
+            f"dbname='{database}' user='{user}' host='{host}' password='{password}' connect_timeout=1"
+        )
+        connection.autocommit = True
+        return connection
 
 
 if __name__ == "__main__":

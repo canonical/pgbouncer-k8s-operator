@@ -39,7 +39,7 @@ async def build_connection_string(
     """
     # Get the connection data exposed to the application through the relation.
     database = await get_application_relation_data(
-        ops_test, pg_app_name, relation_name, "database", relation_id, relation_alias
+        ops_test, pg_app_name, "database", "database", relation_id, relation_alias
     )
     username = await get_application_relation_data(
         ops_test, application_name, relation_name, "username", relation_id, relation_alias
@@ -55,7 +55,7 @@ async def build_connection_string(
         relation_id,
         relation_alias,
     )
-    endpoint = endpoints.split(",")[0]
+    endpoint = endpoints.split(",")[0].split(":")[0]
     ip = socket.gethostbyname(endpoint)
 
     # First try

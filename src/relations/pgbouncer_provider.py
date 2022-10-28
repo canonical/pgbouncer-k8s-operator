@@ -73,7 +73,7 @@ class PgBouncerProvider(Object):
             return
 
         # Retrieve the database name and extra user roles using the charm library.
-        database = event.database
+        databases = event.database
         extra_user_roles = event.extra_user_roles
         rel_id = event.relation.id
 
@@ -84,8 +84,10 @@ class PgBouncerProvider(Object):
             self.charm.backend.postgres.create_user(
                 user, password, extra_user_roles=extra_user_roles
             )
-            self.charm.backend.postgres.create_database(database, user)
-            self.charm.peers.add_user(user, password)
+            for database in databases.split(","):
+                self.charm.backend.postgres.create_database(database, user)
+                # set up auth function
+                self.charm.backend.initialise_auth_function(dbname=database)
 
             # Share the credentials with the application.
             self.database_provides.set_credentials(rel_id, user, password)
@@ -102,8 +104,7 @@ class PgBouncerProvider(Object):
             )
             return
 
-        # set up auth function
-        self.charm.backend.initialise_auth_function(dbname=database)
+        self.charm.peers.add_user(user, password)
 
         # Create user in pgbouncer config
         cfg = self.charm.read_pgb_config()
