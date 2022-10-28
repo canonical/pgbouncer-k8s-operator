@@ -114,7 +114,6 @@ class BackendDatabaseRequires(Object):
         cfg = self.charm.read_pgb_config()
         # adds user to pgb config
         cfg.add_user(user=event.username, admin=True)
-        cfg["pgbouncer"]["auth_user"] = self.auth_user
         cfg["pgbouncer"][
             "auth_query"
         ] = f"SELECT username, password FROM {self.auth_user}.get_auth($1)"
@@ -185,9 +184,7 @@ class BackendDatabaseRequires(Object):
             psycopg2.Error if self.postgres isn't usable.
         """
         logger.info("initialising auth function")
-
         install_script = open("src/relations/sql/pgbouncer-install.sql", "r").read()
-
         with self.postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
             cursor.execute(install_script.replace("auth_user", self.auth_user))
         conn.close()
@@ -254,7 +251,7 @@ class BackendDatabaseRequires(Object):
             return False
 
         cfg = self.charm.read_pgb_config()
-        if "auth_user" not in cfg["pgbouncer"].keys():
+        if "auth_query" not in cfg["pgbouncer"].keys():
             return False
 
         return True

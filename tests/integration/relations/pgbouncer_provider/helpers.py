@@ -20,6 +20,8 @@ async def build_connection_string(
     relation_id: str = None,
     relation_alias: str = None,
     read_only_endpoint: bool = False,
+    pg_app_name: str = "pgbouncer-k8s",
+    pg_port: int = 6432,
 ) -> str:
     """Build a PostgreSQL connection string.
 
@@ -37,7 +39,9 @@ async def build_connection_string(
         a PostgreSQL connection string
     """
     # Get the connection data exposed to the application through the relation.
-    database = f'{application_name.replace("-", "_")}_{relation_name.replace("-", "_")}'
+    database = await get_application_relation_data(
+        ops_test, pg_app_name, relation_name, "database", relation_id, relation_alias
+    )
     username = await get_application_relation_data(
         ops_test, application_name, relation_name, "username", relation_id, relation_alias
     )
@@ -52,16 +56,16 @@ async def build_connection_string(
         relation_id,
         relation_alias,
     )
-    host = endpoints.split(",")[0].split(":")[0]
 
     # Translate the service hostname to an IP address.
-    model = ops_test.model.info
-    client = AsyncClient(namespace=model.name)
-    service = await client.get(Service, name=host.split(".")[0])
-    ip = service.spec.clusterIP
+    # model = ops_test.model.info
+    # client = AsyncClient(namespace=model.name)
+    # service = await client.get(Service, name=pg_app_name)
+    # ip = service.spec.clusterIP
+    ip = ops_test.model.applications[pg_app_name].units[0].public_address
 
     # Build the complete connection string to connect to the database.
-    return f"dbname='{database}' user='{username}' host='{ip}' password='{password}' connect_timeout=10"
+    return f"dbname='{database}' user='{username}' host='{ip}' password='{password}' connect_timeout=10 port={pg_port}"
 
 
 async def check_relation_data_existence(

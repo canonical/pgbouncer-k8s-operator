@@ -74,8 +74,6 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
         ops_test, CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME
     )
 
-    # TODO for one reason or another, we can't access the correct user on this port.
-    # TODO forget this, connect to PG and check the database directly.
     # Connect to the database using the read/write endpoint.
     with psycopg2.connect(connstr) as connection, connection.cursor() as cursor:
         # Check that it's possible to write and read data from the database that
