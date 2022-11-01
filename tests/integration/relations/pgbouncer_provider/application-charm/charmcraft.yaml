@@ -15,4 +15,4 @@ parts:
   charm:
     build-packages:
       - git
-    charm-binary-python-packages: [psycopg2-binary==2.9.3]
+    charm-binary-python-packages: [psycopg2-binary==2.9.5]

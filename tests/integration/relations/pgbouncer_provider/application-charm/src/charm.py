@@ -172,20 +172,27 @@ class ApplicationCharm(CharmBase):
         logger.info(f"cluster2 endpoints have been changed to: {event.endpoints}")
 
     def _on_run_sql_action(self, event: ActionEvent):
+        logger.error(event)
+        logger.error(event.params)
+
         relation_id = event.params["relation-id"]
+        logger.error(relation_id)
         databag = self.first_database.fetch_relation_data()[relation_id]
+        logger.error(databag)
 
         dbname = event.params["dbname"]
         query = event.params["query"]
         user = databag.get("username")
         password = databag.get("password")
         endpoint = databag.get("endpoints").split(",")[0].split(":")[0]
+        logger.error(f"running query: \n{query}")
 
         with self.connect_to_database(
             database=dbname, user=user, password=password, host=endpoint
         ) as connection, connection.cursor() as cursor:
             cursor.execute(query)
             results = cursor.fetchall()
+            logger.error(results)
 
         event.set_results({"results": json.dumps(results)})
 
@@ -201,9 +208,9 @@ class ApplicationCharm(CharmBase):
         Returns:
              psycopg2 connection object.
         """
-        connection = psycopg2.connect(
-            f"dbname='{database}' user='{user}' host='{host}' password='{password}' connect_timeout=1"
-        )
+        connstr = f"dbname='{database}' user='{user}' host='{host}' password='{password}' connect_timeout=1"
+        logger.error(f"connecting to database: \n{connstr}")
+        connection = psycopg2.connect(connstr)
         connection.autocommit = True
         return connection
 

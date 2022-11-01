@@ -48,7 +48,7 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
             ops_test.model.deploy(
                 application_charm,
                 application_name=CLIENT_APP_NAME,
-                num_units=2,
+                resources={"application-image": "ubuntu:latest"},
             ),
             ops_test.model.deploy(
                 pgb_charm,
@@ -58,12 +58,12 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
                     ]
                 },
                 application_name=PGB,
-                num_units=3,
+                num_units=2,
             ),
             ops_test.model.deploy(
                 PG,
                 application_name=PG,
-                num_units=3,
+                num_units=2,
                 channel="edge",
                 trust=True,
             ),
@@ -89,10 +89,10 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
         "command": script,
         "relation-id": first_relation.id,
     }
+    logging.error(f"running script: \n {params['command']}")
     action = await client_unit.run_action("run-sql", **params)
-    result = await action.wait()
-    query_results = json.loads(result.results)
-    logging.error(query_results)
+    result = await asyncio.wait_for(action.wait(), 30)
+    logging.error(result.results)
     # assert "some data" in query_results
 
     params = {
@@ -100,8 +100,9 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
         "command": "SELECT version();",
         "relation-id": first_relation.id,
     }
+    logging.error(f"running script: \n {params['command']}")
     action = await client_unit.run_action("run-sql", **params)
-    result = await action.wait()
+    result = await asyncio.wait_for(action.wait(), 30)
     query_results = json.loads(result.results)
 
     # Get the version of the database and compare with the information that
@@ -146,8 +147,9 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
         "relation-id": first_relation.id,
         "readonly": True,
     }
+    logging.error(f"running script: \n {params['command']}")
     action = await client_unit.run_action("run-sql", **params)
-    result = await action.wait()
+    result = await asyncio.wait_for(action.wait(), 30)
     query_results = json.loads(result.results)
     logging.error(query_results)
     # assert "some data" in query_results
@@ -158,8 +160,9 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
         "relation-id": first_relation.id,
         "readonly": True,
     }
+    logging.error(f"running script: \n {params['command']}")
     action = await client_unit.run_action("run-sql", **params)
-    result = await action.wait()
+    result = await asyncio.wait_for(action.wait(), 30)
     query_results = json.loads(result.results)
     logging.error(query_results)
     # assert "this has failed, you fool!" in query_results
@@ -191,8 +194,9 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
         "relation-id": first_relation.id,
         "readonly": True,
     }
+    logging.error(f"running script: \n {params['command']}")
     action = await client_unit.run_action("run-sql", **params)
-    result = await action.wait()
+    result = await asyncio.wait_for(action.wait(), 30)
     query_results = json.loads(result.results)
     logging.error(query_results)
     # assert "this totally worked" in query_results
