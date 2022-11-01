@@ -11,7 +11,7 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from constants import BACKEND_RELATION_NAME
-from tests.integration.helpers.helpers import get_joining_relations, scale_application
+from tests.integration.helpers.helpers import scale_application
 from tests.integration.helpers.postgresql_helpers import check_database_users_existence
 from tests.integration.relations.pgbouncer_provider.helpers import (
     build_connection_string,
@@ -71,7 +71,6 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
         relation = await ops_test.model.add_relation(
             f"{CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB
         )
-        logging.error(relation.data)
 
     await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
 
@@ -136,14 +135,7 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
     )
     assert run_drop_query_readonly["Code"] == "1"
 
-
-@pytest.mark.client_relation
-async def test_user_with_extra_roles(ops_test: OpsTest):
-    """Test superuser actions and the request for more permissions."""
-    client_unit_name = f"{CLIENT_APP_NAME}/0"
-    dbname = "application_first_database"
-    relation = get_joining_relations(ops_test, PGB, CLIENT_APP_NAME)[0]
-
+    # Test admin permissions
     create_database_query = "CREATE DATABASE another_database;"
     run_create_database_query = await run_sql_on_application_charm(
         ops_test,
@@ -175,21 +167,20 @@ async def test_two_applications_doesnt_share_the_same_relation_data(
     all_app_names = [another_application_app_name]
     all_app_names.extend(APP_NAMES)
 
-    async with ops_test.fast_forward():
-        # Deploy another application.
-        await ops_test.model.deploy(
-            application_charm,
-            application_name=another_application_app_name,
-            resources={"application-image": "ubuntu:latest"},
-        )
-        await ops_test.model.wait_for_idle(apps=all_app_names, status="active")
+    # Deploy another application.
+    await ops_test.model.deploy(
+        application_charm,
+        application_name=another_application_app_name,
+        resources={"application-image": "ubuntu:latest"},
+    )
+    await ops_test.model.wait_for_idle(apps=all_app_names, status="active")
 
-        # Relate the new application with the database
-        # and wait for them exchanging some connection data.
-        await ops_test.model.add_relation(
-            f"{another_application_app_name}:{FIRST_DATABASE_RELATION_NAME}", PGB
-        )
-        await ops_test.model.wait_for_idle(apps=all_app_names, status="active")
+    # Relate the new application with the database
+    # and wait for them exchanging some connection data.
+    await ops_test.model.add_relation(
+        f"{another_application_app_name}:{FIRST_DATABASE_RELATION_NAME}", PGB
+    )
+    await ops_test.model.wait_for_idle(apps=all_app_names, status="active")
 
     # Assert the two application have different relation (connection) data.
     application_connection_string = await build_connection_string(
@@ -271,7 +262,8 @@ async def test_an_application_can_request_multiple_databases(ops_test: OpsTest, 
     """Test that an application can request additional databases using the same interface."""
     # Relate the charms using another relation and wait for them exchanging some connection data.
     await ops_test.model.add_relation(f"{CLIENT_APP_NAME}:{SECOND_DATABASE_RELATION_NAME}", PGB)
-    await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active")
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active")
 
     # Get the connection strings to connect to both databases.
     first_database_connection_string = await build_connection_string(
@@ -338,5 +330,4 @@ async def test_relation_broken(ops_test: OpsTest):
 
         # Check that the relation user was removed from the database.
         await check_database_users_existence(ops_test, [], [relation_user], database_app_name=PG)
-
-        assert False, "TODO check other relation data has been correctly removed."
+        # TODO check relation data was correctly removed from config

@@ -31,6 +31,8 @@ def get_joining_relations(ops_test: OpsTest, app_1: str, app_2: str):
     for rel in ops_test.model.relations:
         logging.info(rel.data)
         apps = [endpoint["application-name"] for endpoint in rel.data["endpoints"]]
+        # TODO consider checking endpoint["relation"]["name"] == relname for endpoint in
+        # rel.data["endpoints"]
         if app_1 in apps and app_2 in apps:
             relations.append(rel)
     return relations
@@ -191,39 +193,39 @@ async def scale_application(ops_test: OpsTest, application_name: str, scale: int
     )
 
 
-# TODO update this to match the old one perfectly.
-async def build_connection_string(ops_test: OpsTest, readonly: bool = False):
-    pgb_unit = ops_test.model.applications[PGB].units[0].name
-    pgb_unit_address = await get_unit_address(ops_test, pgb_unit, app_name="pgbouncer-k8s")
-    backend_relation = get_backend_relation(ops_test)
-    pgb_app_databag = await get_app_relation_databag(
-        ops_test, unit_name=pgb_unit, relation_id=backend_relation.id
-    )
-    user = pgb_app_databag.get("username")
-    password = pgb_app_databag.get("password")
-    database = json.loads(pgb_app_databag.get("data")).get("database")
-    import logging
+# # TODO update this to match the old one perfectly.
+# async def build_connection_string(ops_test: OpsTest, readonly: bool = False):
+#     pgb_unit = ops_test.model.applications[PGB].units[0].name
+#     pgb_unit_address = await get_unit_address(ops_test, pgb_unit, app_name="pgbouncer-k8s")
+#     backend_relation = get_backend_relation(ops_test)
+#     pgb_app_databag = await get_app_relation_databag(
+#         ops_test, unit_name=pgb_unit, relation_id=backend_relation.id
+#     )
+#     user = pgb_app_databag.get("username")
+#     password = pgb_app_databag.get("password")
+#     database = json.loads(pgb_app_databag.get("data")).get("database")
+#     import logging
 
-    logging.info(pgb_app_databag)
-    # host = (
-    #     client_app_databag.get("read-only-endpoints")
-    #     if readonly
-    #     else client_app_databag.get("endpoints")
-    # )
-    return f"dbname='{database}' user='{user}' host='{pgb_unit_address}' password='{password}' connect_timeout=10 port=6432"
+#     logging.info(pgb_app_databag)
+#     # host = (
+#     #     client_app_databag.get("read-only-endpoints")
+#     #     if readonly
+#     #     else client_app_databag.get("endpoints")
+#     # )
+#     return f"dbname='{database}' user='{user}' host='{pgb_unit_address}' password='{password}' connect_timeout=10 port=6432" # noqa: W505
 
 
-async def get_unit_address(ops_test: OpsTest, unit_name: str, app_name: str = None) -> str:
-    """Get unit IP address.
+# async def get_unit_address(ops_test: OpsTest, unit_name: str, app_name: str = None) -> str:
+#     """Get unit IP address.
 
-    Args:
-        ops_test: The ops test framework instance
-        unit_name: The name of the unit
+#     Args:
+#         ops_test: The ops test framework instance
+#         unit_name: The name of the unit
 
-    Returns:
-        IP address of the unit
-    """
-    status = await ops_test.model.get_status()
-    if not app_name:
-        app_name = unit_name.split("/")[0]
-    return status["applications"][app_name].units[unit_name]["address"]
+#     Returns:
+#         IP address of the unit
+#     """
+#     status = await ops_test.model.get_status()
+#     if not app_name:
+#         app_name = unit_name.split("/")[0]
+#     return status["applications"][app_name].units[unit_name]["address"]
