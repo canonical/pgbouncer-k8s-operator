@@ -108,8 +108,8 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
     version = await get_application_relation_data(
         ops_test, CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME, "version"
     )
-    logging.error(run_version_query)
-    logging.error(version)
+    logging.info(run_version_query)
+    logging.info(version)
     assert version in json.loads(run_version_query["results"])[0][0]
 
     # Check we can read things in readonly
@@ -175,19 +175,21 @@ async def test_two_applications_doesnt_share_the_same_relation_data(
     all_app_names = [another_application_app_name]
     all_app_names.extend(APP_NAMES)
 
-    # Deploy another application.
-    await ops_test.model.deploy(
-        application_charm,
-        application_name=another_application_app_name,
-    )
-    await ops_test.model.wait_for_idle(apps=all_app_names, status="active")
+    async with ops_test.fast_forward():
+        # Deploy another application.
+        await ops_test.model.deploy(
+            application_charm,
+            application_name=another_application_app_name,
+            resources={"application-image": "ubuntu:latest"},
+        )
+        await ops_test.model.wait_for_idle(apps=all_app_names, status="active")
 
-    # Relate the new application with the database
-    # and wait for them exchanging some connection data.
-    await ops_test.model.add_relation(
-        f"{another_application_app_name}:{FIRST_DATABASE_RELATION_NAME}", PGB
-    )
-    await ops_test.model.wait_for_idle(apps=all_app_names, status="active")
+        # Relate the new application with the database
+        # and wait for them exchanging some connection data.
+        await ops_test.model.add_relation(
+            f"{another_application_app_name}:{FIRST_DATABASE_RELATION_NAME}", PGB
+        )
+        await ops_test.model.wait_for_idle(apps=all_app_names, status="active")
 
     # Assert the two application have different relation (connection) data.
     application_connection_string = await build_connection_string(
@@ -209,8 +211,7 @@ async def test_an_application_can_connect_to_multiple_database_clusters(ops_test
         f"{CLIENT_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}", PGB
     )
     second_cluster_relation = await ops_test.model.add_relation(
-        f"{CLIENT_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}",
-        PGB,
+        f"{CLIENT_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}", PGB
     )
     await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active")
 
