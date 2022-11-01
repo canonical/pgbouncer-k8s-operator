@@ -6,18 +6,18 @@ import json
 import logging
 from pathlib import Path
 
-import psycopg2
 import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
 from constants import BACKEND_RELATION_NAME
-from tests.integration.helpers.helpers import scale_application
+from tests.integration.helpers.helpers import get_joining_relations, scale_application
 from tests.integration.helpers.postgresql_helpers import check_database_users_existence
 from tests.integration.relations.pgbouncer_provider.helpers import (
     build_connection_string,
     check_relation_data_existence,
     get_application_relation_data,
+    run_sql_on_application_charm,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,9 +31,6 @@ FIRST_DATABASE_RELATION_NAME = "first-database"
 SECOND_DATABASE_RELATION_NAME = "second-database"
 MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME = "multiple-database-clusters"
 ALIASED_MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME = "aliased-multiple-database-clusters"
-
-
-# TODO REINSTATE ASSERTIONS IN THIS TEST
 
 
 @pytest.mark.abort_on_fail
@@ -71,156 +68,101 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, applica
         await ops_test.model.add_relation(f"{PGB}:{BACKEND_RELATION_NAME}", f"{PG}:database")
         await ops_test.model.wait_for_idle(raise_on_blocked=True)
         # Relate the charms and wait for them exchanging some connection data.
-        first_relation = await ops_test.model.add_relation(
+        relation = await ops_test.model.add_relation(
             f"{CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB
         )
+        logging.error(relation.data)
 
     await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
 
-    client_unit = ops_test.model.units.get(f"{CLIENT_APP_NAME}/0")
-    script = (
+    client_unit_name = f"{CLIENT_APP_NAME}/0"
+    dbname = "application_first_database"
+
+    # Check we can update and delete things
+    update_query = (
         "DROP TABLE IF EXISTS test;"
         "CREATE TABLE test(data TEXT);"
         "INSERT INTO test(data) VALUES('some data');"
         "SELECT data FROM test;"
     )
-    params = {
-        "dbname": "application_first_database",
-        "command": script,
-        "relation-id": first_relation.id,
-    }
-    logging.error(f"running script: \n {params['command']}")
-    action = await client_unit.run_action("run-sql", **params)
-    result = await asyncio.wait_for(action.wait(), 30)
-    logging.error(result.results)
-    # assert "some data" in query_results
+    run_update_query = await run_sql_on_application_charm(
+        ops_test,
+        unit_name=client_unit_name,
+        query=update_query,
+        dbname=dbname,
+        relation_id=relation.id,
+    )
+    assert "some data" in json.loads(run_update_query["results"])[0]
 
-    params = {
-        "dbname": "application_first_database",
-        "command": "SELECT version();",
-        "relation-id": first_relation.id,
-    }
-    logging.error(f"running script: \n {params['command']}")
-    action = await client_unit.run_action("run-sql", **params)
-    result = await asyncio.wait_for(action.wait(), 30)
-    query_results = json.loads(result.results)
-
+    # Check version is accurate
+    version_query = "SELECT version();"
+    run_version_query = await run_sql_on_application_charm(
+        ops_test,
+        unit_name=client_unit_name,
+        query=version_query,
+        dbname=dbname,
+        relation_id=relation.id,
+    )
     # Get the version of the database and compare with the information that
     # was retrieved directly from the database.
     version = await get_application_relation_data(
         ops_test, CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME, "version"
     )
-    logging.error(query_results)
+    logging.error(run_version_query)
     logging.error(version)
-    # assert version in query_results
+    assert version in json.loads(run_version_query["results"])[0][0]
 
-    # connstr = await build_connection_string(
-    #     ops_test, CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME
-    # )
-
-    # # Connect to the database using the read/write endpoint.
-    # with psycopg2.connect(connstr) as connection, connection.cursor() as cursor:
-    #     # Check that it's possible to write and read data from the database that
-    #     # was created for the application.
-    #     connection.autocommit = True
-    #     cursor.execute("DROP TABLE IF EXISTS test;")
-    #     cursor.execute("CREATE TABLE test(data TEXT);")
-    #     cursor.execute("INSERT INTO test(data) VALUES('some data');")
-    #     cursor.execute("SELECT data FROM test;")
-    #     data = cursor.fetchone()
-    #     assert data[0] == "some data"
-
-    # Check the version that the application received is the same on the database server.
-    # cursor.execute("SELECT version();")
-    # data = cursor.fetchone()[0].split(" ")[1]
-
-    # # Get the version of the database and compare with the information that
-    # # was retrieved directly from the database.
-    # version = await get_application_relation_data(
-    #     ops_test, CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME, "version"
-    # )
-    # assert version == data
-
-    params = {
-        "dbname": "application_first_database",
-        "command": "SELECT data FROM test;",
-        "relation-id": first_relation.id,
-        "readonly": True,
-    }
-    logging.error(f"running script: \n {params['command']}")
-    action = await client_unit.run_action("run-sql", **params)
-    result = await asyncio.wait_for(action.wait(), 30)
-    query_results = json.loads(result.results)
-    logging.error(query_results)
-    # assert "some data" in query_results
-
-    params = {
-        "dbname": "application_first_database",
-        "command": "DROP TABLE test;",
-        "relation-id": first_relation.id,
-        "readonly": True,
-    }
-    logging.error(f"running script: \n {params['command']}")
-    action = await client_unit.run_action("run-sql", **params)
-    result = await asyncio.wait_for(action.wait(), 30)
-    query_results = json.loads(result.results)
-    logging.error(query_results)
-    # assert "this has failed, you fool!" in query_results
-
-    # # Get the connection string to connect to the database using the read-only endpoint.
-    # connstr = await build_connection_string(
-    #     ops_test, CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME, read_only_endpoint=True
-    # )
-
-    # # Connect to the database using the read-only endpoint.
-    # with psycopg2.connect(connstr) as connection, connection.cursor() as cursor:
-    #     # Read some data.
-    #     cursor.execute("SELECT data FROM test;")
-    #     data = cursor.fetchone()
-    #     assert data[0] == "some data"
-
-    #     # Try to alter some data in a read-only transaction.
-    #     with pytest.raises(psycopg2.errors.ReadOnlySqlTransaction):
-    #         cursor.execute("DROP TABLE test;")
-
-    # Test users
-    script = (
-        "CREATE DATABASE another_database;"
-        "CREATE USER another_user WITH ENCRYPTED PASSWORD 'test-password';"
+    # Check we can read things in readonly
+    select_query = "SELECT data FROM test;"
+    run_select_query_readonly = await run_sql_on_application_charm(
+        ops_test,
+        unit_name=client_unit_name,
+        query=select_query,
+        dbname=dbname,
+        relation_id=relation.id,
+        readonly=True,
     )
-    params = {
-        "dbname": "application_first_database",
-        "command": script,
-        "relation-id": first_relation.id,
-        "readonly": True,
-    }
-    logging.error(f"running script: \n {params['command']}")
-    action = await client_unit.run_action("run-sql", **params)
-    result = await asyncio.wait_for(action.wait(), 30)
-    query_results = json.loads(result.results)
-    logging.error(query_results)
-    # assert "this totally worked" in query_results
+    assert "some data" in json.loads(run_select_query_readonly["results"])[0]
+
+    # check we can't write in readonly
+    drop_query = "DROP TABLE test;"
+    run_drop_query_readonly = await run_sql_on_application_charm(
+        ops_test,
+        unit_name=client_unit_name,
+        query=drop_query,
+        dbname=dbname,
+        relation_id=relation.id,
+        readonly=True,
+    )
+    assert run_drop_query_readonly["Code"] == "1"
 
 
 @pytest.mark.client_relation
 async def test_user_with_extra_roles(ops_test: OpsTest):
     """Test superuser actions and the request for more permissions."""
-    # Get the connection string to connect to the database.
-    connstr = await build_connection_string(
-        ops_test, CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME
+    client_unit_name = f"{CLIENT_APP_NAME}/0"
+    dbname = "application_first_database"
+    relation = get_joining_relations(ops_test, PGB, CLIENT_APP_NAME)[0]
+
+    create_database_query = "CREATE DATABASE another_database;"
+    run_create_database_query = await run_sql_on_application_charm(
+        ops_test,
+        unit_name=client_unit_name,
+        query=create_database_query,
+        dbname=dbname,
+        relation_id=relation.id,
     )
+    assert run_create_database_query["Code"] == "0"
 
-    # Connect to the database.
-    connection = psycopg2.connect(connstr)
-    connection.autocommit = True
-    cursor = connection.cursor()
-
-    # Test the user can create a database and another user.
-    cursor.execute("CREATE DATABASE another_database;")
-    cursor.execute("CREATE USER another_user WITH ENCRYPTED PASSWORD 'test-password';")
-
-    cursor.close()
-    connection.close()
+    create_user_query = "CREATE USER another_user WITH ENCRYPTED PASSWORD 'test-password';"
+    run_create_user_query = await run_sql_on_application_charm(
+        ops_test,
+        unit_name=client_unit_name,
+        query=create_user_query,
+        dbname=dbname,
+        relation_id=relation.id,
+    )
+    assert run_create_user_query["Code"] == "0"
 
 
 @pytest.mark.client_relation

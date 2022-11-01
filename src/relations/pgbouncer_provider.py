@@ -236,10 +236,11 @@ class PgBouncerProvider(Object):
         # if this is triggered by another type of event.
         relations = [event.relation] if event else self.model.relations[self.relation_name]
 
+        port = self.charm.config["listen_port"]
         for relation in relations:
             self.database_provides.set_read_only_endpoints(
                 relation.id,
-                ",".join(list(self.charm.peers.units_hostnames)),
+                ",".join([f"{host}:{port}" for host in self.charm.peers.units_hostnames]),
             )
 
     def get_database(self, relation):

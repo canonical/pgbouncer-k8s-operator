@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
+import asyncio
 import json
+import logging
 import socket
 from typing import Optional
 
@@ -163,3 +165,26 @@ async def get_application_relation_data(
             f"no relation data could be grabbed on relation with endpoint {relation_name} and alias {relation_alias}"
         )
     return relation_data[0]["application-data"].get(key)
+
+
+async def run_sql_on_application_charm(
+    ops_test,
+    unit_name: str,
+    query: str,
+    dbname: str,
+    relation_id,
+    readonly: bool = False,
+    timeout=30,
+):
+    """Runs the given sql query on the given application charm."""
+    client_unit = ops_test.model.units.get(unit_name)
+    params = {
+        "dbname": dbname,
+        "query": query,
+        "relation-id": relation_id,
+    }
+    logging.info(f"running query: \n {query}")
+    action = await client_unit.run_action("run-sql", **params)
+    result = await asyncio.wait_for(action.wait(), timeout)
+    logging.info(f"query results: {result.results}")
+    return result.results

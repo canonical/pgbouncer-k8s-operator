@@ -7,8 +7,8 @@ run-sql:
     dbname:
       description: database on which to run the command
       type: string
-    command:
-      description: command to run
+    query:
+      description: query to run
       type: string
     relation-id:
       description: id of the relation under test
@@ -19,8 +19,5 @@ run-sql:
       default: false
   required:
   - dbname
-  - command
+  - query
   - relation-id
-
-test:
-  description: test

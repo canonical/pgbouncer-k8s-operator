@@ -172,11 +172,8 @@ class ApplicationCharm(CharmBase):
         logger.info(f"cluster2 endpoints have been changed to: {event.endpoints}")
 
     def _on_run_sql_action(self, event: ActionEvent):
-        logger.error(event)
         logger.error(event.params)
-
         relation_id = event.params["relation-id"]
-        logger.error(relation_id)
         databag = self.first_database.fetch_relation_data()[relation_id]
         logger.error(databag)
 
@@ -184,11 +181,14 @@ class ApplicationCharm(CharmBase):
         query = event.params["query"]
         user = databag.get("username")
         password = databag.get("password")
-        endpoint = databag.get("endpoints").split(",")[0].split(":")[0]
+        host = databag.get("endpoints").split(",")[0]
+        endpoint = host.split(":")[0]
+        port = host.split(":")[1]
+
         logger.error(f"running query: \n{query}")
 
         with self.connect_to_database(
-            database=dbname, user=user, password=password, host=endpoint
+            database=dbname, user=user, password=password, host=endpoint, port=port
         ) as connection, connection.cursor() as cursor:
             cursor.execute(query)
             results = cursor.fetchall()
@@ -197,7 +197,7 @@ class ApplicationCharm(CharmBase):
         event.set_results({"results": json.dumps(results)})
 
     def connect_to_database(
-        self, database: str = None, user: str = None, host: str = None, password: str = None
+        self, database: str, user: str, host: str, password: str, port: str
     ) -> psycopg2.extensions.connection:
         """Creates a connection to the database.
 
@@ -208,7 +208,7 @@ class ApplicationCharm(CharmBase):
         Returns:
              psycopg2 connection object.
         """
-        connstr = f"dbname='{database}' user='{user}' host='{host}' password='{password}' connect_timeout=1"
+        connstr = f"dbname='{database}' user='{user}' host='{host}' port='{port}' password='{password}' connect_timeout=1"
         logger.error(f"connecting to database: \n{connstr}")
         connection = psycopg2.connect(connstr)
         connection.autocommit = True
