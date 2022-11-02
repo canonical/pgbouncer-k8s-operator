@@ -194,7 +194,10 @@ class ApplicationCharm(CharmBase):
         cursor.execute(query)
 
         # TODO consider adding a variable to expect results or not
-        results = cursor.fetchall()
+        try:
+            results = cursor.fetchall()
+        except psycopg2.ProgrammingError:
+            results = ["no results to fetch"]
         logger.error(results)
 
         event.set_results({"results": json.dumps(results)})
