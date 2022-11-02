@@ -322,7 +322,7 @@ async def test_relation_broken(ops_test: OpsTest):
 
         # Break the relation.
         await ops_test.model.applications[PGB].remove_relation(
-            f"{PGB}", f"{CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}"
+            f"{PGB}:database", f"{CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}"
         )
         await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
 
