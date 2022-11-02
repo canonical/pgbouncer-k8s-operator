@@ -14,6 +14,6 @@ async def application_charm(ops_test: OpsTest):
 
 
 @pytest.fixture(scope="module")
-async def database_charm(ops_test: OpsTest):
-    """Build the database charm."""
+async def pgb_charm(ops_test: OpsTest):
+    """Build the pgbouncer charm."""
     return await ops_test.build_charm(".")
