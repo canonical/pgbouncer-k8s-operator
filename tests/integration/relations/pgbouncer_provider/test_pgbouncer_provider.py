@@ -327,5 +327,5 @@ async def test_relation_broken(ops_test: OpsTest):
         await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
 
         # Check that the relation user was removed from the database.
-        await check_database_users_existence(ops_test, [], [relation_user], database_app_name=PG)
+        await check_database_users_existence(ops_test, [], [relation_user])
         # TODO check relation data was correctly removed from config
