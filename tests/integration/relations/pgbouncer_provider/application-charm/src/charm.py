@@ -75,36 +75,6 @@ class ApplicationCharm(CharmBase):
             self._on_cluster_endpoints_changed,
         )
 
-        # Multiple database clusters charm events (defined dynamically
-        # in the database requires charm library, using the provided cluster/relation aliases).
-        database_name = f'{self.app.name.replace("-", "_")}_aliased_multiple_database_clusters'
-        cluster_aliases = ["cluster1", "cluster2"]  # Aliases for the multiple clusters/relations.
-        self.aliased_database_clusters = DatabaseRequires(
-            self,
-            "aliased-multiple-database-clusters",
-            database_name,
-            EXTRA_USER_ROLES,
-            cluster_aliases,
-        )
-        # Each database cluster will have its own events
-        # with the name having the cluster/relation alias as the prefix.
-        self.framework.observe(
-            self.aliased_database_clusters.on.cluster1_database_created,
-            self._on_cluster1_database_created,
-        )
-        self.framework.observe(
-            self.aliased_database_clusters.on.cluster1_endpoints_changed,
-            self._on_cluster1_endpoints_changed,
-        )
-        self.framework.observe(
-            self.aliased_database_clusters.on.cluster2_database_created,
-            self._on_cluster2_database_created,
-        )
-        self.framework.observe(
-            self.aliased_database_clusters.on.cluster2_endpoints_changed,
-            self._on_cluster2_endpoints_changed,
-        )
-
         self.framework.observe(self.on.run_sql_action, self._on_run_sql_action)
 
     def _on_start(self, _) -> None:
@@ -181,7 +151,12 @@ class ApplicationCharm(CharmBase):
         query = event.params["query"]
         user = databag.get("username")
         password = databag.get("password")
-        host = databag.get("endpoints").split(",")[0]
+        if event.params["readonly"]:
+            eps = databag.get("read-only-endpoints")
+            dbname = f"{dbname}_readonly"
+        else:
+            eps = databag.get("endpoints")
+        host = eps.split(",")[0]
         endpoint = host.split(":")[0]
         port = host.split(":")[1]
 
@@ -215,7 +190,7 @@ class ApplicationCharm(CharmBase):
              psycopg2 connection object.
         """
         connstr = f"dbname='{database}' user='{user}' host='{host}' port='{port}' password='{password}' connect_timeout=1"
-        logger.error(f"connecting to database: \n{connstr}")
+        logger.debug(f"connecting to database: \n{connstr}")
         connection = psycopg2.connect(connstr)
         connection.autocommit = True
         return connection

@@ -137,7 +137,7 @@ async def test_database_relation_with_charm_libraries(
         relation_id=relation.id,
         readonly=True,
     )
-    assert run_drop_query_readonly["Code"] == "1"
+    assert "no results to fetch" in json.loads(run_drop_query_readonly["results"])
 
     # Test admin permissions
     create_database_query = "CREATE DATABASE another_database;"
@@ -148,7 +148,7 @@ async def test_database_relation_with_charm_libraries(
         dbname=dbname,
         relation_id=relation.id,
     )
-    assert run_create_database_query["Code"] == "0"
+    assert "no results to fetch" in json.loads(run_create_database_query["results"])
 
     create_user_query = "CREATE USER another_user WITH ENCRYPTED PASSWORD 'test-password';"
     run_create_user_query = await run_sql_on_application_charm(
@@ -158,7 +158,7 @@ async def test_database_relation_with_charm_libraries(
         dbname=dbname,
         relation_id=relation.id,
     )
-    assert run_create_user_query["Code"] == "0"
+    assert "no results to fetch" in json.loads(run_create_user_query["results"])
 
 
 @pytest.mark.client_relation
