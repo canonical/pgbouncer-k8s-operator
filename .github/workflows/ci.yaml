@@ -75,7 +75,7 @@ jobs:
           app: pgbouncer-k8s
 
   integration-legacy-client-relations:
-    name: Integration tests for legacy relations
+    name: Integration tests for legacy client relations
     needs:
       - lint
       - unit-test

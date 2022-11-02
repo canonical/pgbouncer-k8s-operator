@@ -4,7 +4,8 @@
 """Postgres client relation hooks & helpers.
 
 Importantly, this relation doesn't handle scaling the same way others do. All PgBouncer nodes are
-read/writes, and they expose the read/write nodes of the backend database by
+read/writes, and they expose the read/write nodes of the backend database through the database name
+f"{dbname}_standby".
 
 ┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ relation (id: 4) ┃ application                                                                                   ┃ pgbouncer-k8s                                                                                  ┃
@@ -69,19 +70,17 @@ class PgBouncerProvider(Object):
             charm: the charm for which this relation is provided
             relation_name: the name of the relation
         """
-        self.relation_name = relation_name
-
-        super().__init__(charm, self.relation_name)
-        self.framework.observe(
-            charm.on[self.relation_name].relation_broken, self._on_relation_broken
-        )
+        super().__init__(charm, relation_name)
 
         self.charm = charm
-
-        # Charm events defined in the database provides charm library.
+        self.relation_name = relation_name
         self.database_provides = DatabaseProvides(self.charm, relation_name=self.relation_name)
+
         self.framework.observe(
             self.database_provides.on.database_requested, self._on_database_requested
+        )
+        self.framework.observe(
+            charm.on[self.relation_name].relation_broken, self._on_relation_broken
         )
 
     def _on_database_requested(self, event: DatabaseRequestedEvent) -> None:
@@ -100,10 +99,10 @@ class PgBouncerProvider(Object):
         extra_user_roles = event.extra_user_roles
         rel_id = event.relation.id
 
+        # Creates the user and the database for this specific relation.
+        user = f"relation_id_{rel_id}"
+        password = pgb.generate_password()
         try:
-            # Creates the user and the database for this specific relation.
-            user = f"relation_id_{rel_id}"
-            password = pgb.generate_password()
             self.charm.backend.postgres.create_user(
                 user, password, extra_user_roles=extra_user_roles
             )
@@ -111,11 +110,6 @@ class PgBouncerProvider(Object):
                 self.charm.backend.postgres.create_database(database, user)
                 # set up auth function
                 self.charm.backend.initialise_auth_function(dbname=database)
-
-            # Share the credentials with the application.
-            self.database_provides.set_credentials(rel_id, user, password)
-
-            self.update_connection_info(event.relation)
         except (
             PostgreSQLCreateDatabaseError,
             PostgreSQLCreateUserError,
@@ -129,15 +123,15 @@ class PgBouncerProvider(Object):
 
         self.charm.peers.add_user(user, password)
 
-        # Create user in pgbouncer config
+        # Update pgbouncer config
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user, admin=True if "SUPERUSER" in extra_user_roles else False)
-
-        # Update endpoints
         self.update_postgres_endpoints(event.relation, cfg=cfg)
-
-        # Write config data to charm filesystem
         self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
+
+        # Share the credentials and updated connection info with the client application.
+        self.database_provides.set_credentials(rel_id, user, password)
+        self.update_connection_info(event.relation)
 
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
         """Remove the user created for this relation, and revoke connection permissions."""
