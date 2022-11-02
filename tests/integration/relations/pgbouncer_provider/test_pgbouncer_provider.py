@@ -33,7 +33,8 @@ MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME = "multiple-database-clusters"
 ALIASED_MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME = "aliased-multiple-database-clusters"
 
 
-@pytest.mark.abort_on_fail
+# TODO reinstate before merge
+# @pytest.mark.abort_on_fail
 @pytest.mark.client_relation
 async def test_database_relation_with_charm_libraries(ops_test: OpsTest, application_charm):
     """Test basic functionality of database relation interface."""

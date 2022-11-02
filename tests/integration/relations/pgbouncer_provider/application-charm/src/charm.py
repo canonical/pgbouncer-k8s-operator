@@ -187,15 +187,15 @@ class ApplicationCharm(CharmBase):
 
         logger.error(f"running query: \n{query}")
 
-        with self.connect_to_database(
+        connection = self.connect_to_database(
             database=dbname, user=user, password=password, host=endpoint, port=port
-        ) as connection, connection.cursor() as cursor:
-            cursor.execute(query)
-            if "DROP" not in query:
-                results = cursor.fetchall()
-            else:
-                results = "no results for drop command"
-            logger.error(results)
+        )
+        cursor = connection.cursor()
+        cursor.execute(query)
+
+        # TODO consider adding a variable to expect results or not
+        results = cursor.fetchall()
+        logger.error(results)
 
         event.set_results({"results": json.dumps(results)})
 
