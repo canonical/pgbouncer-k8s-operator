@@ -191,7 +191,10 @@ class ApplicationCharm(CharmBase):
             database=dbname, user=user, password=password, host=endpoint, port=port
         ) as connection, connection.cursor() as cursor:
             cursor.execute(query)
-            results = cursor.fetchall()
+            if "DROP" not in query:
+                results = cursor.fetchall()
+            else:
+                results = "no results for drop command"
             logger.error(results)
 
         event.set_results({"results": json.dumps(results)})
