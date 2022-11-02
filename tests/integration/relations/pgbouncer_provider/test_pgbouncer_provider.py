@@ -11,7 +11,11 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from constants import BACKEND_RELATION_NAME
-from tests.integration.helpers.helpers import scale_application
+from tests.integration.helpers.helpers import (
+    get_backend_relation,
+    get_backend_user_pass,
+    scale_application,
+)
 from tests.integration.helpers.postgresql_helpers import check_database_users_existence
 from tests.integration.relations.pgbouncer_provider.helpers import (
     build_connection_string,
@@ -325,7 +329,11 @@ async def test_relation_broken(ops_test: OpsTest):
             f"{PGB}:database", f"{CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}"
         )
         await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
+        backend_rel = get_backend_relation(ops_test)
+        pg_user, pg_pass = get_backend_user_pass(ops_test, backend_rel)
 
         # Check that the relation user was removed from the database.
-        await check_database_users_existence(ops_test, [], [relation_user])
+        await check_database_users_existence(
+            ops_test, [], [relation_user], pg_user=pg_user, pg_user_password=pg_pass
+        )
         # TODO check relation data was correctly removed from config
