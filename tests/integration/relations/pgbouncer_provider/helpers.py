@@ -238,7 +238,7 @@ async def build_connection_string(
     # Translate the service hostname to an IP address.
     model = ops_test.model.info
     client = AsyncClient(namespace=model.name)
-    pod = client.get(Pod, name=host.split(".")[0])
+    pod = await client.get(Pod, name=host.split(".")[0])
     ip = pod.status.podIP
 
     # Build the complete connection string to connect to the database.
