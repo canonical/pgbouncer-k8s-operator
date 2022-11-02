@@ -330,7 +330,7 @@ async def test_relation_broken(ops_test: OpsTest):
         )
         await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
         backend_rel = get_backend_relation(ops_test)
-        pg_user, pg_pass = get_backend_user_pass(ops_test, backend_rel)
+        pg_user, pg_pass = await get_backend_user_pass(ops_test, backend_rel)
 
         # Check that the relation user was removed from the database.
         await check_database_users_existence(

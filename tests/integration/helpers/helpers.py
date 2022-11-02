@@ -31,8 +31,6 @@ def get_joining_relations(ops_test: OpsTest, app_1: str, app_2: str):
     for rel in ops_test.model.relations:
         logging.info(rel.data)
         apps = [endpoint["application-name"] for endpoint in rel.data["endpoints"]]
-        # TODO consider checking endpoint["relation"]["name"] == relname for endpoint in
-        # rel.data["endpoints"]
         if app_1 in apps and app_2 in apps:
             relations.append(rel)
     return relations

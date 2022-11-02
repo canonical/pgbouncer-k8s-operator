@@ -152,11 +152,10 @@ class ApplicationCharm(CharmBase):
         user = databag.get("username")
         password = databag.get("password")
         if event.params["readonly"]:
-            eps = databag.get("read-only-endpoints")
+            host = databag.get("read-only-endpoints").split(",")[0]
             dbname = f"{dbname}_readonly"
         else:
-            eps = databag.get("endpoints")
-        host = eps.split(",")[0]
+            host = databag.get("endpoints").split(",")[0]
         endpoint = host.split(":")[0]
         port = host.split(":")[1]
 
