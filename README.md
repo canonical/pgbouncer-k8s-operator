@@ -15,7 +15,7 @@ As this charm is not yet published, you need to follow the build and deploy inst
   - Makes use of the [data-platform-libs DatabaseRequires library](https://github.com/canonical/data-platform-libs/blob/main/lib/charms/data_platform_libs/v0/database_provides.py).
 - `database:postgresql-client`
   - Provides a relation to client applications.
-  - Importantly, this relation doesn't handle scaling the same way others do. All PgBouncer nodes are read/writes, and they expose the read/write nodes of the backend database through the database name `f"{dbname}_standby"`.
+  - Importantly, this relation doesn't handle scaling the same way others do. All PgBouncer nodes are read/writes, and they expose the read-only nodes of the backend database through the database name `f"{dbname}_standby"`.
 
 The expected data presented in a relation interface is provided in the docstring at the top of the source files for each relation.
 

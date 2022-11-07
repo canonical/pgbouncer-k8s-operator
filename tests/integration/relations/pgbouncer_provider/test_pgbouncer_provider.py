@@ -39,9 +39,9 @@ MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME = "multiple-database-clusters"
 ALIASED_MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME = "aliased-multiple-database-clusters"
 
 
-# TODO reinstate before merge
-# @pytest.mark.abort_on_fail
+@pytest.mark.abort_on_fail
 @pytest.mark.client_relation
+@pytest.mark.dev
 async def test_database_relation_with_charm_libraries(
     ops_test: OpsTest, application_charm, pgb_charm
 ):
@@ -238,8 +238,8 @@ async def test_an_application_can_connect_to_multiple_database_clusters(
     )
     await ops_test.model.wait_for_idle(status="active")
 
-    # Retrieve the connection string to both database clusters using the relation aliases
-    # and assert they are different.
+    # Retrieve the connection string to both database clusters using the relation ids and assert
+    # they are different.
     application_connection_string = await build_connection_string(
         ops_test,
         CLIENT_APP_NAME,

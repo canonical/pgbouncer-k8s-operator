@@ -120,32 +120,9 @@ class ApplicationCharm(CharmBase):
             f"cluster {event.relation.app.name} endpoints have been changed to: {event.endpoints}"
         )
 
-    # Multiple database clusters events observers (for aliased clusters/relations).
-    def _on_cluster1_database_created(self, event: DatabaseCreatedEvent) -> None:
-        """Event triggered when a database was created for this application."""
-        # Retrieve the credentials using the charm library.
-        logger.info(f"cluster1 credentials: {event.username} {event.password}")
-        self.unit.status = ActiveStatus("received database credentials for cluster1")
-
-    def _on_cluster1_endpoints_changed(self, event: DatabaseEndpointsChangedEvent) -> None:
-        """Event triggered when the read/write endpoints of the database change."""
-        logger.info(f"cluster1 endpoints have been changed to: {event.endpoints}")
-
-    def _on_cluster2_database_created(self, event: DatabaseCreatedEvent) -> None:
-        """Event triggered when a database was created for this application."""
-        # Retrieve the credentials using the charm library.
-        logger.info(f"cluster2 credentials: {event.username} {event.password}")
-        self.unit.status = ActiveStatus("received database credentials for cluster2")
-
-    def _on_cluster2_endpoints_changed(self, event: DatabaseEndpointsChangedEvent) -> None:
-        """Event triggered when the read/write endpoints of the database change."""
-        logger.info(f"cluster2 endpoints have been changed to: {event.endpoints}")
-
     def _on_run_sql_action(self, event: ActionEvent):
-        logger.error(event.params)
         relation_id = event.params["relation-id"]
         databag = self.first_database.fetch_relation_data()[relation_id]
-        logger.error(databag)
 
         dbname = event.params["dbname"]
         query = event.params["query"]
@@ -170,23 +147,26 @@ class ApplicationCharm(CharmBase):
         # TODO consider adding a variable to expect results or not
         try:
             results = cursor.fetchall()
-        except psycopg2.ProgrammingError:
-            results = ["no results to fetch"]
+        except Exception as e:
+            results = [str(e)]
         logger.error(results)
 
         event.set_results({"results": json.dumps(results)})
 
     def connect_to_database(
-        self, database: str, user: str, host: str, password: str, port: str
+        self, host: str, port: str, database: str, user: str, password: str
     ) -> psycopg2.extensions.connection:
-        """Creates a connection to the database.
+        """Creates a psycopg2 connection object to the database, with autocommit enabled.
 
         Args:
-            database: database to connect to (defaults to the database
-                provided when the object for this class was created).
+            host: network host for the database
+            port: port on which to access the database
+            database: database to connect to
+            user: user to use to connect to the database
+            password: password for the given user
 
         Returns:
-             psycopg2 connection object.
+            psycopg2 connection object using the provided data
         """
         connstr = f"dbname='{database}' user='{user}' host='{host}' port='{port}' password='{password}' connect_timeout=1"
         logger.debug(f"connecting to database: \n{connstr}")

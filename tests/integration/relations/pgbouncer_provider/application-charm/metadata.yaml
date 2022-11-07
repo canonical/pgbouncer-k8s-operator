@@ -15,7 +15,7 @@ resources:
   application-image:
     type: oci-image
     description: OCI image for test charm
-    upstream-source: ubuntu:latest
+    # upstream-source: ubuntu:latest
 
 requires:
   first-database:

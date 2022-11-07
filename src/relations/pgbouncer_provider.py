@@ -141,15 +141,8 @@ class PgBouncerProvider(Object):
         if not self.charm.unit.is_leader():
             return
 
-        cfg = self.charm.read_pgb_config()
-        database = self.get_database(event.relation)
-        cfg["databases"].pop(database, None)
-        cfg["databases"].pop(f"{database}_readonly", None)
-        user = f"relation_id_{event.relation.id}"
-        cfg.remove_user(user)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
-
         # Delete the user.
+        user = f"relation_id_{event.relation.id}"
         try:
             self.charm.backend.postgres.delete_user(user)
         except PostgreSQLDeleteUserError as e:
@@ -158,6 +151,13 @@ class PgBouncerProvider(Object):
                 f"Failed to delete user during {self.relation_name} relation broken event"
             )
             raise
+
+        cfg = self.charm.read_pgb_config()
+        database = self.get_database(event.relation)
+        cfg["databases"].pop(database, None)
+        cfg["databases"].pop(f"{database}_readonly", None)
+        cfg.remove_user(user)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
 
     def update_connection_info(self, relation):
         """Updates client-facing relation information."""
