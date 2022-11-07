@@ -144,7 +144,6 @@ class ApplicationCharm(CharmBase):
         cursor = connection.cursor()
         cursor.execute(query)
 
-        # TODO consider adding a variable to expect results or not
         try:
             results = cursor.fetchall()
         except psycopg2.Error as error:
