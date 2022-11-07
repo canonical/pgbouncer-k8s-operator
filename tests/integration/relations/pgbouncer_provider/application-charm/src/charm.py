@@ -147,8 +147,8 @@ class ApplicationCharm(CharmBase):
         # TODO consider adding a variable to expect results or not
         try:
             results = cursor.fetchall()
-        except Exception as e:
-            results = [str(e)]
+        except psycopg2.Error as error:
+            results = [str(error)]
         logger.error(results)
 
         event.set_results({"results": json.dumps(results)})

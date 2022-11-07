@@ -141,7 +141,7 @@ async def test_database_relation_with_charm_libraries(
         relation_id=relation.id,
         readonly=True,
     )
-    assert "no results to fetch" in json.loads(run_drop_query_readonly["results"])
+    assert run_drop_query_readonly["Code"] == "1"
 
     # Test admin permissions
     create_database_query = "CREATE DATABASE another_database;"
