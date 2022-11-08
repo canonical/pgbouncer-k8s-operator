@@ -3,7 +3,6 @@
 # See LICENSE file for licensing details.
 
 import json
-import logging
 from multiprocessing import ProcessError
 from pathlib import Path
 from typing import Dict
@@ -29,7 +28,6 @@ def get_joining_relations(ops_test: OpsTest, app_1: str, app_2: str):
     """Gets every relation in this model that joins app_1 and app_2."""
     relations = []
     for rel in ops_test.model.relations:
-        logging.info(rel.data)
         apps = [endpoint["application-name"] for endpoint in rel.data["endpoints"]]
         if app_1 in apps and app_2 in apps:
             relations.append(rel)
