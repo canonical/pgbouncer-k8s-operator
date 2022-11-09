@@ -272,8 +272,14 @@ class PgBouncerK8sCharm(CharmBase):
             FileNotFoundError when the config at INI_PATH isn't available, such as if this is
             called before the charm has started.
         """
-        config = self._read_file(INI_PATH)
-        return pgb.PgbConfig(config)
+        try:
+            config = pgb.PgbConfig(self._read_file(INI_PATH))
+        except FileNotFoundError as err:
+            if not (config := self.peers.get_cfg()):
+                raise FileNotFoundError(
+                    f"PGB config file not found in peer databag or filesystem, likely due to charm not being fully initialised. {err}"
+                )
+        return config
 
     def render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
@@ -295,7 +301,14 @@ class PgBouncerK8sCharm(CharmBase):
 
     def read_auth_file(self) -> str:
         """Gets the auth file from the pgbouncer container."""
-        return self._read_file(AUTH_FILE_PATH)
+        try:
+            auth_file = pgb.PgbConfig(self._read_file(AUTH_FILE_PATH))
+        except FileNotFoundError as err:
+            if not (auth_file := self.peers.get_auth_file()):
+                raise FileNotFoundError(
+                    f"auth file not found in peer databag or filesystem, likely due to charm not being fully initialised. {err}"
+                )
+        return auth_file
 
     def render_auth_file(self, auth_file: str, reload_pgbouncer=False):
         """Renders the given auth_file to the correct location."""
