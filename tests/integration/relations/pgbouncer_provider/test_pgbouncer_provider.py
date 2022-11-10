@@ -328,7 +328,7 @@ async def test_legacy_relation_compatibility(ops_test: OpsTest):
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(status="active", timeout=600)
 
-    backend_relation = await get_backend_relation(ops_test)
+    backend_relation = get_backend_relation(ops_test)
     pgb_user, pgb_password = await get_backend_user_pass(ops_test, backend_relation)
     await check_database_creation(ops_test, "waltz", pgb_user, pgb_password)
     finos_user = get_legacy_relation_username(ops_test, finos_relation.id)
