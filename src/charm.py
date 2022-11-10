@@ -59,13 +59,23 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
-        if (default_config := self.peers.get_cfg()) is None:
+        try:
+            # Try and get pgb config. If it already exists in the filesystem it'll be refreshed,
+            # and if it only exists in the peer databag, pull it and write it to filesystem.
+            config = self.read_pgb_config()
+        except FileNotFoundError:
+            # If there's no config in the container or the peer databag, the leader creates a
+            # default.
             if self.unit.is_leader():
-                default_config = PgbConfig(pgb.DEFAULT_CONFIG)
+                config = PgbConfig(pgb.DEFAULT_CONFIG)
             else:
                 event.defer()
                 return
-        self.render_pgb_config(default_config)
+        self.render_pgb_config(config)
+
+        # Update postgres endpoints in config to match the current state of the charm.
+        # TODO this may only be necessary if this is the default charm.
+        self.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
@@ -143,7 +153,7 @@ class PgBouncerK8sCharm(CharmBase):
         """Define and start pgbouncer workload."""
         try:
             # Check config is available before running pgbouncer.
-            self.read_pgb_config()
+            self._read_file(INI_PATH)
         except FileNotFoundError as err:
             # TODO this may need to change to a Blocked or Error status, depending on why the
             # config can't be found.
@@ -269,13 +279,14 @@ class PgBouncerK8sCharm(CharmBase):
             PgbConfig object containing pgbouncer config.
 
         Raises:
-            FileNotFoundError when the config at INI_PATH isn't available, such as if this is
-            called before the charm has started.
+            FileNotFoundError when the config can't be found at INI_PATH or in the relation
+            databag, such as if this is called before the charm has started.
         """
         try:
             config = pgb.PgbConfig(self._read_file(INI_PATH))
         except FileNotFoundError as err:
-            if not (config := self.peers.get_cfg()):
+            config = self.peers.get_cfg()
+            if not config:
                 raise FileNotFoundError(
                     f"PGB config file not found in peer databag or filesystem, likely due to charm not being fully initialised. {err}"
                 )
