@@ -14,9 +14,14 @@ from constants import BACKEND_RELATION_NAME
 from tests.integration.helpers.helpers import (
     get_backend_relation,
     get_backend_user_pass,
+    get_legacy_relation_username,
     scale_application,
+    wait_for_relation_joined_between,
 )
-from tests.integration.helpers.postgresql_helpers import check_database_users_existence
+from tests.integration.helpers.postgresql_helpers import (
+    check_database_creation,
+    check_database_users_existence,
+)
 from tests.integration.relations.pgbouncer_provider.helpers import (
     build_connection_string,
     check_relation_data_existence,
@@ -36,7 +41,6 @@ APP_NAMES = [CLIENT_APP_NAME, PG, PGB]
 FIRST_DATABASE_RELATION_NAME = "first-database"
 SECOND_DATABASE_RELATION_NAME = "second-database"
 MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME = "multiple-database-clusters"
-ALIASED_MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME = "aliased-multiple-database-clusters"
 
 
 @pytest.mark.abort_on_fail
@@ -313,6 +317,25 @@ async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
             "read-only-endpoints",
             exists=True,
         )
+
+
+@pytest.mark.client_relation
+async def test_legacy_relation_compatibility(ops_test: OpsTest):
+    finos = "finos-waltz-k8s"
+    await ops_test.model.deploy(finos, application_name=finos, channel="edge"),
+    finos_relation = await ops_test.model.add_relation(f"{PGB}:db", f"{finos}:db")
+    wait_for_relation_joined_between(ops_test, PGB, finos)
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(status="active", timeout=600)
+
+    backend_relation = await get_backend_relation(ops_test)
+    pgb_user, pgb_password = await get_backend_user_pass(ops_test, backend_relation)
+    await check_database_creation(ops_test, "waltz", pgb_user, pgb_password)
+    finos_user = get_legacy_relation_username(ops_test, finos_relation.id)
+    await check_database_users_existence(ops_test, [finos_user], [], pgb_user, pgb_password)
+
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(status="active", timeout=600)
 
 
 @pytest.mark.client_relation

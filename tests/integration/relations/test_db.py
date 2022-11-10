@@ -53,21 +53,6 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
             ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
         )
 
-        await asyncio.gather(
-            ops_test.model.wait_for_idle(
-                apps=[PG],
-                status="active",
-                timeout=1000,
-                wait_for_exact_units=3,
-            ),
-            ops_test.model.wait_for_idle(
-                apps=[PGB],
-                status="active",
-                raise_on_blocked=True,
-                timeout=1000,
-                wait_for_exact_units=3,
-            ),
-        )
         # TODO test adding both relations simultaneously
         backend_relation = await ops_test.model.add_relation(
             f"{PGB}:backend-database", f"{PG}:database"
