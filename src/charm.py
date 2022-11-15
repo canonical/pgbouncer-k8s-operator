@@ -158,7 +158,7 @@ class PgBouncerK8sCharm(CharmBase):
         """Define and start pgbouncer workload."""
         try:
             # Check config is available before running pgbouncer.
-            self._read_file(INI_PATH)
+            self.read_pgb_config()
         except FileNotFoundError as err:
             # TODO this may need to change to a Blocked or Error status, depending on why the
             # config can't be found.
