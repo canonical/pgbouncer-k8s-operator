@@ -58,6 +58,8 @@ class PgBouncerK8sCharm(CharmBase):
             )
             event.defer()
             return
+
+        config = None
         try:
             # Try and get pgb config. If it only exists in the peer databag, pull it and write it
             # to filesystem.
