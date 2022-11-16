@@ -10,6 +10,7 @@ import yaml
 from lightkube import AsyncClient
 from lightkube.resources.core_v1 import Pod
 from pytest_operator.plugin import OpsTest
+from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from tests.integration.helpers.helpers import get_cfg
 
@@ -60,4 +61,18 @@ async def test_kill_controller(ops_test: OpsTest):
     aclient = AsyncClient(namespace=f"controller-{ops_test.controller_name}")
     await aclient.delete(Pod, name="controller-0")
     # Recreating the controller can take a while, so wait for ages to ensure it's all good.
-    await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=600, idle_period=180)
+
+    # Wait for pgbouncer charm to update its config files.
+    try:
+        for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
+            with attempt:
+                try:
+                    await ops_test.model.wait_for_idle(
+                        apps=[PGB], status="active", timeout=600, idle_period=60
+                    )
+                    break
+                except OSError:
+                    # We're breaking k8s here, so if there's an OSError, just retry.
+                    pass
+    except RetryError:
+        assert False, "PGB never reached an idle state after controller deletion."
