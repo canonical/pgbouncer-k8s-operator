@@ -180,7 +180,7 @@ class Peers(Object):
             self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
             return
 
-        if cfg := self.get_secret("app", CFG_FILE_DATABAG_KEY):
+        if cfg := self.get_cfg():
             self.charm.render_pgb_config(PgbConfig(cfg))
 
         if auth_file := self.get_secret("app", AUTH_FILE_DATABAG_KEY):
@@ -288,13 +288,6 @@ class Peers(Object):
 
         self.set_secret("app", AUTH_FILE_DATABAG_KEY, auth_file)
         logger.debug("updated auth file in peer databag")
-
-    def get_auth_file(self) -> str:
-        """Retrieves the pgbouncer auth file from the peer databag."""
-        if auth_file := self.get_secret("app", AUTH_FILE_DATABAG_KEY):
-            return auth_file
-        else:
-            return None
 
     def add_user(self, username: str, password: str):
         """Adds user to app databag."""
