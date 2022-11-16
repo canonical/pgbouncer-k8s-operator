@@ -1,2 +1,3 @@
-ops >= 1.5.3
+ops==1.5.3
 tenacity==8.0.1
+lightkube==0.10.0
