@@ -60,4 +60,4 @@ async def test_kill_controller(ops_test: OpsTest):
     aclient = AsyncClient(namespace=f"controller-{ops_test.controller_name}")
     await aclient.delete(Pod, name="controller-0")
     # Recreating the controller can take a while, so wait for ages to ensure it's all good.
-    await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=600, idle_period=120)
+    await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=600, idle_period=180)
