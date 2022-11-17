@@ -64,7 +64,7 @@ async def test_kill_controller(ops_test: OpsTest):
 
     # Wait for pgbouncer charm to update its config files.
     try:
-        for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
+        for attempt in Retrying(stop=stop_after_delay(10 * 60), wait=wait_fixed(3)):
             with attempt:
                 try:
                     await ops_test.model.wait_for_idle(
