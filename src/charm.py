@@ -120,6 +120,7 @@ class PgBouncerK8sCharm(CharmBase):
                 PGB: {
                     "summary": "pgbouncer service",
                     "user": PG_USER,
+                    "group": PG_USER,
                     # -R flag reuses sockets on restart
                     "command": f"pgbouncer -R {INI_PATH}",
                     "startup": "enabled",
