@@ -54,6 +54,10 @@ async def test_config_updates(ops_test: OpsTest):
         assert cfg["pgbouncer"]["listen_port"] == port
 
 
+# This test passes, but throws an OSError because we're killing the juju controller, then
+# immediately checking the juju controller. This is expected behaviour, and if we don't get the
+# Model in an active-idle state then we'll fail the test as expected.
+@pytest.mark.filterwarnings("ignore::OSError")
 @pytest.mark.dev
 @pytest.mark.standalone
 async def test_kill_controller(ops_test: OpsTest):
