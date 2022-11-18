@@ -3,8 +3,9 @@
 # See LICENSE file for licensing details.
 
 import logging
-from pathlib import Path
 import time
+from pathlib import Path
+
 import pytest
 import yaml
 from lightkube import AsyncClient
