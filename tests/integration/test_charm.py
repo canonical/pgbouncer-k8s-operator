@@ -4,7 +4,7 @@
 
 import logging
 from pathlib import Path
-
+import time
 import pytest
 import yaml
 from lightkube import AsyncClient
@@ -54,10 +54,6 @@ async def test_config_updates(ops_test: OpsTest):
         assert cfg["pgbouncer"]["listen_port"] == port
 
 
-# This test passes, but throws an OSError because we're killing the juju controller, then
-# immediately checking the juju controller. This is expected behaviour, and if we don't get the
-# Model in an active-idle state then we'll fail the test as expected.
-@pytest.mark.filterwarnings("ignore::OSError")
 @pytest.mark.dev
 @pytest.mark.standalone
 async def test_kill_controller(ops_test: OpsTest):
@@ -65,18 +61,13 @@ async def test_kill_controller(ops_test: OpsTest):
     aclient = AsyncClient(namespace=f"controller-{ops_test.controller_name}")
     await aclient.delete(Pod, name="controller-0")
     # Recreating the controller can take a while, so wait for ages to ensure it's all good.
-
-    # Wait for pgbouncer charm to update its config files.
+    time.sleep(60)
     try:
         for attempt in Retrying(stop=stop_after_delay(10 * 60), wait=wait_fixed(3)):
             with attempt:
-                try:
-                    await ops_test.model.wait_for_idle(
-                        apps=[PGB], status="active", timeout=600, idle_period=60
-                    )
-                    break
-                except OSError:
-                    # We're breaking k8s here, so if there's an OSError, just retry.
-                    pass
+                await ops_test.model.wait_for_idle(
+                    apps=[PGB], status="active", timeout=600, idle_period=60
+                )
+                break
     except RetryError:
         assert False, "PGB never reached an idle state after controller deletion."
