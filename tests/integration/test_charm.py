@@ -3,7 +3,6 @@
 # See LICENSE file for licensing details.
 
 import logging
-import time
 from pathlib import Path
 
 import pytest
@@ -11,7 +10,6 @@ import yaml
 from lightkube import AsyncClient
 from lightkube.resources.core_v1 import Pod
 from pytest_operator.plugin import OpsTest
-from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from tests.integration.helpers.helpers import get_cfg
 
@@ -62,9 +60,7 @@ async def test_kill_controller(ops_test: OpsTest):
     aclient = AsyncClient(namespace=f"controller-{ops_test.controller_name}")
     await aclient.delete(Pod, name="controller-0")
     # Recreating the controller can take a while, so wait a while.
-    await ops_test.model.wait_for_idle(
-        apps=[PGB], status="active", timeout=1200, idle_period=60
-    )
+    await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1200, idle_period=60)
     await ops_test.log_model()
 
     # TODO teardown stage fails, I think because ops_test.controller_name no longer points to the
