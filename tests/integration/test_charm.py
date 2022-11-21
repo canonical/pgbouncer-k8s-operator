@@ -61,14 +61,11 @@ async def test_kill_controller(ops_test: OpsTest):
     """Kill controller pod and see what pgb/juju does."""
     aclient = AsyncClient(namespace=f"controller-{ops_test.controller_name}")
     await aclient.delete(Pod, name="controller-0")
-    # Recreating the controller can take a while, so wait for ages to ensure it's all good.
-    time.sleep(60)
-    try:
-        for attempt in Retrying(stop=stop_after_delay(10 * 60), wait=wait_fixed(3)):
-            with attempt:
-                await ops_test.model.wait_for_idle(
-                    apps=[PGB], status="active", timeout=600, idle_period=60
-                )
-                break
-    except RetryError:
-        assert False, "PGB never reached an idle state after controller deletion."
+    # Recreating the controller can take a while, so wait a while.
+    await ops_test.model.wait_for_idle(
+        apps=[PGB], status="active", timeout=1200, idle_period=60
+    )
+    await ops_test.log_model()
+
+    # TODO teardown stage fails, I think because ops_test.controller_name no longer points to the
+    # same controller.
