@@ -18,7 +18,7 @@ from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
 from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
 
-from constants import AUTH_FILE_PATH, CLIENT_RELATION_NAME, INI_PATH, PG_USER, PGB
+from constants import AUTH_FILE_PATH, CLIENT_RELATION_NAME, INI_PATH, PG_GROUP, PG_USER, PGB
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
 from relations.peers import Peers
@@ -122,6 +122,7 @@ class PgBouncerK8sCharm(CharmBase):
                 PGB: {
                     "summary": "pgbouncer service",
                     "user": PG_USER,
+                    "group": PG_GROUP,
                     # -R flag reuses sockets on restart
                     "command": f"pgbouncer -R {INI_PATH}",
                     "startup": "enabled",
