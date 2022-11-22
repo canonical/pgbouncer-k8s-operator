@@ -100,6 +100,7 @@ class TestCharm(unittest.TestCase):
                 PGB: {
                     "summary": "pgbouncer service",
                     "user": "postgres",
+                    "group": "postgres",
                     "command": f"pgbouncer -R {INI_PATH}",
                     "startup": "enabled",
                     "override": "replace",
@@ -109,11 +110,11 @@ class TestCharm(unittest.TestCase):
         container = self.harness.model.unit.get_container(PGB)
         self.charm.on.pgbouncer_pebble_ready.emit(container)
         updated_plan = self.harness.get_container_pebble_plan(PGB).to_dict()
-        self.assertEqual(expected_plan, updated_plan)
+        self.assertDictEqual(expected_plan, updated_plan)
 
         service = self.harness.model.unit.get_container(PGB).get_service(PGB)
         self.assertTrue(service.is_running())
-        self.assertEqual(self.harness.model.unit.status, ActiveStatus())
+        self.assertIsInstance(self.harness.model.unit.status, ActiveStatus)
 
     @patch("ops.model.Container.can_connect", return_value=False)
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")

@@ -6,6 +6,7 @@
 
 PGB = "pgbouncer"
 PG_USER = "postgres"
+PG_GROUP = PG_USER
 
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
 INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
