@@ -65,4 +65,5 @@ async def test_kill_controller(ops_test: OpsTest):
     # TODO teardown stage fails, I think because ops_test.controller_name no longer points to the
     # same controller. Since this passes locally just fine, try waiting for 30s.
     import time
+
     time.sleep(30)
