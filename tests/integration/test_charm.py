@@ -39,8 +39,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
 
 @pytest.mark.standalone
 async def test_config_updates(ops_test: OpsTest):
-    """Test updating charm config updates pgbouncer config."""
-    # test that changing config updates relation data
+    """Test updating charm config updates pgbouncer config & relation data."""
     pgbouncer_app = ops_test.model.applications[PGB]
     port = "6464"
     async with ops_test.fast_forward():
@@ -56,7 +55,7 @@ async def test_config_updates(ops_test: OpsTest):
 @pytest.mark.dev
 @pytest.mark.standalone
 async def test_kill_controller(ops_test: OpsTest):
-    """Kill controller pod and see what pgb/juju does."""
+    """Kill controller pod and guarantee that the charm survives."""
     aclient = AsyncClient(namespace=f"controller-{ops_test.controller_name}")
     await aclient.delete(Pod, name="controller-0")
     # Recreating the controller can take a while, so wait a while.
