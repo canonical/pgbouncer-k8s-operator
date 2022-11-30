@@ -67,3 +67,4 @@ async def test_kill_controller(ops_test: OpsTest):
     import time
 
     time.sleep(30)
+    await ops_test.model.wait_for_idle()
