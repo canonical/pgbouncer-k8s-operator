@@ -7,8 +7,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-from lightkube import AsyncClient
-from lightkube.resources.core_v1 import Pod
 from pytest_operator.plugin import OpsTest
 
 from tests.integration.helpers.helpers import get_cfg
@@ -19,7 +17,6 @@ METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
 
 
-@pytest.mark.dev
 @pytest.mark.standalone
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test: OpsTest):
@@ -50,20 +47,3 @@ async def test_config_updates(ops_test: OpsTest):
         logger.info(cfg)
         logger.info(await pgbouncer_app.get_config())
         assert cfg["pgbouncer"]["listen_port"] == port
-
-
-@pytest.mark.dev
-@pytest.mark.standalone
-async def test_kill_controller(ops_test: OpsTest):
-    """Kill controller pod and guarantee that the charm survives."""
-    aclient = AsyncClient(namespace=f"controller-{ops_test.controller_name}")
-    await aclient.delete(Pod, name="controller-0")
-    # Recreating the controller can take a while, so wait a while.
-    await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1200, idle_period=60)
-    await ops_test.log_model()
-
-    # TODO teardown stage fails, I think because ops_test.controller_name no longer points to the
-    # same controller. Since this passes locally just fine, try waiting for 30s.
-    import time
-
-    time.sleep(30)
