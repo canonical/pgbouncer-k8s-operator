@@ -104,7 +104,7 @@ class Peers(Object):
     @property
     def relation(self):
         """Returns the relations in this model , or None if peer is not initialised."""
-        return self.model.get_relation(PEER_RELATION_NAME)
+        return self.charm.model.get_relation(PEER_RELATION_NAME)
 
     @property
     def app_databag(self):
@@ -172,7 +172,7 @@ class Peers(Object):
 
     def _on_changed(self, event: RelationChangedEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
-        self.unit_databag[ADDRESS_KEY] = self.charm.unit_pod_hostname
+        self.unit_databag.update({ADDRESS_KEY: self.charm.unit_pod_hostname})
 
         if self.charm.unit.is_leader():
             try:

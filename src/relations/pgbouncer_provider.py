@@ -5,7 +5,7 @@
 
 Importantly, this relation doesn't handle scaling the same way others do. All PgBouncer nodes are
 read/writes, and they expose the read/write nodes of the backend database through the database name
-f"{dbname}_standby".
+f"{dbname}_readonly".
 
 ┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ relation (id: 4) ┃ application                                                                                   ┃ pgbouncer-k8s                                                                                  ┃
@@ -46,7 +46,7 @@ from charms.postgresql_k8s.v0.postgresql import (
     PostgreSQLDeleteUserError,
     PostgreSQLGetPostgreSQLVersionError,
 )
-from ops.charm import CharmBase, RelationBrokenEvent
+from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
 from ops.model import Application, BlockedStatus, Relation, WaitingStatus
 
@@ -78,6 +78,9 @@ class PgBouncerProvider(Object):
 
         self.framework.observe(
             self.database_provides.on.database_requested, self._on_database_requested
+        )
+        self.framework.observe(
+            charm.on[self.relation_name].relation_departed, self._on_relation_departed
         )
         self.framework.observe(
             charm.on[self.relation_name].relation_broken, self._on_relation_broken
@@ -133,16 +136,34 @@ class PgBouncerProvider(Object):
         self.database_provides.set_credentials(rel_id, user, password)
         self.update_connection_info(event.relation)
 
+    def _on_relation_departed(self, event: RelationDepartedEvent) -> None:
+        """Check if this relation is being removed, and update the peer databag accordingly."""
+        self.update_connection_info(event.relation)
+        if event.departing_unit == self.charm.unit:
+            self.charm.peers.unit_databag.update(
+                {f"{self.relation_name}_{event.relation.id}_departing": "true"}
+            )
+
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
         """Remove the user created for this relation, and revoke connection permissions."""
-        if not self._check_backend():
-            event.defer()
+        if not self._check_backend() or not self.charm.unit.is_leader():
             return
-        if not self.charm.unit.is_leader():
+
+        depart_flag = f"{self.relation_name}_{event.relation.id}_departing"
+        if self.charm.peers.unit_databag.get(depart_flag, None) == "true":
+            # This is being removed, so do nothing that relates to the relation.
+            self.charm.peers.app_databag.pop(depart_flag, None)
             return
 
         # Delete the user.
         user = f"relation_id_{event.relation.id}"
+        cfg = self.charm.read_pgb_config()
+        database = self.get_database(event.relation)
+        cfg["databases"].pop(database, None)
+        cfg["databases"].pop(f"{database}_readonly", None)
+        cfg.remove_user(user)
+        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
+
         try:
             self.charm.backend.postgres.delete_user(user)
         except PostgreSQLDeleteUserError as e:
@@ -151,13 +172,6 @@ class PgBouncerProvider(Object):
                 f"Failed to delete user during {self.relation_name} relation broken event"
             )
             raise
-
-        cfg = self.charm.read_pgb_config()
-        database = self.get_database(event.relation)
-        cfg["databases"].pop(database, None)
-        cfg["databases"].pop(f"{database}_readonly", None)
-        cfg.remove_user(user)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
 
     def update_connection_info(self, relation):
         """Updates client-facing relation information."""
@@ -171,9 +185,10 @@ class PgBouncerProvider(Object):
         self.update_read_only_endpoints()
 
         # Set the database version.
-        self.database_provides.set_version(
-            relation.id, self.charm.backend.postgres.get_postgresql_version()
-        )
+        if self._check_backend():
+            self.database_provides.set_version(
+                relation.id, self.charm.backend.postgres.get_postgresql_version()
+            )
 
     def update_postgres_endpoints(
         self,
@@ -226,8 +241,8 @@ class PgBouncerProvider(Object):
         if not self.charm.unit.is_leader():
             return
 
-        # Get the current relation or all the relations
-        # if this is triggered by another type of event.
+        # Get the current relation or all the relations if this is triggered by another type of
+        # event.
         relations = [event.relation] if event else self.model.relations[self.relation_name]
 
         port = self.charm.config["listen_port"]

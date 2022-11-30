@@ -415,8 +415,9 @@ class DbProvides(Object):
                     delete_db = False
                     break
         if delete_db:
-            del cfg["databases"][database]
+            cfg["databases"].pop(database, None)
             cfg["databases"].pop(f"{database}_standby", None)
+            self.charm.backend.remove_auth_function([database])
 
         cfg.remove_user(user)
         self.charm.render_pgb_config(cfg, reload_pgbouncer=True)

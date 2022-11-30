@@ -5,7 +5,7 @@
 """Constants for the PgBouncer charm."""
 
 PGB = "pgbouncer"
-PG_USER = "postgres"
+PG = PG_USER = "postgres"
 
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
 INI_PATH = f"{PGB_DIR}/pgbouncer.ini"

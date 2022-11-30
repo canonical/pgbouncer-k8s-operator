@@ -163,11 +163,6 @@ class TestPgbouncerProvider(unittest.TestCase):
         _cfg.return_value["pgbouncer"]["admin_users"].add(user)
         _cfg.return_value["pgbouncer"]["stats_users"].add(user)
 
-        # check we exit immediately if backend doesn't exist.
-        _check_backend.return_value = False
-        self.client_relation._on_relation_broken(event)
-        event.defer.assert_called()
-
         _check_backend.return_value = True
         self.client_relation._on_relation_broken(event)
         _cfg.assert_called()

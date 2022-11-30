@@ -51,7 +51,7 @@ from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
 from ops.model import Application, BlockedStatus, Relation
 
-from constants import BACKEND_RELATION_NAME, PGB, PGB_DIR
+from constants import BACKEND_RELATION_NAME, PG, PGB, PGB_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +84,9 @@ class BackendDatabaseRequires(Object):
         self.framework.observe(self.database.on.endpoints_changed, self._on_endpoints_changed)
         self.framework.observe(
             self.database.on.read_only_endpoints_changed, self._on_endpoints_changed
+        )
+        self.framework.observe(
+            charm.on[BACKEND_RELATION_NAME].relation_changed, self._on_relation_changed
         )
         self.framework.observe(
             charm.on[BACKEND_RELATION_NAME].relation_broken, self._on_relation_broken
@@ -123,6 +126,11 @@ class BackendDatabaseRequires(Object):
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_endpoints_changed(self, _):
+        self.charm.update_client_connection_info()
+        self.charm.update_postgres_endpoints(reload_pgbouncer=True)
+
+    def _on_relation_changed(self, _):
+        self.charm.update_client_connection_info()
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_relation_departed(self, event: RelationDepartedEvent):
@@ -131,38 +139,49 @@ class BackendDatabaseRequires(Object):
         pgbouncer-uninstall doesn't actually uninstall anything - it actually removes permissions
         for the auth user.
         """
-        if event.departing_unit != self.charm.unit or not self.charm.unit.is_leader():
+        if event.departing_unit.app != self.charm.app or not self.charm.unit.is_leader():
             return
 
-        logger.info("removing auth user")
-
-        uninstall_script = open("src/relations/sql/pgbouncer-uninstall.sql", "r").read()
+        if event.departing_unit == self.charm.unit:
+            self.charm.peers.unit_databag.update(
+                {f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing": "true"}
+            )
+            logger.error("added relation-departing flag to peer databag")
 
         try:
-            with self.postgres.connect_to_database(PGB) as conn, conn.cursor() as cursor:
-                cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
-            conn.close()
+            # TODO de-authorise all databases
+            logger.info("removing auth user")
+            self.remove_auth_function([PGB, PG])
         except psycopg2.Error:
-            auth_fail = "failed to remove auth user when disconnecting from postgres application."
-            self.charm.unit.status = BlockedStatus(auth_fail)
-            event.fail(auth_fail)
+            self.charm.unit.status = BlockedStatus(
+                "failed to remove auth user when disconnecting from postgres application."
+            )
+            event.fail()
             return
 
         self.postgres.delete_user(self.auth_user)
-
-        logger.info("auth user removed")
+        self.charm.peers.remove_user(self.auth_user)
+        logger.info("pgbouncer auth user removed")
 
     def _on_relation_broken(self, event: RelationBrokenEvent):
         """Handle backend-database-relation-broken event.
 
         Removes all traces of this relation from pgbouncer config.
         """
+        depart_flag = f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing"
+        if (
+            self.charm.peers.app_databag.get(depart_flag, None) == "true"
+            or not self.charm.unit.is_leader()
+        ):
+            return
+
         try:
             cfg = self.charm.read_pgb_config()
         except FileNotFoundError:
             event.defer()
             return
 
+        self.charm.peers.app_databag.pop(depart_flag, None)
         cfg.remove_user(self.postgres.user)
         cfg["pgbouncer"].pop("auth_user", None)
         cfg["pgbouncer"].pop("auth_query", None)
@@ -170,6 +189,7 @@ class BackendDatabaseRequires(Object):
         self.charm.render_pgb_config(cfg)
 
         self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
+        self.charm.peers.update_auth_file(auth_file=None)
 
     def initialise_auth_function(self, dbname=PGB):
         """Runs an SQL script to initialise the auth function.
@@ -189,6 +209,23 @@ class BackendDatabaseRequires(Object):
             cursor.execute(install_script.replace("auth_user", self.auth_user))
         conn.close()
         logger.info("auth function initialised")
+
+    def remove_auth_function(self, dbs: List[str]):
+        """Runs an SQL script to remove auth function.
+
+        Args:
+            dbs: a list of database names to connect to.
+
+        Raises:
+            psycopg2.Error if self.postgres isn't usable.
+        """
+        logger.info("removing auth function from backend relation")
+        uninstall_script = open("src/relations/sql/pgbouncer-uninstall.sql", "r").read()
+        for dbname in dbs:
+            with self.postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
+                cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
+            conn.close()
+        logger.info("auth function removed")
 
     @property
     def relation(self) -> Relation:
