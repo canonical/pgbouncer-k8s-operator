@@ -254,8 +254,6 @@ class TestDb(unittest.TestCase):
         assert f"{database}_standby" not in cfg["databases"].keys()
         _render_cfg.assert_called_with(cfg, reload_pgbouncer=reload_pgbouncer)
         _read_only_endpoint.return_value = ["readonly:endpoint"]
-
-        _read_only_endpoint.return_value = "readonly:endpoint"
         self.db_relation.update_postgres_endpoints(relation, reload_pgbouncer=reload_pgbouncer)
         assert database in cfg["databases"].keys()
         assert f"{database}_standby" in cfg["databases"].keys()
