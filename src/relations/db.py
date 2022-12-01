@@ -340,6 +340,11 @@ class DbProvides(Object):
             }
         else:
             cfg["databases"].pop(f"{database}_standby", None)
+
+        if cfg == pgb.PgbConfig(self.charm.read_pgb_config()):
+            # No change in config, so no need to redo anything.
+            return
+
         # Write config data to charm filesystem
         self.charm.render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
 

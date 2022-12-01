@@ -68,13 +68,28 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
-        if (default_config := self.peers.get_cfg()) is None:
+        config = None
+        try:
+            # Try and get pgb config. If it only exists in the peer databag, pull it and write it
+            # to filesystem.
+            config = self.read_pgb_config()
+        except FileNotFoundError:
+            config = self.peers.get_cfg()
+
+        if not config:
             if self.unit.is_leader():
-                default_config = PgbConfig(pgb.DEFAULT_CONFIG)
+                # If there's no config in the container or the peer databag, the leader creates a
+                # default
+                config = PgbConfig(pgb.DEFAULT_CONFIG)
             else:
+                # follower units wait for the leader to define a config.
                 event.defer()
                 return
-        self.render_pgb_config(default_config)
+
+        self.render_pgb_config(config)
+
+        # Update postgres endpoints in config to match the current state of the charm.
+        self.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
@@ -279,11 +294,10 @@ class PgBouncerK8sCharm(CharmBase):
             PgbConfig object containing pgbouncer config.
 
         Raises:
-            FileNotFoundError when the config at INI_PATH isn't available, such as if this is
-            called before the charm has started.
+            FileNotFoundError when the config can't be found at INI_PATH, such as if this is called
+            before the charm has started.
         """
-        config = self._read_file(INI_PATH)
-        return pgb.PgbConfig(config)
+        return pgb.PgbConfig(self._read_file(INI_PATH))
 
     def render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
@@ -295,6 +309,14 @@ class PgBouncerK8sCharm(CharmBase):
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
         """
+        try:
+            if config == self.read_pgb_config():
+                # Skip updating config if it's exactly the same
+                return
+        except FileNotFoundError:
+            # config doesn't exist on local filesystem, so update it.
+            pass
+
         self.push_file(INI_PATH, config.render(), 0o400)
         logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
 
@@ -304,7 +326,7 @@ class PgBouncerK8sCharm(CharmBase):
             self.reload_pgbouncer()
 
     def read_auth_file(self) -> str:
-        """Gets the auth file from the pgbouncer container."""
+        """Gets the auth file from the pgbouncer container filesystem."""
         return self._read_file(AUTH_FILE_PATH)
 
     def render_auth_file(self, auth_file: str, reload_pgbouncer=False):

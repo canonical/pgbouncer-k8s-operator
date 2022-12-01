@@ -67,7 +67,7 @@ LIBID = "113f4a7480c04631bfdf5fe776f760cd"
 LIBAPI = 0
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 3
+LIBPATCH = 4
 
 logger = logging.getLogger(__name__)
 
@@ -123,8 +123,10 @@ class PgbConfig(MutableMapping):
 
         if isinstance(config, str):
             self.read_string(config)
-        elif isinstance(config, (dict, PgbConfig)):
+        elif isinstance(config, dict):
             self.read_dict(config)
+        elif isinstance(config, PgbConfig):
+            self.read_dict(dict(config))
 
     def __delitem__(self, key: str):
         """Deletes item from internal mapping."""
@@ -149,6 +151,10 @@ class PgbConfig(MutableMapping):
     def __str__(self):
         """String representation of PgbConfig object."""
         return str(self.__dict__)
+
+    def __eq__(self, other_config):
+        """Checks if self and other_config are equal."""
+        return self.__dict__ == other_config.__dict__
 
     def keys(self):
         """Returns keys of PgbConfig object."""
