@@ -180,7 +180,7 @@ class Peers(Object):
             self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
             return
 
-        if cfg := self.get_secret("app", CFG_FILE_DATABAG_KEY):
+        if cfg := self.get_cfg():
             self.charm.render_pgb_config(PgbConfig(cfg))
 
         if auth_file := self.get_secret("app", AUTH_FILE_DATABAG_KEY):

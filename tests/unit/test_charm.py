@@ -31,12 +31,13 @@ class TestCharm(unittest.TestCase):
         ini = pgb_container.pull(INI_PATH).read()
         self.assertEqual(ini, PgbConfig(DEFAULT_CONFIG).render())
 
-    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
     @patch("ops.model.Container.restart")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
-    def test_on_config_changed(self, _check_pgb_running, _restart, _update_connection_info, _read):
+    def test_on_config_changed(self, _check_pgb_running, _restart, _update_connection_info):
+        self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
+        self.charm.on.start.emit()
         self.harness.update_config()
 
         def s_effect():
