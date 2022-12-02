@@ -43,6 +43,7 @@ RELATION = "backend-database"
 async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
+    global charm
     charm = await ops_test.build_charm(".")
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
@@ -144,6 +145,17 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
             f"connection authorized: user={pgb_user} database=waltz"
             " SSL enabled (protocol=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384, bits=256)" in logs
         ), "TLS is not being used on connections to PostgreSQL"
+
+
+@pytest.mark.backend
+def test_multiple_pgb_relations_to_one_postgres(ops_test: OpsTest):
+    """Check that we can connect multiple pgbouncer instances to one postgres deployment.
+
+    It's probably smart to check they can actually be used, by running applications through them.
+    Therefore, this should probably wait until the new relation is integrated, since it'll be
+    tested in that PR.
+    """
+
 
 
 @pytest.mark.backend

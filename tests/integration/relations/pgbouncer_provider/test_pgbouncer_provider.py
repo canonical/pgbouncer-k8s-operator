@@ -12,6 +12,7 @@ from pytest_operator.plugin import OpsTest
 
 from constants import BACKEND_RELATION_NAME
 from tests.integration.helpers.helpers import (
+    get_app_relation_databag,
     get_backend_relation,
     get_backend_user_pass,
     get_cfg,
@@ -26,7 +27,6 @@ from tests.integration.helpers.postgresql_helpers import (
 from tests.integration.relations.pgbouncer_provider.helpers import (
     build_connection_string,
     check_new_relation,
-    check_relation_data_existence,
     get_application_relation_data,
     run_sql_on_application_charm,
 )
@@ -302,15 +302,13 @@ async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
         # Scale down the database.
         await scale_application(ops_test, PGB, 1)
 
-        # Try to get the connection string of the database using the read-only endpoint.
-        # It should not be available anymore.
-        assert await check_relation_data_existence(
-            ops_test,
-            CLIENT_APP_NAME,
-            FIRST_DATABASE_RELATION_NAME,
-            "read-only-endpoints",
-            exists=False,
-        )
+    # Try to get the connection string of the database using the read-only endpoint.
+    # It should not be available anymore.
+    unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
+    databag = await get_app_relation_databag(ops_test, unit.name, client_relation.id)
+    assert not databag.get(
+        "read-only-endpoints", None
+    ), f"read-only-endpoints in pgb databag: {databag}"
 
 
 @pytest.mark.dev
@@ -321,15 +319,12 @@ async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
         # Scale up the database.
         await scale_application(ops_test, PGB, 3)
 
-        # Try to get the connection string of the database using the read-only endpoint.
-        # It should be available again.
-        assert await check_relation_data_existence(
-            ops_test,
-            CLIENT_APP_NAME,
-            FIRST_DATABASE_RELATION_NAME,
-            "read-only-endpoints",
-            exists=True,
-        )
+    # Try to get the connection string of the database using the read-only endpoint.
+    # It should be available again.
+    unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
+    databag = await get_app_relation_databag(ops_test, unit.name, client_relation.id)
+    read_only_endpoints = databag.get("read-only-endpoints", None)
+    assert read_only_endpoints, f"read-only-endpoints not in pgb databag: {databag}"
 
 
 @pytest.mark.client_relation
