@@ -148,17 +148,6 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
 
 
 @pytest.mark.backend
-def test_multiple_pgb_relations_to_one_postgres(ops_test: OpsTest):
-    """Check that we can connect multiple pgbouncer instances to one postgres deployment.
-
-    It's probably smart to check they can actually be used, by running applications through them.
-    Therefore, this should probably wait until the new relation is integrated, since it'll be
-    tested in that PR.
-    """
-
-
-
-@pytest.mark.backend
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
         await scale_application(ops_test, PGB, 3)
