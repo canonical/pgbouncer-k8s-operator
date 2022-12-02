@@ -2,9 +2,8 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 import asyncio
+import json
 import logging
-
-# import socket
 from typing import Optional
 
 import yaml
@@ -162,3 +161,22 @@ async def build_connection_string(
 
     # Build the complete connection string to connect to the database.
     return f"dbname='{database}' user='{username}' host='{ip}' password='{password}' connect_timeout=10"
+
+
+async def check_new_relation(ops_test: OpsTest, unit_name, relation_id, dbname):
+    """Smoke test to check relation is online."""
+    table_name = "quick_test"
+    smoke_query = (
+        f"DROP TABLE IF EXISTS {table_name};"
+        f"CREATE TABLE {table_name}(data TEXT);"
+        f"INSERT INTO {table_name}(data) VALUES('some data');"
+        f"SELECT data FROM {table_name};"
+    )
+    run_update_query = await run_sql_on_application_charm(
+        ops_test,
+        unit_name=unit_name,
+        query=smoke_query,
+        dbname=dbname,
+        relation_id=relation_id,
+    )
+    assert "some data" in json.loads(run_update_query["results"])[0]

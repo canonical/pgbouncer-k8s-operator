@@ -147,6 +147,7 @@ class BackendDatabaseRequires(Object):
                 {f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing": "true"}
             )
             logger.error("added relation-departing flag to peer databag")
+            return
 
         try:
             # TODO de-authorise all databases

@@ -14,6 +14,7 @@ from constants import BACKEND_RELATION_NAME
 from tests.integration.helpers.helpers import (
     get_backend_relation,
     get_backend_user_pass,
+    get_cfg,
     get_legacy_relation_username,
     scale_application,
     wait_for_relation_joined_between,
@@ -24,6 +25,7 @@ from tests.integration.helpers.postgresql_helpers import (
 )
 from tests.integration.relations.pgbouncer_provider.helpers import (
     build_connection_string,
+    check_new_relation,
     check_relation_data_existence,
     get_application_relation_data,
     run_sql_on_application_charm,
@@ -41,6 +43,8 @@ APP_NAMES = [CLIENT_APP_NAME, PG, PGB]
 FIRST_DATABASE_RELATION_NAME = "first-database"
 SECOND_DATABASE_RELATION_NAME = "second-database"
 MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME = "multiple-database-clusters"
+TEST_DBNAME = "application_first_database"
+CLIENT_UNIT_NAME = f"{CLIENT_APP_NAME}/0"
 
 
 @pytest.mark.abort_on_fail
@@ -80,16 +84,17 @@ async def test_database_relation_with_charm_libraries(
         await ops_test.model.add_relation(f"{PGB}:{BACKEND_RELATION_NAME}", f"{PG}:database")
         await ops_test.model.wait_for_idle(raise_on_blocked=True)
         # Relate the charms and wait for them exchanging some connection data.
-        relation = await ops_test.model.add_relation(
+        global client_relation
+        client_relation = await ops_test.model.add_relation(
             f"{CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB
         )
 
     await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
 
-    client_unit_name = f"{CLIENT_APP_NAME}/0"
-    dbname = "application_first_database"
 
-    # Check we can update and delete things
+@pytest.mark.client_relation
+async def test_database_usage(ops_test: OpsTest):
+    """Check we can update and delete things."""
     update_query = (
         "DROP TABLE IF EXISTS test;"
         "CREATE TABLE test(data TEXT);"
@@ -98,73 +103,83 @@ async def test_database_relation_with_charm_libraries(
     )
     run_update_query = await run_sql_on_application_charm(
         ops_test,
-        unit_name=client_unit_name,
+        unit_name=CLIENT_UNIT_NAME,
         query=update_query,
-        dbname=dbname,
-        relation_id=relation.id,
+        dbname=TEST_DBNAME,
+        relation_id=client_relation.id,
     )
     assert "some data" in json.loads(run_update_query["results"])[0]
 
-    # Check version is accurate
+
+@pytest.mark.client_relation
+async def test_database_version(ops_test: OpsTest):
+    """Check version is accurate."""
     version_query = "SELECT version();"
     run_version_query = await run_sql_on_application_charm(
         ops_test,
-        unit_name=client_unit_name,
+        unit_name=CLIENT_UNIT_NAME,
         query=version_query,
-        dbname=dbname,
-        relation_id=relation.id,
+        dbname=TEST_DBNAME,
+        relation_id=client_relation.id,
     )
     # Get the version of the database and compare with the information that
     # was retrieved directly from the database.
     version = await get_application_relation_data(
         ops_test, CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME, "version"
     )
-    logging.info(run_version_query)
-    logging.info(version)
     assert version in json.loads(run_version_query["results"])[0][0]
 
-    # Check we can read things in readonly
+
+@pytest.mark.client_relation
+async def test_readonly_reads(ops_test: OpsTest):
+    """Check we can read things in readonly."""
     select_query = "SELECT data FROM test;"
     run_select_query_readonly = await run_sql_on_application_charm(
         ops_test,
-        unit_name=client_unit_name,
+        unit_name=CLIENT_UNIT_NAME,
         query=select_query,
-        dbname=dbname,
-        relation_id=relation.id,
+        dbname=TEST_DBNAME,
+        relation_id=client_relation.id,
         readonly=True,
     )
     assert "some data" in json.loads(run_select_query_readonly["results"])[0]
 
-    # check we can't write in readonly
+
+@pytest.mark.client_relation
+async def test_cant_write_in_readonly(ops_test: OpsTest):
+    """Check we can't write in readonly."""
     drop_query = "DROP TABLE test;"
     run_drop_query_readonly = await run_sql_on_application_charm(
         ops_test,
-        unit_name=client_unit_name,
+        unit_name=CLIENT_UNIT_NAME,
         query=drop_query,
-        dbname=dbname,
-        relation_id=relation.id,
+        dbname=TEST_DBNAME,
+        relation_id=client_relation.id,
         readonly=True,
     )
     assert run_drop_query_readonly["Code"] == "1"
 
-    # Test admin permissions
+
+@pytest.mark.client_relation
+async def test_database_admin_permissions(ops_test: OpsTest):
+    """Test admin permissions."""
     create_database_query = "CREATE DATABASE another_database;"
     run_create_database_query = await run_sql_on_application_charm(
         ops_test,
-        unit_name=client_unit_name,
+        unit_name=CLIENT_UNIT_NAME,
         query=create_database_query,
-        dbname=dbname,
-        relation_id=relation.id,
+        dbname=TEST_DBNAME,
+        relation_id=client_relation.id,
     )
     assert "no results to fetch" in json.loads(run_create_database_query["results"])
 
     create_user_query = "CREATE USER another_user WITH ENCRYPTED PASSWORD 'test-password';"
     run_create_user_query = await run_sql_on_application_charm(
         ops_test,
-        unit_name=client_unit_name,
+        unit_name=CLIENT_UNIT_NAME,
         query=create_user_query,
-        dbname=dbname,
-        relation_id=relation.id,
+        dbname=TEST_DBNAME,
+        relation_id=client_relation.id,
     )
     assert "no results to fetch" in json.loads(run_create_user_query["results"])
 
@@ -279,8 +294,7 @@ async def test_an_application_can_request_multiple_databases(ops_test: OpsTest, 
     assert first_database_connection_string != second_database_connection_string
 
 
-# TODO revisit readonly function
-@pytest.mark.skip
+@pytest.mark.dev
 @pytest.mark.client_relation
 async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
     """Test that there is no read-only endpoint in a standalone cluster."""
@@ -299,8 +313,7 @@ async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
         )
 
 
-# TODO revisit readonly function
-@pytest.mark.skip
+@pytest.mark.dev
 @pytest.mark.client_relation
 async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
     """Test that there is read-only endpoint in a scaled up cluster."""
@@ -337,6 +350,36 @@ async def test_legacy_relation_compatibility(ops_test: OpsTest):
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(status="active", timeout=600)
 
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=client_relation.id,
+        dbname=TEST_DBNAME,
+    )
+
+
+@pytest.mark.dev
+@pytest.mark.client_relation
+async def test_scaling(ops_test: OpsTest):
+    """Check these relations all work when scaling pgbouncer."""
+    await scale_application(ops_test, PGB, 1)
+    await ops_test.model.wait_for_idle()
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=client_relation.id,
+        dbname=TEST_DBNAME,
+    )
+
+    await scale_application(ops_test, PGB, 2)
+    await ops_test.model.wait_for_idle()
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=client_relation.id,
+        dbname=TEST_DBNAME,
+    )
+
 
 @pytest.mark.client_relation
 async def test_relation_broken(ops_test: OpsTest):
@@ -359,4 +402,9 @@ async def test_relation_broken(ops_test: OpsTest):
         await check_database_users_existence(
             ops_test, [], [relation_user], pg_user=pg_user, pg_user_password=pg_pass
         )
-        # TODO check relation data was correctly removed from config
+
+    # check relation data was correctly removed from config
+    pgb_unit_name = ops_test.model.applications[PGB].units[0].name
+    cfg = await get_cfg(ops_test, pgb_unit_name)
+    assert "first-database" not in cfg["databases"].keys()
+    assert "first-database_readonly" not in cfg["databases"].keys()
