@@ -167,10 +167,10 @@ class BackendDatabaseRequires(Object):
             logger.info("removing auth user")
             self.remove_auth_function([PGB, PG])
         except psycopg2.Error:
-            remove_auth_fail_msg = "failed to remove auth user when disconnecting from postgres application."
-            self.charm.unit.status = BlockedStatus(
-                remove_auth_fail_msg
+            remove_auth_fail_msg = (
+                "failed to remove auth user when disconnecting from postgres application."
             )
+            self.charm.unit.status = BlockedStatus(remove_auth_fail_msg)
             logger.error(remove_auth_fail_msg)
             return
 
@@ -312,7 +312,7 @@ class BackendDatabaseRequires(Object):
         if "auth_query" not in cfg["pgbouncer"].keys():
             return False
 
-                # Check we can actually connect to backend database by running a command.
+            # Check we can actually connect to backend database by running a command.
         try:
             with self.postgres.connect_to_database(PGB) as conn, conn.cursor() as cursor:
                 # TODO find a better smoke check
@@ -321,8 +321,6 @@ class BackendDatabaseRequires(Object):
         except psycopg2.Error:
             logger.error("PostgreSQL connection failed")
             return False
-
-
 
         return True
 
