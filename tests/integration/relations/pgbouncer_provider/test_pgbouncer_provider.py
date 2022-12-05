@@ -93,11 +93,45 @@ async def test_database_relation_with_charm_libraries(
 
 
 @pytest.mark.client_relation
+async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
+    """Test that there is no read-only endpoint in a standalone cluster."""
+    await scale_application(ops_test, PGB, 1)
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=client_relation.id,
+        dbname=TEST_DBNAME,
+    )
+
+    unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
+    databag = await get_app_relation_databag(ops_test, unit.name, client_relation.id)
+    assert not databag.get(
+        "read-only-endpoints", None
+    ), f"read-only-endpoints in pgb databag: {databag}"
+
+
+@pytest.mark.client_relation
+async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
+    """Test that there is read-only endpoint in a scaled up cluster."""
+    await scale_application(ops_test, PGB, 2)
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=client_relation.id,
+        dbname=TEST_DBNAME,
+    )
+
+    unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
+    databag = await get_app_relation_databag(ops_test, unit.name, client_relation.id)
+    read_only_endpoints = databag.get("read-only-endpoints", None)
+    assert read_only_endpoints, f"read-only-endpoints not in pgb databag: {databag}"
+
+
+@pytest.mark.client_relation
 async def test_database_usage(ops_test: OpsTest):
     """Check we can update and delete things."""
     update_query = (
         "DROP TABLE IF EXISTS test;"
-        "CREATE TABLE test(data TEXT);"
         "INSERT INTO test(data) VALUES('some data');"
         "SELECT data FROM test;"
     )
@@ -292,39 +326,6 @@ async def test_an_application_can_request_multiple_databases(ops_test: OpsTest, 
 
     # Assert the two application have different relation (connection) data.
     assert first_database_connection_string != second_database_connection_string
-
-
-@pytest.mark.dev
-@pytest.mark.client_relation
-async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
-    """Test that there is no read-only endpoint in a standalone cluster."""
-    async with ops_test.fast_forward():
-        # Scale down the database.
-        await scale_application(ops_test, PGB, 1)
-
-    # Try to get the connection string of the database using the read-only endpoint.
-    # It should not be available anymore.
-    unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
-    databag = await get_app_relation_databag(ops_test, unit.name, client_relation.id)
-    assert not databag.get(
-        "read-only-endpoints", None
-    ), f"read-only-endpoints in pgb databag: {databag}"
-
-
-@pytest.mark.dev
-@pytest.mark.client_relation
-async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
-    """Test that there is read-only endpoint in a scaled up cluster."""
-    async with ops_test.fast_forward():
-        # Scale up the database.
-        await scale_application(ops_test, PGB, 3)
-
-    # Try to get the connection string of the database using the read-only endpoint.
-    # It should be available again.
-    unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
-    databag = await get_app_relation_databag(ops_test, unit.name, client_relation.id)
-    read_only_endpoints = databag.get("read-only-endpoints", None)
-    assert read_only_endpoints, f"read-only-endpoints not in pgb databag: {databag}"
 
 
 @pytest.mark.client_relation
