@@ -151,7 +151,7 @@ class PgBouncerProvider(Object):
 
         depart_flag = f"{self.relation_name}_{event.relation.id}_departing"
         if self.charm.peers.unit_databag.get(depart_flag, None) == "true":
-            # This is being removed, so do nothing that relates to the relation.
+            # This unit is being removed, so don't update the relation.
             self.charm.peers.app_databag.pop(depart_flag, None)
             return
 
@@ -246,10 +246,12 @@ class PgBouncerProvider(Object):
         relations = [event.relation] if event else self.model.relations[self.relation_name]
 
         port = self.charm.config["listen_port"]
+        hostnames = set(self.charm.peers.units_hostnames)
+        hostnames.discard(self.charm.peers.leader_hostname)
         for relation in relations:
             self.database_provides.set_read_only_endpoints(
                 relation.id,
-                ",".join([f"{host}:{port}" for host in self.charm.peers.units_hostnames]),
+                ",".join([f"{host}:{port}" for host in hostnames]),
             )
 
     def get_database(self, relation):
