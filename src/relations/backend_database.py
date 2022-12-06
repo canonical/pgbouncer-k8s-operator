@@ -153,7 +153,8 @@ class BackendDatabaseRequires(Object):
             logger.error("added relation-departing flag to peer databag")
             return
 
-        if event.departing_unit.app != self.charm.app or not self.charm.unit.is_leader():
+        if not self.charm.unit.is_leader() or event.departing_unit.app != self.charm.app:
+            # this doesn't trigger if we're scaling the other app.
             return
 
         planned_units = self.charm.app.planned_units()
@@ -185,7 +186,7 @@ class BackendDatabaseRequires(Object):
         """
         depart_flag = f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing"
         if (
-            self.charm.peers.app_databag.get(depart_flag, None) == "true"
+            self.charm.peers.unit_databag.get(depart_flag, False)
             or not self.charm.unit.is_leader()
         ):
             logging.info("exiting relation-broken hook - nothing to do")
@@ -197,7 +198,6 @@ class BackendDatabaseRequires(Object):
             event.defer()
             return
 
-        self.charm.peers.app_databag.pop(depart_flag, None)
         cfg.remove_user(self.postgres.user)
         cfg["pgbouncer"].pop("auth_user", None)
         cfg["pgbouncer"].pop("auth_query", None)
