@@ -318,7 +318,7 @@ class BackendDatabaseRequires(Object):
                 # TODO find a better smoke check
                 cursor.execute("SELECT version();")
             conn.close()
-        except psycopg2.Error:
+        except (psycopg2.Error, psycopg2.OperationalError):
             logger.error("PostgreSQL connection failed")
             return False
 

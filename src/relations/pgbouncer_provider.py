@@ -261,6 +261,8 @@ class PgBouncerProvider(Object):
     def get_external_app(self, relation):
         """Gets external application, as an Application object.
 
+        Given a relation, this gets the first application object that isn't PGBouncer.
+
         TODO this is stolen from the db relation - cleanup
         """
         for entry in relation.data.keys():
@@ -268,7 +270,7 @@ class PgBouncerProvider(Object):
                 return entry
 
     def _check_backend(self) -> bool:
-        """Verifies backend is ready, defers event if not.
+        """Verifies backend is ready and updates status.
 
         Returns:
             bool signifying whether backend is ready or not
