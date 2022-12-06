@@ -65,7 +65,7 @@ from typing import Optional, Set
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, RelationChangedEvent, RelationCreatedEvent
 from ops.framework import Object
-from ops.model import Unit
+from ops.model import Relation, Unit
 from ops.pebble import ConnectionError
 
 from constants import PEER_RELATION_NAME
@@ -102,7 +102,7 @@ class Peers(Object):
         self.framework.observe(charm.on.leader_elected, self._on_leader_elected)
 
     @property
-    def relation(self):
+    def relation(self) -> Relation:
         """Returns the relations in this model , or None if peer is not initialised."""
         return self.charm.model.get_relation(PEER_RELATION_NAME)
 
@@ -173,6 +173,7 @@ class Peers(Object):
     def _on_changed(self, event: RelationChangedEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
         self.unit_databag.update({ADDRESS_KEY: self.charm.unit_pod_hostname})
+        self.charm.update_client_connection_info()
 
         if self.charm.unit.is_leader():
             try:
@@ -217,6 +218,8 @@ class Peers(Object):
     def set_secret(self, scope: str, key: str, value: str):
         """Sets secret value.
 
+        Pass in "None" to the value to delete the secret.
+
         Placeholder method for Juju Secrets interface.
 
         Args:
@@ -237,24 +240,6 @@ class Peers(Object):
         else:
             raise RuntimeError("Unknown secret scope.")
 
-    def del_secret(self, scope: str, key: str):
-        """Deletes secret value.
-
-        Placeholder method for Juju Secrets interface.
-
-        Args:
-            scope: scope for data. Can be "unit" or "app".
-            key: key to access data
-        """
-        if scope == "unit":
-            self.unit_databag.pop(key, None)
-            return
-        elif scope == "app":
-            self.app_databag.pop(key, None)
-            return
-        else:
-            raise RuntimeError("Unknown secret scope.")
-
     def get_secret(self, scope: str, key: str) -> Optional[str]:
         """Gets secret value.
 
@@ -263,6 +248,7 @@ class Peers(Object):
         Args:
             scope: scope for data. Can be "unit" or "app".
             key: key to access data
+
         Returns:
             value at `key` in `scope` databag.
         """
@@ -275,7 +261,7 @@ class Peers(Object):
 
     def update_cfg(self, cfg: PgbConfig) -> None:
         """Writes cfg to app databag if leader."""
-        if not self.charm.unit.is_leader():
+        if not self.charm.unit.is_leader() or not self.relation:
             return
 
         self.set_secret("app", CFG_FILE_DATABAG_KEY, cfg.render())
@@ -290,7 +276,7 @@ class Peers(Object):
 
     def update_auth_file(self, auth_file: str) -> None:
         """Writes auth_file to app databag if leader."""
-        if not self.charm.unit.is_leader():
+        if not self.charm.unit.is_leader() or not self.relation:
             return
 
         self.set_secret("app", AUTH_FILE_DATABAG_KEY, auth_file)
@@ -308,4 +294,4 @@ class Peers(Object):
         if not self.charm.unit.is_leader():
             return
 
-        self.del_secret("app", username)
+        self.set_secret("app", username, None)
