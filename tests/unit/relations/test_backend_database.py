@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 
 import unittest
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, PropertyMock, call, patch
 
 from charms.pgbouncer_k8s.v0.pgb import (
     DEFAULT_CONFIG,
@@ -76,7 +76,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         self.backend._on_database_created(mock_event)
 
         postgres.create_user.assert_called_with(self.backend.auth_user, pw, admin=True)
-        _init_auth.assert_called_with(dbname=self.backend.database.database)
+        _init_auth.assert_has_calls([call([self.backend.database.database, "postgres"])])
 
         hash_pw = get_hashed_password(self.backend.auth_user, pw)
         _render_auth_file.assert_any_call(f'"{self.backend.auth_user}" "{hash_pw}"')
@@ -147,11 +147,11 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     )
     def test_initialise_auth_function(self, _postgres, _auth_user):
         install_script = open("src/relations/sql/pgbouncer-install.sql", "r").read()
-        dbname = "test-db"
+        dbs = ["test-db"]
 
-        self.backend.initialise_auth_function(dbname=dbname)
+        self.backend.initialise_auth_function(dbs)
 
-        _postgres.return_value.connect_to_database.assert_called_with(dbname)
+        _postgres.return_value.connect_to_database.assert_called_with(dbs[0])
         conn = _postgres.return_value.connect_to_database().__enter__()
         cursor = conn.cursor().__enter__()
         cursor.execute.assert_called_with(

@@ -108,7 +108,7 @@ class TestDb(unittest.TestCase):
 
         _create_user.assert_called_with(user, password, admin=True)
         _create_database.assert_called_with(database, user)
-        _init_auth.assert_called_with(dbname=database)
+        _init_auth.assert_called_with([database])
         assert user in _read_cfg.return_value["pgbouncer"]["admin_users"]
         _render_cfg.assert_called_with(_read_cfg.return_value, reload_pgbouncer=True)
 

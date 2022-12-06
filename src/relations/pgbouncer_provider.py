@@ -64,7 +64,7 @@ class PgBouncerProvider(Object):
     """
 
     def __init__(self, charm: CharmBase, relation_name: str = CLIENT_RELATION_NAME) -> None:
-        """Constructor for PostgreSQLClientProvides object.
+        """Constructor for PgbouncerProvider object.
 
         Args:
             charm: the charm for which this relation is provided
@@ -109,10 +109,11 @@ class PgBouncerProvider(Object):
             self.charm.backend.postgres.create_user(
                 user, password, extra_user_roles=extra_user_roles
             )
-            for database in databases.split(","):
+            dblist = databases.split(",")
+            for database in dblist:
                 self.charm.backend.postgres.create_database(database, user)
-                # set up auth function
-                self.charm.backend.initialise_auth_function(dbname=database)
+            # set up auth function
+            self.charm.backend.initialise_auth_function(dbs=dblist)
         except (
             PostgreSQLCreateDatabaseError,
             PostgreSQLCreateUserError,
@@ -152,18 +153,18 @@ class PgBouncerProvider(Object):
         depart_flag = f"{self.relation_name}_{event.relation.id}_departing"
         if self.charm.peers.unit_databag.get(depart_flag, None) == "true":
             # This unit is being removed, so don't update the relation.
-            self.charm.peers.app_databag.pop(depart_flag, None)
+            self.charm.peers.unit_databag.pop(depart_flag, None)
             return
 
-        # Delete the user.
-        user = f"relation_id_{event.relation.id}"
         cfg = self.charm.read_pgb_config()
         database = self.get_database(event.relation)
         cfg["databases"].pop(database, None)
         cfg["databases"].pop(f"{database}_readonly", None)
+        user = f"relation_id_{event.relation.id}"
         cfg.remove_user(user)
         self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
 
+        # Delete the user.
         try:
             self.charm.backend.postgres.delete_user(user)
         except PostgreSQLDeleteUserError as e:
@@ -222,11 +223,13 @@ class PgBouncerProvider(Object):
             # remove ports from endpoints, and convert to comma-separated list.
             # NOTE: comma-separated readonly hosts are only valid in pgbouncer v1.17. This will
             # enable load balancing once the snap is implemented.
+            for ep in read_only_endpoints:
+                break
             r_hosts = ",".join([host.split(":")[0] for host in read_only_endpoints])
             cfg["databases"][f"{database}_readonly"] = {
                 "host": r_hosts,
                 "dbname": database,
-                "port": read_only_endpoints[0].split(":")[1],
+                "port": ep.split(":")[1],
                 "auth_user": self.charm.backend.auth_user,
             }
         else:

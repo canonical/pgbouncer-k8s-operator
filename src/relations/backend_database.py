@@ -113,7 +113,7 @@ class BackendDatabaseRequires(Object):
         # create authentication user on postgres database, so we can authenticate other users
         # later on
         self.postgres.create_user(self.auth_user, plaintext_password, admin=True)
-        self.initialise_auth_function(dbname=self.database.database)
+        self.initialise_auth_function([self.database.database, PG])
 
         hashed_password = pgb.get_hashed_password(self.auth_user, plaintext_password)
         self.charm.render_auth_file(f'"{self.auth_user}" "{hashed_password}"')
@@ -207,23 +207,25 @@ class BackendDatabaseRequires(Object):
         self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
         self.charm.peers.update_auth_file(auth_file=None)
 
-    def initialise_auth_function(self, dbname=PGB):
+    def initialise_auth_function(self, dbs: List[str]):
         """Runs an SQL script to initialise the auth function.
 
         This function must run in every database for authentication to work correctly, and assumes
         self.postgres is set up correctly.
 
         Args:
-            dbname: the name of the database to connect to.
+            dbs: a list of database names to connect to.
 
         Raises:
             psycopg2.Error if self.postgres isn't usable.
         """
         logger.info("initialising auth function")
         install_script = open("src/relations/sql/pgbouncer-install.sql", "r").read()
-        with self.postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
-            cursor.execute(install_script.replace("auth_user", self.auth_user))
-        conn.close()
+
+        for dbname in dbs:
+            with self.postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
+                cursor.execute(install_script.replace("auth_user", self.auth_user))
+            conn.close()
         logger.info("auth function initialised")
 
     def remove_auth_function(self, dbs: List[str]):
