@@ -127,7 +127,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         assert _cfg()["databases"][f"{database}_readonly"] == {
             "host": r_hosts,
             "dbname": database,
-            "port": read_only_endpoints[0].split(":")[1],
+            "port": next(iter(read_only_endpoints)).split(":")[1],
             "auth_user": self.charm.backend.auth_user,
         }
 
