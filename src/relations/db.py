@@ -331,7 +331,7 @@ class DbProvides(Object):
         # Only one backend endpoint available in legacy relations
         r_endpoints = self.charm.backend.get_read_only_endpoints()
         if len(r_endpoints) > 0:
-            read_only_endpoint = r_endpoints[0]
+            read_only_endpoint = next(iter(r_endpoints))
             cfg["databases"][f"{database}_standby"] = {
                 "host": read_only_endpoint.split(":")[0],
                 "dbname": database,
