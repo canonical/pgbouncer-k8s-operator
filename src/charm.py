@@ -45,6 +45,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.start, self._on_start)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
+        self.framework.observe(self.on.update_status, self._on_update_status)
 
         self.peers = Peers(self)
         self.backend = BackendDatabaseRequires(self)
