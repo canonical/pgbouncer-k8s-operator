@@ -56,7 +56,6 @@ from ops.model import (
     MaintenanceStatus,
     Relation,
 )
-
 from ops.pebble import ConnectionError
 
 from constants import AUTH_FILE_PATH, BACKEND_RELATION_NAME, PG, PGB, PGB_DIR

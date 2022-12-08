@@ -51,12 +51,14 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
     @patch("relations.backend_database.BackendDatabaseRequires.initialise_auth_function")
     @patch("charm.PgBouncerK8sCharm.render_auth_file")
+    @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm.update_postgres_endpoints")
     def test_on_database_created(
         self,
         _update_endpoints,
         _cfg,
+        _check_running,
         _render_auth_file,
         _init_auth,
         _gen_pw,
