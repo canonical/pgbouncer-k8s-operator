@@ -110,7 +110,7 @@ class BackendDatabaseRequires(Object):
         if not self.charm.unit.is_leader():
             return
 
-        logger.info("initialising postgres and pgbouncer relations")
+        logger.info("initialising pgbouncer backend relation")
         self.charm.unit.status = MaintenanceStatus("Initialising backend-database relation")
 
         try:
@@ -130,7 +130,6 @@ class BackendDatabaseRequires(Object):
         # later on
         self.postgres.create_user(self.auth_user, plaintext_password, admin=True)
         self.initialise_auth_function([self.database.database, PG])
-
         hashed_password = pgb.get_hashed_password(self.auth_user, plaintext_password)
         self.charm.render_auth_file(f'"{self.auth_user}" "{hashed_password}"')
 

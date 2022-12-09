@@ -104,11 +104,13 @@ class PgBouncerProvider(Object):
 
         # Creates the user and the database for this specific relation.
         user = f"relation_id_{rel_id}"
+        logger.debug("generating relation user")
         password = pgb.generate_password()
         try:
             self.charm.backend.postgres.create_user(
                 user, password, extra_user_roles=extra_user_roles
             )
+            logger.debug("creating database")
             dblist = databases.split(",")
             for database in dblist:
                 self.charm.backend.postgres.create_database(database, user)
@@ -130,8 +132,9 @@ class PgBouncerProvider(Object):
         # Update pgbouncer config
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user, admin=True if "SUPERUSER" in extra_user_roles else False)
-        self.update_postgres_endpoints(event.relation, cfg=cfg)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
+        self.update_postgres_endpoints(
+            event.relation, cfg=cfg, render_cfg=True, reload_pgbouncer=True
+        )
 
         # Share the credentials and updated connection info with the client application.
         self.database_provides.set_credentials(rel_id, user, password)

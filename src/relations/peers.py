@@ -164,11 +164,13 @@ class Peers(Object):
             event.defer()
             return
 
-        if self.charm.backend.postgres:
+        if self.charm.backend.ready:
             # The backend relation creates the userlist, so only upload userlist to databag if
             # backend relation is initialised. If not, it'll be added when that relation first
             # writes it to the container, so no need to add it now.
             self.update_auth_file(self.charm.read_auth_file())
+        else:
+            event.defer()
 
     def _on_changed(self, event: RelationChangedEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
