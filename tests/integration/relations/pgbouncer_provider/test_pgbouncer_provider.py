@@ -91,6 +91,14 @@ async def test_database_relation_with_charm_libraries(
 
     await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
 
+    # This test hasn't passed if we can't pass a tiny amount of data through the new relation
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=client_relation.id,
+        dbname=TEST_DBNAME,
+    )
+
 
 @pytest.mark.dev
 @pytest.mark.client_relation
