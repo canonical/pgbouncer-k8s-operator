@@ -298,11 +298,11 @@ class DbProvides(Object):
             "host": self.charm.unit_pod_hostname,
         }
 
-        standby_ips = self.charm.peers.units_hostnames - {self.charm.leader_hostname}
+        standby_hostnames = self.charm.peers.units_hostnames - {self.charm.leader_hostname}
         # Only one standby value in legacy relation on pgbouncer. There are multiple standbys on
         # postgres, but not on the legacy pgbouncer charm.
-        if len(standby_ips) > 0:
-            standby_ip = standby_ips.pop()
+        if len(standby_hostnames) > 0:
+            standby_ip = standby_hostnames.pop()
             standby_dbconnstr = dict(master_dbconnstr)
             standby_dbconnstr.update({"host": standby_ip, "dbname": f"{database}_standby"})
             connection_updates["standbys"] = pgb.parse_dict_to_kv_string(standby_dbconnstr)
