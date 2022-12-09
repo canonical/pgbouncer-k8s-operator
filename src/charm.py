@@ -354,6 +354,9 @@ class PgBouncerK8sCharm(CharmBase):
         if not self.backend.postgres:
             return
 
+        if not port:
+            port = self.config["listen_port"]
+
         for relation in self.model.relations.get("db", []):
             self.legacy_db_relation.update_connection_info(relation, port)
 

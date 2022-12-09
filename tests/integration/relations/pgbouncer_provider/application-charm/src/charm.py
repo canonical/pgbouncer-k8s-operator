@@ -138,9 +138,14 @@ class ApplicationCharm(CharmBase):
 
         logger.error(f"running query: \n{query}")
 
-        connection = self.connect_to_database(
-            database=dbname, user=user, password=password, host=endpoint, port=port
-        )
+        try:
+            connection = self.connect_to_database(
+                database=dbname, user=user, password=password, host=endpoint, port=port
+            )
+        except psycopg2.OperationalError:
+            logging.error(
+                f"failed to connect using the following data: {dbname}, {user}, {password}, {endpoint}, {port}"
+            )
         cursor = connection.cursor()
         cursor.execute(query)
 
