@@ -63,9 +63,7 @@ class PgBouncerK8sCharm(CharmBase):
         """Renders basic PGB config."""
         container = self.unit.get_container(PGB)
         if not container.can_connect():
-            logger.debug(
-                "pgbouncer container unavailable, deferring start hook..."
-            )
+            logger.debug("pgbouncer container unavailable, deferring start hook...")
             event.defer()
             return
 
@@ -388,7 +386,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         if reload_pgbouncer:
             self.reload_pgbouncer()
-
 
     @property
     def unit_pod_hostname(self, name="") -> str:
