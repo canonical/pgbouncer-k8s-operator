@@ -21,7 +21,7 @@ The expected data presented in a relation interface is provided in the docstring
 
 ### Legacy
 
-These relations will be deprecated in future. When deploying these relations, please ensure the `backend` relation is completed first. Using legacy relations with normal relations is currently not tested.
+These relations will be deprecated in future. When deploying these relations, please ensure the `backend` relation is completed first. Using legacy relations with normal relations is not extensively tested.
 
 - `db:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)
 - `db-admin:`[`pgsql`](https://github.com/canonical/ops-lib-pgsql/)
