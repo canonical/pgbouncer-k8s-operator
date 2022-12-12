@@ -56,40 +56,41 @@ async def test_database_relation_with_charm_libraries(
     """Test basic functionality of database relation interface."""
     # Deploy both charms (multiple units for each application to test that later they correctly
     # set data in the relation application databag using only the leader unit).
-    async with ops_test.fast_forward():
-        await asyncio.gather(
-            ops_test.model.deploy(
-                application_charm,
-                application_name=CLIENT_APP_NAME,
-                resources={"application-image": "ubuntu:latest"},
-            ),
-            ops_test.model.deploy(
-                pgb_charm,
-                resources={
-                    "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"][
-                        "upstream-source"
-                    ]
-                },
-                application_name=PGB,
-                num_units=2,
-            ),
-            ops_test.model.deploy(
-                PG,
-                application_name=PG,
-                num_units=2,
-                channel="edge",
-                trust=True,
-            ),
-        )
-        await ops_test.model.add_relation(f"{PGB}:{BACKEND_RELATION_NAME}", f"{PG}:database")
-        await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active")
-        # Relate the charms and wait for them exchanging some connection data.
-        global client_relation
-        client_relation = await ops_test.model.add_relation(
-            f"{CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB
-        )
+    await asyncio.gather(
+        ops_test.model.deploy(
+            application_charm,
+            application_name=CLIENT_APP_NAME,
+            resources={"application-image": "ubuntu:latest"},
+        ),
+        ops_test.model.deploy(
+            pgb_charm,
+            resources={
+                "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"]
+            },
+            application_name=PGB,
+            num_units=2,
+        ),
+        ops_test.model.deploy(
+            PG,
+            application_name=PG,
+            num_units=2,
+            channel="edge",
+            trust=True,
+        ),
+    )
+    await ops_test.model.add_relation(f"{PGB}:{BACKEND_RELATION_NAME}", f"{PG}:database")
 
-    await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active")
+
+    # Relate the charms and wait for them exchanging some connection data.
+    global client_relation
+    client_relation = await ops_test.model.add_relation(
+        f"{CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB
+    )
+
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
 
     # This test hasn't passed if we can't pass a tiny amount of data through the new relation
     await check_new_relation(
@@ -106,6 +107,7 @@ async def test_database_usage(ops_test: OpsTest):
     """Check we can update and delete things."""
     update_query = (
         "DROP TABLE IF EXISTS test;"
+        "CREATE TABLE test(data TEXT);"
         "INSERT INTO test(data) VALUES('some data');"
         "SELECT data FROM test;"
     )
