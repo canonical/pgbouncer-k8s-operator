@@ -43,6 +43,7 @@ RELATION = "backend-database"
 async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
+    global charm
     charm = await ops_test.build_charm(".")
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
@@ -114,7 +115,7 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
 
         # Deploy TLS Certificates operator.
         config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
-        await ops_test.model.deploy(TLS, channel="edge", config=config)
+        await ops_test.model.deploy(TLS, channel="beta", config=config)
         await ops_test.model.wait_for_idle(apps=[TLS], status="active", timeout=1000)
 
         # Relate it to the PostgreSQL to enable TLS.

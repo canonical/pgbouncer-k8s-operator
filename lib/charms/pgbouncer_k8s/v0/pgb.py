@@ -27,7 +27,7 @@ discourse-charmers-discourse-k8s_standby = host=postgresql-k8s-replicas.test-db-
 
 [pgbouncer]
 listen_addr = *
-listen_port = 5432
+listen_port = 6432
 logfile = /var/lib/postgresql/pgbouncer/pgbouncer.log
 pidfile = /var/lib/postgresql/pgbouncer/pgbouncer.pid
 admin_users = relation_1,pgbouncer_k8s_user_2_test_db_admin_ipve,pgbouncer_k8s_user_4_test_db_admin_ipve

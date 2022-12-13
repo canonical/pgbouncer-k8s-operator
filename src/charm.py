@@ -18,10 +18,18 @@ from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
 from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
 
-from constants import AUTH_FILE_PATH, INI_PATH, PG_GROUP, PG_USER, PGB
+from constants import (
+    AUTH_FILE_PATH,
+    CLIENT_RELATION_NAME,
+    INI_PATH,
+    PG_GROUP,
+    PG_USER,
+    PGB,
+)
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
 from relations.peers import Peers
+from relations.pgbouncer_provider import PgBouncerProvider
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +45,11 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.start, self._on_start)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
+        self.framework.observe(self.on.update_status, self._on_update_status)
 
         self.peers = Peers(self)
         self.backend = BackendDatabaseRequires(self)
+        self.client_relation = PgBouncerProvider(self)
         self.legacy_db_relation = DbProvides(self, admin=False)
         self.legacy_db_admin_relation = DbProvides(self, admin=True)
 
@@ -53,9 +63,7 @@ class PgBouncerK8sCharm(CharmBase):
         """Renders basic PGB config."""
         container = self.unit.get_container(PGB)
         if not container.can_connect():
-            logger.debug(
-                "pgbouncer config could not be rendered, waiting for container to be available."
-            )
+            logger.debug("pgbouncer container unavailable, deferring start hook...")
             event.defer()
             return
 
@@ -79,8 +87,12 @@ class PgBouncerK8sCharm(CharmBase):
 
         self.render_pgb_config(config)
 
-        # Update postgres endpoints in config to match the current state of the charm.
-        self.update_postgres_endpoints(reload_pgbouncer=True)
+        try:
+            # Update postgres endpoints in config to match the current state of the charm.
+            self.update_postgres_endpoints(reload_pgbouncer=True)
+        except ConnectionError:
+            # pebble_ready hook not fired yet, so defer.
+            event.defer()
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
@@ -182,7 +194,7 @@ class PgBouncerK8sCharm(CharmBase):
         after each time config files are changed.
 
         Raises:
-            pebble.ConnectionError if pgb service isn't accessible
+            ops.pebble.ConnectionError if pgb service isn't accessible
         """
         pgb_container = self.unit.get_container(PGB)
         services = pgb_container.get_services()
@@ -212,10 +224,12 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_service_status = pgb_container.get_services(PGB).get(PGB).current
         if pgb_service_status == ServiceStatus.ACTIVE:
             self.unit.status = ActiveStatus()
+            return True
         else:
             pgb_not_running = "PgBouncer not running"
             self.unit.status = BlockedStatus(pgb_not_running)
             logger.error(pgb_not_running)
+            return False
 
     # =================
     #  File Management
@@ -340,14 +354,24 @@ class PgBouncerK8sCharm(CharmBase):
         if not self.backend.postgres:
             return
 
+        if not port:
+            port = self.config["listen_port"]
+
         for relation in self.model.relations.get("db", []):
             self.legacy_db_relation.update_connection_info(relation, port)
 
         for relation in self.model.relations.get("db-admin", []):
             self.legacy_db_admin_relation.update_connection_info(relation, port)
 
+        for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
+            self.client_relation.update_connection_info(relation)
+
     def update_postgres_endpoints(self, reload_pgbouncer=False):
-        """Update postgres endpoints in relation config values."""
+        """Update postgres endpoints in relation config values.
+
+        Raises:
+            ops.pebble.ConnectionError if we can't connect to the pebble container.
+        """
         # Skip updates if backend.postgres doesn't exist yet.
         if not self.backend.postgres or not self.unit.is_leader():
             return
@@ -360,6 +384,9 @@ class PgBouncerK8sCharm(CharmBase):
                 relation, reload_pgbouncer=False
             )
 
+        for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
+            self.client_relation.update_postgres_endpoints(relation, reload_pgbouncer=False)
+
         if reload_pgbouncer:
             self.reload_pgbouncer()
 
@@ -367,6 +394,11 @@ class PgBouncerK8sCharm(CharmBase):
     def unit_pod_hostname(self, name="") -> str:
         """Creates the pod hostname from its name."""
         return socket.getfqdn(name)
+
+    @property
+    def leader_hostname(self) -> str:
+        """Gets leader hostname."""
+        return self.peers.leader_hostname
 
 
 if __name__ == "__main__":

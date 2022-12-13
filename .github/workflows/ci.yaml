@@ -1,5 +1,6 @@
 name: Tests
 on:
+  workflow_call:
   pull_request:
 
 jobs:
@@ -26,14 +27,14 @@ jobs:
         run: tox -e unit
 
   integration-standalone:
-    name: Integration tests for standalone charm (microk8s)
+    name: Integration tests for standalone charm
     needs:
       - lint
       - unit-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup operator environment
       # This part sets the model name to "testing" (used in test run and logdump)
         uses: charmed-kubernetes/actions-operator@main
@@ -50,14 +51,14 @@ jobs:
           app: pgbouncer-k8s
 
   integration-backend:
-    name: Integration tests for backend relation (microk8s)
+    name: Integration tests for backend relation
     needs:
       - lint
       - unit-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup operator environment
       # This part sets the model name to "testing" (used in test run and logdump)
         uses: charmed-kubernetes/actions-operator@main
@@ -73,15 +74,15 @@ jobs:
         with:
           app: pgbouncer-k8s
 
-  integration-legacy-relations:
-    name: Integration tests for legacy relations (microk8s)
+  integration-legacy-client-relations:
+    name: Integration tests for legacy client relations
     needs:
       - lint
       - unit-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup operator environment
       # This part sets the model name to "testing" (used in test run and logdump)
         uses: charmed-kubernetes/actions-operator@main
@@ -90,7 +91,31 @@ jobs:
           # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
           bootstrap-options: "--agent-version 2.9.29"
       - name: Run legacy integration tests
-        run: tox -e legacy-relation-integration
+        run: tox -e legacy-client-relation-integration
+      - name: Dump logs
+        uses: canonical/charm-logdump-action@main
+        if: failure()
+        with:
+          app: pgbouncer-k8s
+
+  integration-client-relations:
+    name: Integration tests for updated client relations
+    needs:
+      - lint
+      - unit-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup operator environment
+      # This part sets the model name to "testing" (used in test run and logdump)
+        uses: charmed-kubernetes/actions-operator@main
+        with:
+          provider: microk8s
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
+          bootstrap-options: "--agent-version 2.9.29"
+      - name: Run client integration tests
+        run: tox -e client-relation-integration
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
         if: failure()
@@ -98,14 +123,14 @@ jobs:
           app: pgbouncer-k8s
 
   integration-scaling:
-    name: Integration tests for scaling pgbouncer (microk8s)
+    name: Integration tests for scaling pgbouncer
     needs:
       - lint
       - unit-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup operator environment
       # This part sets the model name to "testing" (used in test run and logdump)
         uses: charmed-kubernetes/actions-operator@main

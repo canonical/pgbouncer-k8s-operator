@@ -4,51 +4,58 @@
 """Pgbouncer pgb-peers relation hooks & helpers.
 
 Example:
-┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ relation (id: 0) ┃ pgbouncer-k8s                                                                              ┃
-┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ relation name    │ pgb-peers                                                                                  │
-│ interface        │ pgb_peers                                                                                  │
-│ leader unit      │ 1                                                                                          │
-│ type             │ peer                                                                                       │
-├──────────────────┼────────────────────────────────────────────────────────────────────────────────────────────┤
-│ application data │ ╭────────────────────────────────────────────────────────────────────────────────────────╮ │
-│                  │ │                                                                                        │ │
-│                  │ │  auth_file                            "pgbouncer_auth_relation_2"                      │ │
-│                  │ │                                       "md558cfafb042867ba28d809ec3ff73534f"            │ │
-│                  │ │  cfg_file                             [databases]                                      │ │
-│                  │ │                                                                                        │ │
-│                  │ │                                       [pgbouncer]                                      │ │
-│                  │ │                                       listen_addr = *                                  │ │
-│                  │ │                                       listen_port = 6432                               │ │
-│                  │ │                                       logfile =                                        │ │
-│                  │ │                                       /var/lib/postgresql/pgbouncer/pgbouncer.log      │ │
-│                  │ │                                       pidfile =                                        │ │
-│                  │ │                                       /var/lib/postgresql/pgbouncer/pgbouncer.pid      │ │
-│                  │ │                                       admin_users =                                    │ │
-│                  │ │                                       stats_users =                                    │ │
-│                  │ │                                       auth_type = md5                                  │ │
-│                  │ │                                       user = postgres                                  │ │
-│                  │ │                                       max_client_conn = 10000                          │ │
-│                  │ │                                       ignore_startup_parameters = extra_float_digits   │ │
-│                  │ │                                       server_tls_sslmode = prefer                      │
-│                  │ │                                       so_reuseport = 1                                 │ │
-│                  │ │                                       unix_socket_dir = /var/lib/postgresql/pgbouncer  │ │
-│                  │ │                                       pool_mode = session                              │ │
-│                  │ │                                       max_db_connections = 100                         │ │
-│                  │ │                                       default_pool_size = 13                           │ │
-│                  │ │                                       min_pool_size = 7                                │ │
-│                  │ │                                       reserve_pool_size = 7                            │ │
-│                  │ │                                       auth_file =                                      │ │
-│                  │ │                                       /var/lib/postgresql/pgbouncer/userlist.txt       │ │
-│                  │ │                                                                                        │ │
-│                  │ │                                                                                        │ │
-│                  │ │  pgbouncer_k8s_user_3_test_peers_xz5n DHj1tJXAcrQzSUNc4eVlWf18                         │ │
-│                  │ ╰────────────────────────────────────────────────────────────────────────────────────────╯ │
-│ unit data        │ ╭─ pgbouncer-k8s/0 ─╮ ╭─ pgbouncer-k8s/1* ─╮                                               │
-│                  │ │ <empty>           │ │ <empty>            │                                               │
-│                  │ ╰───────────────────╯ ╰────────────────────╯                                               │
-└──────────────────┴────────────────────────────────────────────────────────────────────────────────────────────┘
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ relation (id: 2) ┃ pgbouncer-k8s                                                                                    ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ relation name    │ pgb-peers                                                                                        │
+│ interface        │ pgb_peers                                                                                        │
+│ leader unit      │ 0                                                                                                │
+│ type             │ peer                                                                                             │
+├──────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ application data │ ╭──────────────────────────────────────────────────────────────────────────────────────────────╮ │
+│                  │ │                                                                                              │ │
+│                  │ │  auth_file        "pgbouncer_auth_relation_id_3" "md5aad46d9afbcc8c8248d254d567b577c1"       │ │
+│                  │ │  cfg_file                                                                                    │ │
+│                  │ │                   application_first_database =                                               │ │
+│                  │ │                   host=postgresql-k8s-primary.test-pgbouncer-provider-gnrj.svc.cluster.loc…  │ │
+│                  │ │                   dbname=application_first_database port=5432                                │ │
+│                  │ │                   auth_user=pgbouncer_auth_relation_id_3                                     │ │
+│                  │ │                   application_first_database_readonly =                                      │ │
+│                  │ │                   host=postgresql-k8s-replicas.test-pgbouncer-provider-gnrj.svc.cluster.lo…  │ │
+│                  │ │                   dbname=application_first_database port=5432                                │ │
+│                  │ │                   auth_user=pgbouncer_auth_relation_id_3                                     │ │
+│                  │ │                                                                                              │ │
+│                  │ │                                                                                              │ │
+│                  │ │                   listen_addr = *                                                            │ │
+│                  │ │                   listen_port = 6432                                                         │ │
+│                  │ │                   logfile = /var/lib/postgresql/pgbouncer/pgbouncer.log                      │ │
+│                  │ │                   pidfile = /var/lib/postgresql/pgbouncer/pgbouncer.pid                      │ │
+│                  │ │                   admin_users = relation_id_3                                                │ │
+│                  │ │                   stats_users =                                                              │ │
+│                  │ │                   auth_type = md5                                                            │ │
+│                  │ │                   user = postgres                                                            │ │
+│                  │ │                   max_client_conn = 10000                                                    │ │
+│                  │ │                   ignore_startup_parameters = extra_float_digits                             │ │
+│                  │ │                   server_tls_sslmode = prefer                                                │ │
+│                  │ │                   so_reuseport = 1                                                           │ │
+│                  │ │                   unix_socket_dir = /var/lib/postgresql/pgbouncer                            │ │
+│                  │ │                   pool_mode = session                                                        │ │
+│                  │ │                   max_db_connections = 100                                                   │ │
+│                  │ │                   default_pool_size = 13                                                     │ │
+│                  │ │                   min_pool_size = 7                                                          │ │
+│                  │ │                   reserve_pool_size = 7                                                      │ │
+│                  │ │                   auth_query = SELECT username, password FROM                                │ │
+│                  │ │                   pgbouncer_auth_relation_id_3.get_auth($1)                                  │ │
+│                  │ │                   auth_file = /var/lib/postgresql/pgbouncer/userlist.txt                     │ │
+│                  │ │                                                                                              │ │
+│                  │ │                                                                                              │ │
+│                  │ │  leader_hostname  pgbouncer-k8s-0.pgbouncer-k8s-endpoints.test-pgbouncer-provider-gnrj.svc…  │ │
+│                  │ │  relation_id_4    Z4OtFCe6r5HG6mk1XuR6LkwZ                                                   │ │
+│                  │ ╰──────────────────────────────────────────────────────────────────────────────────────────────╯ │
+│ unit data        │ ╭─ pgbouncer-k8s/0* ─╮ ╭─ pgbouncer-k8s/1 ─╮ ╭─ pgbouncer-k8s/2 ─╮                               │
+│                  │ │ <empty>            │ │ <empty>           │ │ <empty>           │                               │
+│                  │ ╰────────────────────╯ ╰───────────────────╯ ╰───────────────────╯                               │
+└──────────────────┴──────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 """  # noqa: W505
 
@@ -58,7 +65,7 @@ from typing import Optional, Set
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, RelationChangedEvent, RelationCreatedEvent
 from ops.framework import Object
-from ops.model import Unit
+from ops.model import Relation, Unit
 from ops.pebble import ConnectionError
 
 from constants import PEER_RELATION_NAME
@@ -95,9 +102,9 @@ class Peers(Object):
         self.framework.observe(charm.on.leader_elected, self._on_leader_elected)
 
     @property
-    def relation(self):
+    def relation(self) -> Relation:
         """Returns the relations in this model , or None if peer is not initialised."""
-        return self.model.get_relation(PEER_RELATION_NAME)
+        return self.charm.model.get_relation(PEER_RELATION_NAME)
 
     @property
     def app_databag(self):
@@ -157,15 +164,18 @@ class Peers(Object):
             event.defer()
             return
 
-        if self.charm.backend.postgres:
+        if self.charm.backend.ready:
             # The backend relation creates the userlist, so only upload userlist to databag if
             # backend relation is initialised. If not, it'll be added when that relation first
             # writes it to the container, so no need to add it now.
             self.update_auth_file(self.charm.read_auth_file())
+        else:
+            event.defer()
 
     def _on_changed(self, event: RelationChangedEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem."""
-        self.unit_databag[ADDRESS_KEY] = self.charm.unit_pod_hostname
+        self.unit_databag.update({ADDRESS_KEY: self.charm.unit_pod_hostname})
+        self.charm.update_client_connection_info()
 
         if self.charm.unit.is_leader():
             try:
@@ -210,6 +220,8 @@ class Peers(Object):
     def set_secret(self, scope: str, key: str, value: str):
         """Sets secret value.
 
+        Pass in "None" to the value to delete the secret.
+
         Placeholder method for Juju Secrets interface.
 
         Args:
@@ -230,24 +242,6 @@ class Peers(Object):
         else:
             raise RuntimeError("Unknown secret scope.")
 
-    def del_secret(self, scope: str, key: str):
-        """Deletes secret value.
-
-        Placeholder method for Juju Secrets interface.
-
-        Args:
-            scope: scope for data. Can be "unit" or "app".
-            key: key to access data
-        """
-        if scope == "unit":
-            self.unit_databag.pop(key, None)
-            return
-        elif scope == "app":
-            self.app_databag.pop(key, None)
-            return
-        else:
-            raise RuntimeError("Unknown secret scope.")
-
     def get_secret(self, scope: str, key: str) -> Optional[str]:
         """Gets secret value.
 
@@ -256,6 +250,7 @@ class Peers(Object):
         Args:
             scope: scope for data. Can be "unit" or "app".
             key: key to access data
+
         Returns:
             value at `key` in `scope` databag.
         """
@@ -268,7 +263,7 @@ class Peers(Object):
 
     def update_cfg(self, cfg: PgbConfig) -> None:
         """Writes cfg to app databag if leader."""
-        if not self.charm.unit.is_leader():
+        if not self.charm.unit.is_leader() or not self.relation:
             return
 
         self.set_secret("app", CFG_FILE_DATABAG_KEY, cfg.render())
@@ -283,7 +278,7 @@ class Peers(Object):
 
     def update_auth_file(self, auth_file: str) -> None:
         """Writes auth_file to app databag if leader."""
-        if not self.charm.unit.is_leader():
+        if not self.charm.unit.is_leader() or not self.relation:
             return
 
         self.set_secret("app", AUTH_FILE_DATABAG_KEY, auth_file)
@@ -301,4 +296,4 @@ class Peers(Object):
         if not self.charm.unit.is_leader():
             return
 
-        self.del_secret("app", username)
+        self.set_secret("app", username, None)

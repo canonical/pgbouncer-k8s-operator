@@ -28,6 +28,9 @@ resources:
     upstream-source: docker.io/dataplatformoci/pgbouncer:latest
 
 provides:
+  database:
+    interface: postgresql_client
+    optional: true
   # Legacy relations - these will be deprecated in a future release
   db:
     interface: pgsql

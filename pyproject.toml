@@ -19,6 +19,7 @@ markers = [
     "backend: integration tests for backend relation to postgresql",
     "scaling: integration tests for pgbouncer scaling",
     "legacy_relation: integration tests that test legacy client relations",
+    "client_relation: integration tests that test modern client relations",
 ]
 
 # Formatting tools configuration

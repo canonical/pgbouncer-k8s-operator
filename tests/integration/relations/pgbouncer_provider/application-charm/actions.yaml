@@ -1,0 +1,23 @@
+# Copyright 2022 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+run-sql:
+  description: Runs a given sql command on the backend database.
+  params:
+    dbname:
+      description: database on which to run the command
+      type: string
+    query:
+      description: query to run
+      type: string
+    relation-id:
+      description: id of the relation under test
+      type: integer
+    readonly:
+      description: whether or not to use the readonly endpoint
+      type: boolean
+      default: false
+  required:
+  - dbname
+  - query
+  - relation-id

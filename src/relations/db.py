@@ -139,11 +139,8 @@ class DbProvides(Object):
         If the backend relation is fully initialised and available, we generate the proposed
         database and create a user on the postgres charm, and add preliminary data to the databag.
         """
-        if not self.charm.backend.postgres:
+        if not self._check_backend():
             # We can't relate an app to the backend database without a backend postgres relation
-            wait_str = "waiting for backend-database relation to connect"
-            logger.warning(wait_str)
-            self.charm.unit.status = WaitingStatus(wait_str)
             join_event.defer()
             return
 
@@ -219,7 +216,7 @@ class DbProvides(Object):
             return
 
         # set up auth function
-        self.charm.backend.initialise_auth_function(dbname=database)
+        self.charm.backend.initialise_auth_function([database])
 
         # Create user in pgbouncer config
         cfg = self.charm.read_pgb_config()
@@ -235,11 +232,8 @@ class DbProvides(Object):
         This relation will defer if the backend relation isn't fully available, and if the
         relation_joined hook isn't completed.
         """
-        if not self.charm.backend.postgres:
+        if not self._check_backend():
             # We can't relate an app to the backend database without a backend postgres relation
-            wait_str = "waiting for backend-database relation to connect"
-            logger.warning(wait_str)
-            self.charm.unit.status = WaitingStatus(wait_str)
             change_event.defer()
             return
 
@@ -290,7 +284,7 @@ class DbProvides(Object):
             return
 
         master_dbconnstr = {
-            "host": self.charm.peers.leader_hostname,
+            "host": self.charm.leader_hostname,
             "dbname": database,
             "port": port,
             "user": user,
@@ -304,11 +298,11 @@ class DbProvides(Object):
             "host": self.charm.unit_pod_hostname,
         }
 
-        standby_ips = self.charm.peers.units_hostnames - {self.charm.peers.leader_hostname}
+        standby_hostnames = self.charm.peers.units_hostnames - {self.charm.leader_hostname}
         # Only one standby value in legacy relation on pgbouncer. There are multiple standbys on
         # postgres, but not on the legacy pgbouncer charm.
-        if len(standby_ips) > 0:
-            standby_ip = standby_ips.pop()
+        if len(standby_hostnames) > 0:
+            standby_ip = standby_hostnames.pop()
             standby_dbconnstr = dict(master_dbconnstr)
             standby_dbconnstr.update({"host": standby_ip, "dbname": f"{database}_standby"})
             connection_updates["standbys"] = pgb.parse_dict_to_kv_string(standby_dbconnstr)
@@ -334,8 +328,10 @@ class DbProvides(Object):
             "auth_user": self.charm.backend.auth_user,
         }
 
-        read_only_endpoint = self._get_read_only_endpoint()
-        if read_only_endpoint:
+        # Only one backend endpoint available in legacy relations
+        r_endpoints = self.charm.backend.get_read_only_endpoints()
+        if len(r_endpoints) > 0:
+            read_only_endpoint = next(iter(r_endpoints))
             cfg["databases"][f"{database}_standby"] = {
                 "host": read_only_endpoint.split(":")[0],
                 "dbname": database,
@@ -400,7 +396,7 @@ class DbProvides(Object):
         user = databag.get("user")
         database = databag.get("database")
 
-        if not self.charm.backend.postgres or None in [user, database]:
+        if not self._check_backend() or None in [user, database]:
             # this relation was never created, so wait for it to be initialised before removing
             # everything.
             logger.warning(
@@ -424,8 +420,9 @@ class DbProvides(Object):
                     delete_db = False
                     break
         if delete_db:
-            del cfg["databases"][database]
+            cfg["databases"].pop(database, None)
             cfg["databases"].pop(f"{database}_standby", None)
+            self.charm.backend.remove_auth_function([database])
 
         cfg.remove_user(user)
         self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
@@ -459,17 +456,6 @@ class DbProvides(Object):
         if self.charm.unit.is_leader():
             databags.append(relation.data[self.charm.app])
         return databags
-
-    def _get_read_only_endpoint(self):
-        """Get a read-only-endpoint from backend relation.
-
-        Though multiple readonly endpoints can be provided by the new backend relation, only one
-        can be consumed by this legacy relation.
-        """
-        read_only_endpoints = self.charm.backend.postgres_databag.get("read-only-endpoints")
-        if read_only_endpoints is None or len(read_only_endpoints) == 0:
-            return None
-        return read_only_endpoints.split(",")[0]
 
     def _get_state(self) -> str:
         """Gets the given state for this unit.
@@ -520,3 +506,17 @@ class DbProvides(Object):
         for entry in relation.data.keys():
             if isinstance(entry, Application) and entry != self.charm.app:
                 return entry
+
+    def _check_backend(self) -> bool:
+        """Verifies backend is ready, defers event if not.
+
+        Returns:
+            bool signifying whether backend is ready or not
+        """
+        if not self.charm.backend.ready:
+            # We can't relate an app to the backend database without a backend postgres relation
+            wait_str = "waiting for backend-database relation to connect"
+            logger.warning(wait_str)
+            self.charm.unit.status = WaitingStatus(wait_str)
+            return False
+        return True
