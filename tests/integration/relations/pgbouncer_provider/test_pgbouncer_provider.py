@@ -34,6 +34,7 @@ from tests.integration.relations.pgbouncer_provider.helpers import (
 logger = logging.getLogger(__name__)
 
 CLIENT_APP_NAME = "application"
+SECONDARY_CLIENT_APP_NAME = "another-application"
 PG = "postgresql-k8s"
 PG_2 = "another-postgresql-k8s"
 PGB_METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
@@ -236,22 +237,21 @@ async def test_two_applications_doesnt_share_the_same_relation_data(
 ):
     """Test that two different application connect to the database with different credentials."""
     # Set some variables to use in this test.
-    another_application_app_name = "another-application"
-    all_app_names = [another_application_app_name]
+    all_app_names = [SECONDARY_CLIENT_APP_NAME]
     all_app_names.extend(APP_NAMES)
 
     # Deploy another application.
     await ops_test.model.deploy(
         application_charm,
-        application_name=another_application_app_name,
+        application_name=SECONDARY_CLIENT_APP_NAME,
         resources={"application-image": "ubuntu:latest"},
     )
     await ops_test.model.wait_for_idle(status="active")
 
     # Relate the new application with the database
     # and wait for them exchanging some connection data.
-    await ops_test.model.add_relation(
-        f"{another_application_app_name}:{FIRST_DATABASE_RELATION_NAME}", PGB
+    secondary_relation = await ops_test.model.add_relation(
+        f"{SECONDARY_CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB
     )
     await ops_test.model.wait_for_idle(status="active")
 
@@ -260,10 +260,24 @@ async def test_two_applications_doesnt_share_the_same_relation_data(
         ops_test, CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME
     )
     another_application_connection_string = await build_connection_string(
-        ops_test, another_application_app_name, FIRST_DATABASE_RELATION_NAME
+        ops_test, SECONDARY_CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME
     )
 
     assert application_connection_string != another_application_connection_string
+
+    # Check both relations can connect
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=client_relation.id,
+        dbname=TEST_DBNAME,
+    )
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[SECONDARY_CLIENT_APP_NAME].units[0].name,
+        relation_id=secondary_relation.id,
+        dbname=TEST_DBNAME,
+    )
 
 
 @pytest.mark.client_relation
@@ -302,6 +316,20 @@ async def test_an_application_can_connect_to_multiple_database_clusters(
         f"{CLIENT_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}", PGB_2
     )
     await ops_test.model.wait_for_idle(status="active")
+
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=first_cluster_relation.id,
+        dbname=TEST_DBNAME,
+    )
+
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=first_cluster_relation.id,
+        dbname=TEST_DBNAME,
+    )
 
     # Retrieve the connection string to both database clusters using the relation ids and assert
     # they are different.
@@ -366,7 +394,48 @@ async def test_legacy_relation_compatibility(ops_test: OpsTest):
     )
 
 
-@pytest.mark.dev
+@pytest.mark.client_relation
+async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_charm):
+    pgb_secondary = f"{PGB}_secondary"
+    resources = {
+        "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"],
+    }
+    await ops_test.model.deploy(
+        pgb_charm,
+        resources=resources,
+        application_name=pgb_secondary,
+    )
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(apps=[PGB, pgb_secondary], status="active"),
+
+    await ops_test.model.add_relation(f"{pgb_secondary}:{BACKEND_RELATION_NAME}", f"{PG}:database")
+    wait_for_relation_joined_between(ops_test, PG, pgb_secondary)
+
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(),
+
+    secondary_relation = await ops_test.model.add_relation(
+        f"{SECONDARY_CLIENT_APP_NAME}:{SECOND_DATABASE_RELATION_NAME}", pgb_secondary
+    )
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle()
+
+    # Check new relation works
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=secondary_relation.id,
+        dbname=TEST_DBNAME,
+    )
+    # Check the new relation hasn't affected existing connectivity
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=client_relation.id,
+        dbname=TEST_DBNAME,
+    )
+
+
 @pytest.mark.client_relation
 async def test_scaling(ops_test: OpsTest):
     """Check these relations all work when scaling pgbouncer."""
