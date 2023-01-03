@@ -396,7 +396,7 @@ async def test_legacy_relation_compatibility(ops_test: OpsTest):
 
 @pytest.mark.client_relation
 async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_charm):
-    pgb_secondary = f"{PGB}_secondary"
+    pgb_secondary = f"{PGB}-secondary"
     resources = {
         "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
