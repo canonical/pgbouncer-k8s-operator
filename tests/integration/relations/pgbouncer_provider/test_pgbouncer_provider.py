@@ -38,6 +38,9 @@ SECONDARY_CLIENT_APP_NAME = "secondary-application"
 PG = "postgresql-k8s"
 PG_2 = "secondary-postgresql-k8s"
 PGB_METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
+PGB_RESOURCES = {
+    "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"]
+}
 PGB = "pgbouncer-k8s"
 PGB_2 = "secondary-pgbouncer-k8s"
 APP_NAMES = [CLIENT_APP_NAME, PG, PGB]
@@ -65,9 +68,7 @@ async def test_database_relation_with_charm_libraries(
         ),
         ops_test.model.deploy(
             pgb_charm,
-            resources={
-                "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"]
-            },
+            resources=PGB_RESOURCES,
             application_name=PGB,
             num_units=2,
         ),
@@ -233,8 +234,7 @@ async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
 async def test_each_relation_has_unique_credentials(ops_test: OpsTest, application_charm):
     """Test that two different applications connect to the database with different credentials."""
     # Set some variables to use in this test.
-    all_app_names = [SECONDARY_CLIENT_APP_NAME]
-    all_app_names.extend(APP_NAMES)
+    all_app_names = [SECONDARY_CLIENT_APP_NAME] + APP_NAMES
 
     # Deploy secondary application.
     await ops_test.model.deploy(
@@ -271,7 +271,7 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest, applicati
         relation_id=client_relation.id,
         dbname=TEST_DBNAME,
     )
-    await check_new_relation(  # TODO currently doesn't connect
+    await check_new_relation(
         ops_test,
         unit_name=ops_test.model.applications[SECONDARY_CLIENT_APP_NAME].units[0].name,
         relation_id=secondary_relation.id,
@@ -285,18 +285,14 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest, applicati
 async def test_an_application_can_connect_to_multiple_database_clusters(
     ops_test: OpsTest, pgb_charm
 ):
-    all_app_names = [PG_2, PGB_2]
-    all_app_names.extend(APP_NAMES)
+    all_app_names = [PG_2, PGB_2] + APP_NAMES
     """Test that an application can connect to different clusters of the same database."""
     async with ops_test.fast_forward():
+        # Set up second postgres cluster.
         await asyncio.gather(
             ops_test.model.deploy(
                 pgb_charm,
-                resources={
-                    "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"][
-                        "upstream-source"
-                    ]
-                },
+                resources=PGB_RESOURCES,
                 application_name=PGB_2,
                 num_units=2,
             ),
@@ -311,13 +307,13 @@ async def test_an_application_can_connect_to_multiple_database_clusters(
         await ops_test.model.add_relation(f"{PGB_2}:{BACKEND_RELATION_NAME}", f"{PG_2}:database")
         wait_for_relation_joined_between(ops_test, PGB_2, PG_2)
         await ops_test.model.wait_for_idle(status="active", apps=all_app_names)
-    # Relate the application to the second database cluster and wait for them to exchange some
-    # connection data.
-    second_cluster_relation = await ops_test.model.add_relation(
-        f"{CLIENT_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}", PGB_2
-    )
-    wait_for_relation_joined_between(ops_test, PGB_2, CLIENT_APP_NAME)
-    await ops_test.model.wait_for_idle(status="active", apps=all_app_names)
+        # Relate the application to the second database cluster and wait for them to exchange some
+        # connection data.
+        second_cluster_relation = await ops_test.model.add_relation(
+            f"{CLIENT_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}", PGB_2
+        )
+        wait_for_relation_joined_between(ops_test, PGB_2, CLIENT_APP_NAME)
+        await ops_test.model.wait_for_idle(status="active", apps=all_app_names)
 
     await check_new_relation(
         ops_test,
@@ -400,12 +396,9 @@ async def test_legacy_relation_compatibility(ops_test: OpsTest):
 @pytest.mark.client_relation
 async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_charm):
     pgb_secondary = f"{PGB}-secondary"
-    resources = {
-        "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"],
-    }
     await ops_test.model.deploy(
         pgb_charm,
-        resources=resources,
+        resources=PGB_RESOURCES,
         application_name=pgb_secondary,
     )
     async with ops_test.fast_forward():
@@ -415,7 +408,7 @@ async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_ch
     wait_for_relation_joined_between(ops_test, PG, pgb_secondary)
 
     async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(),
+        await ops_test.model.wait_for_idle(apps=APP_NAMES + [pgb_secondary])
 
     secondary_relation = await ops_test.model.add_relation(
         f"{SECONDARY_CLIENT_APP_NAME}:{SECOND_DATABASE_RELATION_NAME}", pgb_secondary
@@ -426,7 +419,7 @@ async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_ch
     # Check new relation works
     await check_new_relation(
         ops_test,
-        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        unit_name=ops_test.model.applications[SECONDARY_CLIENT_APP_NAME].units[0].name,
         relation_id=secondary_relation.id,
         dbname=TEST_DBNAME,
         table_name="check_multiple_pgb_connected_to_one_postgres",
