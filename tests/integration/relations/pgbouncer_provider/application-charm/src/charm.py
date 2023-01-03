@@ -122,7 +122,17 @@ class ApplicationCharm(CharmBase):
 
     def _on_run_sql_action(self, event: ActionEvent):
         relation_id = event.params["relation-id"]
-        databag = self.first_database.fetch_relation_data()[relation_id]
+        relation_name = event.params["relation-name"]
+        if relation_name == self.first_database.relation_name:
+            relation = self.first_database
+        elif relation_name == self.second_database.relation_name:
+            relation = self.second_database
+        elif relation_name == self.database_clusters.relation_name:
+            relation = self.database_clusters
+        else:
+            event.fail(message="invalid relation name")
+
+        databag = relation.fetch_relation_data()[relation_id]
 
         dbname = event.params["dbname"]
         query = event.params["query"]

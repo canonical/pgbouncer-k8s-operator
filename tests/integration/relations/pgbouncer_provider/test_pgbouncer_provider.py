@@ -100,6 +100,7 @@ async def test_database_relation_with_charm_libraries(
         unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
         relation_id=client_relation.id,
         dbname=TEST_DBNAME,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
     )
 
 
@@ -118,6 +119,7 @@ async def test_database_usage(ops_test: OpsTest):
         query=update_query,
         dbname=TEST_DBNAME,
         relation_id=client_relation.id,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
     )
     assert "some data" in json.loads(run_update_query["results"])[0]
 
@@ -132,6 +134,7 @@ async def test_database_version(ops_test: OpsTest):
         query=version_query,
         dbname=TEST_DBNAME,
         relation_id=client_relation.id,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
     )
     # Get the version of the database and compare with the information that
     # was retrieved directly from the database.
@@ -151,6 +154,7 @@ async def test_readonly_reads(ops_test: OpsTest):
         query=select_query,
         dbname=TEST_DBNAME,
         relation_id=client_relation.id,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
         readonly=True,
     )
     assert "some data" in json.loads(run_select_query_readonly["results"])[0]
@@ -166,6 +170,7 @@ async def test_cant_write_in_readonly(ops_test: OpsTest):
         query=drop_query,
         dbname=TEST_DBNAME,
         relation_id=client_relation.id,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
         readonly=True,
     )
     assert run_drop_query_readonly["Code"] == "1"
@@ -181,6 +186,7 @@ async def test_database_admin_permissions(ops_test: OpsTest):
         query=create_database_query,
         dbname=TEST_DBNAME,
         relation_id=client_relation.id,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
     )
     assert "no results to fetch" in json.loads(run_create_database_query["results"])
 
@@ -191,6 +197,7 @@ async def test_database_admin_permissions(ops_test: OpsTest):
         query=create_user_query,
         dbname=TEST_DBNAME,
         relation_id=client_relation.id,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
     )
     assert "no results to fetch" in json.loads(run_create_user_query["results"])
 
@@ -204,6 +211,7 @@ async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
         unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
         relation_id=client_relation.id,
         dbname=TEST_DBNAME,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
     )
 
     unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
@@ -222,6 +230,7 @@ async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
         unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
         relation_id=client_relation.id,
         dbname=TEST_DBNAME,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
     )
 
     unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
@@ -230,6 +239,7 @@ async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
     assert read_only_endpoints, f"read-only-endpoints not in pgb databag: {databag}"
 
 
+@pytest.mark.dev
 @pytest.mark.client_relation
 async def test_each_relation_has_unique_credentials(ops_test: OpsTest, application_charm):
     """Test that two different applications connect to the database with different credentials."""
@@ -270,6 +280,7 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest, applicati
         unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
         relation_id=client_relation.id,
         dbname=TEST_DBNAME,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
     )
     await check_new_relation(
         ops_test,
@@ -277,6 +288,7 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest, applicati
         relation_id=secondary_relation.id,
         dbname=TEST_DBNAME,
         table_name="check_multiple_apps_connected_to_one_cluster",
+        relation_name=SECOND_DATABASE_RELATION_NAME,
     )
 
 
@@ -320,6 +332,7 @@ async def test_an_application_can_connect_to_multiple_database_clusters(
         unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
         relation_id=client_relation.id,
         dbname=TEST_DBNAME,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
     )
     await check_new_relation(
         ops_test,
@@ -327,6 +340,7 @@ async def test_an_application_can_connect_to_multiple_database_clusters(
         relation_id=second_cluster_relation.id,
         dbname=TEST_DBNAME,
         table_name="check_one_app_connected_to_multiple_clusters",
+        relation_name=MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME,
     )
 
     # Retrieve the connection string to both database clusters using the relation ids and assert
@@ -389,6 +403,7 @@ async def test_legacy_relation_compatibility(ops_test: OpsTest):
         unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
         relation_id=client_relation.id,
         dbname=TEST_DBNAME,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
     )
 
 
@@ -423,12 +438,14 @@ async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_ch
         relation_id=secondary_relation.id,
         dbname=TEST_DBNAME,
         table_name="check_multiple_pgb_connected_to_one_postgres",
+        relation_name=SECOND_DATABASE_RELATION_NAME,
     )
     # Check the new relation hasn't affected existing connectivity
     await check_new_relation(
         ops_test,
         unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
         relation_id=client_relation.id,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
         dbname=TEST_DBNAME,
     )
 
@@ -443,6 +460,7 @@ async def test_scaling(ops_test: OpsTest):
         unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
         relation_id=client_relation.id,
         dbname=TEST_DBNAME,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
     )
 
     await scale_application(ops_test, PGB, 2)
@@ -452,6 +470,7 @@ async def test_scaling(ops_test: OpsTest):
         unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
         relation_id=client_relation.id,
         dbname=TEST_DBNAME,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
     )
 
 
