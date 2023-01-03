@@ -163,9 +163,14 @@ async def build_connection_string(
     return f"dbname='{database}' user='{username}' host='{ip}' password='{password}' connect_timeout=10"
 
 
-async def check_new_relation(ops_test: OpsTest, unit_name, relation_id, dbname):
-    """Smoke test to check relation is online."""
-    table_name = "quick_test"
+async def check_new_relation(
+    ops_test: OpsTest, unit_name, relation_id, dbname, table_name="smoke_test"
+):
+    """Smoke test to check relation is online.
+
+    When using this check on multiple test applications connected to one database, set table_name
+    to a unique variable for each application.
+    """
     smoke_query = (
         f"DROP TABLE IF EXISTS {table_name};"
         f"CREATE TABLE {table_name}(data TEXT);"
@@ -179,4 +184,6 @@ async def check_new_relation(ops_test: OpsTest, unit_name, relation_id, dbname):
         dbname=dbname,
         relation_id=relation_id,
     )
-    assert "some data" in json.loads(run_update_query["results"])[0]
+    assert (
+        "some data" in json.loads(run_update_query["results"])[0]
+    ), f"smoke check failed. Query output: {run_update_query}"

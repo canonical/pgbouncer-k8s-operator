@@ -136,7 +136,7 @@ class ApplicationCharm(CharmBase):
         endpoint = host.split(":")[0]
         port = host.split(":")[1]
 
-        logger.error(f"running query: \n{query}")
+        logger.info(f"running query: \n{query}")
         connection = self.connect_to_database(
             database=dbname, user=user, password=password, host=endpoint, port=port
         )
@@ -147,7 +147,7 @@ class ApplicationCharm(CharmBase):
             results = cursor.fetchall()
         except psycopg2.Error as error:
             results = [str(error)]
-        logger.error(results)
+        logger.info(results)
 
         event.set_results({"results": json.dumps(results)})
 
