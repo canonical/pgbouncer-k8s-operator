@@ -121,6 +121,9 @@ class ApplicationCharm(CharmBase):
         )
 
     def _on_run_sql_action(self, event: ActionEvent):
+        """An action that allows us to run SQL queries from this charm."""
+        logger.info(event.params)
+
         relation_id = event.params["relation-id"]
         relation_name = event.params["relation-name"]
         if relation_name == self.first_database.relation_name:
@@ -138,6 +141,7 @@ class ApplicationCharm(CharmBase):
         query = event.params["query"]
         user = databag.get("username")
         password = databag.get("password")
+
         if event.params["readonly"]:
             host = databag.get("read-only-endpoints").split(",")[0]
             dbname = f"{dbname}_readonly"

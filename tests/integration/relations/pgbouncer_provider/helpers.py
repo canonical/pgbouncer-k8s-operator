@@ -116,6 +116,7 @@ async def run_sql_on_application_charm(
         "readonly": readonly,
     }
     logging.info(f"running query: \n {query}")
+    logging.info(params)
     action = await client_unit.run_action("run-sql", **params)
     result = await asyncio.wait_for(action.wait(), timeout)
     logging.info(f"query results: {result.results}")
