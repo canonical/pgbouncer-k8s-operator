@@ -17,11 +17,8 @@ resources:
     description: OCI image for test charm
     upstream-source: ubuntu:latest
 
-# TODO check if all these relations are being used
 requires:
   first-database:
     interface: postgresql_client
   second-database:
-    interface: postgresql_client
-  multiple-database-clusters:
     interface: postgresql_client

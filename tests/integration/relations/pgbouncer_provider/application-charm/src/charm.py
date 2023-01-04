@@ -62,19 +62,6 @@ class ApplicationCharm(CharmBase):
             self.second_database.on.endpoints_changed, self._on_second_database_endpoints_changed
         )
 
-        # Multiple database clusters charm events (clusters/relations without alias).
-        database_name = f'{self.app.name.replace("-", "_")}_multiple_database_clusters'
-        self.database_clusters = DatabaseRequires(
-            self, "multiple-database-clusters", database_name, EXTRA_USER_ROLES
-        )
-        self.framework.observe(
-            self.database_clusters.on.database_created, self._on_cluster_database_created
-        )
-        self.framework.observe(
-            self.database_clusters.on.endpoints_changed,
-            self._on_cluster_endpoints_changed,
-        )
-
         self.framework.observe(self.on.run_sql_action, self._on_run_sql_action)
 
     def _on_start(self, _) -> None:
@@ -102,23 +89,6 @@ class ApplicationCharm(CharmBase):
     def _on_second_database_endpoints_changed(self, event: DatabaseEndpointsChangedEvent) -> None:
         """Event triggered when the read/write endpoints of the database change."""
         logger.info(f"second database endpoints have been changed to: {event.endpoints}")
-
-    # Multiple database clusters events observers.
-    def _on_cluster_database_created(self, event: DatabaseCreatedEvent) -> None:
-        """Event triggered when a database was created for this application."""
-        # Retrieve the credentials using the charm library.
-        logger.info(
-            f"cluster {event.relation.app.name} credentials: {event.username} {event.password}"
-        )
-        self.unit.status = ActiveStatus(
-            f"received database credentials for cluster {event.relation.app.name}"
-        )
-
-    def _on_cluster_endpoints_changed(self, event: DatabaseEndpointsChangedEvent) -> None:
-        """Event triggered when the read/write endpoints of the database change."""
-        logger.info(
-            f"cluster {event.relation.app.name} endpoints have been changed to: {event.endpoints}"
-        )
 
     def _on_run_sql_action(self, event: ActionEvent):
         """An action that allows us to run SQL queries from this charm."""

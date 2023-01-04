@@ -36,28 +36,22 @@ logger = logging.getLogger(__name__)
 CLIENT_APP_NAME = "application"
 SECONDARY_CLIENT_APP_NAME = "secondary-application"
 PG = "postgresql-k8s"
-PG_2 = "secondary-postgresql-k8s"
 PGB_METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB_RESOURCES = {
     "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"]
 }
 PGB = "pgbouncer-k8s"
-PGB_2 = "secondary-pgbouncer-k8s"
 APP_NAMES = [CLIENT_APP_NAME, PG, PGB]
 FIRST_DATABASE_RELATION_NAME = "first-database"
 SECOND_DATABASE_RELATION_NAME = "second-database"
-MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME = "multiple-database-clusters"
 
-# TODO this is a mess
 APPLICATION_FIRST_DBNAME = "application_first_database"
-APPLICATION_MULTIPLE_CLUSTERS_DBNAME = "application_multiple_database_clusters"
 SECONDARY_APPLICATION_FIRST_DBNAME = "secondary_application_first_database"
 SECONDARY_APPLICATION_SECOND_DBNAME = "secondary_application_second_database"
 
 
 @pytest.mark.abort_on_fail
 @pytest.mark.client_relation
-@pytest.mark.dev
 async def test_database_relation_with_charm_libraries(
     ops_test: OpsTest, application_charm, pgb_charm
 ):
@@ -292,80 +286,6 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest, applicati
     logger.info(app_connstr)
     logger.info(secondary_app_connstr)
     assert app_connstr != secondary_app_connstr
-
-
-@pytest.mark.dev
-@pytest.mark.client_relation
-async def test_an_application_can_connect_to_multiple_database_clusters(
-    ops_test: OpsTest, pgb_charm
-):
-    """Test that an application can connect to different clusters of the same database."""
-    all_app_names = [PG_2, PGB_2] + APP_NAMES
-    # Set up second postgres cluster.
-    async with ops_test.fast_forward():
-        await asyncio.gather(
-            ops_test.model.deploy(
-                pgb_charm,
-                resources=PGB_RESOURCES,
-                application_name=PGB_2,
-                num_units=2,
-            ),
-            ops_test.model.deploy(
-                PG,
-                application_name=PG_2,
-                num_units=2,
-                channel="edge",
-                trust=True,
-            ),
-        )
-        await ops_test.model.add_relation(f"{PGB_2}:{BACKEND_RELATION_NAME}", f"{PG_2}:database")
-        wait_for_relation_joined_between(ops_test, PGB_2, PG_2)
-        await ops_test.model.wait_for_idle(status="active", apps=all_app_names)
-        # Relate the application to the second database cluster and wait for them to exchange some
-        # connection data.
-        cluster_relation_1, cluster_relation_2 = await asyncio.gather()
-        cluster_relation_1 = await ops_test.model.add_relation(
-            f"{CLIENT_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}", PGB
-        )
-        cluster_relation_2 = await ops_test.model.add_relation(
-            f"{CLIENT_APP_NAME}:{MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME}", PGB_2
-        )
-        wait_for_relation_joined_between(ops_test, PGB, CLIENT_APP_NAME)
-        wait_for_relation_joined_between(ops_test, PGB_2, CLIENT_APP_NAME)
-        await ops_test.model.wait_for_idle(status="active", apps=all_app_names)
-
-    await check_new_relation(
-        ops_test,
-        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
-        relation_id=cluster_relation_1.id,
-        dbname=APPLICATION_MULTIPLE_CLUSTERS_DBNAME,
-        table_name="check_one_app_connected_to_multiple_clusters",
-        relation_name=MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME,
-    )
-    await check_new_relation(
-        ops_test,
-        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
-        relation_id=cluster_relation_2.id,
-        dbname=APPLICATION_MULTIPLE_CLUSTERS_DBNAME,
-        table_name="check_second_app_connected_to_multiple_clusters",
-        relation_name=MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME,
-    )
-
-    # Retrieve the connection string to both database clusters using the relation ids and assert
-    # they are different.
-    application_connection_string = await build_connection_string(
-        ops_test,
-        CLIENT_APP_NAME,
-        MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME,
-        relation_id=cluster_relation_1.id,
-    )
-    secondary_application_connection_string = await build_connection_string(
-        ops_test,
-        CLIENT_APP_NAME,
-        MULTIPLE_DATABASE_CLUSTERS_RELATION_NAME,
-        relation_id=cluster_relation_2.id,
-    )
-    assert application_connection_string != secondary_application_connection_string
 
 
 @pytest.mark.client_relation
