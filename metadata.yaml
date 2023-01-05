@@ -25,7 +25,7 @@ resources:
   pgbouncer-image:
     type: oci-image
     description: OCI image for pgbouncer
-    upstream-source: docker.io/dataplatformoci/pgbouncer:1.12-20.04
+    upstream-source: docker.io/dataplatformoci/pgbouncer:1.16-22.04
 
 provides:
   database:
