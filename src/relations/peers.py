@@ -128,9 +128,9 @@ class Peers(Object):
             A list of peers addresses (strings).
         """
         units_hostnames = {self._get_unit_hostname(unit) for unit in self.relation.units}
-        units_hostnames.add(self.charm.unit_pod_hostname)
         units_hostnames.discard(None)
         units_hostnames.discard(self.leader_hostname)
+        units_hostnames.add(self.charm.unit_pod_hostname)
         return units_hostnames
 
     @property
