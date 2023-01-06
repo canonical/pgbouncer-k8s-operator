@@ -210,16 +210,20 @@ class PgBouncerK8sCharm(CharmBase):
         self.check_pgb_running()
 
     def check_pgb_running(self):
-        """Checks that pgbouncer pebble service is running.
-
-        Raises:
-            pebble.ConnectionError if pgbouncer hasn't been added to pebble config.
-        """
+        """Checks that pgbouncer pebble service is running, and updates status accordingly."""
+        pgb_container_unavailable = "PgBouncer container currently unavailable"
         pgb_container = self.unit.get_container(PGB)
+        if not pgb_container.can_connect():
+            self.unit.status = BlockedStatus(pgb_container_unavailable)
+            logger.error(pgb_container_unavailable)
+            return False
+
         services = pgb_container.get_services()
         if PGB not in services.keys():
             # pebble_ready event hasn't fired so pgbouncer layer has not been added to pebble
-            raise ConnectionError
+            self.unit.status = BlockedStatus(pgb_container_unavailable)
+            logger.error(pgb_container_unavailable)
+            return False
 
         pgb_service_status = pgb_container.get_services(PGB).get(PGB).current
         if pgb_service_status == ServiceStatus.ACTIVE:
@@ -366,6 +370,8 @@ class PgBouncerK8sCharm(CharmBase):
         for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
             self.client_relation.update_connection_info(relation)
 
+        # TODO consider updating charm status here
+
     def update_postgres_endpoints(self, reload_pgbouncer=False):
         """Update postgres endpoints in relation config values.
 
@@ -389,6 +395,8 @@ class PgBouncerK8sCharm(CharmBase):
 
         if reload_pgbouncer:
             self.reload_pgbouncer()
+
+        # TODO consider updating charm status here
 
     @property
     def unit_pod_hostname(self, name="") -> str:

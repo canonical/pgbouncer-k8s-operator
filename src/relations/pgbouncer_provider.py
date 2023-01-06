@@ -48,7 +48,14 @@ from charms.postgresql_k8s.v0.postgresql import (
 )
 from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
-from ops.model import Application, BlockedStatus, Relation, WaitingStatus
+from ops.model import (
+    ActiveStatus,
+    Application,
+    BlockedStatus,
+    MaintenanceStatus,
+    Relation,
+    WaitingStatus,
+)
 
 from constants import CLIENT_RELATION_NAME
 
@@ -148,8 +155,21 @@ class PgBouncerProvider(Object):
                 {f"{self.relation_name}_{event.relation.id}_departing": "true"}
             )
 
+            # If the leader is the departing unit, set the endpoint to a random unit so on
+            # leader-departed events, we still have an accessible endpoint. Leadership is
+            # irrelevant to pgbouncer, so having a fake leader doesn't cause any real problems.
+            # TODO this may no longer be necessary.
+            if self.charm.unit.is_leader() and (
+                random_hostname := self.charm.peers.unit_hostnames.pop(0, None) is not None
+            ):
+                self.database_provides.set_endpoints(
+                    event.relation.id,
+                    f"{random_hostname}:{self.charm.config['listen_port']}",
+                )
+
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
         """Remove the user created for this relation, and revoke connection permissions."""
+        self.update_connection_info(event.relation)
         if not self._check_backend() or not self.charm.unit.is_leader():
             return
 
@@ -180,6 +200,9 @@ class PgBouncerProvider(Object):
     def update_connection_info(self, relation):
         """Updates client-facing relation information."""
         # Set the read/write endpoint.
+        self.charm.unit.status = MaintenanceStatus(
+            f"Updating {self.relation_name} connection information"
+        )
         self.database_provides.set_endpoints(
             relation.id,
             f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}",
@@ -193,6 +216,8 @@ class PgBouncerProvider(Object):
             self.database_provides.set_version(
                 relation.id, self.charm.backend.postgres.get_postgresql_version()
             )
+
+        self.charm.unit.status = ActiveStatus()
 
     def update_postgres_endpoints(
         self,
