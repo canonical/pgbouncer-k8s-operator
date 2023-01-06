@@ -210,11 +210,6 @@ async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
     await scale_application(ops_test, PGB, 1)
     logger.error(await get_app_relation_databag(ops_test, unit.name, client_relation.id))
     async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(
-            apps=[PGB], status="active", timeout=600, wait_for_exact_units=1
-        )
-    logger.error(await get_app_relation_databag(ops_test, unit.name, client_relation.id))
-    async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", timeout=600)
     logger.error(await get_app_relation_databag(ops_test, unit.name, client_relation.id))
     await check_new_relation(
