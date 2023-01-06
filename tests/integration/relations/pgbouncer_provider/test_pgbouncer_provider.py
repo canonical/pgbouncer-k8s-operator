@@ -205,8 +205,12 @@ async def test_database_admin_permissions(ops_test: OpsTest):
 @pytest.mark.client_relation
 async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
     """Test that there is no read-only endpoint in a standalone cluster."""
+    unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
+    logger.error(await get_app_relation_databag(ops_test, unit.name, client_relation.id))
     await scale_application(ops_test, PGB, 1)
+    logger.error(await get_app_relation_databag(ops_test, unit.name, client_relation.id))
     await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", timeout=600)
+    logger.error(await get_app_relation_databag(ops_test, unit.name, client_relation.id))
     await check_new_relation(
         ops_test,
         unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
@@ -217,6 +221,7 @@ async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
 
     unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
     databag = await get_app_relation_databag(ops_test, unit.name, client_relation.id)
+    logger.error(await get_app_relation_databag(ops_test, unit.name, client_relation.id))
     assert not databag.get(
         "read-only-endpoints", None
     ), f"read-only-endpoints in pgb databag: {databag}"
