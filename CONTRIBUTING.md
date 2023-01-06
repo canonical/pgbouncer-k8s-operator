@@ -78,7 +78,7 @@ TODO:
 
 ```mermaid
 flowchart TD
-  start([start Hook]) --> is_container{ Is container\navailable? }
+  hook_fired([start Hook]) --> is_container{ Is container\navailable? }
   is_container -- no --> defer> defer ]
   is_container -- yes --> is_cfg{ Is pgbouncer config\navailable in container or\npeer databag? }
   is_cfg -- no --> is_leader{ Is the current unit Leader? }
@@ -93,7 +93,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  start([pgbouncer-pebble-ready Hook]) --> is_cfg{Is pgbouncer\nconfig available?}
+  hook_fired([pgbouncer-pebble-ready Hook]) --> is_cfg{Is pgbouncer\nconfig available?}
   is_cfg -- no --> defer>defer]
   is_cfg -- yes --> gen_cfg[Generate pebble config\nand start service]
   gen_cfg --> verify[Verify pgbouncer is\nrunning, and set charm\n status accordingly]
@@ -104,13 +104,13 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  id301([config-changed Hook]) --> id302{Is current\nunit leader?}
-  id302 -- no --> rtn((return))
-  id302 -- yes --> id303{Is pgbouncer\nconfig available?}
-  id303 -- no --> id304>defer]
-  id303 -- yes --> id305[Modify pgbouncer\nconfig to match\ncharm config]
-  id305 --> id306[Render config &\nreload pgbouncer]
-  id306 --> id1((return))
+  hook_fired([config-changed Hook]) --> is_leader{Is current\nunit leader?}
+  is_leader -- no --> rtn((return))
+  is_leader -- yes --> is_cfg{Is pgbouncer\nconfig available?}
+  is_cfg -- no --> defer>defer]
+  is_cfg -- yes --> match_cfg[Modify pgbouncer\nconfig to match\ncharm config]
+  match_cfg --> render_cfg[Render config &\nreload pgbouncer]
+  render_cfg --> rtn2((return))
 ```
 
 #### Peer Relation Created Hook
@@ -119,7 +119,7 @@ TODO
 
 ```mermaid
 flowchart TD
-  id601([peer-relation-created Hook])
+  hook_fired([peer-relation-created Hook])
 ```
 
 #### Peer Relation Changed Hook
@@ -128,25 +128,25 @@ TODO
 
 ```mermaid
 flowchart TD
-  id701([peer-relation-changed Hook])
+  hook_fired([peer-relation-changed Hook])
 ```
 
 #### Backend Database Created Hook
 
 ```mermaid
 flowchart TD
-  id401([backend-database-requested Hook]) --> id402{Is current\nunit leader?}
-  id402 -- no --> id2((return))
-  id402 -- yes --> id403{Is pgbouncer\nrunning?}
-  id403 -- no --> id3((return))
-  id403 -- yes --> id405{is backend database ready,\nand has pgbouncer been\nprovided with the\nnecessary relation data?}
-  id405 -- no --> id406>defer]
-  id405 -- yes --> id407[Generate username & password]
-  id407 --> id408[create auth function on postgres]
-  id408 --> id409[update pgbouncer config, and save\nauth data to container and peer databag]
-  id409 --> id410[update postgres endpoints in client relations]
-  id410 --> id411[update charm status]
-  id411 --> id1((return))
+  hook_fired([backend-database-requested Hook]) --> is_leader{Is current\nunit leader?}
+  is_leader -- no --> rtn((return))
+  is_leader -- yes --> is_running{Is pgbouncer\nrunning?}
+  is_running -- no --> rtn3((return))
+  is_running -- yes --> is_backend_ready{is backend database ready,\nand has pgbouncer been\nprovided with the\nnecessary relation data?}
+  is_backend_ready -- no --> defer>defer]
+  is_backend_ready -- yes --> generate_user[Generate username & password]
+  generate_user --> create_auth_func[create auth function on postgres]
+  create_auth_func --> save_auth_data[update pgbouncer config, and save\nauth data to container and peer databag]
+  save_auth_data --> update_relations[update postgres endpoints in client relations]
+  update_relations --> update_status[update charm status]
+  update_status --> rtn2((return))
 ```
 
 #### Backend Database Departed Hook
@@ -155,11 +155,15 @@ TODO
 
 ```mermaid
 flowchart TD
-  id501([backend-database-relation-departed Hook]) --> id502[update relation connection information]
-  id502 --> id503{Is this unit the\ndeparting unit?}
-  id503 -- yes --> id504[update unit databag to tell\npeers this unit is departing]
-  id504 --> id505((return))
-  id503 -- no --> id506
+  hook_fired([backend-database-relation-departed Hook]) --> update_info[update relation connection information]
+  update_info --> is_this_unit_departing{Is this unit the\ndeparting unit?}
+  is_this_unit_departing -- yes --> tell_peers[update unit databag to tell\npeers this unit is departing]
+  tell_peers --> rtn((return))
+  is_this_unit_departing -- no --> is_leader{is this unit the\nleader, and is\nit departing}
+  is_leader -- no --> rtn2((return))
+  is_leader -- yes --> scale_down{Is this application\nscaling down,\nbut not to 0?}
+  scale_down -- no --> rtn3((return))
+  scale_down -- yes --> remove_auth[Remove auth function, and \n delete auth user]
 ```
 
 #### Backend Database Broken Hook
@@ -168,7 +172,7 @@ TODO
 
 ```mermaid
 flowchart TD
-  id801([backend-database-relation-broken Hook])
+  hook_fired([backend-database-relation-broken Hook])
 ```
 
 #### Database Requested Hook
@@ -177,7 +181,7 @@ TODO
 
 ```mermaid
 flowchart TD
-  id901([database-requested Hook])
+  hook_fired([database-requested Hook])
 ```
 
 #### Database Relation Departed Hook
@@ -186,7 +190,7 @@ TODO
 
 ```mermaid
 flowchart TD
-  id1001([database-relation-departed Hook])
+  hook_fired([database-relation-departed Hook])
 ```
 
 
@@ -196,7 +200,7 @@ TODO
 
 ```mermaid
 flowchart TD
-  id1101([database-relation-broken Hook])
+  hook_fired([database-relation-broken Hook])
 ```
 
 #### db And db-admin Relation Joined Hook
@@ -207,7 +211,7 @@ TODO
 
 ```mermaid
 flowchart TD
-  id1001([db-relation-joined Hook])
+  hook_fired([db-relation-joined Hook])
 ```
 
 #### db And db-admin Relation Changed Hook
@@ -218,7 +222,7 @@ TODO
 
 ```mermaid
 flowchart TD
-  id1001([db-relation-changed Hook])
+  hook_fired([db-relation-changed Hook])
 ```
 
 #### db And db-admin Relation Departed Hook
@@ -229,7 +233,7 @@ TODO
 
 ```mermaid
 flowchart TD
-  id1001([db-relation-departed Hook])
+  hook_fired([db-relation-departed Hook])
 ```
 
 #### db And db-admin Relation Broken Hook
@@ -240,5 +244,5 @@ TODO
 
 ```mermaid
 flowchart TD
-  id1001([db-relation-Broken Hook])
+  hook_fired([db-relation-Broken Hook])
 ```
