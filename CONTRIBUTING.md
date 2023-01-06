@@ -96,8 +96,8 @@ flowchart TD
   start([pgbouncer-pebble-ready Hook]) --> is_cfg{Is pgbouncer\nconfig available?}
   is_cfg -- no --> defer>defer]
   is_cfg -- yes --> gen_cfg[Generate pebble config\nand start service]
-  gen_cfg --> id205[Verify pgbouncer is\nrunning, and set charm\n status accordingly]
-  is_cfg --> rtn((return))
+  gen_cfg --> verify[Verify pgbouncer is\nrunning, and set charm\n status accordingly]
+  verify --> rtn((return))
 ```
 
 #### Config Changed Hook
