@@ -78,26 +78,26 @@ TODO:
 
 ```mermaid
 flowchart TD
-  start([start Hook]) --> is_container{Is container\navailable?}
-  is_container -- no --> defer>defer]
-  is_container -- yes --> is_cfg{Is pgbouncer config\navailable in container or\npeer databag?}
-  is_cfg -- no --> is_leader{Is the current unit Leader?}
-  is_cfg -- yes --> render_cfg[render config, update\nrelations if available]
-  is_leader -- no --> defer_wait>defer:\nwait for leader unit to generate\nconfig and upload to peer databag]
-  is_leader -- yes --> gen_cfg[generate new config]
+  start([start Hook]) --> is_container{ Is container\navailable? }
+  is_container -- no --> defer> defer ]
+  is_container -- yes --> is_cfg{ Is pgbouncer config\navailable in container or\npeer databag? }
+  is_cfg -- no --> is_leader{ Is the current unit Leader? }
+  is_cfg -- yes --> render_cfg[ render config, update\nrelations if available ]
+  is_leader -- no --> defer_wait> defer:\nwait for leader unit to generate\nconfig and upload to peer databag ]
+  is_leader -- yes --> gen_cfg[ generate new config ]
   gen_cfg --> render_cfg
-  render_cfg --> rtn((return))
+  render_cfg --> rtn(( return ))
 ```
 
 #### PgBouncer Pebble Ready Hook
 
 ```mermaid
 flowchart TD
-  id201([pgbouncer-pebble-ready Hook]) --> id202{Is pgbouncer\nconfig available?}
-  id202 -- no --> id203>defer]
-  id202 -- yes --> id204[Generate pebble config\nand start service]
-  id204 --> id205[Verify pgbouncer is\nrunning, and set charm\n status accordingly]
-  id205 --> rtn((return))
+  start([pgbouncer-pebble-ready Hook]) --> is_cfg{Is pgbouncer\nconfig available?}
+  is_cfg -- no --> defer>defer]
+  is_cfg -- yes --> gen_cfg[Generate pebble config\nand start service]
+  gen_cfg --> id205[Verify pgbouncer is\nrunning, and set charm\n status accordingly]
+  is_cfg --> rtn((return))
 ```
 
 #### Config Changed Hook
