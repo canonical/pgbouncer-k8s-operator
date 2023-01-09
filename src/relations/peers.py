@@ -212,10 +212,20 @@ class Peers(Object):
     def _on_leader_elected(self, _):
         self._update_connection()
 
+    def leader_removed(self):
+        """If leader is removed, remove leader address key.
+
+        If a leader address key is available but invalid, then the charm is going to route data to
+        non-existent units. Therefore, in the on-stop hook there's a check for leadership. If the
+        leader unit is stopping, we run this function and remove the leader unit from the databag.
+        Once a new leader unit is elected, we'll run _update_connection and add this data back in.
+        """
+        self.app_databag[LEADER_ADDRESS_KEY] = ""
+
     def _update_connection(self):
-        self.charm.update_client_connection_info()
         if self.charm.unit.is_leader():
             self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
+        self.charm.update_client_connection_info()
 
     def set_secret(self, scope: str, key: str, value: str):
         """Sets secret value.

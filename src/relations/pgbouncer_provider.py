@@ -159,8 +159,10 @@ class PgBouncerProvider(Object):
             # leader-departed events, we still have an accessible endpoint. Leadership is
             # irrelevant to pgbouncer, so having a fake leader doesn't cause any real problems.
             # TODO this may no longer be necessary.
+            hostnames = set(self.charm.peers.unit_hostnames)
+            hostnames.discard(self.charm.leader_hostname)
             if self.charm.unit.is_leader() and (
-                random_hostname := self.charm.peers.unit_hostnames.pop(0, None) is not None
+                random_hostname := hostnames.pop(0, None) is not None
             ):
                 self.database_provides.set_endpoints(
                     event.relation.id,
@@ -203,9 +205,13 @@ class PgBouncerProvider(Object):
         self.charm.unit.status = MaintenanceStatus(
             f"Updating {self.relation_name} connection information"
         )
+        if not (hostname := self.charm.leader_hostname):
+            # If there's temporarily no leader unit (such as after the leader has been removed, but
+            # before leader_elected), then we select a random unit to be the leader endpoint.
+            hostname = self.charm.peers.units_hostnames.pop(0)
         self.database_provides.set_endpoints(
             relation.id,
-            f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}",
+            f"{hostname}:{self.charm.config['listen_port']}",
         )
 
         # Update the read-only endpoint.

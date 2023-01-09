@@ -193,6 +193,14 @@ class PgBouncerK8sCharm(CharmBase):
         container.autostart()
         self.check_pgb_running()
 
+    def _on_stop(self, _) -> None:
+        """Stop hook.
+
+        Currently only adds a flag to tell other units if the leader has not been added.
+        """
+        if self.unit.is_leader():
+            self.peers.leader_removed()
+
     def reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
 
