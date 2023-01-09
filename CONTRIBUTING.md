@@ -226,7 +226,7 @@ flowchart TD
 
 #### db And db-admin Relation Joined Hook
 
-`db` and `db-admin` relations share the same logic. `db` has been used in this documentation.
+`db` and `db-admin` relations share the same logic. `db` has been used in this documentation, but they're interchangeable.
 
 TODO
 
@@ -237,7 +237,7 @@ flowchart TD
 
 #### db And db-admin Relation Changed Hook
 
-`db` and `db-admin` relations share the same logic. `db` has been used in this documentation.
+`db` and `db-admin` relations share the same logic. `db` has been used in this documentation, but they're interchangeable.
 
 TODO
 
@@ -248,7 +248,7 @@ flowchart TD
 
 #### db And db-admin Relation Departed Hook
 
-`db` and `db-admin` relations share the same logic. `db` has been used in this documentation.
+`db` and `db-admin` relations share the same logic. `db` has been used in this documentation, but they're interchangeable.
 
 TODO
 
@@ -259,7 +259,7 @@ flowchart TD
 
 #### db And db-admin Relation Broken Hook
 
-`db` and `db-admin` relations share the same logic. `db` has been used in this documentation.
+`db` and `db-admin` relations share the same logic. `db` has been used in this documentation, but they're interchangeable.
 
 TODO
 
