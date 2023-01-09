@@ -156,25 +156,27 @@ class PgBouncerProvider(Object):
     def _on_relation_departed(self, event: RelationDepartedEvent) -> None:
         """Check if this relation is being removed, and update the peer databag accordingly."""
         self.update_connection_info(event.relation)
-        if event.departing_unit == self.charm.unit:
-            logger.info(self._depart_flag(event.relation))
-            self.charm.peers.unit_databag.update({self._depart_flag(event.relation): "true"})
+        logger.error(event.departing_unit)
+        logger.error(self.charm.unit)
+        # if event.departing_unit == self.charm.unit:
+        #     logger.info(self._depart_flag(event.relation))
+        #     self.charm.peers.unit_databag.update({self._depart_flag(event.relation): "true"})
 
-            # If the leader is the departing unit, set the endpoint to a random unit so on
-            # leader-departed events, we still have an accessible endpoint. Leadership is
-            # irrelevant to pgbouncer, so having a fake leader doesn't cause any real problems.
-            if self.charm.unit.is_leader():
-                hostnames = set(self.charm.peers.unit_hostnames)
-                hostnames.discard(self.charm.leader_hostname)
-                random_hostname = hostnames.pop(0, None)
-                logger.info(
-                    "leader is being removed - temporarily setting endpoint to random replica"
-                )
-                logger.info(random_hostname)
-                self.database_provides.set_endpoints(
-                    event.relation.id,
-                    f"{random_hostname}:{self.charm.config['listen_port']}",
-                )
+        #     # If the leader is the departing unit, set the endpoint to a random unit so on
+        #     # leader-departed events, we still have an accessible endpoint. Leadership is
+        #     # irrelevant to pgbouncer, so having a fake leader doesn't cause any real problems.
+        #     if self.charm.unit.is_leader():
+        #         hostnames = set(self.charm.peers.unit_hostnames)
+        #         hostnames.discard(self.charm.leader_hostname)
+        #         random_hostname = hostnames.pop(0, None)
+        #         logger.info(
+        #             "leader is being removed - temporarily setting endpoint to random replica"
+        #         )
+        #         logger.info(random_hostname)
+        #         self.database_provides.set_endpoints(
+        #             event.relation.id,
+        #             f"{random_hostname}:{self.charm.config['listen_port']}",
+        #         )
 
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
         """Remove the user created for this relation, and revoke connection permissions."""
