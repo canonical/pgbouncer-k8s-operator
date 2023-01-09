@@ -122,10 +122,10 @@ class Peers(Object):
 
     @property
     def units_hostnames(self) -> Set[str]:
-        """Fetch current list of peers hostnames.
+        """Fetch current set of peers hostnames.
 
         Returns:
-            A list of peers addresses (strings).
+            A set of peers addresses (strings).
         """
         units_hostnames = {self._get_unit_hostname(unit) for unit in self.relation.units}
         units_hostnames.discard(None)

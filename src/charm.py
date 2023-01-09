@@ -243,15 +243,15 @@ class PgBouncerK8sCharm(CharmBase):
             logger.error(pgb_container_unavailable)
             return False
 
-        pgb_service_status = pgb_container.get_services(PGB).get(PGB).current
-        if pgb_service_status == ServiceStatus.ACTIVE:
-            self.unit.status = ActiveStatus()
-            return True
-        else:
-            pgb_not_running = "PgBouncer not running"
+        service_status = pgb_container.get_services(PGB).get(PGB).current
+        if service_status != ServiceStatus.ACTIVE:
+            pgb_not_running = f"PgBouncer not running: service status = {service_status}"
             self.unit.status = BlockedStatus(pgb_not_running)
             logger.error(pgb_not_running)
             return False
+
+        self.unit.status = ActiveStatus()
+        return True
 
     # =================
     #  File Management

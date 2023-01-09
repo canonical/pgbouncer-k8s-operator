@@ -162,12 +162,14 @@ class PgBouncerProvider(Object):
             # If the leader is the departing unit, set the endpoint to a random unit so on
             # leader-departed events, we still have an accessible endpoint. Leadership is
             # irrelevant to pgbouncer, so having a fake leader doesn't cause any real problems.
-            # TODO this may no longer be necessary.
-            hostnames = set(self.charm.peers.unit_hostnames)
-            hostnames.discard(self.charm.leader_hostname)
-            if self.charm.unit.is_leader() and (
-                random_hostname := hostnames.pop(0, None) is not None
-            ):
+            if self.charm.unit.is_leader():
+                hostnames = set(self.charm.peers.unit_hostnames)
+                hostnames.discard(self.charm.leader_hostname)
+                random_hostname = hostnames.pop(0, None)
+                logger.info(
+                    "leader is being removed - temporarily setting endpoint to random replica"
+                )
+                logger.info(random_hostname)
                 self.database_provides.set_endpoints(
                     event.relation.id,
                     f"{random_hostname}:{self.charm.config['listen_port']}",
@@ -178,10 +180,6 @@ class PgBouncerProvider(Object):
         self.update_connection_info(event.relation)
         if not self._check_backend() or not self.charm.unit.is_leader():
             return
-
-        # If the leader is being removed from the relation, we need to unset its endpoint so no
-        # further connections are attempted.
-        self.database_provides.set_endpoints(event.relation.id, "")
 
         depart_flag = self._depart_flag(event.relation)
         if self._unit_departing(event.relation):
@@ -213,6 +211,7 @@ class PgBouncerProvider(Object):
         self.charm.unit.status = MaintenanceStatus(
             f"Updating {self.relation_name} connection information"
         )
+
         if not (hostname := self.charm.leader_hostname) or (
             self.charm.unit.is_leader() and self._unit_departing(relation)
         ):
