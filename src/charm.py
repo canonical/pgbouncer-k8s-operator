@@ -43,6 +43,7 @@ class PgBouncerK8sCharm(CharmBase):
         super().__init__(*args)
 
         self.framework.observe(self.on.start, self._on_start)
+        self.framework.observe(self.on.stop, self._on_stop)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
         self.framework.observe(self.on.update_status, self._on_update_status)
@@ -196,10 +197,13 @@ class PgBouncerK8sCharm(CharmBase):
     def _on_stop(self, _) -> None:
         """Stop hook.
 
-        Currently only adds a flag to tell other units if the leader has not been added.
+        Removes leader unit hostname from peer databag, to prevent routing traffic to a
+        non-existent leader.
         """
         if self.unit.is_leader():
             self.peers.leader_removed()
+
+        self.update_client_connection_info()
 
     def reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
