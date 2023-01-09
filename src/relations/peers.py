@@ -187,7 +187,7 @@ class Peers(Object):
                 return
 
             self.update_cfg(cfg)
-            self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
+            self.update_leader()
             return
 
         if cfg := self.get_cfg():
@@ -212,7 +212,7 @@ class Peers(Object):
     def _on_leader_elected(self, _):
         self._update_connection()
 
-    def leader_removed(self):
+    def unset_leader(self):
         """If leader is removed, remove leader address key.
 
         If a leader address key is available but invalid, then the charm is going to route data to
@@ -223,11 +223,12 @@ class Peers(Object):
         self.app_databag[LEADER_ADDRESS_KEY] = ""
 
     def update_leader(self):
-        """Updates leader information in peer databag."""
+        """Updates leader hostname in peer databag to match this unit if it's the leader."""
         if self.charm.unit.is_leader():
             self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
 
     def _update_connection(self):
+        """Updates connection information in this relation and all client relations."""
         self.update_leader()
         self.charm.update_client_connection_info()
 

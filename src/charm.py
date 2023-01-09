@@ -203,7 +203,7 @@ class PgBouncerK8sCharm(CharmBase):
         non-existent leader.
         """
         if self.unit.is_leader():
-            self.peers.leader_removed()
+            self.peers.unset_leader()
 
         self.update_client_connection_info()
 
