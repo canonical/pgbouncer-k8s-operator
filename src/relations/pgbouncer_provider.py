@@ -93,6 +93,12 @@ class PgBouncerProvider(Object):
             charm.on[self.relation_name].relation_broken, self._on_relation_broken
         )
 
+    def _depart_flag(self, relation):
+        return f"{self.relation_name}_{relation.id}_departing"
+
+    def _unit_departing(self, relation):
+        return self.charm.peers.unit_databag.get(self._depart_flag(relation), None) == "true"
+
     def _on_database_requested(self, event: DatabaseRequestedEvent) -> None:
         """Handle the client relation-requested event.
 
@@ -151,9 +157,7 @@ class PgBouncerProvider(Object):
         """Check if this relation is being removed, and update the peer databag accordingly."""
         self.update_connection_info(event.relation)
         if event.departing_unit == self.charm.unit:
-            self.charm.peers.unit_databag.update(
-                {f"{self.relation_name}_{event.relation.id}_departing": "true"}
-            )
+            self.charm.peers.unit_databag.update({self._depart_flag(event.relation): "true"})
 
             # If the leader is the departing unit, set the endpoint to a random unit so on
             # leader-departed events, we still have an accessible endpoint. Leadership is
@@ -179,8 +183,8 @@ class PgBouncerProvider(Object):
         # further connections are attempted.
         self.database_provides.set_endpoints(event.relation.id, "")
 
-        depart_flag = f"{self.relation_name}_{event.relation.id}_departing"
-        if self.charm.peers.unit_databag.get(depart_flag, None) == "true":
+        depart_flag = self._depart_flag(event.relation)
+        if self._unit_departing(event.relation):
             # This unit is being removed, so don't update the relation.
             self.charm.peers.unit_databag.pop(depart_flag, None)
             return
@@ -209,14 +213,22 @@ class PgBouncerProvider(Object):
         self.charm.unit.status = MaintenanceStatus(
             f"Updating {self.relation_name} connection information"
         )
-        if not (hostname := self.charm.leader_hostname):
+        if not (hostname := self.charm.leader_hostname) or (
+            self.charm.unit.is_leader() and self._unit_departing(relation)
+        ):
             # If there's temporarily no leader unit (such as after the leader has been removed, but
             # before leader_elected), then we select a random unit to be the leader endpoint.
-            hostname = self.charm.peers.units_hostnames.pop(0)
-        self.database_provides.set_endpoints(
-            relation.id,
-            f"{hostname}:{self.charm.config['listen_port']}",
-        )
+            hostnames = self.charm.peers.units_hostnames
+            if self._unit_departing(relation):
+                hostnames.discard(self.charm.unit_pod_hostname)
+            hostname = hostnames.pop(0, None)
+        if hostname is not None:
+            endpoint = f"{hostname}:{self.charm.config['listen_port']}"
+        else:
+            # No hostname is available, so unset endpoint. This should only happen if we're
+            # scaling to 0.
+            endpoint = ""
+        self.database_provides.set_endpoints(relation.id, endpoint)
 
         # Update the read-only endpoint.
         self.update_read_only_endpoints()
