@@ -175,6 +175,10 @@ class PgBouncerProvider(Object):
         if not self._check_backend() or not self.charm.unit.is_leader():
             return
 
+        # If the leader is being removed from the relation, we need to unset its endpoint so no
+        # further connections are attempted.
+        self.database_provides.set_endpoints(event.relation.id, "")
+
         depart_flag = f"{self.relation_name}_{event.relation.id}_departing"
         if self.charm.peers.unit_databag.get(depart_flag, None) == "true":
             # This unit is being removed, so don't update the relation.
