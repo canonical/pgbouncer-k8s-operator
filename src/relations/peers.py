@@ -222,9 +222,13 @@ class Peers(Object):
         """
         self.app_databag[LEADER_ADDRESS_KEY] = ""
 
-    def _update_connection(self):
+    def update_leader(self):
+        """Updates leader information in peer databag."""
         if self.charm.unit.is_leader():
             self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
+
+    def _update_connection(self):
+        self.update_leader()
         self.charm.update_client_connection_info()
 
     def set_secret(self, scope: str, key: str, value: str):

@@ -157,24 +157,20 @@ class PgBouncerProvider(Object):
         """Check if this relation is being removed, and update the peer databag accordingly."""
         self.update_connection_info(event.relation)
         if event.departing_unit == self.charm.unit:
+            logger.info(self._depart_flag(event.relation))
             self.charm.peers.unit_databag.update({self._depart_flag(event.relation): "true"})
 
             # If the leader is the departing unit, set the endpoint to a random unit so on
             # leader-departed events, we still have an accessible endpoint. Leadership is
             # irrelevant to pgbouncer, so having a fake leader doesn't cause any real problems.
-            hostnames = set(self.charm.peers.unit_hostnames)
-            hostnames.discard(self.charm.leader_hostname)
-            if self.charm.unit.is_leader() and (
-                random_hostname := hostnames.pop(0, None) is not None
-            ):
-                # if self.charm.unit.is_leader():
-                #     hostnames = set(self.charm.peers.unit_hostnames)
-                #     hostnames.discard(self.charm.leader_hostname)
-                #     random_hostname = hostnames.pop(0, None)
-                #     logger.info(
-                #         "leader is being removed-temporarily setting endpoint to random replica"
-                #     )
-                #     logger.info(random_hostname)
+            if self.charm.unit.is_leader():
+                hostnames = set(self.charm.peers.unit_hostnames)
+                hostnames.discard(self.charm.leader_hostname)
+                random_hostname = hostnames.pop(0, None)
+                logger.info(
+                    "leader is being removed - temporarily setting endpoint to random replica"
+                )
+                logger.info(random_hostname)
                 self.database_provides.set_endpoints(
                     event.relation.id,
                     f"{random_hostname}:{self.charm.config['listen_port']}",
@@ -186,14 +182,9 @@ class PgBouncerProvider(Object):
         if not self._check_backend() or not self.charm.unit.is_leader():
             return
 
-        # If the leader is being removed from the relation, we need to unset its endpoint so no
-        # further connections are attempted.
-        self.database_provides.set_endpoints(event.relation.id, "")
-
-        depart_flag = self._depart_flag(event.relation)
         if self._unit_departing(event.relation):
             # This unit is being removed, so don't update the relation.
-            self.charm.peers.unit_databag.pop(depart_flag, None)
+            self.charm.peers.unit_databag.pop(self._depart_flag(event.relation), None)
             return
 
         cfg = self.charm.read_pgb_config()
@@ -230,7 +221,7 @@ class PgBouncerProvider(Object):
             if self._unit_departing(relation):
                 hostnames.discard(self.charm.unit_pod_hostname)
             hostname = hostnames.pop(0, None)
-        if hostname is not None:
+        if hostname:
             endpoint = f"{hostname}:{self.charm.config['listen_port']}"
         else:
             # No hostname is available, so unset endpoint. This should only happen if we're

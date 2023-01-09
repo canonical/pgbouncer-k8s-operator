@@ -169,6 +169,8 @@ class PgBouncerK8sCharm(CharmBase):
 
         self.check_pgb_running()
 
+        self.peers.update_leader()
+
         # Update relation connection information. This is necessary because we don't receive any
         # information when the leader is removed, but we still need to have up-to-date connection
         # information in all the relation databags.
