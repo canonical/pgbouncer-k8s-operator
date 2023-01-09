@@ -123,6 +123,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         # Create an updated pebble layer for the pgbouncer container, and apply it if there are
         # any changes.
+        # TODO this doesn't serve a purpose anymore - remove
         container = self.unit.get_container(PGB)
         layer = self._pgbouncer_layer()
         services = container.get_plan().to_dict().get("services", {})
@@ -166,6 +167,11 @@ class PgBouncerK8sCharm(CharmBase):
             self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
 
         self.check_pgb_running()
+
+        # Update relation connection information. This is necessary because we don't receive any
+        # information when the leader is removed, but we still need to have up-to-date connection
+        # information in all the relation databags.
+        self.update_client_connection_info()
 
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Define and start pgbouncer workload."""
