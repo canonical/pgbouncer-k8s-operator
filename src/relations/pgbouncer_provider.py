@@ -205,28 +205,15 @@ class PgBouncerProvider(Object):
             )
             raise
 
-    def update_connection_info(self, relation):
+    def update_connection_info(self, relation, leader_hostname=None):
         """Updates client-facing relation information."""
         # Set the read/write endpoint.
         self.charm.unit.status = MaintenanceStatus(
             f"Updating {self.relation_name} relation connection information"
         )
-
-        if not (hostname := self.charm.leader_hostname) or (
-            self.charm.unit.is_leader() and self._unit_departing(relation)
-        ):
-            # If there's temporarily no leader unit (such as after the leader has been removed, but
-            # before leader_elected), then we select a random unit to be the leader endpoint.
-            hostnames = self.charm.peers.units_hostnames
-            if self._unit_departing(relation):
-                hostnames.discard(self.charm.unit_pod_hostname)
-            hostname = hostnames.pop(0, None)
-        if hostname:
-            endpoint = f"{hostname}:{self.charm.config['listen_port']}"
-        else:
-            # No hostname is available, so unset endpoint. This should only happen if we're
-            # scaling to 0.
-            endpoint = ""
+        if not leader_hostname:
+            leader_hostname = self.charm.leader_hostname
+        endpoint = f"{leader_hostname}:{self.charm.config['listen_port']}"
         self.database_provides.set_endpoints(relation.id, endpoint)
 
         self.update_read_only_endpoints()

@@ -372,11 +372,15 @@ class PgBouncerK8sCharm(CharmBase):
     #  Relation Utilities
     # =====================
 
-    def update_client_connection_info(self, port: Optional[str] = None):
+    def update_client_connection_info(
+        self, port: Optional[str] = None, leader_hostname: Optional[str] = None
+    ):
         """Update connection info in client relations."""
         # Skip updates if backend.postgres doesn't exist yet.
         if not self.backend.postgres:
             return
+        # if not self.backend.postgres.ready:
+        #     return
 
         if not port:
             port = self.config["listen_port"]
@@ -388,7 +392,7 @@ class PgBouncerK8sCharm(CharmBase):
             self.legacy_db_admin_relation.update_connection_info(relation, port)
 
         for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
-            self.client_relation.update_connection_info(relation)
+            self.client_relation.update_connection_info(relation, leader_hostname)
 
         # TODO consider updating charm status here
 

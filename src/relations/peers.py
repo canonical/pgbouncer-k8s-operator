@@ -206,11 +206,24 @@ class Peers(Object):
                 )
                 event.defer()
 
-    def _on_departed(self, _):
-        self._update_connection()
+    def _on_departed(self, event):
+        random_hostname = None
+        if event.departing_unit == self.charm.unit and self.charm.unit.is_leader():
+            # If the leader is the departing unit, set leader endpoint to a random unit so on
+            # when the leader departs, we still have an accessible endpoint. Leadership is
+            # irrelevant to pgbouncer, so having a fake leader doesn't cause any real problems.
+            hostnames = set(self.charm.peers.unit_hostnames)
+            hostnames.discard(self.charm.leader_hostname)
+            random_hostname = hostnames.pop(0, None)
+            logger.info("leader is being removed - temporarily setting endpoint to random replica")
+            self.app_databag[LEADER_ADDRESS_KEY] = random_hostname
+        self.charm.update_client_connection_info(random_hostname)
 
     def _on_leader_elected(self, _):
-        self._update_connection()
+        if self.charm.unit.is_leader():
+            self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
+
+        self.charm.update_client_connection_info()
 
     def unset_leader(self):
         """If leader is removed, remove leader address key.
@@ -226,11 +239,6 @@ class Peers(Object):
         """Updates leader hostname in peer databag to match this unit if it's the leader."""
         if self.charm.unit.is_leader():
             self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
-
-    def _update_connection(self):
-        """Updates connection information in this relation and all client relations."""
-        self.update_leader()
-        self.charm.update_client_connection_info()
 
     def set_secret(self, scope: str, key: str, value: str):
         """Sets secret value.
