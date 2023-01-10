@@ -208,6 +208,7 @@ class Peers(Object):
 
     def _on_departed(self, event):
         random_hostname = None
+        logger.info("running peer on-departed")
         if event.departing_unit == self.charm.unit and self.charm.unit.is_leader():
             # If the leader is the departing unit, set leader endpoint to a random unit so on
             # when the leader departs, we still have an accessible endpoint. Leadership is
@@ -217,7 +218,7 @@ class Peers(Object):
             random_hostname = hostnames.pop(0, None)
             logger.info("leader is being removed - temporarily setting endpoint to random replica")
             self.app_databag[LEADER_ADDRESS_KEY] = random_hostname
-        self.charm.update_client_connection_info(random_hostname)
+        self.charm.update_client_connection_info(leader_hostname=random_hostname)
 
     def _on_leader_elected(self, _):
         if self.charm.unit.is_leader():
