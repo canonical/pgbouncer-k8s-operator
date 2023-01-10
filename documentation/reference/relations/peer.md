@@ -3,8 +3,7 @@
 
 These flowcharts detail the control flow of the hooks in this program. Unless otherwise stated, **a hook deferral is always followed by a return**.
 
-
-#### Peer Relation Created Hook
+### Peer Relation Created Hook
 
 file: [src/relations/peers.py](https://github.com/canonical/pgbouncer-k8s-operator/blob/main/src/relations/peers.py)
 
@@ -21,7 +20,7 @@ flowchart TD
   update_auth --> rtn2([return])
 ```
 
-#### Peer Relation Changed Hook
+### Peer Relation Changed Hook
 
 file: [src/relations/peers.py](https://github.com/canonical/pgbouncer-k8s-operator/blob/main/src/relations/peers.py)
 

@@ -6,7 +6,33 @@ These two relations are identical, except that the `db-admin` relation has total
 
 ## Expected Interface
 
-TODO
+These are the expected contents of the databags in this relation (all values are examples, generated in a running test instance):
+| category | keys | pgbouncer-k8s/0 | finos-waltz/0 |
+|---|---|---|---|
+| metadata         |        endpoint | 'db'                                   | 'db'          |
+|                  |          leader | True                                   | True          |
+| application data | allowed-subnets | 10.152.183.122/32                      |               |
+|                  |   allowed-units | pgbouncer-k8s/0                        |               |
+|                  |        database | waltz                                  | waltz         |
+|                  |            host | pgbouncer-k8s-0.pgbouncer-k8s-op…      |               |
+|                  |          master | host=pgbouncer-k8s-0.pgbouncer-k… dbname=waltz port=6432 user=relation_3  password=BjWDKjvZyClvTl4d5VDOK3mH fallback_application_name=finos-waltz  |               |
+|                  |        password | BjWDKjvZyClvTl4d5VDOK3mH               |               |
+|                  |            port | 6432                                   |               |
+|                  |        standbys | host=pgbouncer-k8s-0.pgbouncer-k… dbname=waltz port=6432 user=relation_3  password=BjWDKjvZyClvTl4d5VDOK3mH fallback_application_name=finos-waltz  |               |
+|                  |           state | master                                 |               |
+|                  |            user | relation_3                             |               |
+|                  |         version | 12.11                                  |               |
+| unit data        | allowed-subnets | 10.152.183.122/32                      |               |
+|                  |   allowed-units | pgbouncer-k8s/0                        |               |
+|                  |        database | waltz                                  | waltz         |
+|                  |            host | pgbouncer-k8s-0.pgbouncer-k8s-op…      |               |
+|                  |          master | host=pgbouncer-k8s-0.pgbouncer-k… dbname=waltz port=6432 user=relation_3 password=BjWDKjvZyClvTl4d5VDOK3mH fallback_application_name=finos-waltz  |               |
+|                  |        password | BjWDKjvZyClvTl4d5VDOK3mH               |               |
+|                  |            port | 6432                                   |               |
+|                  |        standbys | host=pgbouncer-k8s-0.pgbouncer-k…  dbname=waltz port=6432 user=relation_3  password=BjWDKjvZyClvTl4d5VDOK3mH fallback_application_name=finos-waltz  |               |
+|                  |           state | master                                 |               |
+|                  |            user | relation_3                             |               |
+|                  |         version | 12.11                                  |               |
 
 ## Hook Handler Lifecycle Flowcharts
 
