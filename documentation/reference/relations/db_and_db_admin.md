@@ -64,27 +64,40 @@ flowchart TD
 
 ### db And db-admin Relation Changed Hook
 
-TODO
-
 ```mermaid
 flowchart TD
-  hook_fired([db-relation-changed Hook])
+  hook_fired([db-relation-changed Hook]) --> is_backend_ready{Is backend\ndatabase ready?}
+  is_backend_ready -- no --> defer>defer]
+  is_backend_ready -- yes --> is_initialised{Check databag to\nsee if this relation\nis initialised}
+  is_initialised -- no --> defer2>defer]
+  is_initialised -- yes --> update_connection[Update\nconnection\ninformation]
+  update_connection --> update_pg[Update postgres\nendpoints in\npgb config]
+  update_pg --> update_databags[Update relation\ndatabags]
+  update_databags --> rtn([return])
 ```
 
 ### db And db-admin Relation Departed Hook
 
-TODO
-
 ```mermaid
 flowchart TD
-  hook_fired([db-relation-departed Hook])
+  hook_fired([db-relation-departed Hook]) --> is_this_unit_departing{Is this unit the\ndeparting unit?}
+  is_this_unit_departing -- yes --> tell_peers[update peer unit databag to tell\npeers this unit is departing]
+  tell_peers --> rtn([return])
+  is_this_unit_departing -- no --> update_databags[Update relation databags\n with relevant allowed units]
+  update_databags --> rtn
 ```
 
 ### db And db-admin Relation Broken Hook
 
-TODO
-
 ```mermaid
 flowchart TD
-  hook_fired([db-relation-Broken Hook])
+  hook_fired([db-relation-Broken Hook]) --> is_departing{Is this unit\n departing?}
+  is_departing -- yes --> rtn([return])
+  is_departing -- no --> is_ready{Is this relation\n initialised, and is the\n backend ready?}
+  is_ready -- no --> defer>defer]
+  is_ready -- yes --> can_remove_db{Is this relation the\nlast one still using\nthis database?}
+  can_remove_db -- yes --> remove_db[Remove database\n from config and\nremove auth function]
+  remove_db --> remove_user
+  can_remove_db -- no --> remove_user[Remove user\nfor this relation]
+  remove_user --> rtn2([return])
 ```
