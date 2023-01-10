@@ -1,10 +1,10 @@
 
-## Hook Handler Lifecycle Flowcharts
+## Hook Handler Flowcharts
 
 These flowcharts detail the control flow of the hooks in this program. Unless otherwise stated, **a hook deferral is always followed by a return**.
 
 
-#### Backend Database Created Hook
+### Backend Database Created Hook
 
 file: [src/relations/backend_database.py](https://github.com/canonical/pgbouncer-k8s-operator/blob/main/src/relations/backend_database.py)
 
@@ -24,7 +24,7 @@ flowchart TD
   update_status --> rtn2([return])
 ```
 
-#### Backend Database Departed Hook
+### Backend Database Departed Hook
 
 file: [src/relations/backend_database.py](https://github.com/canonical/pgbouncer-k8s-operator/blob/main/src/relations/backend_database.py)
 
@@ -42,7 +42,7 @@ flowchart TD
   remove_auth --> rtn4([return])
 ```
 
-#### Backend Database Broken Hook
+### Backend Database Broken Hook
 
 file: [src/relations/backend_database.py](https://github.com/canonical/pgbouncer-k8s-operator/blob/main/src/relations/backend_database.py)
 

@@ -1,10 +1,10 @@
 
-## Hook Handler Lifecycle Flowcharts
+## Hook Handler Flowcharts
 
 These flowcharts detail the control flow of the hooks in this program. Unless otherwise stated, **a hook deferral is always followed by a return**.
 
 
-#### Database Requested Hook
+### Database Requested Hook
 
 file: [src/relations/pgbouncer_provider.py](https://github.com/canonical/pgbouncer-k8s-operator/blob/main/src/relations/pgbouncer_provider.py)
 
@@ -15,7 +15,7 @@ flowchart TD
   hook_fired([database-requested Hook])
 ```
 
-#### Database Relation Departed Hook
+### Database Relation Departed Hook
 
 file: [src/relations/pgbouncer_provider.py](https://github.com/canonical/pgbouncer-k8s-operator/blob/main/src/relations/pgbouncer_provider.py)
 
@@ -27,7 +27,7 @@ flowchart TD
 ```
 
 
-#### Database Relation Broken Hook
+### Database Relation Broken Hook
 
 file: [src/relations/pgbouncer_provider.py](https://github.com/canonical/pgbouncer-k8s-operator/blob/main/src/relations/pgbouncer_provider.py)
 

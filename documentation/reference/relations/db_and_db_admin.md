@@ -34,7 +34,7 @@ These are the expected contents of the databags in this relation (all values are
 |                  |            user | relation_3                             |               |
 |                  |         version | 12.11                                  |               |
 
-## Hook Handler Lifecycle Flowcharts
+## Hook Handler Flowcharts
 
 These flowcharts detail the control flow of the hooks in this program. Unless otherwise stated, **a hook deferral is always followed by a return**.
 

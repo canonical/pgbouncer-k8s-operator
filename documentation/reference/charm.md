@@ -6,7 +6,7 @@ This file is the entrypoint for the charm, and contains functions for its basic 
 
 The following charts detail the expected flow of events for the pgbouncer k8s charm. TODO
 
-## Hook Handler Lifecycle Flowcharts
+## Hook Handler Flowcharts
 
 These flowcharts detail the control flow of the hooks in this program. Unless otherwise stated, **a hook deferral is always followed by a return**.
 
