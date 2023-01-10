@@ -65,7 +65,7 @@ from typing import Optional, Set
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, RelationChangedEvent, RelationCreatedEvent
 from ops.framework import Object
-from ops.model import Relation, Unit
+from ops.model import MaintenanceStatus, Relation, Unit
 from ops.pebble import ConnectionError
 
 from constants import PEER_RELATION_NAME
@@ -138,6 +138,13 @@ class Peers(Object):
         """Gets the hostname of the leader unit."""
         return self.app_databag.get(LEADER_ADDRESS_KEY, None)
 
+    @property
+    def leader_unit(self) -> Unit:
+        """Gets the leader unit."""
+        for unit in self.relation.units:
+            if self._get_unit_hostname(unit) == self.leader_hostname:
+                return unit
+
     def _get_unit_hostname(self, unit: Unit) -> Optional[str]:
         """Get the hostname of a specific unit."""
         # Check if host is current host.
@@ -207,34 +214,16 @@ class Peers(Object):
                 event.defer()
 
     def _on_departed(self, event):
-        random_hostname = None
-        logger.info("running peer on-departed")
-        if event.departing_unit == self.charm.unit and self.charm.unit.is_leader():
-            # If the leader is the departing unit, set leader endpoint to a random unit so on
-            # when the leader departs, we still have an accessible endpoint. Leadership is
-            # irrelevant to pgbouncer, so having a fake leader doesn't cause any real problems.
-            hostnames = set(self.charm.peers.unit_hostnames)
-            hostnames.discard(self.charm.leader_hostname)
-            random_hostname = hostnames.pop(0, None)
-            logger.info("leader is being removed - temporarily setting endpoint to random replica")
-            self.app_databag[LEADER_ADDRESS_KEY] = random_hostname
-        self.charm.update_client_connection_info(leader_hostname=random_hostname)
+        self.update_leader()
+        self.charm.update_client_connection_info()
+        if event.departing_unit == self.leader_unit:
+            self.charm.unit.status = MaintenanceStatus(
+                "Leader unit removed - waiting for leader_elected event"
+            )
 
     def _on_leader_elected(self, _):
-        if self.charm.unit.is_leader():
-            self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
-
+        self.update_leader()
         self.charm.update_client_connection_info()
-
-    def unset_leader(self):
-        """If leader is removed, remove leader address key.
-
-        If a leader address key is available but invalid, then the charm is going to route data to
-        non-existent units. Therefore, in the on-stop hook there's a check for leadership. If the
-        leader unit is stopping, we run this function and remove the leader unit from the databag.
-        Once a new leader unit is elected, we'll run _update_connection and add this data back in.
-        """
-        self.app_databag[LEADER_ADDRESS_KEY] = ""
 
     def update_leader(self):
         """Updates leader hostname in peer databag to match this unit if it's the leader."""

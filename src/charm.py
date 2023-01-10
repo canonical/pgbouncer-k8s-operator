@@ -43,7 +43,6 @@ class PgBouncerK8sCharm(CharmBase):
         super().__init__(*args)
 
         self.framework.observe(self.on.start, self._on_start)
-        self.framework.observe(self.on.stop, self._on_stop)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
         self.framework.observe(self.on.update_status, self._on_update_status)
@@ -195,17 +194,6 @@ class PgBouncerK8sCharm(CharmBase):
         container.add_layer(PGB, pebble_layer, combine=True)
         container.autostart()
         self.check_pgb_running()
-
-    def _on_stop(self, _) -> None:
-        """Stop hook.
-
-        Removes leader unit hostname from peer databag, to prevent routing traffic to a
-        non-existent leader.
-        """
-        if self.unit.is_leader():
-            self.peers.unset_leader()
-
-        self.update_client_connection_info()
 
     def reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
@@ -372,9 +360,7 @@ class PgBouncerK8sCharm(CharmBase):
     #  Relation Utilities
     # =====================
 
-    def update_client_connection_info(
-        self, port: Optional[str] = None, leader_hostname: Optional[str] = None
-    ):
+    def update_client_connection_info(self, port: Optional[str] = None):
         """Update connection info in client relations."""
         # Skip updates if backend.postgres doesn't exist yet.
         if not self.backend.postgres:
@@ -392,7 +378,7 @@ class PgBouncerK8sCharm(CharmBase):
             self.legacy_db_admin_relation.update_connection_info(relation, port)
 
         for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
-            self.client_relation.update_connection_info(relation, leader_hostname)
+            self.client_relation.update_connection_info(relation)
 
         # TODO consider updating charm status here
 
