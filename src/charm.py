@@ -15,7 +15,7 @@ from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, StartEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus, BlockedStatus, MaintenanceStatus, WaitingStatus
+from ops.model import ActiveStatus, BlockedStatus, WaitingStatus
 from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
 
 from constants import (
@@ -120,18 +120,16 @@ class PgBouncerK8sCharm(CharmBase):
             config["pgbouncer"]["listen_port"] = self.config["listen_port"]
 
         self.render_pgb_config(config)
-
-        # Create an updated pebble layer for the pgbouncer container, and apply it if there are
-        # any changes.
-        # TODO this doesn't serve a purpose anymore - remove
-        container = self.unit.get_container(PGB)
-        layer = self._pgbouncer_layer()
-        services = container.get_plan().to_dict().get("services", {})
-        if services != layer["services"]:
-            container.add_layer(PGB, layer, combine=True)
-            logging.info("Added layer 'pgbouncer' to pebble plan")
-
-        self.reload_pgbouncer()
+        logger.error("yep")
+        try:
+            logger.error("yepyep")
+            logger.error(self.check_pgb_running())
+            logger.error(self.unit.status)
+            if self.check_pgb_running():
+                logger.error("yepyepyep")
+                self.reload_pgbouncer()
+        except ConnectionError:
+            event.defer()
 
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
@@ -166,7 +164,8 @@ class PgBouncerK8sCharm(CharmBase):
         if self.backend.postgres is None:
             self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
 
-        self.check_pgb_running()
+        if self.check_pgb_running():
+            self.unit.status = ActiveStatus()
 
         self.peers.update_leader()
 
@@ -193,7 +192,9 @@ class PgBouncerK8sCharm(CharmBase):
         pebble_layer = self._pgbouncer_layer()
         container.add_layer(PGB, pebble_layer, combine=True)
         container.autostart()
-        self.check_pgb_running()
+
+        if self.check_pgb_running():
+            self.unit.status = ActiveStatus()
 
     def reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
@@ -208,14 +209,10 @@ class PgBouncerK8sCharm(CharmBase):
         services = pgb_container.get_services()
         if PGB not in services.keys():
             # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
-            # TODO update error handling across the charm so we aren't constantly swapping
-            # deferred hooks around
             raise ConnectionError
 
-        self.unit.status = MaintenanceStatus("Reloading Pgbouncer")
         logger.info("reloading pgbouncer application")
         pgb_container.restart(PGB)
-        self.check_pgb_running()
 
     def check_pgb_running(self):
         """Checks that pgbouncer pebble service is running, and updates status accordingly."""
@@ -240,7 +237,6 @@ class PgBouncerK8sCharm(CharmBase):
             logger.error(pgb_not_running)
             return False
 
-        self.unit.status = ActiveStatus()
         return True
 
     # =================
