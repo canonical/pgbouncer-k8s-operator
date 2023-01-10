@@ -50,7 +50,6 @@ SECONDARY_APPLICATION_FIRST_DBNAME = "secondary_application_first_database"
 SECONDARY_APPLICATION_SECOND_DBNAME = "secondary_application_second_database"
 
 
-@pytest.mark.dev
 @pytest.mark.abort_on_fail
 @pytest.mark.client_relation
 async def test_database_relation_with_charm_libraries(
@@ -201,7 +200,6 @@ async def test_database_admin_permissions(ops_test: OpsTest):
     assert "no results to fetch" in json.loads(run_create_user_query["results"])
 
 
-@pytest.mark.dev
 @pytest.mark.client_relation
 async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
     """Test that there is no read-only endpoint in a standalone cluster."""
