@@ -226,8 +226,6 @@ class DatabaseProvides(Object):
             relation_id: the identifier for a particular relation.
             connection_strings: database hosts and ports comma separated list.
         """
-        # TODO this is debug information and shouldn't be merged
-        logger.info(f"setting endpoints: {connection_strings}")
         self._update_relation_data(relation_id, {"endpoints": connection_strings})
 
     def set_read_only_endpoints(self, relation_id: int, connection_strings: str) -> None:
