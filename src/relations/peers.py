@@ -65,7 +65,7 @@ from typing import Optional, Set
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, RelationChangedEvent, RelationCreatedEvent
 from ops.framework import Object
-from ops.model import Relation, Unit
+from ops.model import MaintenanceStatus, Relation, Unit
 from ops.pebble import ConnectionError
 
 from constants import PEER_RELATION_NAME
@@ -122,10 +122,10 @@ class Peers(Object):
 
     @property
     def units_hostnames(self) -> Set[str]:
-        """Fetch current list of peers hostnames.
+        """Fetch current set of peers hostnames.
 
         Returns:
-            A list of peers addresses (strings).
+            A set of peers addresses (strings).
         """
         units_hostnames = {self._get_unit_hostname(unit) for unit in self.relation.units}
         units_hostnames.discard(None)
@@ -137,6 +137,13 @@ class Peers(Object):
     def leader_hostname(self) -> str:
         """Gets the hostname of the leader unit."""
         return self.app_databag.get(LEADER_ADDRESS_KEY, None)
+
+    @property
+    def leader_unit(self) -> Unit:
+        """Gets the leader unit."""
+        for unit in self.relation.units:
+            if self._get_unit_hostname(unit) == self.leader_hostname:
+                return unit
 
     def _get_unit_hostname(self, unit: Unit) -> Optional[str]:
         """Get the hostname of a specific unit."""
@@ -187,7 +194,7 @@ class Peers(Object):
                 return
 
             self.update_cfg(cfg)
-            self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
+            self.update_leader()
             return
 
         if cfg := self.get_cfg():
@@ -206,14 +213,20 @@ class Peers(Object):
                 )
                 event.defer()
 
-    def _on_departed(self, _):
-        self._update_connection()
+    def _on_departed(self, event):
+        self.update_leader()
+        self.charm.update_client_connection_info()
+        if event.departing_unit == self.leader_unit:
+            self.charm.unit.status = MaintenanceStatus(
+                "Leader unit removed - waiting for leader_elected event"
+            )
 
     def _on_leader_elected(self, _):
-        self._update_connection()
-
-    def _update_connection(self):
+        self.update_leader()
         self.charm.update_client_connection_info()
+
+    def update_leader(self):
+        """Updates leader hostname in peer databag to match this unit if it's the leader."""
         if self.charm.unit.is_leader():
             self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
 

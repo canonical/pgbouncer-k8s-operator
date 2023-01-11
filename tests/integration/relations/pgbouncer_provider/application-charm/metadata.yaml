@@ -22,8 +22,3 @@ requires:
     interface: postgresql_client
   second-database:
     interface: postgresql_client
-  multiple-database-clusters:
-    interface: postgresql_client
-  aliased-multiple-database-clusters:
-    interface: postgresql_client
-    limit: 2

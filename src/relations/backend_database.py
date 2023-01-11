@@ -169,9 +169,14 @@ class BackendDatabaseRequires(Object):
             # Not ready, no config
             return False
 
+        # Check we can authenticate
         if "auth_query" not in cfg["pgbouncer"].keys():
-            # Check we can authenticate
             # Not ready, backend relation not initialised
+            return False
+        try:
+            cfg = self.charm.read_auth_file()
+        except FileNotFoundError:
+            # Not ready, no auth file to authenticate our pgb user
             return False
 
         # Check we can actually connect to backend database by running a command.
