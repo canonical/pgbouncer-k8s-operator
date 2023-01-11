@@ -12,7 +12,7 @@ from charms.pgbouncer_k8s.v0 import pgb
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
-from constants import AUTH_FILE_PATH, INI_PATH, LOG_PATH
+from constants import AUTH_FILE_PATH, INI_PATH
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
@@ -94,11 +94,6 @@ async def get_cfg(ops_test: OpsTest, unit_name: str) -> pgb.PgbConfig:
     """Gets pgbouncer config from pgbouncer container."""
     cat = await cat_file_from_unit(ops_test, INI_PATH, unit_name)
     return pgb.PgbConfig(cat)
-
-
-async def get_pgb_log(ops_test: OpsTest, unit_name) -> str:
-    """Gets pgbouncer logs from pgbouncer container."""
-    return await cat_file_from_unit(ops_test, LOG_PATH, unit_name)
 
 
 async def get_userlist(ops_test: OpsTest, unit_name) -> str:
