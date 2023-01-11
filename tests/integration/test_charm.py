@@ -9,7 +9,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers.helpers import get_cfg
+from tests.integration.helpers.helpers import get_cfg, run_command_on_unit
 
 logger = logging.getLogger(__name__)
 
@@ -47,3 +47,19 @@ async def test_config_updates(ops_test: OpsTest):
         logger.info(cfg)
         logger.info(await pgbouncer_app.get_config())
         assert cfg["pgbouncer"]["listen_port"] == port
+
+
+@pytest.mark.standalone
+async def test_multiple_pebble_services(ops_test: OpsTest):
+    """Test we have the correct pebble services."""
+    unit = ops_test.model.applications[PGB].units[0]
+    core_count = await run_command_on_unit(ops_test, unit.name, "nproc --all")
+    get_services = await run_command_on_unit(ops_test, unit.name, "/charm/bin/pebble services")
+
+    services = get_services.splitlines()[1:]
+    assert len(services) == int(core_count)
+
+    for service in services:
+        service = service.split()
+        assert service[1] == "enabled"
+        assert service[2] == "active"
