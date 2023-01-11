@@ -120,13 +120,8 @@ class PgBouncerK8sCharm(CharmBase):
             config["pgbouncer"]["listen_port"] = self.config["listen_port"]
 
         self.render_pgb_config(config)
-        logger.error("yep")
         try:
-            logger.error("yepyep")
-            logger.error(self.check_pgb_running())
-            logger.error(self.unit.status)
             if self.check_pgb_running():
-                logger.error("yepyepyep")
                 self.reload_pgbouncer()
         except ConnectionError:
             event.defer()
