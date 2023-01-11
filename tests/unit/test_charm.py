@@ -33,21 +33,14 @@ class TestCharm(unittest.TestCase):
         self.assertEqual(ini, PgbConfig(DEFAULT_CONFIG).render())
 
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
-    @patch("ops.model.Container.restart")
+    @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
     @patch("ops.model.Container.make_dir")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
-    def test_on_config_changed(
-        self, _check_pgb_running, _mkdir, _restart, _update_connection_info
-    ):
+    def test_on_config_changed(self, _check_pgb_running, _mkdir, _reload, _update_connection_info):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         self.charm.on.start.emit()
         self.harness.update_config()
-
-        def s_effect():
-            self.charm.unit.status = ActiveStatus()
-
-        _check_pgb_running.side_effect = s_effect
 
         mock_cores = 1
         self.charm._cores = mock_cores
@@ -69,8 +62,7 @@ class TestCharm(unittest.TestCase):
                 "listen_port": 6464,
             }
         )
-        self.assertIsInstance(self.harness.model.unit.status, ActiveStatus)
-        _restart.assert_called()
+        _reload.assert_called()
         _update_connection_info.assert_called()
         _check_pgb_running.assert_called()
 
