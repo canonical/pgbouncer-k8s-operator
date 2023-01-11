@@ -2,10 +2,6 @@
 
 This file is the entrypoint for the charm, and contains functions for its basic operation, including its major hooks and file management. This file can be found at [src/charm.py](../../../src/charm.py).
 
-## Event Flowchart
-
-The following charts detail the expected flow of events for the pgbouncer k8s charm. TODO
-
 ## Hook Handler Flowcharts
 
 These flowcharts detail the control flow of the hooks in this program. Unless otherwise stated, **a hook deferral is always followed by a return**.
@@ -47,4 +43,39 @@ flowchart TD
   is_cfg -- yes --> match_cfg[Modify pgbouncer\nconfig to match\ncharm config]
   match_cfg --> render_cfg[Render config &\nreload pgbouncer]
   render_cfg --> rtn2([return])
+```
+
+## Event Flowchart
+
+The following charts detail the expected flow of events for the pgbouncer k8s charm. For more information on charm lifecycles, see [A Charm's Life](https://juju.is/docs/sdk/a-charms-life).
+
+TODO this is likely to be a spaghetti mess
+
+### Charm Startup
+
+Relation events can be fired at any time during startup.
+
+TODO format
+
+```mermaid
+flowchart TD
+  start([Start charm]) --> start_hook[Run start hook. \nDefers until the workload container is available, and the leader unit has generated config, which is then written to the container filesystem and shared to other units via peer databag.] 
+  start_hook --> pebble_ready[Run pgbouncer-pebble-ready hook.\nDefers until config has been written to container filesystem. Writes pebble config to pgbouncer container, which in turn starts pgbouncer services.] 
+  pebble_ready -- deferral --> start_hook
+  pebble_ready --> begin([Begin charm operation])
+  backend_database_relation_created[Backend relation can be created, but won't be initialised unil pgbouncer services are running]
+  backend_database_relation_created -- deferral --> pebble_ready
+  client_relation_created[Client relations can be created, but won't be initialised until pgbouncer services are running and backend database is initialised]
+  client_relation_created -- deferral --> pebble_ready
+  client_relation_created -- deferral --> backend_database_relation_created
+  peer_relation_created[Peer relation created by default on startup\ndefers config upload until config exists, and defers auth file upload until backend relation exists] 
+  peer_relation_created -- deferral --> start_hook
+  peer_relation_created -- deferral --> backend_database_relation_created
+```
+
+### Config updates
+
+```mermaid
+flowchart TD
+  exists([Charm is running fine])
 ```
