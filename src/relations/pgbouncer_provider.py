@@ -48,7 +48,14 @@ from charms.postgresql_k8s.v0.postgresql import (
 )
 from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
-from ops.model import Application, BlockedStatus, Relation, WaitingStatus
+from ops.model import (
+    ActiveStatus,
+    Application,
+    BlockedStatus,
+    MaintenanceStatus,
+    Relation,
+    WaitingStatus,
+)
 
 from constants import CLIENT_RELATION_NAME
 
@@ -85,6 +92,12 @@ class PgBouncerProvider(Object):
         self.framework.observe(
             charm.on[self.relation_name].relation_broken, self._on_relation_broken
         )
+
+    def _depart_flag(self, relation):
+        return f"{self.relation_name}_{relation.id}_departing"
+
+    def _unit_departing(self, relation):
+        return self.charm.peers.unit_databag.get(self._depart_flag(relation), None) == "true"
 
     def _on_database_requested(self, event: DatabaseRequestedEvent) -> None:
         """Handle the client relation-requested event.
@@ -141,22 +154,43 @@ class PgBouncerProvider(Object):
         self.update_connection_info(event.relation)
 
     def _on_relation_departed(self, event: RelationDepartedEvent) -> None:
-        """Check if this relation is being removed, and update the peer databag accordingly."""
+        """Check if this relation is being removed, and update databags accordingly.
+
+        If the leader is being removed,
+        """
         self.update_connection_info(event.relation)
+
+        # This only ever evaluates to true when the relation is being removed - on app scale-down,
+        # depart events are only sent to the other application in the relation.
         if event.departing_unit == self.charm.unit:
-            self.charm.peers.unit_databag.update(
-                {f"{self.relation_name}_{event.relation.id}_departing": "true"}
-            )
+            logger.info(self._depart_flag(event.relation))
+            self.charm.peers.unit_databag.update({self._depart_flag(event.relation): "true"})
+
+            # If the leader is the departing unit, set the endpoint to a random unit so on
+            # leader-departed events, we still have an accessible endpoint. Leadership is
+            # irrelevant to pgbouncer, so having a fake leader doesn't cause any real problems.
+            # if self.charm.unit.is_leader():
+            #     hostnames = set(self.charm.peers.unit_hostnames)
+            #     hostnames.discard(self.charm.leader_hostname)
+            #     random_hostname = hostnames.pop(0, None)
+            #     logger.info(
+            #         "leader is being removed - temporarily setting endpoint to random replica"
+            #     )
+            #     logger.info(random_hostname)
+            #     self.database_provides.set_endpoints(
+            #         event.relation.id,
+            #         f"{random_hostname}:{self.charm.config['listen_port']}",
+            #     )
 
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
         """Remove the user created for this relation, and revoke connection permissions."""
+        self.update_connection_info(event.relation)
         if not self._check_backend() or not self.charm.unit.is_leader():
             return
 
-        depart_flag = f"{self.relation_name}_{event.relation.id}_departing"
-        if self.charm.peers.unit_databag.get(depart_flag, None) == "true":
+        if self._unit_departing(event.relation):
             # This unit is being removed, so don't update the relation.
-            self.charm.peers.unit_databag.pop(depart_flag, None)
+            self.charm.peers.unit_databag.pop(self._depart_flag(event.relation), None)
             return
 
         cfg = self.charm.read_pgb_config()
@@ -180,12 +214,12 @@ class PgBouncerProvider(Object):
     def update_connection_info(self, relation):
         """Updates client-facing relation information."""
         # Set the read/write endpoint.
-        self.database_provides.set_endpoints(
-            relation.id,
-            f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}",
+        self.charm.unit.status = MaintenanceStatus(
+            f"Updating {self.relation_name} relation connection information"
         )
+        endpoint = f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}"
+        self.database_provides.set_endpoints(relation.id, endpoint)
 
-        # Update the read-only endpoint.
         self.update_read_only_endpoints()
 
         # Set the database version.
@@ -193,6 +227,8 @@ class PgBouncerProvider(Object):
             self.database_provides.set_version(
                 relation.id, self.charm.backend.postgres.get_postgresql_version()
             )
+
+        self.charm.unit.status = ActiveStatus()
 
     def update_postgres_endpoints(
         self,

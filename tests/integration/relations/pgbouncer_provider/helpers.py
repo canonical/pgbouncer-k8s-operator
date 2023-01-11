@@ -102,13 +102,21 @@ async def run_sql_on_application_charm(
     query: str,
     dbname: str,
     relation_id,
+    relation_name,
     readonly: bool = False,
     timeout=30,
 ):
     """Runs the given sql query on the given application charm."""
     client_unit = ops_test.model.units.get(unit_name)
-    params = {"dbname": dbname, "query": query, "relation-id": relation_id, "readonly": readonly}
+    params = {
+        "dbname": dbname,
+        "query": query,
+        "relation-id": relation_id,
+        "relation-name": relation_name,
+        "readonly": readonly,
+    }
     logging.info(f"running query: \n {query}")
+    logging.info(params)
     action = await client_unit.run_action("run-sql", **params)
     result = await asyncio.wait_for(action.wait(), timeout)
     logging.info(f"query results: {result.results}")
@@ -163,20 +171,29 @@ async def build_connection_string(
     return f"dbname='{database}' user='{username}' host='{ip}' password='{password}' connect_timeout=10"
 
 
-async def check_new_relation(ops_test: OpsTest, unit_name, relation_id, dbname):
-    """Smoke test to check relation is online."""
-    table_name = "quick_test"
-    smoke_query = (
+async def check_new_relation(
+    ops_test: OpsTest, unit_name, relation_name, relation_id, dbname, table_name="smoke_test"
+):
+    """Smoke test to check relation is online.
+
+    When using this check on multiple test applications connected to one database, set table_name
+    to a unique variable for each application.
+    """
+    test_data = "some data"
+    query = (
         f"DROP TABLE IF EXISTS {table_name};"
         f"CREATE TABLE {table_name}(data TEXT);"
-        f"INSERT INTO {table_name}(data) VALUES('some data');"
+        f"INSERT INTO {table_name}(data) VALUES('{test_data}');"
         f"SELECT data FROM {table_name};"
     )
-    run_update_query = await run_sql_on_application_charm(
+    run_query = await run_sql_on_application_charm(
         ops_test,
         unit_name=unit_name,
-        query=smoke_query,
+        query=query,
         dbname=dbname,
+        relation_name=relation_name,
         relation_id=relation_id,
     )
-    assert "some data" in json.loads(run_update_query["results"])[0]
+    assert (
+        test_data in json.loads(run_query["results"])[0]
+    ), f"smoke check failed. Query output: {run_query}"
