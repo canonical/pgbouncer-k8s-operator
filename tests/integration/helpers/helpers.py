@@ -12,7 +12,7 @@ from charms.pgbouncer_k8s.v0 import pgb
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
-from constants import AUTH_FILE_PATH, INI_PATH, LOG_PATH
+from constants import AUTH_FILE_PATH, INI_PATH
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
@@ -96,14 +96,29 @@ async def get_cfg(ops_test: OpsTest, unit_name: str) -> pgb.PgbConfig:
     return pgb.PgbConfig(cat)
 
 
-async def get_pgb_log(ops_test: OpsTest, unit_name) -> str:
-    """Gets pgbouncer logs from pgbouncer container."""
-    return await cat_file_from_unit(ops_test, LOG_PATH, unit_name)
-
-
 async def get_userlist(ops_test: OpsTest, unit_name) -> str:
     """Gets pgbouncer logs from pgbouncer container."""
     return await cat_file_from_unit(ops_test, AUTH_FILE_PATH, unit_name)
+
+
+async def run_command_on_unit(ops_test: OpsTest, unit_name: str, command: str) -> str:
+    """Run a command on a specific unit.
+
+    Args:
+        ops_test: The ops test framework instance
+        unit_name: The name of the unit to run the command on
+        command: The command to run
+
+    Returns:
+        the command output if it succeeds, otherwise raises an exception.
+    """
+    complete_command = f"ssh --container pgbouncer {unit_name} {command}"
+    return_code, stdout, _ = await ops_test.juju(*complete_command.split())
+    if return_code != 0:
+        raise Exception(
+            "Expected command %s to succeed instead it failed: %s", command, return_code
+        )
+    return stdout
 
 
 async def cat_file_from_unit(ops_test: OpsTest, filepath: str, unit_name: str) -> str:

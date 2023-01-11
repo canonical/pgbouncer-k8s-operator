@@ -15,7 +15,6 @@ from tests.integration.helpers.helpers import (
     get_backend_relation,
     get_backend_user_pass,
     get_cfg,
-    get_pgb_log,
     get_userlist,
     scale_application,
     wait_for_relation_joined_between,
@@ -101,7 +100,6 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
 
         cfg = await get_cfg(ops_test, f"{PGB}/0")
         logging.info(cfg.render())
-        logger.info(await get_pgb_log(ops_test, f"{PGB}/0"))
 
 
 @pytest.mark.backend

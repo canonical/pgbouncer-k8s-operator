@@ -25,6 +25,7 @@ from constants import (
     PG_GROUP,
     PG_USER,
     PGB,
+    PGB_DIR,
 )
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
@@ -54,6 +55,15 @@ class PgBouncerK8sCharm(CharmBase):
         self.legacy_db_admin_relation = DbProvides(self, admin=True)
 
         self._cores = os.cpu_count()
+        self._services = [
+            {
+                "name": f"{PGB}_{service_id}",
+                "id": service_id,
+                "dir": f"{PGB_DIR}/instance_{service_id}",
+                "ini_path": f"{PGB_DIR}/instance_{service_id}/pgbouncer.ini",
+            }
+            for service_id in range(self._cores)
+        ]
 
     # =======================
     #  Charm Lifecycle Hooks
@@ -84,6 +94,17 @@ class PgBouncerK8sCharm(CharmBase):
                 # follower units wait for the leader to define a config.
                 event.defer()
                 return
+
+        # Initialise filesystem - _push_file()'s make_dirs option sets the permissions for those
+        # dirs to root, so we build them ourselves to control permissions.
+        for service in self._services:
+            if not container.exists(service["dir"]):
+                container.make_dir(
+                    service["dir"],
+                    user=PG_USER,
+                    group=PG_USER,
+                    permissions=0o700,
+                )
 
         self.render_pgb_config(config)
 
@@ -129,25 +150,27 @@ class PgBouncerK8sCharm(CharmBase):
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
 
-        TODO auto-generate multiple pgbouncer services to make use of available cpu cores on unit.
+        Auto-generates multiple pgbouncer services to make use of available cpu cores on unit.
 
         Returns:
             A pebble configuration layer for charm services.
         """
+        pebble_services = {}
+        for service in self._services:
+            pebble_services[service["name"]] = {
+                "summary": f"pgbouncer service {service['id']}",
+                "user": PG_USER,
+                "group": PG_GROUP,
+                # -R flag reuses sockets on restart
+                "command": f"pgbouncer -R {service['ini_path']}",
+                "startup": "enabled",
+                "override": "replace",
+            }
+
         return {
             "summary": "pgbouncer layer",
             "description": "pebble config layer for pgbouncer",
-            "services": {
-                PGB: {
-                    "summary": "pgbouncer service",
-                    "user": PG_USER,
-                    "group": PG_GROUP,
-                    # -R flag reuses sockets on restart
-                    "command": f"pgbouncer -R {INI_PATH}",
-                    "startup": "enabled",
-                    "override": "replace",
-                }
-            },
+            "services": pebble_services,
         }
 
     def _on_update_status(self, _) -> None:
@@ -200,14 +223,17 @@ class PgBouncerK8sCharm(CharmBase):
         Raises:
             ops.pebble.ConnectionError if pgb service isn't accessible
         """
-        pgb_container = self.unit.get_container(PGB)
-        services = pgb_container.get_services()
-        if PGB not in services.keys():
-            # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
-            raise ConnectionError
-
         logger.info("reloading pgbouncer application")
-        pgb_container.restart(PGB)
+
+        pgb_container = self.unit.get_container(PGB)
+        pebble_services = pgb_container.get_services()
+        for service in self._services:
+            if service["name"] not in pebble_services.keys():
+                # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
+                raise ConnectionError
+            pgb_container.restart(service["name"])
+
+        self.check_pgb_running()
 
     def check_pgb_running(self):
         """Checks that pgbouncer pebble service is running, and updates status accordingly."""
@@ -218,19 +244,17 @@ class PgBouncerK8sCharm(CharmBase):
             logger.error(pgb_container_unavailable)
             return False
 
-        services = pgb_container.get_services()
-        if PGB not in services.keys():
-            # pebble_ready event hasn't fired so pgbouncer layer has not been added to pebble
-            self.unit.status = BlockedStatus(pgb_container_unavailable)
-            logger.error(pgb_container_unavailable)
-            return False
-
-        service_status = pgb_container.get_services(PGB).get(PGB).current
-        if service_status != ServiceStatus.ACTIVE:
-            pgb_not_running = f"PgBouncer not running: service status = {service_status}"
-            self.unit.status = BlockedStatus(pgb_not_running)
-            logger.error(pgb_not_running)
-            return False
+        pebble_services = pgb_container.get_services()
+        for service in self._services:
+            if service["name"] not in pebble_services.keys():
+                # pebble_ready event hasn't fired so pgbouncer layer has not been added to pebble
+                raise ConnectionError
+            pgb_service_status = pgb_container.get_services().get(service["name"]).current
+            if pgb_service_status != ServiceStatus.ACTIVE:
+                pgb_not_running = f"PgBouncer service {service['name']} not running: service status = {pgb_service_status}"
+                self.unit.status = BlockedStatus(pgb_not_running)
+                logger.error(pgb_not_running)
+                return False
 
         return True
 
@@ -325,10 +349,17 @@ class PgBouncerK8sCharm(CharmBase):
             # config doesn't exist on local filesystem, so update it.
             pass
 
-        self.push_file(INI_PATH, config.render(), 0o400)
-        logger.info("pushed new pgbouncer.ini config file to pgbouncer container")
-
         self.peers.update_cfg(config)
+
+        perm = 0o400
+        self.push_file(INI_PATH, config.render(), perm)
+        for service in self._services:
+            s_config = pgb.PgbConfig(config)
+            s_config[PGB]["unix_socket_dir"] = service["dir"]
+            s_config[PGB]["logfile"] = f"{service['dir']}/pgbouncer.log"
+            s_config[PGB]["pidfile"] = f"{service['dir']}/pgbouncer.pid"
+            self.push_file(service["ini_path"], s_config.render(), perm)
+        logger.info("pushed new pgbouncer.ini config files to pgbouncer container")
 
         if reload_pgbouncer:
             self.reload_pgbouncer()
@@ -371,8 +402,6 @@ class PgBouncerK8sCharm(CharmBase):
         for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
             self.client_relation.update_connection_info(relation)
 
-        # TODO consider updating charm status here
-
     def update_postgres_endpoints(self, reload_pgbouncer=False):
         """Update postgres endpoints in relation config values.
 
@@ -396,8 +425,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         if reload_pgbouncer:
             self.reload_pgbouncer()
-
-        # TODO consider updating charm status here
 
     @property
     def unit_pod_hostname(self, name="") -> str:

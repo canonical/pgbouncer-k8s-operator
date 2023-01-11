@@ -14,7 +14,6 @@ from tests.integration.helpers.helpers import (
     get_backend_user_pass,
     get_cfg,
     get_legacy_relation_username,
-    get_pgb_log,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
 )
@@ -163,5 +162,3 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         assert finos_user not in cfg["pgbouncer"]["admin_users"]
         assert "waltz" not in cfg["databases"].keys()
         assert "waltz_standby" not in cfg["databases"].keys()
-
-        logger.info(await get_pgb_log(ops_test, f"{PGB}/0"))
