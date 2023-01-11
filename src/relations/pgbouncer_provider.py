@@ -154,16 +154,12 @@ class PgBouncerProvider(Object):
         self.update_connection_info(event.relation)
 
     def _on_relation_departed(self, event: RelationDepartedEvent) -> None:
-        """Check if this relation is being removed, and update databags accordingly.
-
-        If the leader is being removed,
-        """
+        """Check if this relation is being removed, and update databags accordingly."""
         self.update_connection_info(event.relation)
 
         # This only ever evaluates to true when the relation is being removed - on app scale-down,
         # depart events are only sent to the other application in the relation.
         if event.departing_unit == self.charm.unit:
-            logger.info(self._depart_flag(event.relation))
             self.charm.peers.unit_databag.update({self._depart_flag(event.relation): "true"})
 
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:

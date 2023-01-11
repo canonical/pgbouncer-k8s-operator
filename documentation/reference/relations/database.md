@@ -30,6 +30,8 @@ These flowcharts detail the control flow of the hooks in this program. Unless ot
 
 ### Database Requested Hook
 
+TODO format
+
 ```mermaid
 flowchart TD
   hook_fired([database-requested Hook]) --> is_backend_ready{Is backend\ndatabase ready?}
@@ -46,13 +48,16 @@ flowchart TD
 
 ### Database Relation Departed Hook
 
-TODO
+TODO format
 
 ```mermaid
 flowchart TD
-  hook_fired([database-relation-departed Hook])
+  hook_fired([database-relation-departed Hook]) --> update_connection_info[Update connection information in relation databag]
+  update_connection_info --> is_departing{Is this unit departing from the relation during this hook?}
+  is_departing -- yes --> add_flag[Add departing flag so this unit knows that it's being removed if the relation-broken hook fires after this.]
+  is_departing -- no --> rtn([Return])
+  add_flag --> rtn
 ```
-
 
 ### Database Relation Broken Hook
 
