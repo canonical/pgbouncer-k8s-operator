@@ -21,7 +21,8 @@ class TestCharm(unittest.TestCase):
         self.harness.begin_with_initial_hooks()
         self.charm = self.harness.charm
 
-    def test_on_start(self):
+    @patch("ops.model.Container.make_dir")
+    def test_on_start(self, _mkdir):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         self.charm.on.start.emit()
@@ -33,8 +34,11 @@ class TestCharm(unittest.TestCase):
 
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
     @patch("ops.model.Container.restart")
+    @patch("ops.model.Container.make_dir")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
-    def test_on_config_changed(self, _check_pgb_running, _restart, _update_connection_info):
+    def test_on_config_changed(
+        self, _check_pgb_running, _mkdir, _restart, _update_connection_info
+    ):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         self.charm.on.start.emit()
@@ -91,7 +95,8 @@ class TestCharm(unittest.TestCase):
         layer = self.charm._pgbouncer_layer()
         assert len(layer["services"]) == self.charm._cores
 
-    def test_on_pgbouncer_pebble_ready(self):
+    @patch("ops.model.Container.make_dir")
+    def test_on_pgbouncer_pebble_ready(self, _mkdir):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         # emit on start to ensure config file render
@@ -133,8 +138,9 @@ class TestCharm(unittest.TestCase):
         read_cfg = self.charm.read_pgb_config()
         self.assertEqual(PgbConfig(read_cfg).render(), test_cfg.render())
 
+    @patch("ops.model.Container.make_dir")
     @patch("ops.model.Container.restart")
-    def test_reload_pgbouncer(self, _restart):
+    def test_reload_pgbouncer(self, _restart, _mkdir):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         # necessary hooks before we can check reloads

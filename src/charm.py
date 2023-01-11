@@ -95,6 +95,17 @@ class PgBouncerK8sCharm(CharmBase):
                 event.defer()
                 return
 
+        # Initialise filesystem - _push_file()'s make_dirs option sets the permissions for those
+        # dirs to root, so we build them ourselves to control permissions.
+        for service in self._services:
+            if not container.exists(service["dir"]):
+                container.make_dir(
+                    service["dir"],
+                    user=PG_USER,
+                    group=PG_USER,
+                    permissions=0o700,
+                )
+
         self.render_pgb_config(config)
 
         try:

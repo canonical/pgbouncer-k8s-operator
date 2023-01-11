@@ -106,6 +106,26 @@ async def get_userlist(ops_test: OpsTest, unit_name) -> str:
     return await cat_file_from_unit(ops_test, AUTH_FILE_PATH, unit_name)
 
 
+async def run_command_on_unit(ops_test: OpsTest, unit_name: str, command: str) -> str:
+    """Run a command on a specific unit.
+
+    Args:
+        ops_test: The ops test framework instance
+        unit_name: The name of the unit to run the command on
+        command: The command to run
+
+    Returns:
+        the command output if it succeeds, otherwise raises an exception.
+    """
+    complete_command = f"ssh --container pgbouncer {unit_name} {command}"
+    return_code, stdout, _ = await ops_test.juju(*complete_command.split())
+    if return_code != 0:
+        raise Exception(
+            "Expected command %s to succeed instead it failed: %s", command, return_code
+        )
+    return stdout
+
+
 async def cat_file_from_unit(ops_test: OpsTest, filepath: str, unit_name: str) -> str:
     """Gets a file from the pgbouncer container of a pgbouncer application unit."""
     cat_cmd = f"ssh --container pgbouncer {unit_name} cat {filepath}"
