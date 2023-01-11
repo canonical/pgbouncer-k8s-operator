@@ -61,9 +61,16 @@ flowchart TD
 
 ### Database Relation Broken Hook
 
-TODO
+TODO format
 
 ```mermaid
 flowchart TD
-  hook_fired([database-relation-broken Hook])
+  hook_fired([database-relation-broken Hook]) --> update_connection_info[Update connection information in relation databag]
+  update_connection_info --> is_backend_and_leader{Is the backend ready, and is this unit the leader?}
+  is_backend_and_leader -- no --> rtn([Return])
+  is_backend_and_leader -- yes --> is_departing{Is this unit departing, according to the flag set in the departed hook?}
+  is_departing -- yes --> rtn2([Return])
+  is_departing -- no --> remove_data[Remove user and database from pgb config]
+  remove_data --> delete_user[Delete user from backend charm]
+  delete_user --> rtn3([Return])
 ```
