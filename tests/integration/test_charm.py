@@ -55,7 +55,6 @@ async def test_multiple_pebble_services(ops_test: OpsTest):
     unit = ops_test.model.applications[PGB].units[0]
     core_count = await run_command_on_unit(ops_test, unit.name, "nproc --all")
     get_services = await run_command_on_unit(ops_test, unit.name, "/charm/bin/pebble services")
-    logger.error(get_services)
 
     services = get_services.splitlines()[1:]
     assert len(services) == int(core_count)
