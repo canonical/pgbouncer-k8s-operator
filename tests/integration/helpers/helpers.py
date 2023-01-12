@@ -13,7 +13,7 @@ from charms.pgbouncer_k8s.v0 import pgb
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
-from constants import AUTH_FILE_PATH, INI_PATH
+from constants import AUTH_FILE_PATH, BACKEND_RELATION_NAME, INI_PATH
 
 PGB_METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = PGB_METADATA["name"]
@@ -242,6 +242,10 @@ async def deploy_postgres_k8s_bundle(
                 channel="edge",
                 trust=True,
             ),
+        )
+        await asyncio.gather(
+            ops_test.model.add_relation(f"{PGB}:{BACKEND_RELATION_NAME}", f"{PG}:database"),
+            ops_test.model.add_relation(f"{PG}:certificates", f"{tls_charm}:certificates"),
         )
         wait_for_relation_joined_between(ops_test, PG, PGB)
         wait_for_relation_joined_between(ops_test, PG, tls_charm)
