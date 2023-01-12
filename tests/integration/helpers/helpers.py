@@ -224,9 +224,9 @@ async def deploy_postgres_k8s_bundle(
                 tls_charm,
                 application_name=tls_charm,
                 channel="edge",
-                options={
+                config={
                     "ca-common-name": "test_bundle",
-                    "generate_self_signed_certificates": True,
+                    "generate-self-signed-certificates": True,
                 },
             ),
             ops_test.model.deploy(
