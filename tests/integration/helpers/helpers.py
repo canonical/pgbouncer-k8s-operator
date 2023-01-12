@@ -2,7 +2,6 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import asyncio
 import json
 from multiprocessing import ProcessError
 from pathlib import Path
@@ -13,13 +12,10 @@ from charms.pgbouncer_k8s.v0 import pgb
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
-from constants import AUTH_FILE_PATH, BACKEND_RELATION_NAME, INI_PATH
+from constants import AUTH_FILE_PATH, INI_PATH
 
 PGB_METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = PGB_METADATA["name"]
-PGB_RESOURCES = {
-    "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"]
-}
 PG = "postgresql-k8s"
 
 
@@ -206,49 +202,3 @@ async def scale_application(ops_test: OpsTest, application_name: str, scale: int
         timeout=1000,
         wait_for_exact_units=scale,
     )
-
-
-async def deploy_postgres_k8s_bundle(
-    ops_test: OpsTest, scale_pgbouncer: int = 1, scale_postgres: int = 2
-) -> None:
-    """Deploys postgres, pgbouncer, and the TLS operator.
-
-    This method exists to allow easy interoperability between tests in this repo and tests in the
-    bundle repo.
-    """
-    tls_charm = "tls-certificates-operator"
-    pgb_charm = await ops_test.build_charm(".")
-    async with ops_test.fast_forward():
-        await asyncio.gather(
-            ops_test.model.deploy(
-                tls_charm,
-                application_name=tls_charm,
-                channel="edge",
-                config={
-                    "ca-common-name": "test_bundle",
-                    "generate-self-signed-certificates": True,
-                },
-            ),
-            ops_test.model.deploy(
-                pgb_charm,
-                resources=PGB_RESOURCES,
-                application_name=PGB,
-                num_units=scale_pgbouncer,
-            ),
-            ops_test.model.deploy(
-                PG,
-                application_name=PG,
-                num_units=scale_postgres,
-                channel="edge",
-                trust=True,
-            ),
-        )
-        await asyncio.gather(
-            ops_test.model.add_relation(f"{PGB}:{BACKEND_RELATION_NAME}", f"{PG}:database"),
-            ops_test.model.add_relation(f"{PG}:certificates", f"{tls_charm}:certificates"),
-        )
-        wait_for_relation_joined_between(ops_test, PG, PGB)
-        wait_for_relation_joined_between(ops_test, PG, tls_charm)
-        await ops_test.model.wait_for_idle(
-            apps=[PG, PGB, tls_charm], status="active", timeout=1000
-        )

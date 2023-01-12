@@ -20,7 +20,6 @@ markers = [
     "scaling: integration tests for pgbouncer scaling",
     "legacy_relation: integration tests that test legacy client relations",
     "client_relation: integration tests that test modern client relations",
-    "tls: integration tests for tls",
 ]
 
 # Formatting tools configuration
