@@ -145,3 +145,27 @@ jobs:
         if: failure()
         with:
           app: pgbouncer-k8s
+
+  integration-tls:
+    name: Integration tests for tls
+    needs:
+      - lint
+      - unit-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup operator environment
+      # This part sets the model name to "testing" (used in test run and logdump)
+        uses: charmed-kubernetes/actions-operator@main
+        with:
+          provider: microk8s
+          # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
+          bootstrap-options: "--agent-version 2.9.29"
+      - name: Run tls integration tests
+        run: tox -e tls-integration
+      - name: Dump logs
+        uses: canonical/charm-logdump-action@main
+        if: failure()
+        with:
+          app: pgbouncer-k8s
