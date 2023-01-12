@@ -186,7 +186,9 @@ class PgBouncerK8sCharm(CharmBase):
             if self.check_pgb_running():
                 self.unit.status = ActiveStatus()
         except ConnectionError:
-            self.unit.status = WaitingStatus("pgbouncer not running")
+            not_running = "pgbouncer not running"
+            logger.error(not_running)
+            self.unit.status = WaitingStatus(not_running)
 
         self.peers.update_leader()
 
@@ -218,7 +220,9 @@ class PgBouncerK8sCharm(CharmBase):
             if self.check_pgb_running():
                 self.unit.status = ActiveStatus()
         except ConnectionError:
-            self.unit.status = WaitingStatus("pgbouncer not running")
+            not_running = "pgbouncer not running"
+            logger.error(not_running)
+            self.unit.status = WaitingStatus(not_running)
             event.defer()
 
     def reload_pgbouncer(self) -> None:
