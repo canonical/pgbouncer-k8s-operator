@@ -220,7 +220,15 @@ async def deploy_postgres_k8s_bundle(
     pgb_charm = await ops_test.build_charm(".")
     async with ops_test.fast_forward():
         await asyncio.gather(
-            ops_test.model.deploy(tls_charm, application_name=tls_charm, channel="edge"),
+            ops_test.model.deploy(
+                tls_charm,
+                application_name=tls_charm,
+                channel="edge",
+                options={
+                    "ca-common-name": "test_bundle",
+                    "generate_self_signed_certificates": True,
+                },
+            ),
             ops_test.model.deploy(
                 pgb_charm,
                 resources=PGB_RESOURCES,
