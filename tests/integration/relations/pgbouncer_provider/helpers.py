@@ -71,7 +71,7 @@ async def get_application_relation_data(
         relation_id: id of the relation to get connection data from
 
     Returns:
-        the that that was requested or None
+        the data that was requested or None
             if no data in the relation
 
     Raises:

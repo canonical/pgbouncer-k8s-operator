@@ -100,8 +100,6 @@ class ApplicationCharm(CharmBase):
             relation = self.first_database
         elif relation_name == self.second_database.relation_name:
             relation = self.second_database
-        elif relation_name == self.database_clusters.relation_name:
-            relation = self.database_clusters
         else:
             event.fail(message="invalid relation name")
 
