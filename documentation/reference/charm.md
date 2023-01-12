@@ -2,10 +2,6 @@
 
 This file is the entrypoint for the charm, and contains functions for its basic operation, including its major hooks and file management. This file can be found at [src/charm.py](../../../src/charm.py).
 
-## Event Flowchart
-
-The following charts detail the expected flow of events for the pgbouncer k8s charm. TODO
-
 ## Hook Handler Flowcharts
 
 These flowcharts detail the control flow of the hooks in this program. Unless otherwise stated, **a hook deferral is always followed by a return**.

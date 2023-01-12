@@ -30,7 +30,7 @@ flowchart TD
   is_leader -- no --> rtn([return])
   is_leader -- yes --> is_running{Is pgbouncer\nrunning?}
   is_running -- no --> rtn3([return])
-  is_running -- yes --> is_backend_ready{is backend database ready,\nand has pgbouncer been\nprovided with the\nnecessary relation data?}
+  is_running -- yes --> is_backend_ready{is backend database charm ready,\nand has pgbouncer been\nprovided with the\nnecessary relation data?}
   is_backend_ready -- no --> defer>defer]
   is_backend_ready -- yes --> generate_user[Generate username & password]
   generate_user --> create_auth_func[create auth function on postgres]
