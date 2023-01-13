@@ -37,6 +37,7 @@ TLS = "tls-certificates-operator"
 RELATION = "backend-database"
 
 
+@pytest.mark.smoke
 @pytest.mark.backend
 @pytest.mark.abort_on_fail
 async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
@@ -102,6 +103,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         logging.info(cfg.render())
 
 
+@pytest.mark.smoke
 @pytest.mark.backend
 async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
