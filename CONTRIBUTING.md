@@ -48,6 +48,8 @@ tox -e dev-integration     # Tag integration tests with `@pytest.mark.dev' to se
 tox                        # runs 'fmt', 'lint', and 'unit' environments
 ```
 
+Integration tests for individual functionality can be found in tox.ini
+
 ## Build charm
 
 Build the charm in this git repository using:
