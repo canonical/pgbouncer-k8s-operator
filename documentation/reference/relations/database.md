@@ -30,47 +30,41 @@ These flowcharts detail the control flow of the hooks in this program. Unless ot
 
 ### Database Requested Hook
 
-TODO format
-
 ```mermaid
 flowchart TD
   hook_fired([database-requested Hook]) --> is_backend_ready{Is backend\ndatabase ready?}
   is_backend_ready -- no --> defer>defer]
   is_backend_ready -- yes --> is_leader{is this unit\nthe leader}
   is_leader -- no --> rtn([Return])
-  is_leader -- yes --> get_user[Get user data and generate password]
-  get_user --> create_user_and_db[Create user and database]
-  create_user_and_db --> add_user[Add user to pgbouncer config and peer databag]
-  add_user --> update_pg[Update pgbouncer config with updated connection information]
-  update_pg --> update_databag[Update relation databag with credentials and connection information]
+  is_leader -- yes --> get_user[Get user data and\ngenerate password]
+  get_user --> create_user_and_db[Create user\nand database]
+  create_user_and_db --> add_user[Add user to\npgbouncer config\nand peer databag]
+  add_user --> update_pg[Update pgbouncer\nconfig with updated\nconnection information]
+  update_pg --> update_databag[Update relation databag\nwith credentials and\nconnection information]
   update_databag --> rtn2([Return])
 ```
 
 ### Database Relation Departed Hook
 
-TODO format
-
 ```mermaid
 flowchart TD
-  hook_fired([database-relation-departed Hook]) --> update_connection_info[Update connection information in relation databag]
-  update_connection_info --> is_departing{Is this unit departing from the relation during this hook?}
-  is_departing -- yes --> add_flag[Add departing flag so this unit knows that it's being removed if the relation-broken hook fires after this.]
+  hook_fired([database-relation-departed Hook]) --> update_connection_info[Update connection\ninformation in\nrelation databag]
+  update_connection_info --> is_departing{Is this unit departing\nfrom the relation\nduring this hook?}
+  is_departing -- yes --> add_flag[Add departing flag\nso this unit knows\nthat it's being removed\nif the relation-broken\nhook fires after this.]
   is_departing -- no --> rtn([Return])
   add_flag --> rtn
 ```
 
 ### Database Relation Broken Hook
 
-TODO format
-
 ```mermaid
 flowchart TD
-  hook_fired([database-relation-broken Hook]) --> update_connection_info[Update connection information in relation databag]
-  update_connection_info --> is_backend_and_leader{Is the backend ready, and is this unit the leader?}
+  hook_fired([database-relation-broken Hook]) --> update_connection_info[Update connection\ninformation in\nrelation databag]
+  update_connection_info --> is_backend_and_leader{Is the backend\nready, and is this\nunit the leader?}
   is_backend_and_leader -- no --> rtn([Return])
-  is_backend_and_leader -- yes --> is_departing{Is this unit departing, according to the flag set in the departed hook?}
+  is_backend_and_leader -- yes --> is_departing{Is this unit departing,\naccording to the flag\nset in the departed hook?}
   is_departing -- yes --> rtn2([Return])
-  is_departing -- no --> remove_data[Remove user and database from pgb config]
-  remove_data --> delete_user[Delete user from backend charm]
+  is_departing -- no --> remove_data[Remove user and\ndatabase from\npgb config]
+  remove_data --> delete_user[Delete user from\nbackend charm]
   delete_user --> rtn3([Return])
 ```
