@@ -37,6 +37,8 @@ source .tox/unit/bin/activate
 
 ### Testing
 
+Individual functionality can be integration tested using the tox runners available in tox.ini.
+
 ```shell
 tox -e fmt           # update your code according to linting rules
 tox -e lint          # code style
@@ -56,8 +58,9 @@ charmcraft pack
 ### Deploy
 
 ```bash
-juju deploy ./pgbouncer-k8s_ubuntu-20.04-amd64.charm \
-    --resource pgbouncer-image=dataplatformoci/pgbouncer:1.12-20.04
+# This .charm file was built using the default `charmcraft pack` command.
+juju deploy ./pgbouncer-k8s_ubuntu-22.04-amd64.charm \
+    --resource pgbouncer-image=dataplatformoci/pgbouncer:1.16-22.04
 ```
 
 ## Canonical Contributor Agreement
