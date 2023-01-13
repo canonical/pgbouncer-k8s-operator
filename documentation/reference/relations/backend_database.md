@@ -29,7 +29,7 @@ flowchart TD
   hook_fired([backend-database-requested Hook]) --> is_leader{Is current\nunit leader?}
   is_leader -- no --> rtn([return])
   is_leader -- yes --> is_running{Is pgbouncer\nrunning?}
-  is_running -- no --> rtn3([return])
+  is_running -- no --> defer2>defer]
   is_running -- yes --> is_backend_ready{is backend database charm ready,\nand has pgbouncer been\nprovided with the\nnecessary relation data?}
   is_backend_ready -- no --> defer>defer]
   is_backend_ready -- yes --> generate_user[Generate username & password]
@@ -51,8 +51,8 @@ flowchart TD
   is_this_unit_departing -- no --> is_leader{is this unit the\nleader, and is\nit departing}
   is_leader -- no --> rtn2([return])
   is_leader -- yes --> scale_down{Is this application\nscaling down,\nbut not to 0?}
-  scale_down -- no --> rtn3([return])
-  scale_down -- yes --> remove_auth[Remove auth function, and \n delete auth user]
+  scale_down -- yes --> rtn3([return])
+  scale_down -- no --> remove_auth[Remove auth function, and \n delete auth user]
   remove_auth --> rtn4([return])
 ```
 

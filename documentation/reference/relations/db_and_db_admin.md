@@ -47,10 +47,10 @@ flowchart TD
   is_backend_ready -- yes --> is_cfg{Is pgbouncer\nconfig available?}
   is_cfg -- no --> defer2>defer]
   is_cfg -- yes --> extension_requested{Has the remote\napplication requested\nextensions?}
-  extension_requested -- yes --> defer3>defer\nThis charm\ncurrently doesn't\nsupport extensions]
+  extension_requested -- yes --> block[Set BlockedStatus: \nThis charm\ncurrently doesn't\nsupport extensions.]--> rtn3([Return])
   extension_requested -- no --> get_data[Get database from databag\nand generate username]
   get_data --> is_leader{is this unit\nthe leader}
-  is_leader -- no --> is_pw_in_databag{Is password in \n peer databag?}
+  is_leader -- no --> is_pw_in_databag{Is password in \n peer databag, and\n has the client app\nshared a \ndatabase name?}
   is_pw_in_databag -- no --> defer4>defer]
   is_pw_in_databag -- yes --> store_data[Store username,\npassword, and database\n in client relation databags]
   is_leader -- yes --> gen_pw[Generate password and\nstore in peer databag]

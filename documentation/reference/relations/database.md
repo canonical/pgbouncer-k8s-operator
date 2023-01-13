@@ -14,11 +14,11 @@ These are the expected contents of the databags in this relation (all values are
 | relation name    | first-database | database|
 | interface        | postgresql_client | postgresql_client  |
 | leader unit      | 0| 1 |
-| **application data**| 
+| **application data**|
 | data                |   {"endpoints": "pgbouncer-k8s-1.pgbouncer-k8s-endpoints.test-pgbouncer-provider-5l5…","password": "2LDDKswhH5DdMvjEAZ9igVET", "read-only-endpoints":"pgbouncer-k8s-2.pgbouncer-k8s-endpoints.test-pgbouncer-provider-5l5…", "username": "relation_id_4", "version": "14.5"}  | {"database": "application_first_database", "extra-user-roles":"CREATEDB,CREATEROLE"} |
 | endpoints           | | pgbouncer-k8s-1.pgbouncer-k8s-endpoints.test-pgbouncer-provider-5l…  |
 | password            | |2LDDKswhH5DdMvjEAZ9igVET |
-| read-only-endpoints | | pgbouncer-k8s-2.pgbouncer-k8s-endpoints.test-pgbouncer-provider-5l…  | 
+| read-only-endpoints | | pgbouncer-k8s-2.pgbouncer-k8s-endpoints.test-pgbouncer-provider-5l…  |
 | username            | |  relation_id_4|
 | version             | | 14.5 |
 | database            | application_first_database | |
