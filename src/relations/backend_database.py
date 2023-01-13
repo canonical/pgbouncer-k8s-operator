@@ -235,12 +235,12 @@ class BackendDatabaseRequires(Object):
         self.charm.unit.status = ActiveStatus("backend-database relation initialised.")
 
     def _on_endpoints_changed(self, _):
-        self.charm.update_postgres_endpoints()
-        self.charm.update_client_connection_info(reload_pgbouncer=True)
+        self.charm.update_postgres_endpoints(reload_pgbouncer=True)
+        self.charm.update_client_connection_info()
 
     def _on_relation_changed(self, _):
-        self.charm.update_postgres_endpoints()
-        self.charm.update_client_connection_info(reload_pgbouncer=True)
+        self.charm.update_postgres_endpoints(reload_pgbouncer=True)
+        self.charm.update_client_connection_info()
 
     def _on_relation_departed(self, event: RelationDepartedEvent):
         """Runs pgbouncer-uninstall.sql and removes auth user.
