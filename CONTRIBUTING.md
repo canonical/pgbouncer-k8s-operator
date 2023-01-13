@@ -43,13 +43,10 @@ Use the following tox commands to run tests:
 tox -e fmt                 # update your code according to linting rules
 tox -e lint                # code style
 tox -e unit                # unit tests
-tox -e integration         # runs all integration tests. This takes a while.
 tox -e smoke-integration   # runs a small subset of integration tests that quickly verifies the charm is mostly working as intended.
 tox -e dev-integration     # Tag integration tests with `@pytest.mark.dev' to select tests to run using this command.
 tox                        # runs 'fmt', 'lint', and 'unit' environments
 ```
-
-Note: `tox -e integration` runs all integration tests, which takes a long time. Individual functionality can be integration tested using the tox runners available in tox.ini, and most of these test runs shouldn't take much longer than an hour.
 
 ## Build charm
 
