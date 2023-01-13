@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout
+        uses: actions/checkout@latest
       - name: Install dependencies
         run: python -m pip install tox
       - name: Run linters
