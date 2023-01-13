@@ -55,11 +55,13 @@ Build the charm in this git repository using:
 charmcraft pack
 ```
 
+This will generate a file called something like `pgbouncer-k8s_ubuntu-20.04-amd64.charm`. The `20.04` component of this filename relates to the **ubuntu version used in the build container used to build the charm**, designated by the `build-on` parameter in `./metadata.yaml`. It does not relate to the ubuntu version of the charm.
+
 ### Deploy
 
 ```bash
 # This .charm file was built using the default `charmcraft pack` command.
-juju deploy ./pgbouncer-k8s_ubuntu-22.04-amd64.charm \
+juju deploy ./pgbouncer-k8s_ubuntu-20.04-amd64.charm \
     --resource pgbouncer-image=dataplatformoci/pgbouncer:1.16-22.04
 ```
 
