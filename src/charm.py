@@ -134,8 +134,14 @@ class PgBouncerK8sCharm(CharmBase):
         container.add_layer(PGB, pebble_layer, combine=True)
         container.autostart()
 
-        if self.check_pgb_running():
-            self.unit.status = ActiveStatus()
+        try:
+            if self.check_pgb_running():
+                self.unit.status = ActiveStatus()
+        except ConnectionError:
+            not_running = "pgbouncer not running"
+            logger.error(not_running)
+            self.unit.status = WaitingStatus(not_running)
+            event.defer()
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
@@ -204,8 +210,13 @@ class PgBouncerK8sCharm(CharmBase):
         if self.backend.postgres is None:
             self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
 
-        if self.check_pgb_running():
-            self.unit.status = ActiveStatus()
+        try:
+            if self.check_pgb_running():
+                self.unit.status = ActiveStatus()
+        except ConnectionError:
+            not_running = "pgbouncer not running"
+            logger.error(not_running)
+            self.unit.status = WaitingStatus(not_running)
 
         self.peers.update_leader()
 
