@@ -104,10 +104,10 @@ class PgBouncerProvider(Object):
 
         Generate password and handle user and database creation for the related application.
         """
+        if not self.charm.unit.is_leader():
+            return
         if not self._check_backend():
             event.defer()
-            return
-        if not self.charm.unit.is_leader():
             return
 
         # Retrieve the database name and extra user roles using the charm library.

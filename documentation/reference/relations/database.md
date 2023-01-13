@@ -32,11 +32,11 @@ These flowcharts detail the control flow of the hooks in this program. Unless ot
 
 ```mermaid
 flowchart TD
-  hook_fired([database-requested Hook]) --> is_backend_ready{Is backend\ndatabase ready?}
-  is_backend_ready -- no --> defer>defer]
-  is_backend_ready -- yes --> is_leader{is this unit\nthe leader}
+  hook_fired([database-requested Hook]) --> is_leader{is this unit\nthe leader}
   is_leader -- no --> rtn([Return])
-  is_leader -- yes --> get_user[Get user data and\ngenerate password]
+  is_leader -- yes --> is_backend_ready{Is backend\ndatabase ready?}
+  is_backend_ready -- no --> defer>defer]
+  is_backend_ready -- yes --> get_user[Get user data and\ngenerate password]
   get_user --> create_user_and_db[Create user\nand database]
   create_user_and_db --> add_user[Add user to\npgbouncer config\nand peer databag]
   add_user --> update_pg[Update pgbouncer\nconfig with updated\nconnection information]
