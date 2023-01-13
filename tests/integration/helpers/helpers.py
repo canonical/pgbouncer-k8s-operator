@@ -14,8 +14,8 @@ from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from constants import AUTH_FILE_PATH, INI_PATH
 
-METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
-PGB = METADATA["name"]
+PGB_METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
+PGB = PGB_METADATA["name"]
 PG = "postgresql-k8s"
 
 
