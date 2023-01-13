@@ -35,7 +35,7 @@ flowchart TD
   is_cfg -- yes --> update_cfg[Update config in\npeer databag]
   update_cfg --> is_backend_ready{Is backend\ndatabase ready?}
   is_backend_ready -- no --> defer2>defer]
-  is_backend_ready -- yes --> update_auth[Add auth file to\npeer databag]
+  is_backend_ready -- yes --> update_auth[Add auth file to\nsecret store]
   update_auth --> rtn2([return])
 ```
 
