@@ -217,7 +217,10 @@ class PgBouncerProvider(Object):
         render_cfg: bool = True,
         reload_pgbouncer: bool = False,
     ):
-        """Updates postgres replicas."""
+        """Updates postgres replicas.
+
+        TODO rename
+        """
         database = self.get_database(relation)
         if database is None:
             logger.warning("relation not fully initialised - skipping postgres endpoint update")

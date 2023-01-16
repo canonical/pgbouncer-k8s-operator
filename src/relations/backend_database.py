@@ -253,6 +253,7 @@ class BackendDatabaseRequires(Object):
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
         if event.departing_unit == self.charm.unit:
+            # This should only occur when the relation is being removed, not on scale-down
             self.charm.peers.unit_databag.update(
                 {f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing": "true"}
             )
@@ -272,6 +273,7 @@ class BackendDatabaseRequires(Object):
         try:
             # TODO de-authorise all databases
             logger.info("removing auth user")
+            # Remove auth function before broken-hook, while we can still connect to postgres.
             self.remove_auth_function([PGB, PG])
         except psycopg2.Error:
             remove_auth_fail_msg = (

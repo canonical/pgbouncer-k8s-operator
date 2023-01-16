@@ -269,9 +269,10 @@ class PgBouncerK8sCharm(CharmBase):
 
         return True
 
-    # =================
+    # =============================
     #  File Management
-    # =================
+    #  TODO: extract into new file
+    # =============================
 
     def push_file(self, path, file_contents, perms):
         """Pushes file_contents to path, with the given permissions."""
@@ -394,7 +395,10 @@ class PgBouncerK8sCharm(CharmBase):
     # =====================
 
     def update_client_connection_info(self, port: Optional[str] = None):
-        """Update connection info in client relations."""
+        """Update connection info in client relations.
+
+        TODO rename
+        """
         # Skip updates if backend.postgres doesn't exist yet.
         if not self.backend.postgres:
             return
@@ -415,6 +419,8 @@ class PgBouncerK8sCharm(CharmBase):
 
     def update_postgres_endpoints(self, reload_pgbouncer=False):
         """Update postgres endpoints in relation config values.
+
+        TODO rename
 
         Raises:
             ops.pebble.ConnectionError if we can't connect to the pebble container.
