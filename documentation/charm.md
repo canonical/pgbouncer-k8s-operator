@@ -10,12 +10,11 @@ The following charts detail the expected flow of events for the pgbouncer k8s ch
 
 Relation events can be fired at any time during startup.
 
-TODO format
+TODO this is an unreadable mess
 
 ```mermaid
 flowchart TD
   start_hook[Run start hook. \nDefers until the workload container\nis available, and the leader unit\n has generated config, which is\nthen written to the container\nfilesystem and shared to other units\nvia peer databag.]
-
   start_hook --> pebble_ready[Run pgbouncer-pebble-ready hook.\nDefers until config has been\nwritten to container filesystem.\n Writes pebble config to pgbouncer\ncontainer, which in turn starts\npgbouncer services.]
   pebble_ready -- deferral --> start_hook
   pebble_ready --> begin([Begin charm operation])
@@ -33,5 +32,19 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  exists([Charm is running fine])
+  exists([Charm is running]) --> config_changed[Charm config is changed,\nfiring Config-changed hook]
+  exists --> relation_changed[Backend or client\nrelation updates,\ntriggering changes in\npgbouncer config] --> update_cfg
+  config_changed --> update_cfg[Leader updates config locally\nand in peer databag, causing a \n peer-relation-changed event]
+  update_cfg --> peer_changed[Follower units update\nconfig from peer databag]
+  update_cfg --> reload_pgb[Reload\npgbouncer]
+  peer_changed --> reload_pgb
+  reload_pgb --> continue([Charm continues running])
+```
+
+### Leader Updates
+
+```mermaid
+flowchart TD
+  exists([Charm is running])--> leader_deleted[Leader unit \n is deleted]
+  leader_deleted -->
 ```

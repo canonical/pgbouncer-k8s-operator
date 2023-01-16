@@ -35,6 +35,9 @@ Example:
 │                  │         username │                  │ relation_18      │
 │                  │          version │                  │ 12.9             │
 └──────────────────┴──────────────────┴──────────────────┴──────────────────┘
+
+NOTE: this charm uses the old data_platform_libs database_requires lib. TODO update to
+database_interface lib
 """
 
 import logging
