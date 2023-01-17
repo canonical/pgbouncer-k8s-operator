@@ -8,24 +8,25 @@ The following charts detail the expected flow of events for the pgbouncer k8s ch
 
 ### Charm Startup
 
-Relation events can be fired at any time during startup.
-
-TODO this is an unreadable mess. Update to have thick arrows as the "golden path" and dotted arrows for deferrals.
+Relation events can be fired at any time during startup, but they're generally expected by the charm to run after start and pebble_ready hooks. The "golden path" in the flowchart below is shown by the bold lines.
 
 ```mermaid
 flowchart TD
+  start([Start Charm]) ==> start_hook
   start_hook[Run start hook. \nDefers until the workload container\nis available, and the leader unit\n has generated config, which is\nthen written to the container\nfilesystem and shared to other units\nvia peer databag.]
-  start_hook --> pebble_ready[Run pgbouncer-pebble-ready hook.\nDefers until config has been\nwritten to container filesystem.\n Writes pebble config to pgbouncer\ncontainer, which in turn starts\npgbouncer services.]
-  pebble_ready -- deferral --> start_hook
-  pebble_ready --> begin([Begin charm operation])
+  start_hook ==> pebble_ready[Run pgbouncer-pebble-ready hook.\nDefers until config has been\nwritten to container filesystem.\n Writes pebble config to pgbouncer\ncontainer, which in turn starts\npgbouncer services.]
+  pebble_ready -. deferral .-> start_hook
+  pebble_ready ==> begin([Begin charm operation])
+  pebble_ready --> backend_database_relation_created
+  pebble_ready --> client_relation_created
   backend_database_relation_created[Backend relation can be\ncreated, but won't be\ninitialised unil pgbouncer\nservices are running]
-  backend_database_relation_created -- deferral --> pebble_ready
+  backend_database_relation_created -. deferral .-> pebble_ready
     peer_relation_created[Peer relation created by default on\nstartup. Defers config upload until config\nexists, and defers auth file upload\nuntil backend relation exists]
-  peer_relation_created -- deferral --> start_hook
-  peer_relation_created -- deferral --> backend_database_relation_created
+  peer_relation_created -. deferral .-> start_hook
+  peer_relation_created -. deferral .-> backend_database_relation_created
   client_relation_created[Client relations can be\ncreated, but won't be\ninitialised until pgbouncer\nservices are running and\nbackend database is initialised]
-  client_relation_created -- deferral --> backend_database_relation_created
-  client_relation_created -- deferral --> pebble_ready
+  client_relation_created -. deferral .-> backend_database_relation_created
+  client_relation_created -. deferral .-> pebble_ready
 ```
 
 ### Config updates
