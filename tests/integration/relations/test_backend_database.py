@@ -183,7 +183,7 @@ async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
 
         # TODO test deleting leader
 
-        await scale_application(ops_test, PGB, 1)
+        await scale_application(ops_test, PGB, 1, expected_status="blocked")
         await asyncio.gather(
             ops_test.model.wait_for_idle(
                 apps=[PGB], status="blocked", timeout=1000, wait_for_exact_units=1

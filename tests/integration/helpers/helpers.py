@@ -187,18 +187,21 @@ def relation_exited(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> 
     return False
 
 
-async def scale_application(ops_test: OpsTest, application_name: str, scale: int) -> None:
+async def scale_application(
+    ops_test: OpsTest, application_name: str, scale: int, expected_status="active"
+) -> None:
     """Scale a given application to a specific unit count.
 
     Args:
         ops_test: The ops test framework instance
         application_name: The name of the application
         scale: The number of units to scale to
+        expected_status: the expected status of the application
     """
     await ops_test.model.applications[application_name].scale(scale)
     await ops_test.model.wait_for_idle(
         apps=[application_name],
-        status="active",
+        status=expected_status,
         timeout=1000,
         wait_for_exact_units=scale,
     )
