@@ -58,7 +58,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
             ops_test.model.deploy(PG, channel="edge", trust=True, num_units=3),
         )
         await asyncio.gather(
-            ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000),
+            ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000),
             ops_test.model.wait_for_idle(
                 apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
             ),
@@ -181,7 +181,7 @@ async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
         await scale_application(ops_test, PGB, 1)
         await asyncio.gather(
             ops_test.model.wait_for_idle(
-                apps=[PGB], status="active", timeout=1000, wait_for_exact_units=1
+                apps=[PGB], status="blocked", timeout=1000, wait_for_exact_units=1
             ),
             ops_test.model.wait_for_idle(
                 apps=[PG], status="active", timeout=1000, wait_for_exact_units=3

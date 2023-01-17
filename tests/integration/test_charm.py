@@ -31,7 +31,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
             resources=resources,
             application_name=PGB,
         )
-        await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)
+        await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)
 
 
 @pytest.mark.standalone
@@ -41,7 +41,7 @@ async def test_config_updates(ops_test: OpsTest):
     port = "6464"
     async with ops_test.fast_forward():
         await pgbouncer_app.set_config({"listen_port": port})
-        await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)
+        await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)
 
         cfg = await get_cfg(ops_test, f"{PGB}/0")
         logger.info(cfg)
