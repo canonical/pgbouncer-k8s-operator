@@ -47,15 +47,19 @@ flowchart TD
 flowchart TD
   exists([Charm is running])--> leader_deleted[Leader unit \n is deleted]
   leader_deleted --> client_relation_remove_leader[Add departing flag to peer \n databag, and update \n connection information.]
-  leader_deleted --> legacy_client_relation_remove_leader
+  leader_deleted --> legacy_client_relation_remove_leader[Update peer databag\nto inform other\nunits that leader\nis departing]
+  leader_deleted --> backend_relation_remove_leader[Update peer databag\nto inform other\nunits that leader\nis departing]
   leader_deleted --> peer_relation_remove_leader[Update peer databag\nto inform other\nunits that leader\nis departing]
   client_relation_remove_leader -.-> leader_elected
   legacy_client_relation_remove_leader -.-> leader_elected
+  backend_relation_remove_leader -.-> leader_elected
   peer_relation_remove_leader -.-> leader_elected[leader_elected hook fires after\nan indeterminate amount of time]
   leader_elected --> client_relation_update_leader
   leader_elected --> legacy_client_relation_update_leader
+  leader_elected --> backend_relation_update_leader
   leader_elected --> peer_relation_update_leader[Update leader address\n in peer databag,\nand update connection\ninformation]
   client_relation_update_leader --> continue
   legacy_client_relation_update_leader --> continue
+  backend_relation_update_leader --> continue
   peer_relation_update_leader --> continue([Continue normal \n charm operation])
 ```

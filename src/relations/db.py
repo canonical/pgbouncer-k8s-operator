@@ -133,6 +133,9 @@ class DbProvides(Object):
         self.charm = charm
         self.admin = admin
 
+    def _depart_flag(self, relation):
+        return f"{self.relation_name}_{relation.id}_departing"
+
     def _on_relation_joined(self, join_event: RelationJoinedEvent):
         """Handle db-relation-joined event.
 
@@ -360,7 +363,9 @@ class DbProvides(Object):
         # Neither peer relation data nor stored state are good solutions,
         # just a temporary solution.
         if departed_event.departing_unit == self.charm.unit:
-            self.charm.peers.unit_databag.update({"departing": "True"})
+            self.charm.peers.unit_databag.update(
+                {self._depart_flag(departed_event.relation): "True"}
+            )
             # Just run the rest of the logic for departing of remote units.
             return
 
@@ -389,7 +394,7 @@ class DbProvides(Object):
         # https://bugs.launchpad.net/juju/+bug/1979811.
         # Neither peer relation data nor stored state
         # are good solutions, just a temporary solution.
-        if "departing" in self.charm.peers.unit_databag:
+        if self._depart_flag(broken_event.relation) in self.charm.peers.unit_databag:
             return
 
         databag = self.get_databags(broken_event.relation)[0]
