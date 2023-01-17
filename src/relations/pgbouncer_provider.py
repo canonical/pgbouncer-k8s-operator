@@ -112,7 +112,7 @@ class PgBouncerProvider(Object):
 
         # Retrieve the database name and extra user roles using the charm library.
         databases = event.database
-        extra_user_roles = event.extra_user_roles
+        extra_user_roles = event.extra_user_roles or ""
         rel_id = event.relation.id
 
         # Creates the user and the database for this specific relation.
@@ -144,6 +144,8 @@ class PgBouncerProvider(Object):
 
         # Update pgbouncer config
         cfg = self.charm.read_pgb_config()
+        logger.error(f"extra_user_roles: {extra_user_roles}")
+        logger.error(f"type of extra_user_roles: {str(type(extra_user_roles))}")
         cfg.add_user(user, admin=True if "SUPERUSER" in extra_user_roles else False)
         self.update_postgres_endpoints(
             event.relation, cfg=cfg, render_cfg=True, reload_pgbouncer=True
