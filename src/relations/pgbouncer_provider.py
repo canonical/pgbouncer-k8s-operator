@@ -105,6 +105,9 @@ class PgBouncerProvider(Object):
         """Handle the client relation-requested event.
 
         Generate password and handle user and database creation for the related application.
+
+        Deferrals:
+            - If backend relation is not fully initialised
         """
         if not self._check_backend():
             event.defer()

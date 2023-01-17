@@ -70,7 +70,15 @@ class PgBouncerK8sCharm(CharmBase):
     # =======================
 
     def _on_start(self, event: StartEvent) -> None:
-        """Renders basic PGB config."""
+        """Renders basic PGB config.
+
+        Deferrals:
+            - If pgbouncer container cannot connect, since this makes rendering config impossible.
+            - If config is unavailable in filesystem or peer databag, and this unit isn't the
+              leader, and therefore can't generate a default config.
+            - When we try and update relation endpoints, and pebble throws an error, implying that
+              it hasn't started yet.
+        """
         container = self.unit.get_container(PGB)
         if not container.can_connect():
             logger.debug("pgbouncer container unavailable, deferring start hook...")
@@ -116,7 +124,13 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
-        """Handle changes in configuration."""
+        """Handle changes in configuration.
+
+        Deferrals:
+            - If pgb config is unavailable
+            - If reloading the pgbouncer pebble service throws a ConnectionError (Implying that
+              the pebble service is not yet ready)
+        """
         if not self.unit.is_leader():
             return
 
@@ -206,7 +220,14 @@ class PgBouncerK8sCharm(CharmBase):
         self.update_client_connection_info()
 
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
-        """Define and start pgbouncer workload."""
+        """Define and start pgbouncer workload.
+
+        Deferrals:
+            - If pgbouncer config is not available in container filesystem, ensuring this fires
+              after start hook. This is likely unnecessary, and these hooks could be merged.
+            - If checking pgb running raises an error, implying that the pgbouncer services are not
+              yet accessible in the container.
+        """
         try:
             # Check config is available before running pgbouncer.
             self.read_pgb_config()

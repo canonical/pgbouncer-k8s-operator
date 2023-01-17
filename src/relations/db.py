@@ -141,6 +141,11 @@ class DbProvides(Object):
 
         If the backend relation is fully initialised and available, we generate the proposed
         database and create a user on the postgres charm, and add preliminary data to the databag.
+
+        Deferrals:
+            - If backend is unavailable
+            - If pgbouncer has not started
+            - If database and password haven't been added to the databag by the client charm
         """
         if not self._check_backend():
             # We can't relate an app to the backend database without a backend postgres relation
@@ -232,8 +237,9 @@ class DbProvides(Object):
         Takes information from the pgbouncer db app relation databag and copies it into the
         pgbouncer.ini config.
 
-        This relation will defer if the backend relation isn't fully available, and if the
-        relation_joined hook isn't completed.
+        Deferrals:
+            - If backend relation isn't available
+            - If relation_joined hook hasn't completed
         """
         if not self._check_backend():
             # We can't relate an app to the backend database without a backend postgres relation
@@ -387,12 +393,14 @@ class DbProvides(Object):
 
         This doesn't delete any tables so we aren't deleting a user's entire database with one
         command.
+
+        Deferrals:
+            - If backend relation doesn't exist
+            - If relation data has not been fully initialised
         """
-        # Run this event only if this unit isn't being
-        # removed while the others from this application
-        # are still alive. This check is needed because of
-        # https://bugs.launchpad.net/juju/+bug/1979811.
-        # Neither peer relation data nor stored state
+        # Run this event only if this unit isn't being removed while the others from this
+        # application are still alive. This check is needed because of
+        # https://bugs.launchpad.net/juju/+bug/1979811. Neither peer relation data nor stored state
         # are good solutions, just a temporary solution.
         if self._depart_flag(broken_event.relation) in self.charm.peers.unit_databag:
             return
