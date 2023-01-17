@@ -222,7 +222,7 @@ class PgBouncerK8sCharm(CharmBase):
             self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
             return
 
-        if not self.backend.postgres.ready:
+        if not self.backend.ready:
             self.unit.status = BlockedStatus("backend database relation not ready")
             return
 
