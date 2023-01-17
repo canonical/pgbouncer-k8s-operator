@@ -150,7 +150,11 @@ class PgBouncerK8sCharm(CharmBase):
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
 
-        Auto-generates multiple pgbouncer services to make use of available cpu cores on unit.
+        Since PgBouncer is single-threaded, we auto-generate multiple pgbouncer services to make
+        use of all the available cpu cores on a unit. This necessitates that we have separate
+        directories for each instance, since otherwise pidfiles and logfiles will conflict. When
+        viewing logs (including exporting them to COS), use the pebble logs, rather than individual
+        logfiles.
 
         Returns:
             A pebble configuration layer for charm services.
