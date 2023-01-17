@@ -152,12 +152,16 @@ class PgBouncerK8sCharm(CharmBase):
 
         Since PgBouncer is single-threaded, we auto-generate multiple pgbouncer services to make
         use of all the available cpu cores on a unit. This necessitates that we have separate
-        directories for each instance, since otherwise pidfiles and logfiles will conflict. When
-        viewing logs (including exporting them to COS), use the pebble logs, rather than individual
-        logfiles.
+        directories for each instance, since otherwise pidfiles and logfiles will conflict. Ports
+        are reused by setting "so_reuseport=1" in the pgbouncer config. This is enabled by default
+        in pgb.DEFAULT_CONFIG.
+
+        When viewing logs (including exporting them to COS), use the pebble service logs, rather
+        than viewing individual logfiles.
 
         Returns:
-            A pebble configuration layer for charm services.
+            A pebble configuration layer for as many charm services as there are available CPU
+            cores
         """
         pebble_services = {}
         for service in self._services:
