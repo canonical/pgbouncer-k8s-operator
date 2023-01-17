@@ -353,6 +353,13 @@ class PgBouncerK8sCharm(CharmBase):
     def render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
+        Every time the config is rendered, `peers.update_cfg` is called. This updates the config in
+        the peer databag if this unit is the leader, propagating the config file to all units,
+        which will then update their local config, so each unit isn't figuring out its own config
+        constantly. This is valuable because the leader unit is the only unit that can read app
+        databags, so this information would have to be propagated to peers anyway. Therefore, it's
+        most convenient to have a single source of truth for the whole config.
+
         Args:
             config: PgbConfig object containing pgbouncer config.
             reload_pgbouncer: A boolean defining whether or not to reload the pgbouncer application
@@ -362,7 +369,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         try:
             if config == self.read_pgb_config():
-                # Skip updating config if it's exactly the same
+                # Skip updating config if it's exactly the same as the existing config.
                 return
         except FileNotFoundError:
             # config doesn't exist on local filesystem, so update it.

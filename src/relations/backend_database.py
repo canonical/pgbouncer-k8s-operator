@@ -230,6 +230,9 @@ class BackendDatabaseRequires(Object):
     def initialise_auth_function(self, dbs: List[str]):
         """Runs an SQL script to initialise the auth function.
 
+        Using this method of authentication means we don't have to store and manage usernames and
+        passwords locally in userlist.txt.
+
         This function must run in every database for authentication to work correctly, and assumes
         self.postgres is set up correctly.
 
@@ -240,19 +243,20 @@ class BackendDatabaseRequires(Object):
             psycopg2.Error if self.postgres isn't usable.
         """
         logger.info("initialising auth function")
-        install_script = open("src/relations/sql/pgbouncer-install.sql", "r").read()
+        initialise_auth_script = open("src/relations/sql/pgbouncer-install.sql", "r").read()
 
         for dbname in dbs:
             with self.postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
-                cursor.execute(install_script.replace("auth_user", self.auth_user))
+                cursor.execute(initialise_auth_script.replace("auth_user", self.auth_user))
             conn.close()
         logger.info("auth function initialised")
 
     def remove_auth_function(self, dbs: List[str]):
-        """Runs an SQL script to remove auth function.
+        """Runs an SQL script to remove auth function for the given databases on the backend charm.
 
         pgbouncer-uninstall doesn't actually uninstall anything - it actually removes permissions
-        for the auth user.
+        for the auth user. This is to guarantee we aren't deleting data unless we're explicitly
+        doing so on the postgres charm.
 
         Args:
             dbs: a list of database names to connect to.
@@ -261,10 +265,10 @@ class BackendDatabaseRequires(Object):
             psycopg2.Error if self.postgres isn't usable.
         """
         logger.info("removing auth function from backend relation")
-        uninstall_script = open("src/relations/sql/pgbouncer-uninstall.sql", "r").read()
+        remove_auth_script = open("src/relations/sql/pgbouncer-uninstall.sql", "r").read()
         for dbname in dbs:
             with self.postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
-                cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
+                cursor.execute(remove_auth_script.replace("auth_user", self.auth_user))
             conn.close()
         logger.info("auth function removed")
 

@@ -158,6 +158,11 @@ class Peers(Object):
             return None
 
     def _on_created(self, event: RelationCreatedEvent):
+        """Updates unit databag with address key, and if this unit is leader, add config data.
+
+        Defers:
+            - If config is unavailable
+        """
         self.unit_databag[ADDRESS_KEY] = self.charm.unit_pod_hostname
         if not self.charm.unit.is_leader():
             return
@@ -176,11 +181,18 @@ class Peers(Object):
             # backend relation is initialised. If not, it'll be added when that relation first
             # writes it to the container, so no need to add it now.
             self.update_auth_file(self.charm.read_auth_file())
-        else:
-            event.defer()
 
     def _on_changed(self, event: RelationChangedEvent):
-        """If the current unit is a follower, write updated config and auth files to filesystem."""
+        """If the current unit is a follower, write updated config and auth files to filesystem.
+
+        Every time the pgbouncer config is changed, update_cfg is called. This updates the leader's
+        config file in the peer databag, which propagates the config to the follower units. In this
+        function, we check for that updated config and render it to the container.
+
+        Deferrals:
+            - If pgbouncer config is unavailable
+            - If pgbouncer container is unavailable.
+        """
         self.unit_databag.update({ADDRESS_KEY: self.charm.unit_pod_hostname})
         self.charm.update_client_connection_info()
 
@@ -275,7 +287,15 @@ class Peers(Object):
             raise RuntimeError("Unknown secret scope.")
 
     def update_cfg(self, cfg: PgbConfig) -> None:
-        """Writes cfg to app databag if leader."""
+        """Writes cfg to app databag if leader.
+
+        Called every time a unit tries to write config. This creates a peer-relation-changed event,
+        meaning that the follower units will receive config updates when the leader adds them.
+
+        Args:
+            cfg: the config file to be sent to the databag. Will be rendered to a string
+            automatically.
+        """
         if not self.charm.unit.is_leader() or not self.relation:
             return
 
