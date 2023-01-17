@@ -21,9 +21,9 @@ this operator.
 
 ## Environment Setup
 
-This setup is required for testing and deploying this charm. These instructions are written assuming you're using microk8s as your juju substrate. Instructions for setting this up can be found [here](https://juju.is/docs/olm/microk8s). If you're using a different substrate, update these instructions accordingly.
+This setup is required for testing and deploying this charm. These instructions are written assuming you have a [bootstrapped kubernetes juju controller](https://github.com/jnsgruk/hello-kubecon/), and you're using microk8s as your juju substrate. Instructions for setting this up can be found [here](https://juju.is/docs/olm/microk8s). If you're using a different substrate, update these instructions accordingly.
 
-```shell
+```bash
 # Create a model
 juju add-model dev
 # Enable DEBUG logging
@@ -32,6 +32,9 @@ juju model-config logging-config="<root>=INFO;unit=DEBUG"
 # initialise an environment using tox
 tox --notest -e unit
 source .tox/unit/bin/activate
+
+# export kubernetes config to lightkube, for integration testing.
+microk8s config > ~/.kube/config
 ```
 
 ### Testing

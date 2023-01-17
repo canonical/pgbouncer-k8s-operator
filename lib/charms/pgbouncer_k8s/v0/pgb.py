@@ -185,9 +185,9 @@ class PgbConfig(MutableMapping):
 
         Args:
             input: Dict to be read into this object. This dict must follow the pgbouncer config
-            spec (https://pgbouncer.org/config.html) to pass validation, implementing each section
-            as its own subdict. Lists should be represented as python lists, not comma-separated
-            strings.
+                spec (https://pgbouncer.org/config.html) to pass validation, implementing each
+                section as its own subdict. Lists should be represented as python lists, not
+                comma-separated strings.
         """
         self.update(deepcopy(input))
         self.validate()
@@ -196,7 +196,8 @@ class PgbConfig(MutableMapping):
         """Populates this class from a pgbouncer.ini file, passed in as a string.
 
         Args:
-            input: pgbouncer.ini file to be parsed, represented as a string
+            input: pgbouncer.ini file to be parsed, represented as a string. This string must
+                follow the pgbouncer config spec (https://pgbouncer.org/config.html)
         """
         # Since the parser persists data across reads, we have to create a new one for every read.
         parser = ConfigParser()
