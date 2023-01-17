@@ -3,6 +3,9 @@
 
 """Pgbouncer pgb-peers relation hooks & helpers.
 
+This relation is primarily used for inter-unit communication through its databags, such as sharing
+networking information, or leader units handing down config to followers.
+
 Example:
 ┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ relation (id: 2) ┃ pgbouncer-k8s                                                                                    ┃

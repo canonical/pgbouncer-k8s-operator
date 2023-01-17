@@ -267,6 +267,8 @@ class BackendDatabaseRequires(Object):
         for the auth user. This is to guarantee we aren't deleting data unless we're explicitly
         doing so on the postgres charm.
 
+        This should be called before relations are broken with the backend charm.
+
         Args:
             dbs: a list of database names to connect to.
 
@@ -337,7 +339,11 @@ class BackendDatabaseRequires(Object):
 
     @property
     def ready(self) -> bool:
-        """A boolean signifying whether the backend relation is fully initialised & ready."""
+        """A boolean signifying whether the backend relation is fully initialised & ready.
+
+        This is a simple binary check to verify that we can send data from this charm to the
+        backend charm.
+        """
         # Check we have connection information
         if not self.postgres:
             return False
