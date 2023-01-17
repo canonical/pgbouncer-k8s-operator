@@ -207,8 +207,24 @@ class PgBouncerK8sCharm(CharmBase):
         Sets BlockedStatus if we have no backend database; if we can't connect to a backend, this
         charm serves no purpose.
         """
+        self.update_status()
+
+        self.peers.update_leader()
+
+        # Update relation connection information. This is necessary because we don't receive any
+        # information when the leader is removed, but we still need to have up-to-date connection
+        # information in all the relation databags.
+        self.update_client_connection_info()
+
+    def update_status(self):
+        """Health check to update pgbouncer status based on charm state."""
         if self.backend.postgres is None:
             self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
+            return
+
+        if not self.backend.postgres.ready:
+            self.unit.status = BlockedStatus("backend database relation not ready")
+            return
 
         try:
             if self.check_pgb_running():
@@ -217,13 +233,6 @@ class PgBouncerK8sCharm(CharmBase):
             not_running = "pgbouncer not running"
             logger.error(not_running)
             self.unit.status = WaitingStatus(not_running)
-
-        self.peers.update_leader()
-
-        # Update relation connection information. This is necessary because we don't receive any
-        # information when the leader is removed, but we still need to have up-to-date connection
-        # information in all the relation databags.
-        self.update_client_connection_info()
 
     def reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.

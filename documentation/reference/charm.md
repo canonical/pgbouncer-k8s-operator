@@ -46,7 +46,7 @@ flowchart TD
   render_cfg --> rtn2([return])
 ```
 
-### Status Changed Hook
+### Update Status Hook
 
 ```mermaid
 flowchart TD
