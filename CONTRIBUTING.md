@@ -1,9 +1,10 @@
 # Contributing
 
+More extensive documentation can be found in the ./documentation directory.
+
 ## Overview
 
-This documents explains the processes and practices recommended for contributing enhancements to
-this operator.
+This documents explains the processes and practices recommended for contributing enhancements to this operator.
 
 - Generally, before developing enhancements to this charm, you should consider [opening an issue
   ](https://github.com/canonical/pgbouncer-k8s-operator/issues) explaining your use case.
@@ -39,29 +40,37 @@ microk8s config > ~/.kube/config
 
 ### Testing
 
-```shell
-tox -e fmt           # update your code according to linting rules
-tox -e lint          # code style
-tox -e unit          # unit tests
-tox -e integration   # integration tests
-tox                  # runs 'lint' and 'unit' environments
+Use the following tox commands to run tests:
+
+```bash
+tox -e fmt                 # update your code according to linting rules
+tox -e lint                # code style
+tox -e unit                # unit tests
+tox -e smoke-integration   # runs a small subset of integration tests that quickly verifies the charm is mostly working as intended.
+tox -e dev-integration     # Tag integration tests with `@pytest.mark.dev' to select tests to run using this command.
+tox                        # runs 'fmt', 'lint', and 'unit' environments
 ```
+
+Integration tests for individual functionality can be found in tox.ini
 
 ## Build charm
 
 Build the charm in this git repository using:
 
-```shell
+```bash
 charmcraft pack
 ```
+
+This will generate a file called something like `pgbouncer-k8s_ubuntu-20.04-amd64.charm`. The `20.04` component of this filename relates to the **ubuntu version used in the build container used to build the charm**, designated by the `build-on` parameter in `./metadata.yaml`. It does not relate to the ubuntu version of the charm.
 
 ### Deploy
 
 ```bash
+# This .charm file was built using the default `charmcraft pack` command.
 juju deploy ./pgbouncer-k8s_ubuntu-20.04-amd64.charm \
     --resource pgbouncer-image=dataplatformoci/pgbouncer:1.16-22.04
 ```
 
 ## Canonical Contributor Agreement
 
-Canonical welcomes contributions to the Charmed PGBouncer Operator. Please check out our [contributor agreement](https://ubuntu.com/legal/contributors) if you're interested in contributing to the solution.
+Canonical welcomes contributions to the Charmed PGBouncer Operator. Please check out our [contributor agreement](https://ubuntu.com/legal/contributors) if you're interested in contributing.

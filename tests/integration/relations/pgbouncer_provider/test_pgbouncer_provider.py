@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 import asyncio
 import json
@@ -50,7 +50,7 @@ SECONDARY_APPLICATION_FIRST_DBNAME = "secondary_application_first_database"
 SECONDARY_APPLICATION_SECOND_DBNAME = "secondary_application_second_database"
 
 
-@pytest.mark.dev
+@pytest.mark.smoke
 @pytest.mark.abort_on_fail
 @pytest.mark.client_relation
 async def test_database_relation_with_charm_libraries(
@@ -296,7 +296,7 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest, applicati
 
 
 @pytest.mark.client_relation
-async def test_an_application_can_request_multiple_databases(ops_test: OpsTest, application_charm):
+async def test_an_application_can_request_multiple_databases(ops_test: OpsTest):
     """Test that an application can request additional databases using the same interface."""
     # Relate the charms using another relation and wait for them exchanging some connection data.
     await ops_test.model.add_relation(f"{CLIENT_APP_NAME}:{SECOND_DATABASE_RELATION_NAME}", PGB)
@@ -315,6 +315,7 @@ async def test_an_application_can_request_multiple_databases(ops_test: OpsTest, 
     assert first_database_connection_string != second_database_connection_string
 
 
+@pytest.mark.smoke
 @pytest.mark.client_relation
 async def test_legacy_relation_compatibility(ops_test: OpsTest):
     finos = "finos-waltz-k8s"
@@ -351,7 +352,7 @@ async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_ch
         application_name=pgb_secondary,
     )
     async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(apps=[pgb_secondary], status="active"),
+        await ops_test.model.wait_for_idle(apps=[pgb_secondary], status="blocked"),
 
     await ops_test.model.add_relation(f"{pgb_secondary}:{BACKEND_RELATION_NAME}", f"{PG}:database")
     wait_for_relation_joined_between(ops_test, PG, pgb_secondary)
@@ -384,6 +385,7 @@ async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_ch
     )
 
 
+@pytest.mark.smoke
 @pytest.mark.client_relation
 async def test_scaling(ops_test: OpsTest):
     """Check these relations all work when scaling pgbouncer."""

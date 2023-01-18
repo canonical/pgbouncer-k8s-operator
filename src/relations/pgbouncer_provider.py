@@ -1,4 +1,4 @@
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Postgres client relation hooks & helpers.
@@ -109,10 +109,10 @@ class PgBouncerProvider(Object):
         Deferrals:
             - If backend relation is not fully initialised
         """
+        if not self.charm.unit.is_leader():
+            return
         if not self._check_backend():
             event.defer()
-            return
-        if not self.charm.unit.is_leader():
             return
 
         # Retrieve the database name and extra user roles using the charm library.
@@ -171,7 +171,6 @@ class PgBouncerProvider(Object):
         # This only ever evaluates to true when the relation is being removed - on app scale-down,
         # depart events are only sent to the other application in the relation.
         if event.departing_unit == self.charm.unit:
-            logger.info(self._depart_flag(event.relation))
             self.charm.peers.unit_databag.update({self._depart_flag(event.relation): "true"})
 
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
@@ -229,7 +228,10 @@ class PgBouncerProvider(Object):
         render_cfg: bool = True,
         reload_pgbouncer: bool = False,
     ):
-        """Updates postgres replicas."""
+        """Updates postgres replicas.
+
+        TODO rename
+        """
         database = self.get_database(relation)
         if database is None:
             logger.warning("relation not fully initialised - skipping postgres endpoint update")
