@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Charmed PgBouncer connection pooler."""
@@ -115,6 +115,34 @@ class PgBouncerK8sCharm(CharmBase):
             # pebble_ready hook not fired yet, so defer.
             event.defer()
 
+    def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
+        """Define and start pgbouncer workload."""
+        try:
+            # Check config is available before running pgbouncer.
+            self.read_pgb_config()
+        except FileNotFoundError as err:
+            # TODO this may need to change to a Blocked or Error status, depending on why the
+            # config can't be found.
+            config_err_msg = f"Unable to read config, error: {err}"
+            logger.warning(config_err_msg)
+            self.unit.status = WaitingStatus(config_err_msg)
+            event.defer()
+            return
+
+        container = event.workload
+        pebble_layer = self._pgbouncer_layer()
+        container.add_layer(PGB, pebble_layer, combine=True)
+        container.autostart()
+
+        try:
+            if self.check_pgb_running():
+                self.unit.status = ActiveStatus()
+        except ConnectionError:
+            not_running = "pgbouncer not running"
+            logger.error(not_running)
+            self.unit.status = WaitingStatus(not_running)
+            event.defer()
+
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration."""
         if not self.unit.is_leader():
@@ -179,16 +207,7 @@ class PgBouncerK8sCharm(CharmBase):
         Sets BlockedStatus if we have no backend database; if we can't connect to a backend, this
         charm serves no purpose.
         """
-        if self.backend.postgres is None:
-            self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
-
-        try:
-            if self.check_pgb_running():
-                self.unit.status = ActiveStatus()
-        except ConnectionError:
-            not_running = "pgbouncer not running"
-            logger.error(not_running)
-            self.unit.status = WaitingStatus(not_running)
+        self.update_status()
 
         self.peers.update_leader()
 
@@ -197,24 +216,15 @@ class PgBouncerK8sCharm(CharmBase):
         # information in all the relation databags.
         self.update_client_connection_info()
 
-    def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
-        """Define and start pgbouncer workload."""
-        try:
-            # Check config is available before running pgbouncer.
-            self.read_pgb_config()
-        except FileNotFoundError as err:
-            # TODO this may need to change to a Blocked or Error status, depending on why the
-            # config can't be found.
-            config_err_msg = f"Unable to read config, error: {err}"
-            logger.warning(config_err_msg)
-            self.unit.status = WaitingStatus(config_err_msg)
-            event.defer()
+    def update_status(self):
+        """Health check to update pgbouncer status based on charm state."""
+        if self.backend.postgres is None:
+            self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
             return
 
-        container = event.workload
-        pebble_layer = self._pgbouncer_layer()
-        container.add_layer(PGB, pebble_layer, combine=True)
-        container.autostart()
+        if not self.backend.ready:
+            self.unit.status = BlockedStatus("backend database relation not ready")
+            return
 
         try:
             if self.check_pgb_running():
@@ -223,7 +233,6 @@ class PgBouncerK8sCharm(CharmBase):
             not_running = "pgbouncer not running"
             logger.error(not_running)
             self.unit.status = WaitingStatus(not_running)
-            event.defer()
 
     def reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
@@ -269,9 +278,10 @@ class PgBouncerK8sCharm(CharmBase):
 
         return True
 
-    # =================
+    # =============================
     #  File Management
-    # =================
+    #  TODO: extract into new file
+    # =============================
 
     def push_file(self, path, file_contents, perms):
         """Pushes file_contents to path, with the given permissions."""
@@ -394,7 +404,10 @@ class PgBouncerK8sCharm(CharmBase):
     # =====================
 
     def update_client_connection_info(self, port: Optional[str] = None):
-        """Update connection info in client relations."""
+        """Update connection info in client relations.
+
+        TODO rename
+        """
         # Skip updates if backend.postgres doesn't exist yet.
         if not self.backend.postgres:
             return
@@ -415,6 +428,8 @@ class PgBouncerK8sCharm(CharmBase):
 
     def update_postgres_endpoints(self, reload_pgbouncer=False):
         """Update postgres endpoints in relation config values.
+
+        TODO rename
 
         Raises:
             ops.pebble.ConnectionError if we can't connect to the pebble container.
