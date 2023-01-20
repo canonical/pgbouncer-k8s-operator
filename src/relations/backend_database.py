@@ -35,6 +35,9 @@ Example:
 │                  │         username │                  │ relation_18      │
 │                  │          version │                  │ 12.9             │
 └──────────────────┴──────────────────┴──────────────────┴──────────────────┘
+
+NOTE: this charm uses the old data_platform_libs database_requires lib. TODO update to
+database_interface lib
 """
 
 import logging
@@ -158,7 +161,11 @@ class BackendDatabaseRequires(Object):
 
     @property
     def ready(self) -> bool:
-        """A boolean signifying whether the backend relation is fully initialised & ready."""
+        """A boolean signifying whether the backend relation is fully initialised & ready.
+
+        This is a simple binary check to verify that we can send data from this charm to the
+        backend charm.
+        """
         # Check we have connection information
         if not self.postgres:
             return False

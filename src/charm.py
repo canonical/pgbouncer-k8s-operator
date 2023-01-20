@@ -70,7 +70,15 @@ class PgBouncerK8sCharm(CharmBase):
     # =======================
 
     def _on_start(self, event: StartEvent) -> None:
-        """Renders basic PGB config."""
+        """Renders basic PGB config.
+
+        Deferrals:
+            - If pgbouncer container cannot connect, since this makes rendering config impossible.
+            - If config is unavailable in filesystem or peer databag, and this unit isn't the
+              leader, and therefore can't generate a default config.
+            - When we try and update relation endpoints, and pebble throws an error, implying that
+              it hasn't started yet.
+        """
         container = self.unit.get_container(PGB)
         if not container.can_connect():
             logger.debug("pgbouncer container unavailable, deferring start hook...")
@@ -116,7 +124,14 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
 
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
-        """Define and start pgbouncer workload."""
+        """Define and start pgbouncer workload.
+
+        Deferrals:
+            - If pgbouncer config is not available in container filesystem, ensuring this fires
+              after start hook. This is likely unnecessary, and these hooks could be merged.
+            - If checking pgb running raises an error, implying that the pgbouncer services are not
+              yet accessible in the container.
+        """
         try:
             # Check config is available before running pgbouncer.
             self.read_pgb_config()
@@ -144,7 +159,13 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
-        """Handle changes in configuration."""
+        """Handle changes in configuration.
+
+        Deferrals:
+            - If pgb config is unavailable
+            - If reloading the pgbouncer pebble service throws a ConnectionError (Implying that
+              the pebble service is not yet ready)
+        """
         if not self.unit.is_leader():
             return
 
@@ -178,10 +199,18 @@ class PgBouncerK8sCharm(CharmBase):
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
 
-        Auto-generates multiple pgbouncer services to make use of available cpu cores on unit.
+        Since PgBouncer is single-threaded, we auto-generate multiple pgbouncer services to make
+        use of all the available cpu cores on a unit. This necessitates that we have separate
+        directories for each instance, since otherwise pidfiles and logfiles will conflict. Ports
+        are reused by setting "so_reuseport=1" in the pgbouncer config. This is enabled by default
+        in pgb.DEFAULT_CONFIG.
+
+        When viewing logs (including exporting them to COS), use the pebble service logs, rather
+        than viewing individual logfiles.
 
         Returns:
-            A pebble configuration layer for charm services.
+            A pebble configuration layer for as many charm services as there are available CPU
+            cores
         """
         pebble_services = {}
         for service in self._services:
@@ -355,6 +384,13 @@ class PgBouncerK8sCharm(CharmBase):
     def render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
+        Every time the config is rendered, `peers.update_cfg` is called. This updates the config in
+        the peer databag if this unit is the leader, propagating the config file to all units,
+        which will then update their local config, so each unit isn't figuring out its own config
+        constantly. This is valuable because the leader unit is the only unit that can read app
+        databags, so this information would have to be propagated to peers anyway. Therefore, it's
+        most convenient to have a single source of truth for the whole config.
+
         Args:
             config: PgbConfig object containing pgbouncer config.
             reload_pgbouncer: A boolean defining whether or not to reload the pgbouncer application
@@ -364,7 +400,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         try:
             if config == self.read_pgb_config():
-                # Skip updating config if it's exactly the same
+                # Skip updating config if it's exactly the same as the existing config.
                 return
         except FileNotFoundError:
             # config doesn't exist on local filesystem, so update it.

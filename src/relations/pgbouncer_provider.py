@@ -29,6 +29,8 @@ f"{dbname}_readonly".
 │                  │ ╰──────────────────╯ ╰─────────────────╯                                                      │ ╰───────────────────╯ ╰────────────────────╯ ╰───────────────────╯                             │
 └──────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────┘
 
+NOTE: this charm uses the old data_platform_libs database_provides lib. TODO update to
+database_interface lib
 """  # noqa: W505
 
 
@@ -103,6 +105,9 @@ class PgBouncerProvider(Object):
         """Handle the client relation-requested event.
 
         Generate password and handle user and database creation for the related application.
+
+        Deferrals:
+            - If backend relation is not fully initialised
         """
         if not self.charm.unit.is_leader():
             return
@@ -154,7 +159,13 @@ class PgBouncerProvider(Object):
         self.update_connection_info(event.relation)
 
     def _on_relation_departed(self, event: RelationDepartedEvent) -> None:
-        """Check if this relation is being removed, and update databags accordingly."""
+        """Check if this relation is being removed, and update databags accordingly.
+
+        If the leader is being removed, we check if this unit is departing. This occurs only on
+        relation deletion, so we set a flag for the relation-broken hook to remove the relation.
+        When scaling down, we don't set this flag and we just let the newly elected leader take
+        control of the pgbouncer config.
+        """
         self.update_connection_info(event.relation)
 
         # This only ever evaluates to true when the relation is being removed - on app scale-down,

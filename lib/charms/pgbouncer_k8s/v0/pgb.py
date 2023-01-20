@@ -15,39 +15,10 @@
 """PgBouncer Charm Library.
 
 This charm library provides common pgbouncer-specific features for the pgbouncer machine and
-Kubernetes charms, including automatic config management.
+Kubernetes charms, including automatic config management using the PgbConfig object, and the
+default config for pgbouncer.
 
-The following is an example of a pgbouncer.ini config file output by PgbConfig.render():
-
-[databases]
-discourse-k8s = host=postgresql-k8s-primary.test-db-admin-ipve.svc.cluster.local dbname=discourse-k8s port=5432
-discourse-k8s_standby = host=postgresql-k8s-replicas.test-db-admin-ipve.svc.cluster.local dbname=discourse-k8s port=5432
-discourse-charmers-discourse-k8s = host=postgresql-k8s-primary.test-db-admin-ipve.svc.cluster.local dbname=discourse-charmers-discourse-k8s port=5432
-discourse-charmers-discourse-k8s_standby = host=postgresql-k8s-replicas.test-db-admin-ipve.svc.cluster.local dbname=discourse-charmers-discourse-k8s port=5432
-
-[pgbouncer]
-listen_addr = *
-listen_port = 6432
-logfile = /var/lib/postgresql/pgbouncer/pgbouncer.log
-pidfile = /var/lib/postgresql/pgbouncer/pgbouncer.pid
-admin_users = relation_1,pgbouncer_k8s_user_2_test_db_admin_ipve,pgbouncer_k8s_user_4_test_db_admin_ipve
-stats_users =
-auth_type = md5
-user = postgres
-max_client_conn = 10000
-ignore_startup_parameters = extra_float_digits
-server_tls_sslmode = prefer
-so_reuseport = 1
-unix_socket_dir = /var/lib/postgresql/pgbouncer
-pool_mode = session
-max_db_connections = 100
-default_pool_size = 13
-min_pool_size = 7
-reserve_pool_size = 7
-auth_user = pgbouncer_auth_relation_1
-auth_query = SELECT username, password FROM pgbouncer_auth_relation_1.get_auth($1)
-
-"""  # noqa: W505
+"""
 
 import io
 import logging
@@ -67,7 +38,7 @@ LIBID = "113f4a7480c04631bfdf5fe776f760cd"
 LIBAPI = 0
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 4
+LIBPATCH = 5
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +67,52 @@ DEFAULT_CONFIG = {
 
 
 class PgbConfig(MutableMapping):
-    """A mapping that represents the pgbouncer config."""
+    """A mapping that represents the pgbouncer config.
+
+    The PgbConfig class provides an abstraction for the pgbouncer.ini config file. This file
+    essentially governs how each instance of pgbouncer operates, including the connection
+    information for each database, user authentication, local file managment, and how connections
+    are pooled in detail. This config also contains a `validate` function that allows a user to
+    verify their changes will result in a valid pgbouncer config, and a `render` function to render
+    this object out to a string.
+
+    This config is implemented as a MutableMapping with a few `dict`-style methods for ease of use.
+    Config can be passed to the constructor as a string, a dict (such as the default variable
+    DEFAULT_CONFIG), or another PgbConfig object.
+
+    For more pgbouncer config documentation, visit: https://www.pgbouncer.org/config.html
+
+    The following is an example of a pgbouncer.ini config file output by PgbConfig.render(), taken
+    from a test deployment:
+    [databases]
+    discourse-k8s = host=postgresql-k8s-primary.test-db-admin-ipve.svc.cluster.local dbname=discourse-k8s port=5432
+    discourse-k8s_standby = host=postgresql-k8s-replicas.test-db-admin-ipve.svc.cluster.local dbname=discourse-k8s port=5432
+    discourse-charmers-discourse-k8s = host=postgresql-k8s-primary.test-db-admin-ipve.svc.cluster.local dbname=discourse-charmers-discourse-k8s port=5432
+    discourse-charmers-discourse-k8s_standby = host=postgresql-k8s-replicas.test-db-admin-ipve.svc.cluster.local dbname=discourse-charmers-discourse-k8s port=5432
+
+    [pgbouncer]
+    listen_addr = *
+    listen_port = 6432
+    logfile = /var/lib/postgresql/pgbouncer/pgbouncer.log
+    pidfile = /var/lib/postgresql/pgbouncer/pgbouncer.pid
+    admin_users = relation_1,pgbouncer_k8s_user_2_test_db_admin_ipve,pgbouncer_k8s_user_4_test_db_admin_ipve
+    stats_users =
+    auth_type = md5
+    user = postgres
+    max_client_conn = 10000
+    ignore_startup_parameters = extra_float_digits
+    server_tls_sslmode = prefer
+    so_reuseport = 1
+    unix_socket_dir = /var/lib/postgresql/pgbouncer
+    pool_mode = session
+    max_db_connections = 100
+    default_pool_size = 13
+    min_pool_size = 7
+    reserve_pool_size = 7
+    auth_user = pgbouncer_auth_relation_1
+    auth_query = SELECT username, password FROM pgbouncer_auth_relation_1.get_auth($1)
+
+    """  # noqa: W505
 
     # Define names of ini sections:
     # [databases] defines the config options for each database. This section is mandatory.
@@ -169,9 +185,9 @@ class PgbConfig(MutableMapping):
 
         Args:
             input: Dict to be read into this object. This dict must follow the pgbouncer config
-            spec (https://pgbouncer.org/config.html) to pass validation, implementing each section
-            as its own subdict. Lists should be represented as python lists, not comma-separated
-            strings.
+                spec (https://pgbouncer.org/config.html) to pass validation, implementing each
+                section as its own subdict. Lists should be represented as python lists, not
+                comma-separated strings.
         """
         self.update(deepcopy(input))
         self.validate()
@@ -180,7 +196,8 @@ class PgbConfig(MutableMapping):
         """Populates this class from a pgbouncer.ini file, passed in as a string.
 
         Args:
-            input: pgbouncer.ini file to be parsed, represented as a string
+            input: pgbouncer.ini file to be parsed, represented as a string. This string must
+                follow the pgbouncer config spec (https://pgbouncer.org/config.html)
         """
         # Since the parser persists data across reads, we have to create a new one for every read.
         parser = ConfigParser()
@@ -423,6 +440,8 @@ def parse_kv_string_to_dict(string: str) -> Dict[str, str]:
 
 def parse_dict_to_kv_string(dictionary: Dict[str, str]) -> str:
     """Helper function to encode a python dict into a pgbouncer-readable string.
+
+    TODO this could make use of pgconnstr, but that requires that this charm lib has a dependency.
 
     Args:
         dictionary: A dict containing the key-value pairs represented as strings.
