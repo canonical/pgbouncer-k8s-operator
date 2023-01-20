@@ -22,7 +22,7 @@ This documents explains the processes and practices recommended for contributing
 
 ## Environment Setup
 
-This setup is required for testing and deploying this charm. These instructions are written assuming you have a [bootstrapped kubernetes juju controller](https://github.com/jnsgruk/hello-kubecon/), and you're using microk8s as your juju substrate. Instructions for setting this up can be found [here](https://juju.is/docs/olm/microk8s). If you're using a different substrate, update these instructions accordingly.
+This setup is required for testing and deploying this charm. These instructions are written assuming you have a bootstrapped kubernetes juju controller, and you're using microk8s as your juju substrate. Instructions for setting this up can be found [here](https://juju.is/docs/olm/microk8s). If you're using a different substrate, update these instructions accordingly.
 
 ```bash
 # Create a model
