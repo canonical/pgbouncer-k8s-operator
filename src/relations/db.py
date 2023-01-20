@@ -146,7 +146,7 @@ class DbProvides(Object):
             - If backend is unavailable
             - If pgbouncer has not started
             - If database hasn't been added to the databag by the client charm
-            - If password hasn't been added to the databag by this charm, implying that a user 
+            - If password hasn't been added to the databag by this charm, implying that a user
               has not been created.
         """
         if not self._check_backend():
