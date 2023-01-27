@@ -1,4 +1,4 @@
-# Copyright 2023 Canonical Ltd.
+# Copyright 2022 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,36 +13,50 @@
 # limitations under the License.
 
 """Relation provider side abstraction for database relation.
+
 This library is a uniform interface to a selection of common database
 metadata, with added custom events that add convenience to database management,
 and methods to set the application related data.
+
 It can be used as the main library in a database charm to handle relations with
 application charms or be extended/used as a template when creating a more complete library
 (like one that also handles the database and user creation using database specific APIs).
+
 Following an example of using the DatabaseRequestedEvent, in the context of the
 database charm code:
+
 ```python
 from charms.data_platform_libs.v0.database_provides import DatabaseProvides
+
 class SampleCharm(CharmBase):
+
     def __init__(self, *args):
         super().__init__(*args)
+
         # Charm events defined in the database provides charm library.
         self.provided_database = DatabaseProvides(self, relation_name="database")
         self.framework.observe(self.provided_database.on.database_requested,
             self._on_database_requested)
+
         # Database generic helper
         self.database = DatabaseHelper()
+
     def _on_database_requested(self, event: DatabaseRequestedEvent) -> None:
         # Handle the event triggered by a new database requested in the relation
+
         # Retrieve the database name using the charm library.
         db_name = event.database
+
         # generate a new user credential
         username = self.database.generate_user()
         password = self.database.generate_password()
+
         # set the credentials for the relation
         self.provided_database.set_credentials(event.relation.id, username, password)
+
         # set other variables for the relation event.set_tls("False")
 ```
+
 As shown above, the library provides a custom event (database_requested) to handle
 the situation when an application charm requests a new database to be created.
 It's preferred to subscribe to this event instead of relation changed event to avoid
@@ -91,6 +105,7 @@ class DatabaseRequestedEvent(DatabaseEvent):
 
 class DatabaseEvents(CharmEvents):
     """Database events.
+
     This class defines the events that the database can emit.
     """
 
@@ -100,6 +115,7 @@ class DatabaseEvents(CharmEvents):
 Diff = namedtuple("Diff", "added changed deleted")
 Diff.__doc__ = """
 A tuple for storing the diff between two data mappings.
+
 added - keys that were added
 changed - keys that still exist but have new values
 deleted - key that were deleted"""
@@ -123,8 +139,10 @@ class DatabaseProvides(Object):
 
     def _diff(self, event: RelationChangedEvent) -> Diff:
         """Retrieves the diff of the data in the relation changed databag.
+
         Args:
             event: relation changed event.
+
         Returns:
             a Diff instance containing the added, deleted and changed
                 keys from the event relation databag.
@@ -170,8 +188,10 @@ class DatabaseProvides(Object):
 
     def fetch_relation_data(self) -> dict:
         """Retrieves data from relation.
+
         This function can be used to retrieve data from a relation
         in the charm code when outside an event callback.
+
         Returns:
             a dict of the values stored in the relation data bag
                 for all relation instances (indexed by the relation id).
@@ -185,8 +205,10 @@ class DatabaseProvides(Object):
 
     def _update_relation_data(self, relation_id: int, data: dict) -> None:
         """Updates a set of key-value pairs in the relation.
+
         This function writes in the application data bag, therefore,
         only the leader unit can call it.
+
         Args:
             relation_id: the identifier for a particular relation.
             data: dict containing the key-value pairs
@@ -203,8 +225,10 @@ class DatabaseProvides(Object):
 
     def set_credentials(self, relation_id: int, username: str, password: str) -> None:
         """Set database primary connections.
+
         This function writes in the application data bag, therefore,
         only the leader unit can call it.
+
         Args:
             relation_id: the identifier for a particular relation.
             username: user that was created.
@@ -220,8 +244,10 @@ class DatabaseProvides(Object):
 
     def set_endpoints(self, relation_id: int, connection_strings: str) -> None:
         """Set database primary connections.
+
         This function writes in the application data bag, therefore,
         only the leader unit can call it.
+
         Args:
             relation_id: the identifier for a particular relation.
             connection_strings: database hosts and ports comma separated list.
@@ -230,8 +256,10 @@ class DatabaseProvides(Object):
 
     def set_read_only_endpoints(self, relation_id: int, connection_strings: str) -> None:
         """Set database replicas connection strings.
+
         This function writes in the application data bag, therefore,
         only the leader unit can call it.
+
         Args:
             relation_id: the identifier for a particular relation.
             connection_strings: database hosts and ports comma separated list.
@@ -240,7 +268,9 @@ class DatabaseProvides(Object):
 
     def set_replset(self, relation_id: int, replset: str) -> None:
         """Set replica set name in the application relation databag.
+
         MongoDB only.
+
         Args:
             relation_id: the identifier for a particular relation.
             replset: replica set name.
@@ -249,6 +279,7 @@ class DatabaseProvides(Object):
 
     def set_tls(self, relation_id: int, tls: str) -> None:
         """Set whether TLS is enabled.
+
         Args:
             relation_id: the identifier for a particular relation.
             tls: whether tls is enabled (True or False).
@@ -257,6 +288,7 @@ class DatabaseProvides(Object):
 
     def set_tls_ca(self, relation_id: int, tls_ca: str) -> None:
         """Set the TLS CA in the application relation databag.
+
         Args:
             relation_id: the identifier for a particular relation.
             tls_ca: TLS certification authority.
@@ -265,7 +297,9 @@ class DatabaseProvides(Object):
 
     def set_uris(self, relation_id: int, uris: str) -> None:
         """Set the database connection URIs in the application relation databag.
+
         MongoDB, Redis, OpenSearch and Kafka only.
+
         Args:
             relation_id: the identifier for a particular relation.
             uris: connection URIs.
@@ -274,6 +308,7 @@ class DatabaseProvides(Object):
 
     def set_version(self, relation_id: int, version: str) -> None:
         """Set the database version in the application relation databag.
+
         Args:
             relation_id: the identifier for a particular relation.
             version: database version.

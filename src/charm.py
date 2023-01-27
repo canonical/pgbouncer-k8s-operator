@@ -12,6 +12,7 @@ from typing import Optional
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
+from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, StartEvent
 from ops.framework import StoredState
 from ops.main import main
@@ -22,6 +23,7 @@ from constants import (
     AUTH_FILE_PATH,
     CLIENT_RELATION_NAME,
     INI_PATH,
+    PEER_RELATION_NAME,
     PG_GROUP,
     PG_USER,
     PGB,
@@ -53,6 +55,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.client_relation = PgBouncerProvider(self)
         self.legacy_db_relation = DbProvides(self, admin=False)
         self.legacy_db_admin_relation = DbProvides(self, admin=True)
+        self.tls = PostgreSQLTLS(self, PEER_RELATION_NAME, [self.unit_pod_hostname])
 
         self._cores = os.cpu_count()
         self._services = [

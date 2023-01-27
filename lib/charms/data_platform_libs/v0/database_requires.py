@@ -1,4 +1,4 @@
-# Copyright 2023 Canonical Ltd.
+# Copyright 2022 Canonical Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,60 +13,85 @@
 # limitations under the License.
 
 """Relation 'requires' side abstraction for database relation.
+
 This library is a uniform interface to a selection of common database
 metadata, with added custom events that add convenience to database management,
 and methods to consume the application related data.
+
 Following an example of using the DatabaseCreatedEvent, in the context of the
 application charm code:
+
 ```python
+
 from charms.data_platform_libs.v0.database_requires import DatabaseRequires
+
 class ApplicationCharm(CharmBase):
     # Application charm that connects to database charms.
+
     def __init__(self, *args):
         super().__init__(*args)
+
         # Charm events defined in the database requires charm library.
         self.database = DatabaseRequires(self, relation_name="database", database_name="database")
         self.framework.observe(self.database.on.database_created, self._on_database_created)
+
     def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
         # Handle the created database
+
         # Create configuration file for app
         config_file = self._render_app_config_file(
             event.username,
             event.password,
             event.endpoints,
         )
+
         # Start application with rendered configuration
         self._start_application(config_file)
+
         # Set active status
         self.unit.status = ActiveStatus("received database credentials")
 ```
+
 As shown above, the library provides some custom events to handle specific situations,
 which are listed below:
+
 — database_created: event emitted when the requested database is created.
 — endpoints_changed: event emitted when the read/write endpoints of the database have changed.
 — read_only_endpoints_changed: event emitted when the read-only endpoints of the database
-  have changed.
+  have changed. Event is not triggered if read/write endpoints changed too.
+
 If it is needed to connect multiple database clusters to the same relation endpoint
 the application charm can implement the same code as if it would connect to only
 one database cluster (like the above code example).
+
 To differentiate multiple clusters connected to the same relation endpoint
 the application charm can use the name of the remote application:
+
 ```python
+
 def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
     # Get the remote app name of the cluster that triggered this event
     cluster = event.relation.app.name
 ```
+
 It is also possible to provide an alias for each different database cluster/relation.
+
 So, it is possible to differentiate the clusters in two ways.
 The first is to use the remote application name, i.e., `event.relation.app.name`, as above.
+
 The second way is to use different event handlers to handle each cluster events.
 The implementation would be something like the following code:
+
 ```python
+
 from charms.data_platform_libs.v0.database_requires import DatabaseRequires
+
 class ApplicationCharm(CharmBase):
     # Application charm that connects to database charms.
+
     def __init__(self, *args):
         super().__init__(*args)
+
         # Define the cluster aliases and one handler for each cluster database created event.
         self.database = DatabaseRequires(
             self,
@@ -80,8 +105,10 @@ class ApplicationCharm(CharmBase):
         self.framework.observe(
             self.database.on.cluster2_database_created, self._on_cluster2_database_created
         )
+
     def _on_cluster1_database_created(self, event: DatabaseCreatedEvent) -> None:
         # Handle the created database on the cluster named cluster1
+
         # Create configuration file for app
         config_file = self._render_app_config_file(
             event.username,
@@ -89,8 +116,10 @@ class ApplicationCharm(CharmBase):
             event.endpoints,
         )
         ...
+
     def _on_cluster2_database_created(self, event: DatabaseCreatedEvent) -> None:
         # Handle the created database on the cluster named cluster2
+
         # Create configuration file for app
         config_file = self._render_app_config_file(
             event.username,
@@ -98,6 +127,7 @@ class ApplicationCharm(CharmBase):
             event.endpoints,
         )
         ...
+
 ```
 """
 
@@ -124,7 +154,7 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version.
-LIBPATCH = 3
+LIBPATCH = 4
 
 logger = logging.getLogger(__name__)
 
@@ -150,6 +180,7 @@ class DatabaseEvent(RelationEvent):
     @property
     def replset(self) -> Optional[str]:
         """Returns the replicaset name.
+
         MongoDB only.
         """
         return self.relation.data[self.relation.app].get("replset")
@@ -167,6 +198,7 @@ class DatabaseEvent(RelationEvent):
     @property
     def uris(self) -> Optional[str]:
         """Returns the connection URIs.
+
         MongoDB, Redis, OpenSearch and Kafka only.
         """
         return self.relation.data[self.relation.app].get("uris")
@@ -179,6 +211,7 @@ class DatabaseEvent(RelationEvent):
     @property
     def version(self) -> Optional[str]:
         """Returns the version of the database.
+
         Version as informed by the database daemon.
         """
         return self.relation.data[self.relation.app].get("version")
@@ -198,6 +231,7 @@ class DatabaseReadOnlyEndpointsChangedEvent(DatabaseEvent):
 
 class DatabaseEvents(CharmEvents):
     """Database events.
+
     This class defines the events that the database can emit.
     """
 
@@ -209,6 +243,7 @@ class DatabaseEvents(CharmEvents):
 Diff = namedtuple("Diff", "added changed deleted")
 Diff.__doc__ = """
 A tuple for storing the diff between two data mappings.
+
 — added — keys that were added.
 — changed — keys that still exist but have new values.
 — deleted — keys that were deleted.
@@ -267,7 +302,9 @@ class DatabaseRequires(Object):
 
     def _assign_relation_alias(self, relation_id: int) -> None:
         """Assigns an alias to a relation.
+
         This function writes in the unit data bag.
+
         Args:
             relation_id: the identifier for a particular relation.
         """
@@ -298,8 +335,10 @@ class DatabaseRequires(Object):
 
     def _diff(self, event: RelationChangedEvent) -> Diff:
         """Retrieves the diff of the data in the relation changed databag.
+
         Args:
             event: relation changed event.
+
         Returns:
             a Diff instance containing the added, deleted and changed
                 keys from the event relation databag.
@@ -331,6 +370,7 @@ class DatabaseRequires(Object):
 
     def _emit_aliased_event(self, event: RelationChangedEvent, event_name: str) -> None:
         """Emit an aliased event to a particular relation if it has an alias.
+
         Args:
             event: the relation changed event that was received.
             event_name: the name of the event to emit.
@@ -343,8 +383,10 @@ class DatabaseRequires(Object):
 
     def _get_relation_alias(self, relation_id: int) -> Optional[str]:
         """Returns the relation alias.
+
         Args:
             relation_id: the identifier for a particular relation.
+
         Returns:
             the relation alias or None if the relation was not found.
         """
@@ -355,8 +397,10 @@ class DatabaseRequires(Object):
 
     def fetch_relation_data(self) -> dict:
         """Retrieves data from relation.
+
         This function can be used to retrieve data from a relation
         in the charm code when outside an event callback.
+
         Returns:
             a dict of the values stored in the relation data bag
                 for all relation instances (indexed by the relation ID).
@@ -370,8 +414,10 @@ class DatabaseRequires(Object):
 
     def _update_relation_data(self, relation_id: int, data: dict) -> None:
         """Updates a set of key-value pairs in the relation.
+
         This function writes in the application data bag, therefore,
         only the leader unit can call it.
+
         Args:
             relation_id: the identifier for a particular relation.
             data: dict containing the key-value pairs
@@ -414,6 +460,10 @@ class DatabaseRequires(Object):
             # Emit the aliased event (if any).
             self._emit_aliased_event(event, "database_created")
 
+            # To avoid unnecessary application restarts do not trigger
+            # “endpoints_changed“ event if “database_created“ is triggered.
+            return
+
         # Emit an endpoints changed event if the database
         # added or changed this info in the relation databag.
         if "endpoints" in diff.added or "endpoints" in diff.changed:
@@ -423,6 +473,10 @@ class DatabaseRequires(Object):
 
             # Emit the aliased event (if any).
             self._emit_aliased_event(event, "endpoints_changed")
+
+            # To avoid unnecessary application restarts do not trigger
+            # “read_only_endpoints_changed“ event if “endpoints_changed“ is triggered.
+            return
 
         # Emit a read only endpoints changed event if the database
         # added or changed this info in the relation databag.
