@@ -16,7 +16,7 @@ from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, StartEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus, BlockedStatus, WaitingStatus
+from ops.model import ActiveStatus, BlockedStatus, Container, WaitingStatus
 from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
 
 from constants import (
@@ -28,6 +28,9 @@ from constants import (
     PG_USER,
     PGB,
     PGB_DIR,
+    TLS_CA_FILE,
+    TLS_CERT_FILE,
+    TLS_KEY_FILE,
 )
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
@@ -310,6 +313,62 @@ class PgBouncerK8sCharm(CharmBase):
 
         return True
 
+    def get_hostname_by_unit(self, unit_name: str) -> str:
+        """Create a DNS name for a PgBouncer unit.
+
+        Args:
+            unit_name: the juju unit name, e.g. "postgre-sql/1".
+
+        Returns:
+            A string representing the hostname of the PostgreSQL unit.
+        """
+        unit_id = unit_name.split("/")[1]
+        return f"{self.app.name}-{unit_id}.{self.app.name}-endpoints"
+
+    def get_secret(self, scope: str, key: str) -> Optional[str]:
+        """Get secret from the secret storage."""
+        return self.peers.get_secret(scope, key)
+
+    def set_secret(self, scope: str, key: str, value: Optional[str]) -> None:
+        """Set secret from the secret storage."""
+        self.peers.set_secret(scope, key, value)
+
+    def push_tls_files_to_workload(self, container: Container = None) -> None:
+        """Uploads TLS files to the workload container."""
+        if container is None:
+            container = self.unit.get_container("pgbouncer")
+
+        key, ca, cert = self.tls.get_tls_files()
+        if key is not None:
+            container.push(
+                f"{PGB_DIR}/{TLS_KEY_FILE}",
+                key,
+                make_dirs=True,
+                permissions=0o400,
+                user=PG_USER,
+                group=PG_GROUP,
+            )
+        if ca is not None:
+            container.push(
+                f"{PGB_DIR}/{TLS_CA_FILE}",
+                ca,
+                make_dirs=True,
+                permissions=0o400,
+                user=PG_USER,
+                group=PG_GROUP,
+            )
+        if cert is not None:
+            container.push(
+                f"{PGB_DIR}/{TLS_CERT_FILE}",
+                cert,
+                make_dirs=True,
+                permissions=0o400,
+                user=PG_USER,
+                group=PG_GROUP,
+            )
+
+        # TODO update config
+
     # =============================
     #  File Management
     #  TODO: extract into new file
@@ -412,13 +471,13 @@ class PgBouncerK8sCharm(CharmBase):
         self.peers.update_cfg(config)
 
         perm = 0o400
-        self.push_file(INI_PATH, config.render(), perm)
         for service in self._services:
             s_config = pgb.PgbConfig(config)
             s_config[PGB]["unix_socket_dir"] = service["dir"]
             s_config[PGB]["logfile"] = f"{service['dir']}/pgbouncer.log"
             s_config[PGB]["pidfile"] = f"{service['dir']}/pgbouncer.pid"
             self.push_file(service["ini_path"], s_config.render(), perm)
+        self.push_file(INI_PATH, config.render(), perm)
         logger.info("pushed new pgbouncer.ini config files to pgbouncer container")
 
         if reload_pgbouncer:
