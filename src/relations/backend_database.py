@@ -35,16 +35,13 @@ Example:
 │                  │         username │                  │ relation_18      │
 │                  │          version │                  │ 12.9             │
 └──────────────────┴──────────────────┴──────────────────┴──────────────────┘
-
-NOTE: this charm uses the old data_platform_libs database_requires lib. TODO update to
-database_interface lib
 """
 
 import logging
 from typing import Dict, List, Set
 
 import psycopg2
-from charms.data_platform_libs.v0.database_requires import (
+from charms.data_platform_libs.v0.data_interfaces import (
     DatabaseCreatedEvent,
     DatabaseRequires,
 )
