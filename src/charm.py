@@ -367,7 +367,12 @@ class PgBouncerK8sCharm(CharmBase):
                 group=PG_GROUP,
             )
 
+        self.update_config()
+
+    def update_config(self) -> None:
+        """Updates PgBouncer config file based on the existence of the TLS files."""
         # TODO update config
+        pass
 
     # =============================
     #  File Management
