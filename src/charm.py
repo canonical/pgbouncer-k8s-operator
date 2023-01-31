@@ -16,7 +16,7 @@ from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, StartEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus, BlockedStatus, Container, WaitingStatus
+from ops.model import ActiveStatus, BlockedStatus, WaitingStatus
 from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
 
 from constants import (
@@ -333,38 +333,26 @@ class PgBouncerK8sCharm(CharmBase):
         """Set secret from the secret storage."""
         self.peers.set_secret(scope, key, value)
 
-    def push_tls_files_to_workload(self, container: Container = None) -> None:
+    def push_tls_files_to_workload(self) -> None:
         """Uploads TLS files to the workload container."""
-        if container is None:
-            container = self.unit.get_container("pgbouncer")
-
         key, ca, cert = self.tls.get_tls_files()
         if key is not None:
-            container.push(
+            self.push_file(
                 f"{PGB_DIR}/{TLS_KEY_FILE}",
                 key,
-                make_dirs=True,
-                permissions=0o400,
-                user=PG_USER,
-                group=PG_GROUP,
+                0o400,
             )
         if ca is not None:
-            container.push(
+            self.push_file(
                 f"{PGB_DIR}/{TLS_CA_FILE}",
                 ca,
-                make_dirs=True,
-                permissions=0o400,
-                user=PG_USER,
-                group=PG_GROUP,
+                0o400,
             )
         if cert is not None:
-            container.push(
+            self.push_file(
                 f"{PGB_DIR}/{TLS_CERT_FILE}",
                 cert,
-                make_dirs=True,
-                permissions=0o400,
-                user=PG_USER,
-                group=PG_GROUP,
+                0o400,
             )
 
         self.update_config()
