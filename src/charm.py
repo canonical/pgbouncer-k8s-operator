@@ -317,10 +317,10 @@ class PgBouncerK8sCharm(CharmBase):
         """Create a DNS name for a PgBouncer unit.
 
         Args:
-            unit_name: the juju unit name, e.g. "postgre-sql/1".
+            unit_name: the juju unit name, e.g. "pgbouncer-k8s/1".
 
         Returns:
-            A string representing the hostname of the PostgreSQL unit.
+            A string representing the hostname of the PgBouncer unit.
         """
         unit_id = unit_name.split("/")[1]
         return f"{self.app.name}-{unit_id}.{self.app.name}-endpoints"
