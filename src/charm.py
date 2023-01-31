@@ -150,6 +150,11 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
+        if self.model.relations.get("certificates", []) and not all(self.tls.get_tls_files()):
+            self.unit.status = WaitingStatus("Waiting for certificates")
+            event.defer()
+            return
+
         container = event.workload
         pebble_layer = self._pgbouncer_layer()
         container.add_layer(PGB, pebble_layer, combine=True)
@@ -359,8 +364,28 @@ class PgBouncerK8sCharm(CharmBase):
 
     def update_config(self) -> None:
         """Updates PgBouncer config file based on the existence of the TLS files."""
-        # TODO update config
-        pass
+        try:
+            config = self.read_pgb_config()
+        except FileNotFoundError as err:
+            logger.warning(f"update_config: Unable to read config, error: {err}")
+            return
+
+        if all(self.tls.get_tls_files()):
+            config["pgbouncer"]["client_tls_key_file"] = f"{PGB_DIR}/{TLS_KEY_FILE}"
+            config["pgbouncer"]["client_tls_ca_file"] = f"{PGB_DIR}/{TLS_CA_FILE}"
+            config["pgbouncer"]["client_tls_cert_file"] = f"{PGB_DIR}/{TLS_CERT_FILE}"
+            config["pgbouncer"]["client_tls_sslmode"] = "prefer"
+        else:
+            # cleanup tls keys if present
+            if "client_tls_key_file" in config["pgbouncer"]:
+                del config["pgbouncer"]["client_tls_key_file"]
+            if "client_tls_cert_file" in config["pgbouncer"]:
+                del config["pgbouncer"]["client_tls_cert_file"]
+            if "client_tls_ca_file" in config["pgbouncer"]:
+                del config["pgbouncer"]["client_tls_ca_file"]
+            if "client_tls_sslmode" in config["pgbouncer"]:
+                del config["pgbouncer"]["client_tls_sslmode"]
+        self.render_pgb_config(config, True)
 
     # =============================
     #  File Management
