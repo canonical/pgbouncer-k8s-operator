@@ -16,3 +16,7 @@ BACKEND_RELATION_NAME = "backend-database"
 DB_RELATION_NAME = "db"
 DB_ADMIN_RELATION_NAME = "db-admin"
 CLIENT_RELATION_NAME = "database"
+
+TLS_KEY_FILE = "key.pem"
+TLS_CA_FILE = "ca.pem"
+TLS_CERT_FILE = "cert.pem"

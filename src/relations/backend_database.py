@@ -35,16 +35,13 @@ Example:
 │                  │         username │                  │ relation_18      │
 │                  │          version │                  │ 12.9             │
 └──────────────────┴──────────────────┴──────────────────┴──────────────────┘
-
-NOTE: this charm uses the old data_platform_libs database_requires lib. TODO update to
-database_interface lib
 """
 
 import logging
 from typing import Dict, List, Set
 
 import psycopg2
-from charms.data_platform_libs.v0.database_requires import (
+from charms.data_platform_libs.v0.data_interfaces import (
     DatabaseCreatedEvent,
     DatabaseRequires,
 )
@@ -133,7 +130,11 @@ class BackendDatabaseRequires(Object):
             return None
 
         return PostgreSQL(
-            primary_host=endpoint.split(":")[0], user=user, password=password, database=database
+            primary_host=endpoint.split(":")[0],
+            current_host=endpoint.split(":")[0],
+            user=user,
+            password=password,
+            database=database,
         )
 
     @property
@@ -188,7 +189,7 @@ class BackendDatabaseRequires(Object):
 
         # Check we can actually connect to backend database by running a command.
         try:
-            with self.postgres.connect_to_database(PGB) as conn, conn.cursor() as cursor:
+            with self.postgres._connect_to_database(PGB) as conn, conn.cursor() as cursor:
                 # TODO find a better smoke check
                 cursor.execute("SELECT version();")
             conn.close()
@@ -338,7 +339,7 @@ class BackendDatabaseRequires(Object):
         install_script = open("src/relations/sql/pgbouncer-install.sql", "r").read()
 
         for dbname in dbs:
-            with self.postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
+            with self.postgres._connect_to_database(dbname) as conn, conn.cursor() as cursor:
                 cursor.execute(install_script.replace("auth_user", self.auth_user))
             conn.close()
         logger.info("auth function initialised")
@@ -358,7 +359,7 @@ class BackendDatabaseRequires(Object):
         logger.info("removing auth function from backend relation")
         uninstall_script = open("src/relations/sql/pgbouncer-uninstall.sql", "r").read()
         for dbname in dbs:
-            with self.postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
+            with self.postgres._connect_to_database(dbname) as conn, conn.cursor() as cursor:
                 cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
             conn.close()
         logger.info("auth function removed")

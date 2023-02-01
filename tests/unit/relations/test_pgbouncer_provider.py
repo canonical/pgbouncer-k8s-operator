@@ -52,9 +52,9 @@ class TestPgbouncerProvider(unittest.TestCase):
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="test_pass")
     @patch("relations.pgbouncer_provider.PgBouncerProvider.update_read_only_endpoints")
     @patch("relations.pgbouncer_provider.PgBouncerProvider.get_database", return_value="test-db")
-    @patch("charms.data_platform_libs.v0.database_provides.DatabaseProvides.set_credentials")
-    @patch("charms.data_platform_libs.v0.database_provides.DatabaseProvides.set_endpoints")
-    @patch("charms.data_platform_libs.v0.database_provides.DatabaseProvides.set_version")
+    @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_credentials")
+    @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_endpoints")
+    @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_version")
     @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_database_requested(
@@ -184,9 +184,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         assert not _cfg()["databases"].get(database)
         assert not _cfg()["databases"].get(f"{database}_readonly")
 
-    @patch(
-        "charms.data_platform_libs.v0.database_provides.DatabaseProvides.set_read_only_endpoints"
-    )
+    @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_read_only_endpoints")
     def test_update_read_only_endpoints(self, _set_read_only_endpoints):
         self.harness.set_leader()
         event = MagicMock()
