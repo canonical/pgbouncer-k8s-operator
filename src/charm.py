@@ -150,10 +150,14 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
-        if self.model.relations.get("certificates", []) and not all(self.tls.get_tls_files()):
+        tls_enabled = all(self.tls.get_tls_files())
+        if self.model.relations.get("certificates", []) and not tls_enabled:
             self.unit.status = WaitingStatus("Waiting for certificates")
             event.defer()
             return
+        # in case of pod restart
+        elif tls_enabled:
+            self.push_tls_files_to_workload(False)
 
         container = event.workload
         pebble_layer = self._pgbouncer_layer()
@@ -338,7 +342,7 @@ class PgBouncerK8sCharm(CharmBase):
         """Set secret from the secret storage."""
         self.peers.set_secret(scope, key, value)
 
-    def push_tls_files_to_workload(self) -> None:
+    def push_tls_files_to_workload(self, update_config: bool = True) -> None:
         """Uploads TLS files to the workload container."""
         key, ca, cert = self.tls.get_tls_files()
         if key is not None:
@@ -359,8 +363,8 @@ class PgBouncerK8sCharm(CharmBase):
                 cert,
                 0o400,
             )
-
-        self.update_config()
+        if update_config:
+            self.update_config()
 
     def update_config(self) -> None:
         """Updates PgBouncer config file based on the existence of the TLS files."""
@@ -377,14 +381,10 @@ class PgBouncerK8sCharm(CharmBase):
             config["pgbouncer"]["client_tls_sslmode"] = "prefer"
         else:
             # cleanup tls keys if present
-            if "client_tls_key_file" in config["pgbouncer"]:
-                del config["pgbouncer"]["client_tls_key_file"]
-            if "client_tls_cert_file" in config["pgbouncer"]:
-                del config["pgbouncer"]["client_tls_cert_file"]
-            if "client_tls_ca_file" in config["pgbouncer"]:
-                del config["pgbouncer"]["client_tls_ca_file"]
-            if "client_tls_sslmode" in config["pgbouncer"]:
-                del config["pgbouncer"]["client_tls_sslmode"]
+            config["pgbouncer"].pop("client_tls_key_file", None)
+            config["pgbouncer"].pop("client_tls_cert_file", None)
+            config["pgbouncer"].pop("client_tls_ca_file", None)
+            config["pgbouncer"].pop("client_tls_sslmode", None)
         self.render_pgb_config(config, True)
 
     # =============================

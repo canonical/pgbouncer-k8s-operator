@@ -162,7 +162,7 @@ jobs:
           provider: microk8s
           # This is needed until https://bugs.launchpad.net/juju/+bug/1977582 is fixed.
           bootstrap-options: "--agent-version 2.9.29"
-      - name: Run scaling integration tests
+      - name: Run TLS integration tests
         run: tox -e tls-integration
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
