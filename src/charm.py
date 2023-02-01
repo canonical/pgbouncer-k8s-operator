@@ -137,6 +137,7 @@ class PgBouncerK8sCharm(CharmBase):
               after start hook. This is likely unnecessary, and these hooks could be merged.
             - If checking pgb running raises an error, implying that the pgbouncer services are not
               yet accessible in the container.
+            - If the unit is waiting for certificates to be issued
         """
         try:
             # Check config is available before running pgbouncer.

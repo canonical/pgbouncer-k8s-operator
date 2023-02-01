@@ -15,7 +15,7 @@ flowchart TD
   start([Start Charm]) ==> start_hook
   start --> peer_relation_created
   start_hook[Run start hook. \nDefers until the workload container\nis available, and the leader unit\n has generated config, which is\nthen written to the container\nfilesystem and shared to other units\nvia peer databag.]
-  start_hook ==> pebble_ready[Run pgbouncer-pebble-ready hook.\nDefers until config has been\nwritten to container filesystem.\n Writes pebble config to pgbouncer\ncontainer, which in turn starts\npgbouncer services.]
+  start_hook ==> pebble_ready[Run pgbouncer-pebble-ready hook.\nDefers until config has been\nwritten to container filesystem.\n Writes pebble config and TLS certs\nto pgbouncer container, which in turn starts\npgbouncer services.]
   pebble_ready -. deferral .-> start_hook
   pebble_ready ==> begin([Begin charm operation])
   pebble_ready --> backend_database_relation_created
