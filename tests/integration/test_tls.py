@@ -21,7 +21,7 @@ DATABASE_UNITS = 3
 async def test_mattermost_db(ops_test: OpsTest) -> None:
     """Deploy Mattermost to test the 'db' relation.
 
-    Mattermost needs TLS enabled on PostgreSQL to correctly connect to it.
+    Mattermost needs TLS enabled on PgBouncer to correctly connect to it.
 
     Args:
         ops_test: The ops test framework
