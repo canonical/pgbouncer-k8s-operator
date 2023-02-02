@@ -246,7 +246,7 @@ async def deploy_and_relate_application_with_pgbouncer(
         timeout=1000,
     )
 
-    # Relate application to PostgreSQL.
+    # Relate application to PgBouncer.
     relation = await ops_test.model.relate(f"{application_name}", f"{PGB}:{relation}")
     await ops_test.model.wait_for_idle(
         apps=[application_name],
