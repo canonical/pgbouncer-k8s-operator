@@ -225,7 +225,7 @@ async def deploy_and_relate_application_with_pgbouncer(
         application_name: The name of the application to deploy.
         number_of_units: The number of units to deploy.
         channel: The channel to use for the charm.
-        relation: Name of the PostgreSQL relation to relate
+        relation: Name of the PgBouncer relation to relate
             the application to.
         status: The status to wait for in the application (default: blocked).
 
