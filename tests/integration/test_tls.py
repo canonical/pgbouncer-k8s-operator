@@ -44,7 +44,7 @@ async def test_mattermost_db(ops_test: OpsTest) -> None:
         # Deploy TLS Certificates operator.
         config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
         await ops_test.model.deploy(TLS_CERTIFICATES_APP_NAME, channel="beta", config=config)
-        # Relate it to the PostgreSQL to enable TLS.
+        # Relate it to the PgBouncer to enable TLS.
         await ops_test.model.relate(PGB, TLS_CERTIFICATES_APP_NAME)
         await ops_test.model.relate(TLS_CERTIFICATES_APP_NAME, POSTGRESQL_APP_NAME)
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
