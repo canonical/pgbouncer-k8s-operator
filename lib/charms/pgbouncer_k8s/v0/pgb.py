@@ -38,7 +38,7 @@ LIBID = "113f4a7480c04631bfdf5fe776f760cd"
 LIBAPI = 0
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 5
+LIBPATCH = 6
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ DEFAULT_CONFIG = {
         "auth_type": "md5",
         "user": "postgres",
         "max_client_conn": "10000",
-        "ignore_startup_parameters": "extra_float_digits",
+        "ignore_startup_parameters": "extra_float_digits,options",
         "server_tls_sslmode": "prefer",
         "so_reuseport": "1",
         "unix_socket_dir": PGB_DIR,
@@ -100,7 +100,7 @@ class PgbConfig(MutableMapping):
     auth_type = md5
     user = postgres
     max_client_conn = 10000
-    ignore_startup_parameters = extra_float_digits
+    ignore_startup_parameters = extra_float_digits,options
     server_tls_sslmode = prefer
     so_reuseport = 1
     unix_socket_dir = /var/lib/postgresql/pgbouncer
