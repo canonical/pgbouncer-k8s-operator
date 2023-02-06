@@ -17,6 +17,7 @@ from constants import AUTH_FILE_PATH, INI_PATH
 PGB_METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = PGB_METADATA["name"]
 PG = "postgresql-k8s"
+POSTGRESQL_APP_NAME = "postgresql-k8s"
 
 
 def get_backend_relation(ops_test: OpsTest):
@@ -205,3 +206,53 @@ async def scale_application(
         timeout=1000,
         wait_for_exact_units=scale,
     )
+
+
+async def deploy_and_relate_application_with_pgbouncer(
+    ops_test: OpsTest,
+    charm: str,
+    application_name: str,
+    number_of_units: int,
+    channel: str = "stable",
+    relation: str = "db",
+    status: str = "blocked",
+) -> int:
+    """Helper function to deploy and relate application with PgBouncer.
+
+    Args:
+        ops_test: The ops test framework.
+        charm: Charm identifier.
+        application_name: The name of the application to deploy.
+        number_of_units: The number of units to deploy.
+        channel: The channel to use for the charm.
+        relation: Name of the PgBouncer relation to relate
+            the application to.
+        status: The status to wait for in the application (default: blocked).
+
+    Returns:
+        the id of the created relation.
+    """
+    # Deploy application.
+    await ops_test.model.deploy(
+        charm,
+        channel=channel,
+        application_name=application_name,
+        num_units=number_of_units,
+    )
+    await ops_test.model.wait_for_idle(
+        apps=[application_name],
+        status=status,
+        raise_on_blocked=False,
+        timeout=1000,
+    )
+
+    # Relate application to PgBouncer.
+    relation = await ops_test.model.relate(f"{application_name}", f"{PGB}:{relation}")
+    await ops_test.model.wait_for_idle(
+        apps=[application_name],
+        status="active",
+        raise_on_blocked=False,  # Application that needs a relation is blocked initially.
+        timeout=1000,
+    )
+
+    return relation.id

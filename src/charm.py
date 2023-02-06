@@ -137,6 +137,7 @@ class PgBouncerK8sCharm(CharmBase):
               after start hook. This is likely unnecessary, and these hooks could be merged.
             - If checking pgb running raises an error, implying that the pgbouncer services are not
               yet accessible in the container.
+            - If the unit is waiting for certificates to be issued
         """
         try:
             # Check config is available before running pgbouncer.
@@ -149,6 +150,15 @@ class PgBouncerK8sCharm(CharmBase):
             self.unit.status = WaitingStatus(config_err_msg)
             event.defer()
             return
+
+        tls_enabled = all(self.tls.get_tls_files())
+        if self.model.relations.get("certificates", []) and not tls_enabled:
+            self.unit.status = WaitingStatus("Waiting for certificates")
+            event.defer()
+            return
+        # in case of pod restart
+        elif tls_enabled:
+            self.push_tls_files_to_workload(False)
 
         container = event.workload
         pebble_layer = self._pgbouncer_layer()
@@ -333,7 +343,7 @@ class PgBouncerK8sCharm(CharmBase):
         """Set secret from the secret storage."""
         self.peers.set_secret(scope, key, value)
 
-    def push_tls_files_to_workload(self) -> None:
+    def push_tls_files_to_workload(self, update_config: bool = True) -> None:
         """Uploads TLS files to the workload container."""
         key, ca, cert = self.tls.get_tls_files()
         if key is not None:
@@ -354,13 +364,29 @@ class PgBouncerK8sCharm(CharmBase):
                 cert,
                 0o400,
             )
-
-        self.update_config()
+        if update_config:
+            self.update_config()
 
     def update_config(self) -> None:
         """Updates PgBouncer config file based on the existence of the TLS files."""
-        # TODO update config
-        pass
+        try:
+            config = self.read_pgb_config()
+        except FileNotFoundError as err:
+            logger.warning(f"update_config: Unable to read config, error: {err}")
+            return
+
+        if all(self.tls.get_tls_files()):
+            config["pgbouncer"]["client_tls_key_file"] = f"{PGB_DIR}/{TLS_KEY_FILE}"
+            config["pgbouncer"]["client_tls_ca_file"] = f"{PGB_DIR}/{TLS_CA_FILE}"
+            config["pgbouncer"]["client_tls_cert_file"] = f"{PGB_DIR}/{TLS_CERT_FILE}"
+            config["pgbouncer"]["client_tls_sslmode"] = "prefer"
+        else:
+            # cleanup tls keys if present
+            config["pgbouncer"].pop("client_tls_key_file", None)
+            config["pgbouncer"].pop("client_tls_cert_file", None)
+            config["pgbouncer"].pop("client_tls_ca_file", None)
+            config["pgbouncer"].pop("client_tls_sslmode", None)
+        self.render_pgb_config(config, True)
 
     # =============================
     #  File Management
