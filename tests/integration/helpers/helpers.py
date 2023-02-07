@@ -5,15 +5,22 @@
 import json
 from multiprocessing import ProcessError
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 import yaml
 from charms.pgbouncer_k8s.v0 import pgb
 from pytest_operator.plugin import OpsTest
-from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
+from tenacity import (
+    RetryError,
+    Retrying,
+    stop_after_attempt,
+    stop_after_delay,
+    wait_fixed,
+)
 
 from constants import AUTH_FILE_PATH, INI_PATH
 
+CLIENT_APP_NAME = "application"
 PGB_METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = PGB_METADATA["name"]
 PG = "postgresql-k8s"
@@ -256,3 +263,51 @@ async def deploy_and_relate_application_with_pgbouncer(
     )
 
     return relation.id
+
+
+async def app_name(ops_test: OpsTest, application_name: str = "pgbouncer") -> Optional[str]:
+    """Returns the name of the cluster running PgBouncer.
+
+    This is important since not all deployments of the PgBouncer charm have the application name
+    "pgbouncer".
+    Note: if multiple clusters are running PgBouncer this will return the one first found.
+    """
+    status = await ops_test.model.get_status()
+    for app in ops_test.model.applications:
+        if application_name in status["applications"][app]["charm"]:
+            return app
+
+    return None
+
+
+async def check_tls(ops_test: OpsTest, relation_id: int, enabled: bool) -> bool:
+    """Returns whether TLS is enabled on a related PgBouncer cluster.
+
+    Args:
+        ops_test: The ops test framework instance.
+        enabled: check if TLS is enabled/disabled
+
+    Returns:
+        Whether TLS is enabled/disabled.
+    """
+    cleint_name = await app_name(ops_test, CLIENT_APP_NAME)
+    unit = ops_test.model.applications[cleint_name].units[0]
+    params = {
+        "dbname": "first-database",
+        "query": "SHOW ssl;",
+        "relation-id": relation_id,
+        "relation-name": "first-database",
+        "readonly": True,
+    }
+    try:
+        for attempt in Retrying(stop=stop_after_attempt(10), wait=wait_fixed(3)):
+            with attempt:
+                action = await unit.run_action("run-sql", **params)
+                result = await action.wait()
+
+                tls_enabled = "on" in result.results
+                if enabled != tls_enabled:
+                    raise ValueError(f"TLS is{' not' if not tls_enabled else ''} enabled")
+                return True
+    except RetryError:
+        return False

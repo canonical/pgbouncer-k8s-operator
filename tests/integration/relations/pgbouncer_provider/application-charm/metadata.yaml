@@ -7,16 +7,6 @@ summary: |
   Data platform libs application meant to be used
   only for testing of the libs in this repository.
 
-containers:
-  pgbouncer:
-    resource: application-image
-
-resources:
-  application-image:
-    type: oci-image
-    description: OCI image for test charm
-    upstream-source: ubuntu:latest
-
 requires:
   first-database:
     interface: postgresql_client

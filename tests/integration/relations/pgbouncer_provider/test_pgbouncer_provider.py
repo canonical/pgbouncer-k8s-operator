@@ -63,7 +63,6 @@ async def test_database_relation_with_charm_libraries(
         ops_test.model.deploy(
             application_charm,
             application_name=CLIENT_APP_NAME,
-            resources={"application-image": "ubuntu:latest"},
         ),
         ops_test.model.deploy(
             pgb_charm,
