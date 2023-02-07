@@ -14,7 +14,6 @@ jobs:
   release-to-charmhub:
     name: Release to CharmHub
     needs:
-      - lib-check
       - run-tests
     runs-on: ubuntu-20.04
     steps:
