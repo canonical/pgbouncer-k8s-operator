@@ -252,7 +252,6 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest, applicati
     await ops_test.model.deploy(
         application_charm,
         application_name=SECONDARY_CLIENT_APP_NAME,
-        resources={"application-image": "ubuntu:latest"},
     )
     await ops_test.model.wait_for_idle(status="active", apps=all_app_names)
 

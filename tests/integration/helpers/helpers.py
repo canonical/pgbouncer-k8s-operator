@@ -296,8 +296,8 @@ async def check_tls(ops_test: OpsTest, relation_id: int, enabled: bool) -> bool:
         "dbname": "first-database",
         "query": "SHOW ssl;",
         "relation-id": relation_id,
-        "relation-name": "first-database",
-        "readonly": True,
+        "relation-name": "application_first_database",
+        "readonly": False,
     }
     try:
         for attempt in Retrying(stop=stop_after_attempt(10), wait=wait_fixed(3)):

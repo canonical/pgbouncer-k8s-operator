@@ -57,6 +57,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
         await ops_test.model.applications[PGB].remove_relation(
             f"{PGB}:database", f"{CLIENT_APP_NAME}:first-database"
         )
+        await ops_test.model.wait_for_idle(status="active", timeout=1000)
     except Exception:
         pass
     global client_relation
@@ -139,7 +140,7 @@ async def test_add_tls(ops_test: OpsTest) -> None:
     """
     await ops_test.model.relate(PGB, TLS_CERTIFICATES_APP_NAME)
     await ops_test.model.wait_for_idle(status="active", timeout=1000)
-    assert await check_tls(ops_test, client_relation.id, False)
+    assert await check_tls(ops_test, client_relation.id, True)
 
 
 @pytest.mark.tls_tests
