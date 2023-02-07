@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Charmed PgBouncer connection pooler."""
@@ -12,6 +12,7 @@ from typing import Optional
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
+from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, StartEvent
 from ops.framework import StoredState
 from ops.main import main
@@ -22,10 +23,14 @@ from constants import (
     AUTH_FILE_PATH,
     CLIENT_RELATION_NAME,
     INI_PATH,
+    PEER_RELATION_NAME,
     PG_GROUP,
     PG_USER,
     PGB,
     PGB_DIR,
+    TLS_CA_FILE,
+    TLS_CERT_FILE,
+    TLS_KEY_FILE,
 )
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
@@ -53,6 +58,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.client_relation = PgBouncerProvider(self)
         self.legacy_db_relation = DbProvides(self, admin=False)
         self.legacy_db_admin_relation = DbProvides(self, admin=True)
+        self.tls = PostgreSQLTLS(self, PEER_RELATION_NAME, [self.unit_pod_hostname])
 
         self._cores = os.cpu_count()
         self._services = [
@@ -70,7 +76,15 @@ class PgBouncerK8sCharm(CharmBase):
     # =======================
 
     def _on_start(self, event: StartEvent) -> None:
-        """Renders basic PGB config."""
+        """Renders basic PGB config.
+
+        Deferrals:
+            - If pgbouncer container cannot connect, since this makes rendering config impossible.
+            - If config is unavailable in filesystem or peer databag, and this unit isn't the
+              leader, and therefore can't generate a default config.
+            - When we try and update relation endpoints, and pebble throws an error, implying that
+              it hasn't started yet.
+        """
         container = self.unit.get_container(PGB)
         if not container.can_connect():
             logger.debug("pgbouncer container unavailable, deferring start hook...")
@@ -115,8 +129,59 @@ class PgBouncerK8sCharm(CharmBase):
             # pebble_ready hook not fired yet, so defer.
             event.defer()
 
+    def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
+        """Define and start pgbouncer workload.
+
+        Deferrals:
+            - If pgbouncer config is not available in container filesystem, ensuring this fires
+              after start hook. This is likely unnecessary, and these hooks could be merged.
+            - If checking pgb running raises an error, implying that the pgbouncer services are not
+              yet accessible in the container.
+            - If the unit is waiting for certificates to be issued
+        """
+        try:
+            # Check config is available before running pgbouncer.
+            self.read_pgb_config()
+        except FileNotFoundError as err:
+            # TODO this may need to change to a Blocked or Error status, depending on why the
+            # config can't be found.
+            config_err_msg = f"Unable to read config, error: {err}"
+            logger.warning(config_err_msg)
+            self.unit.status = WaitingStatus(config_err_msg)
+            event.defer()
+            return
+
+        tls_enabled = all(self.tls.get_tls_files())
+        if self.model.relations.get("certificates", []) and not tls_enabled:
+            self.unit.status = WaitingStatus("Waiting for certificates")
+            event.defer()
+            return
+        # in case of pod restart
+        elif tls_enabled:
+            self.push_tls_files_to_workload(False)
+
+        container = event.workload
+        pebble_layer = self._pgbouncer_layer()
+        container.add_layer(PGB, pebble_layer, combine=True)
+        container.autostart()
+
+        try:
+            if self.check_pgb_running():
+                self.unit.status = ActiveStatus()
+        except ConnectionError:
+            not_running = "pgbouncer not running"
+            logger.error(not_running)
+            self.unit.status = WaitingStatus(not_running)
+            event.defer()
+
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
-        """Handle changes in configuration."""
+        """Handle changes in configuration.
+
+        Deferrals:
+            - If pgb config is unavailable
+            - If reloading the pgbouncer pebble service throws a ConnectionError (Implying that
+              the pebble service is not yet ready)
+        """
         if not self.unit.is_leader():
             return
 
@@ -150,10 +215,18 @@ class PgBouncerK8sCharm(CharmBase):
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
 
-        Auto-generates multiple pgbouncer services to make use of available cpu cores on unit.
+        Since PgBouncer is single-threaded, we auto-generate multiple pgbouncer services to make
+        use of all the available cpu cores on a unit. This necessitates that we have separate
+        directories for each instance, since otherwise pidfiles and logfiles will conflict. Ports
+        are reused by setting "so_reuseport=1" in the pgbouncer config. This is enabled by default
+        in pgb.DEFAULT_CONFIG.
+
+        When viewing logs (including exporting them to COS), use the pebble service logs, rather
+        than viewing individual logfiles.
 
         Returns:
-            A pebble configuration layer for charm services.
+            A pebble configuration layer for as many charm services as there are available CPU
+            cores
         """
         pebble_services = {}
         for service in self._services:
@@ -179,16 +252,7 @@ class PgBouncerK8sCharm(CharmBase):
         Sets BlockedStatus if we have no backend database; if we can't connect to a backend, this
         charm serves no purpose.
         """
-        if self.backend.postgres is None:
-            self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
-
-        try:
-            if self.check_pgb_running():
-                self.unit.status = ActiveStatus()
-        except ConnectionError:
-            not_running = "pgbouncer not running"
-            logger.error(not_running)
-            self.unit.status = WaitingStatus(not_running)
+        self.update_status()
 
         self.peers.update_leader()
 
@@ -197,24 +261,15 @@ class PgBouncerK8sCharm(CharmBase):
         # information in all the relation databags.
         self.update_client_connection_info()
 
-    def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
-        """Define and start pgbouncer workload."""
-        try:
-            # Check config is available before running pgbouncer.
-            self.read_pgb_config()
-        except FileNotFoundError as err:
-            # TODO this may need to change to a Blocked or Error status, depending on why the
-            # config can't be found.
-            config_err_msg = f"Unable to read config, error: {err}"
-            logger.warning(config_err_msg)
-            self.unit.status = WaitingStatus(config_err_msg)
-            event.defer()
+    def update_status(self):
+        """Health check to update pgbouncer status based on charm state."""
+        if self.backend.postgres is None:
+            self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
             return
 
-        container = event.workload
-        pebble_layer = self._pgbouncer_layer()
-        container.add_layer(PGB, pebble_layer, combine=True)
-        container.autostart()
+        if not self.backend.ready:
+            self.unit.status = BlockedStatus("backend database relation not ready")
+            return
 
         try:
             if self.check_pgb_running():
@@ -223,7 +278,6 @@ class PgBouncerK8sCharm(CharmBase):
             not_running = "pgbouncer not running"
             logger.error(not_running)
             self.unit.status = WaitingStatus(not_running)
-            event.defer()
 
     def reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
@@ -269,9 +323,75 @@ class PgBouncerK8sCharm(CharmBase):
 
         return True
 
-    # =================
+    def get_hostname_by_unit(self, unit_name: str) -> str:
+        """Create a DNS name for a PgBouncer unit.
+
+        Args:
+            unit_name: the juju unit name, e.g. "pgbouncer-k8s/1".
+
+        Returns:
+            A string representing the hostname of the PgBouncer unit.
+        """
+        unit_id = unit_name.split("/")[1]
+        return f"{self.app.name}-{unit_id}.{self.app.name}-endpoints"
+
+    def get_secret(self, scope: str, key: str) -> Optional[str]:
+        """Get secret from the secret storage."""
+        return self.peers.get_secret(scope, key)
+
+    def set_secret(self, scope: str, key: str, value: Optional[str]) -> None:
+        """Set secret from the secret storage."""
+        self.peers.set_secret(scope, key, value)
+
+    def push_tls_files_to_workload(self, update_config: bool = True) -> None:
+        """Uploads TLS files to the workload container."""
+        key, ca, cert = self.tls.get_tls_files()
+        if key is not None:
+            self.push_file(
+                f"{PGB_DIR}/{TLS_KEY_FILE}",
+                key,
+                0o400,
+            )
+        if ca is not None:
+            self.push_file(
+                f"{PGB_DIR}/{TLS_CA_FILE}",
+                ca,
+                0o400,
+            )
+        if cert is not None:
+            self.push_file(
+                f"{PGB_DIR}/{TLS_CERT_FILE}",
+                cert,
+                0o400,
+            )
+        if update_config:
+            self.update_config()
+
+    def update_config(self) -> None:
+        """Updates PgBouncer config file based on the existence of the TLS files."""
+        try:
+            config = self.read_pgb_config()
+        except FileNotFoundError as err:
+            logger.warning(f"update_config: Unable to read config, error: {err}")
+            return
+
+        if all(self.tls.get_tls_files()):
+            config["pgbouncer"]["client_tls_key_file"] = f"{PGB_DIR}/{TLS_KEY_FILE}"
+            config["pgbouncer"]["client_tls_ca_file"] = f"{PGB_DIR}/{TLS_CA_FILE}"
+            config["pgbouncer"]["client_tls_cert_file"] = f"{PGB_DIR}/{TLS_CERT_FILE}"
+            config["pgbouncer"]["client_tls_sslmode"] = "prefer"
+        else:
+            # cleanup tls keys if present
+            config["pgbouncer"].pop("client_tls_key_file", None)
+            config["pgbouncer"].pop("client_tls_cert_file", None)
+            config["pgbouncer"].pop("client_tls_ca_file", None)
+            config["pgbouncer"].pop("client_tls_sslmode", None)
+        self.render_pgb_config(config, True)
+
+    # =============================
     #  File Management
-    # =================
+    #  TODO: extract into new file
+    # =============================
 
     def push_file(self, path, file_contents, perms):
         """Pushes file_contents to path, with the given permissions."""
@@ -345,6 +465,13 @@ class PgBouncerK8sCharm(CharmBase):
     def render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
+        Every time the config is rendered, `peers.update_cfg` is called. This updates the config in
+        the peer databag if this unit is the leader, propagating the config file to all units,
+        which will then update their local config, so each unit isn't figuring out its own config
+        constantly. This is valuable because the leader unit is the only unit that can read app
+        databags, so this information would have to be propagated to peers anyway. Therefore, it's
+        most convenient to have a single source of truth for the whole config.
+
         Args:
             config: PgbConfig object containing pgbouncer config.
             reload_pgbouncer: A boolean defining whether or not to reload the pgbouncer application
@@ -354,7 +481,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         try:
             if config == self.read_pgb_config():
-                # Skip updating config if it's exactly the same
+                # Skip updating config if it's exactly the same as the existing config.
                 return
         except FileNotFoundError:
             # config doesn't exist on local filesystem, so update it.
@@ -363,13 +490,13 @@ class PgBouncerK8sCharm(CharmBase):
         self.peers.update_cfg(config)
 
         perm = 0o400
-        self.push_file(INI_PATH, config.render(), perm)
         for service in self._services:
             s_config = pgb.PgbConfig(config)
             s_config[PGB]["unix_socket_dir"] = service["dir"]
             s_config[PGB]["logfile"] = f"{service['dir']}/pgbouncer.log"
             s_config[PGB]["pidfile"] = f"{service['dir']}/pgbouncer.pid"
             self.push_file(service["ini_path"], s_config.render(), perm)
+        self.push_file(INI_PATH, config.render(), perm)
         logger.info("pushed new pgbouncer.ini config files to pgbouncer container")
 
         if reload_pgbouncer:
@@ -394,7 +521,10 @@ class PgBouncerK8sCharm(CharmBase):
     # =====================
 
     def update_client_connection_info(self, port: Optional[str] = None):
-        """Update connection info in client relations."""
+        """Update connection info in client relations.
+
+        TODO rename
+        """
         # Skip updates if backend.postgres doesn't exist yet.
         if not self.backend.postgres:
             return
@@ -415,6 +545,8 @@ class PgBouncerK8sCharm(CharmBase):
 
     def update_postgres_endpoints(self, reload_pgbouncer=False):
         """Update postgres endpoints in relation config values.
+
+        TODO rename
 
         Raises:
             ops.pebble.ConnectionError if we can't connect to the pebble container.

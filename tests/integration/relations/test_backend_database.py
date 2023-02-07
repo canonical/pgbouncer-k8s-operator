@@ -1,4 +1,4 @@
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 import asyncio
@@ -58,7 +58,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
             ops_test.model.deploy(PG, channel="edge", trust=True, num_units=3),
         )
         await asyncio.gather(
-            ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000),
+            ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000),
             ops_test.model.wait_for_idle(
                 apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
             ),
@@ -83,7 +83,12 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         pgb_unit = ops_test.model.applications[PGB].units[0]
         logging.info(await get_app_relation_databag(ops_test, pgb_unit.name, relation.id))
         wait_for_relation_removed_between(ops_test, PG, PGB)
-        await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000),
+        await asyncio.gather(
+            ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000),
+            ops_test.model.wait_for_idle(
+                apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
+            ),
+        )
 
         # Wait for pgbouncer charm to update its config files.
         try:
@@ -178,7 +183,7 @@ async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
 
         # TODO test deleting leader
 
-        await scale_application(ops_test, PGB, 1)
+        await scale_application(ops_test, PGB, 1, expected_status="active")
         await asyncio.gather(
             ops_test.model.wait_for_idle(
                 apps=[PGB], status="active", timeout=1000, wait_for_exact_units=1

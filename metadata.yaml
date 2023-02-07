@@ -1,4 +1,4 @@
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 name: pgbouncer-k8s
@@ -44,6 +44,10 @@ requires:
   backend-database:
     interface: postgresql_client
     optional: false
+  certificates:
+    interface: tls-certificates
+    optional: true
+    limit: 1
 
 peers:
   pgb-peers:

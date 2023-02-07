@@ -1,4 +1,4 @@
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 # Testing tools configuration
@@ -20,6 +20,7 @@ markers = [
     "scaling: integration tests for pgbouncer scaling",
     "legacy_relation: integration tests that test legacy client relations",
     "client_relation: integration tests that test modern client relations",
+    "tls_tests: integration tests that test TLS",
 ]
 
 # Formatting tools configuration

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Constants for the PgBouncer charm."""
@@ -16,3 +16,7 @@ BACKEND_RELATION_NAME = "backend-database"
 DB_RELATION_NAME = "db"
 DB_ADMIN_RELATION_NAME = "db-admin"
 CLIENT_RELATION_NAME = "database"
+
+TLS_KEY_FILE = "key.pem"
+TLS_CA_FILE = "ca.pem"
+TLS_CERT_FILE = "cert.pem"

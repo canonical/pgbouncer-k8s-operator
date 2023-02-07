@@ -1,4 +1,4 @@
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 """Pgbouncer backend-database relation hooks & helpers.
@@ -41,7 +41,7 @@ import logging
 from typing import Dict, List, Set
 
 import psycopg2
-from charms.data_platform_libs.v0.database_requires import (
+from charms.data_platform_libs.v0.data_interfaces import (
     DatabaseCreatedEvent,
     DatabaseRequires,
 )
@@ -101,6 +101,103 @@ class BackendDatabaseRequires(Object):
         self.framework.observe(
             charm.on[BACKEND_RELATION_NAME].relation_broken, self._on_relation_broken
         )
+
+    @property
+    def relation(self) -> Relation:
+        """Relation object for postgres backend-database relation."""
+        backend_relation = self.model.get_relation(BACKEND_RELATION_NAME)
+        if not backend_relation:
+            return None
+        else:
+            return backend_relation
+
+    @property
+    def postgres(self) -> PostgreSQL:
+        """Returns PostgreSQL representation of backend database, as defined in relation.
+
+        Returns None if backend relation is not fully initialised.
+        """
+        if not self.relation:
+            return None
+
+        databag = self.postgres_databag
+        endpoint = databag.get("endpoints")
+        user = databag.get("username")
+        password = databag.get("password")
+        database = self.database.database
+
+        if None in [endpoint, user, password]:
+            return None
+
+        return PostgreSQL(
+            primary_host=endpoint.split(":")[0],
+            current_host=endpoint.split(":")[0],
+            user=user,
+            password=password,
+            database=database,
+        )
+
+    @property
+    def auth_user(self):
+        """Username for auth_user."""
+        username = self.postgres_databag.get("username")
+        if username is None:
+            return None
+        return f"pgbouncer_auth_{username}".replace("-", "_")
+
+    @property
+    def postgres_databag(self) -> Dict:
+        """Wrapper around accessing the remote application databag for the backend relation.
+
+        Returns None if relation is none.
+
+        Since we can trigger db-relation-changed on backend-changed, we need to be able to easily
+        access the backend app relation databag.
+        """
+        if self.relation:
+            for key, databag in self.relation.data.items():
+                if isinstance(key, Application) and key != self.charm.app:
+                    return databag
+        return None
+
+    @property
+    def ready(self) -> bool:
+        """A boolean signifying whether the backend relation is fully initialised & ready.
+
+        This is a simple binary check to verify that we can send data from this charm to the
+        backend charm.
+        """
+        # Check we have connection information
+        if not self.postgres:
+            return False
+
+        try:
+            cfg = self.charm.read_pgb_config()
+        except FileNotFoundError:
+            # Not ready, no config
+            return False
+
+        # Check we can authenticate
+        if "auth_query" not in cfg["pgbouncer"].keys():
+            # Not ready, backend relation not initialised
+            return False
+        try:
+            cfg = self.charm.read_auth_file()
+        except FileNotFoundError:
+            # Not ready, no auth file to authenticate our pgb user
+            return False
+
+        # Check we can actually connect to backend database by running a command.
+        try:
+            with self.postgres._connect_to_database(PGB) as conn, conn.cursor() as cursor:
+                # TODO find a better smoke check
+                cursor.execute("SELECT version();")
+            conn.close()
+        except (psycopg2.Error, psycopg2.OperationalError):
+            logger.error("PostgreSQL connection failed")
+            return False
+
+        return True
 
     def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
         """Handle backend-database-database-created event.
@@ -164,6 +261,7 @@ class BackendDatabaseRequires(Object):
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
         if event.departing_unit == self.charm.unit:
+            # This should only occur when the relation is being removed, not on scale-down
             self.charm.peers.unit_databag.update(
                 {f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing": "true"}
             )
@@ -183,6 +281,7 @@ class BackendDatabaseRequires(Object):
         try:
             # TODO de-authorise all databases
             logger.info("removing auth user")
+            # Remove auth function before broken-hook, while we can still connect to postgres.
             self.remove_auth_function([PGB, PG])
         except psycopg2.Error:
             remove_auth_fail_msg = (
@@ -240,7 +339,7 @@ class BackendDatabaseRequires(Object):
         install_script = open("src/relations/sql/pgbouncer-install.sql", "r").read()
 
         for dbname in dbs:
-            with self.postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
+            with self.postgres._connect_to_database(dbname) as conn, conn.cursor() as cursor:
                 cursor.execute(install_script.replace("auth_user", self.auth_user))
             conn.close()
         logger.info("auth function initialised")
@@ -260,99 +359,10 @@ class BackendDatabaseRequires(Object):
         logger.info("removing auth function from backend relation")
         uninstall_script = open("src/relations/sql/pgbouncer-uninstall.sql", "r").read()
         for dbname in dbs:
-            with self.postgres.connect_to_database(dbname) as conn, conn.cursor() as cursor:
+            with self.postgres._connect_to_database(dbname) as conn, conn.cursor() as cursor:
                 cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
             conn.close()
         logger.info("auth function removed")
-
-    @property
-    def relation(self) -> Relation:
-        """Relation object for postgres backend-database relation."""
-        backend_relation = self.model.get_relation(BACKEND_RELATION_NAME)
-        if not backend_relation:
-            return None
-        else:
-            return backend_relation
-
-    @property
-    def postgres(self) -> PostgreSQL:
-        """Returns PostgreSQL representation of backend database, as defined in relation.
-
-        Returns None if backend relation is not fully initialised.
-        """
-        if not self.relation:
-            return None
-
-        databag = self.postgres_databag
-        endpoint = databag.get("endpoints")
-        user = databag.get("username")
-        password = databag.get("password")
-        database = self.database.database
-
-        if None in [endpoint, user, password]:
-            return None
-
-        return PostgreSQL(
-            primary_host=endpoint.split(":")[0], user=user, password=password, database=database
-        )
-
-    @property
-    def auth_user(self):
-        """Username for auth_user."""
-        username = self.postgres_databag.get("username")
-        if username is None:
-            return None
-        return f"pgbouncer_auth_{username}".replace("-", "_")
-
-    @property
-    def postgres_databag(self) -> Dict:
-        """Wrapper around accessing the remote application databag for the backend relation.
-
-        Returns None if relation is none.
-
-        Since we can trigger db-relation-changed on backend-changed, we need to be able to easily
-        access the backend app relation databag.
-        """
-        if self.relation:
-            for key, databag in self.relation.data.items():
-                if isinstance(key, Application) and key != self.charm.app:
-                    return databag
-        return None
-
-    @property
-    def ready(self) -> bool:
-        """A boolean signifying whether the backend relation is fully initialised & ready."""
-        # Check we have connection information
-        if not self.postgres:
-            return False
-
-        try:
-            cfg = self.charm.read_pgb_config()
-        except FileNotFoundError:
-            # Not ready, no config
-            return False
-
-        # Check we can authenticate
-        if "auth_query" not in cfg["pgbouncer"].keys():
-            # Not ready, backend relation not initialised
-            return False
-        try:
-            cfg = self.charm.read_auth_file()
-        except FileNotFoundError:
-            # Not ready, no auth file to authenticate our pgb user
-            return False
-
-        # Check we can actually connect to backend database by running a command.
-        try:
-            with self.postgres.connect_to_database(PGB) as conn, conn.cursor() as cursor:
-                # TODO find a better smoke check
-                cursor.execute("SELECT version();")
-            conn.close()
-        except (psycopg2.Error, psycopg2.OperationalError):
-            logger.error("PostgreSQL connection failed")
-            return False
-
-        return True
 
     def get_read_only_endpoints(self) -> Set[str]:
         """Get read-only-endpoints from backend relation."""

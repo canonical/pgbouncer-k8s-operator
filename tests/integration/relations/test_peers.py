@@ -1,4 +1,4 @@
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 import asyncio
@@ -26,7 +26,6 @@ FINOS_WALTZ = "finos-waltz"
 
 @pytest.mark.scaling
 @pytest.mark.abort_on_fail
-@pytest.mark.run(order=1)
 # TODO order marks aren't behaving
 async def test_deploy_at_scale(ops_test):
     # Build, deploy, and relate charms.
@@ -37,13 +36,12 @@ async def test_deploy_at_scale(ops_test):
     async with ops_test.fast_forward():
         await ops_test.model.deploy(charm, resources=resources, application_name=PGB, num_units=3)
         await ops_test.model.wait_for_idle(
-            apps=[PGB], status="active", timeout=1000, wait_for_exact_units=3
+            apps=[PGB], status="blocked", timeout=1000, wait_for_exact_units=3
         ),
 
 
 @pytest.mark.scaling
 @pytest.mark.abort_on_fail
-@pytest.mark.run(order=2)
 async def test_scaled_relations(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
@@ -56,7 +54,7 @@ async def test_scaled_relations(ops_test: OpsTest):
 
         await asyncio.gather(
             ops_test.model.wait_for_idle(
-                apps=[PGB], status="active", timeout=1000, wait_for_exact_units=3
+                apps=[PGB], status="blocked", timeout=1000, wait_for_exact_units=3
             ),
             ops_test.model.wait_for_idle(
                 apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
@@ -83,7 +81,6 @@ async def test_scaled_relations(ops_test: OpsTest):
 
 
 @pytest.mark.scaling
-@pytest.mark.run(order=3)
 async def test_scaling(ops_test: OpsTest):
     """Test data is replicated to new units after a scale up."""
     # Ensure the initial number of units in the application.
@@ -108,7 +105,6 @@ async def test_scaling(ops_test: OpsTest):
 
 
 @pytest.mark.scaling
-@pytest.mark.run(order=4)
 async def test_exit_relations(ops_test: OpsTest):
     """Test that we can exit relations with multiple units without breaking anything."""
     async with ops_test.fast_forward():
@@ -118,4 +114,4 @@ async def test_exit_relations(ops_test: OpsTest):
 
         await ops_test.model.remove_application(PG)
         wait_for_relation_removed_between(ops_test, PG, PGB)
-        await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)
+        await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)

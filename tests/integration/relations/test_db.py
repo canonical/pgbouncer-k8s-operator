@@ -1,4 +1,4 @@
-# Copyright 2022 Canonical Ltd.
+# Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 import asyncio
@@ -27,6 +27,7 @@ PGB = METADATA["name"]
 PG = "postgresql-k8s"
 FINOS_WALTZ = "finos-waltz"
 ANOTHER_FINOS_WALTZ = "another-finos-waltz"
+OPENLDAP = "openldap"
 
 logger = logging.getLogger(__name__)
 
@@ -162,3 +163,14 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         assert finos_user not in cfg["pgbouncer"]["admin_users"]
         assert "waltz" not in cfg["databases"].keys()
         assert "waltz_standby" not in cfg["databases"].keys()
+
+
+@pytest.mark.legacy_relation
+async def test_relation_with_openldap(ops_test: OpsTest):
+    """Test the relation with OpenLDAP charm."""
+    await ops_test.model.deploy(
+        "openldap-charmers-openldap", application_name=OPENLDAP, channel="edge"
+    )
+    await ops_test.model.add_relation(f"{PGB}:db", f"{OPENLDAP}:db")
+    wait_for_relation_joined_between(ops_test, PGB, OPENLDAP)
+    await ops_test.model.wait_for_idle(apps=[PG, PGB, OPENLDAP], status="active", timeout=1000)
