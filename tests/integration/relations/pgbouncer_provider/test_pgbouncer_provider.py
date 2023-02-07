@@ -439,12 +439,11 @@ async def test_relation_broken(ops_test: OpsTest):
     assert "first-database" not in cfg["databases"].keys()
     assert "first-database_readonly" not in cfg["databases"].keys()
 
+
 @pytest.mark.client_relation
 async def test_relation_with_data_integrator(ops_test: OpsTest):
     """Test that the charm can be related to the data integrator without extra user roles."""
-    config = {
-        "database-name": "test-database"
-    }
+    config = {"database-name": "test-database"}
     await ops_test.model.deploy(
         DATA_INTEGRATOR_APP_NAME,
         channel="edge",
