@@ -153,8 +153,8 @@ class TestBackendDatabaseRelation(unittest.TestCase):
 
         self.backend.initialise_auth_function(dbs)
 
-        _postgres.return_value.connect_to_database.assert_called_with(dbs[0])
-        conn = _postgres.return_value.connect_to_database().__enter__()
+        _postgres.return_value._connect_to_database.assert_called_with(dbs[0])
+        conn = _postgres.return_value._connect_to_database().__enter__()
         cursor = conn.cursor().__enter__()
         cursor.execute.assert_called_with(
             install_script.replace("auth_user", self.backend.auth_user)

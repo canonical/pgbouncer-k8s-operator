@@ -28,15 +28,12 @@ f"{dbname}_readonly".
 │                  │ │ <empty>          │ │ <empty>         │                                                      │ │ <empty>           │ │ <empty>            │ │ <empty>           │                             │
 │                  │ ╰──────────────────╯ ╰─────────────────╯                                                      │ ╰───────────────────╯ ╰────────────────────╯ ╰───────────────────╯                             │
 └──────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-NOTE: this charm uses the old data_platform_libs database_provides lib. TODO update to
-database_interface lib
 """  # noqa: W505
 
 
 import logging
 
-from charms.data_platform_libs.v0.database_provides import (
+from charms.data_platform_libs.v0.data_interfaces import (
     DatabaseProvides,
     DatabaseRequestedEvent,
 )
