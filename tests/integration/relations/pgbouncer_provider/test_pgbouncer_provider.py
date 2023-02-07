@@ -345,6 +345,101 @@ async def test_legacy_relation_compatibility(ops_test: OpsTest):
 
 
 @pytest.mark.client_relation
+async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_charm):
+    pgb_secondary = f"{PGB}-secondary"
+    await ops_test.model.deploy(
+        pgb_charm,
+        resources=PGB_RESOURCES,
+        application_name=pgb_secondary,
+    )
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(apps=[pgb_secondary], status="blocked"),
+
+    await ops_test.model.add_relation(f"{pgb_secondary}:{BACKEND_RELATION_NAME}", f"{PG}:database")
+    wait_for_relation_joined_between(ops_test, PG, pgb_secondary)
+
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(apps=APP_NAMES + [pgb_secondary])
+
+    secondary_relation = await ops_test.model.add_relation(
+        f"{SECONDARY_CLIENT_APP_NAME}:{SECOND_DATABASE_RELATION_NAME}", pgb_secondary
+    )
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle()
+
+    # Check new relation works
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[SECONDARY_CLIENT_APP_NAME].units[0].name,
+        relation_id=secondary_relation.id,
+        dbname=SECONDARY_APPLICATION_SECOND_DBNAME,
+        table_name="check_multiple_pgb_connected_to_one_postgres",
+        relation_name=SECOND_DATABASE_RELATION_NAME,
+    )
+    # Check the new relation hasn't affected existing connectivity
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=client_relation.id,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
+        dbname=APPLICATION_FIRST_DBNAME,
+    )
+
+
+@pytest.mark.smoke
+@pytest.mark.client_relation
+async def test_scaling(ops_test: OpsTest):
+    """Check these relations all work when scaling pgbouncer."""
+    await scale_application(ops_test, PGB, 1)
+    await ops_test.model.wait_for_idle(apps=APP_NAMES)
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=client_relation.id,
+        dbname=APPLICATION_FIRST_DBNAME,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
+    )
+
+    await scale_application(ops_test, PGB, 2)
+    await ops_test.model.wait_for_idle(apps=APP_NAMES)
+    await check_new_relation(
+        ops_test,
+        unit_name=ops_test.model.applications[CLIENT_APP_NAME].units[0].name,
+        relation_id=client_relation.id,
+        dbname=APPLICATION_FIRST_DBNAME,
+        relation_name=FIRST_DATABASE_RELATION_NAME,
+    )
+
+
+@pytest.mark.client_relation
+async def test_relation_broken(ops_test: OpsTest):
+    """Test that the user is removed when the relation is broken."""
+    async with ops_test.fast_forward():
+        # Retrieve the relation user.
+        relation_user = await get_application_relation_data(
+            ops_test, CLIENT_APP_NAME, FIRST_DATABASE_RELATION_NAME, "username"
+        )
+
+        # Break the relation.
+        await ops_test.model.applications[PGB].remove_relation(
+            f"{PGB}:database", f"{CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}"
+        )
+        await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
+        backend_rel = get_backend_relation(ops_test)
+        pg_user, pg_pass = await get_backend_user_pass(ops_test, backend_rel)
+
+        # Check that the relation user was removed from the database.
+        await check_database_users_existence(
+            ops_test, [], [relation_user], pg_user=pg_user, pg_user_password=pg_pass
+        )
+
+    # check relation data was correctly removed from config
+    pgb_unit_name = ops_test.model.applications[PGB].units[0].name
+    cfg = await get_cfg(ops_test, pgb_unit_name)
+    assert "first-database" not in cfg["databases"].keys()
+    assert "first-database_readonly" not in cfg["databases"].keys()
+
+@pytest.mark.client_relation
 async def test_relation_with_data_integrator(ops_test: OpsTest):
     """Test that the charm can be related to the data integrator without extra user roles."""
     config = {
