@@ -293,10 +293,10 @@ async def check_tls(ops_test: OpsTest, relation_id: int, enabled: bool) -> bool:
     cleint_name = await app_name(ops_test, CLIENT_APP_NAME)
     unit = ops_test.model.applications[cleint_name].units[0]
     params = {
-        "dbname": "first-database",
+        "dbname": "application_first_database",
         "query": "SHOW ssl;",
         "relation-id": relation_id,
-        "relation-name": "application_first_database",
+        "relation-name": "first-database",
         "readonly": False,
     }
     try:
