@@ -294,7 +294,6 @@ async def check_tls(ops_test: OpsTest, relation_id: int, enabled: bool) -> bool:
     unit = ops_test.model.applications[cleint_name].units[0]
     params = {
         "dbname": "application_first_database",
-        "query": "SHOW ssl;",
         "relation-id": relation_id,
         "relation-name": "first-database",
         "readonly": False,
@@ -302,10 +301,10 @@ async def check_tls(ops_test: OpsTest, relation_id: int, enabled: bool) -> bool:
     try:
         for attempt in Retrying(stop=stop_after_attempt(10), wait=wait_fixed(3)):
             with attempt:
-                action = await unit.run_action("run-sql", **params)
+                action = await unit.run_action("test-tls", **params)
                 result = await action.wait()
 
-                tls_enabled = "on" in result.results
+                tls_enabled = result.results["results"] == "True"
                 if enabled != tls_enabled:
                     raise ValueError(f"TLS is{' not' if not tls_enabled else ''} enabled")
                 return True

@@ -53,13 +53,18 @@ async def test_build_and_deploy(ops_test: OpsTest):
                 application_name=CLIENT_APP_NAME,
             )
     # remove preexisting relation if any so that we can know the rel id
-    try:
+    relations = [
+        relation
+        for relation in ops_test.model.applications[PGB].relations
+        if not relation.is_peer
+        and f"{relation.requires.application_name}:{relation.requires.name}"
+        == f"{CLIENT_APP_NAME}:first-database"
+    ]
+    if relations:
         await ops_test.model.applications[PGB].remove_relation(
             f"{PGB}:database", f"{CLIENT_APP_NAME}:first-database"
         )
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
-    except Exception:
-        pass
     global client_relation
     client_relation = await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:first-database")
 

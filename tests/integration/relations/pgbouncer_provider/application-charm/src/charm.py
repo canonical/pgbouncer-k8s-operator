@@ -63,6 +63,7 @@ class ApplicationCharm(CharmBase):
         )
 
         self.framework.observe(self.on.run_sql_action, self._on_run_sql_action)
+        self.framework.observe(self.on.test_tls_action, self._on_test_tls_action)
 
     def _on_start(self, _) -> None:
         """Only sets an Active status."""
@@ -133,8 +134,44 @@ class ApplicationCharm(CharmBase):
 
         event.set_results({"results": json.dumps(results)})
 
+    def _on_test_tls_action(self, event: ActionEvent):
+        """An action that allows us to run SQL queries from this charm."""
+        logger.info(event.params)
+
+        relation_id = event.params["relation-id"]
+        relation_name = event.params["relation-name"]
+        if relation_name == self.first_database.relation_name:
+            relation = self.first_database
+        elif relation_name == self.second_database.relation_name:
+            relation = self.second_database
+        else:
+            event.fail(message="invalid relation name")
+
+        databag = relation.fetch_relation_data()[relation_id]
+
+        dbname = event.params["dbname"]
+        user = databag.get("username")
+        password = databag.get("password")
+
+        if event.params["readonly"]:
+            host = databag.get("read-only-endpoints").split(",")[0]
+            dbname = f"{dbname}_readonly"
+        else:
+            host = databag.get("endpoints").split(",")[0]
+        endpoint = host.split(":")[0]
+        port = host.split(":")[1]
+
+        try:
+            connection = self.connect_to_database(
+                database=dbname, user=user, password=password, host=endpoint, port=port, tls=True
+            )
+            connection.close()
+            event.set_results({"results": "True"})
+        except psycopg2.OperationalError:
+            event.set_results({"results": "False"})
+
     def connect_to_database(
-        self, host: str, port: str, database: str, user: str, password: str
+        self, host: str, port: str, database: str, user: str, password: str, tls: bool = False
     ) -> psycopg2.extensions.connection:
         """Creates a psycopg2 connection object to the database, with autocommit enabled.
 
@@ -144,11 +181,14 @@ class ApplicationCharm(CharmBase):
             database: database to connect to
             user: user to use to connect to the database
             password: password for the given user
+            tls: whether to require TLS
 
         Returns:
             psycopg2 connection object using the provided data
         """
         connstr = f"dbname='{database}' user='{user}' host='{host}' port='{port}' password='{password}' connect_timeout=1"
+        if tls:
+            connstr = f"{connstr} sslmode=require"
         logger.debug(f"connecting to database: \n{connstr}")
         connection = psycopg2.connect(connstr)
         connection.autocommit = True
