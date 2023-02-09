@@ -114,7 +114,7 @@ class PgBouncerProvider(Object):
 
         # Retrieve the database name and extra user roles using the charm library.
         databases = event.database
-        extra_user_roles = event.extra_user_roles
+        extra_user_roles = event.extra_user_roles or ""
         rel_id = event.relation.id
 
         # Creates the user and the database for this specific relation.
