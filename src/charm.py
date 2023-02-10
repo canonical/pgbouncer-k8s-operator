@@ -153,6 +153,9 @@ class PgBouncerK8sCharm(CharmBase):
 
         tls_enabled = all(self.tls.get_tls_files())
         if self.model.relations.get("certificates", []) and not tls_enabled:
+            logger.debug(
+                "pgbouncer_pebble_ready: Deferring as certificates files are not yet populated for existing certificates relation"
+            )
             self.unit.status = WaitingStatus("Waiting for certificates")
             event.defer()
             return
