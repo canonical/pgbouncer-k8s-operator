@@ -4,7 +4,7 @@
 import pytest as pytest
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers.helpers import (
+from .helpers.helpers import (
     CLIENT_APP_NAME,
     PGB,
     PGB_METADATA,
@@ -22,7 +22,6 @@ DATABASE_UNITS = 3
 
 
 @pytest.mark.abort_on_fail
-@pytest.mark.tls_tests
 async def test_build_and_deploy(ops_test: OpsTest):
     """Build and deploy pgbouncer charm."""
     wait_for_apps = False
@@ -90,7 +89,6 @@ async def test_build_and_deploy(ops_test: OpsTest):
             await ops_test.model.wait_for_idle(status="active", timeout=1000)
 
 
-@pytest.mark.tls_tests
 async def test_scale_up_pgb(ops_test: OpsTest) -> None:
     """Scale up PGB while TLS is enabled.
 
@@ -106,7 +104,6 @@ async def test_scale_up_pgb(ops_test: OpsTest) -> None:
     assert len(ops_test.model.applications[pgb_app].units) == num_units + 1
 
 
-@pytest.mark.tls_tests
 async def test_scale_down_pgb(ops_test: OpsTest) -> None:
     """Scale down PGB while TLS is enabled.
 
@@ -122,7 +119,6 @@ async def test_scale_down_pgb(ops_test: OpsTest) -> None:
     assert len(ops_test.model.applications[pgb_app].units) == num_units - 1
 
 
-@pytest.mark.tls_tests
 async def test_remove_tls(ops_test: OpsTest) -> None:
     """Removes the TLS relation and check through the test app the it is off.
 
@@ -136,7 +132,6 @@ async def test_remove_tls(ops_test: OpsTest) -> None:
     assert await check_tls(ops_test, client_relation.id, False)
 
 
-@pytest.mark.tls_tests
 async def test_add_tls(ops_test: OpsTest) -> None:
     """Rejoins the TLS relation and check through the test app the it is on.
 
@@ -148,7 +143,6 @@ async def test_add_tls(ops_test: OpsTest) -> None:
     assert await check_tls(ops_test, client_relation.id, True)
 
 
-@pytest.mark.tls_tests
 async def test_mattermost_db(ops_test: OpsTest) -> None:
     """Deploy Mattermost to test the 'db' relation.
 

@@ -4,6 +4,11 @@
 import unittest
 from unittest.mock import MagicMock, PropertyMock, patch
 
+from charms.pgbouncer_k8s.v0.pgb import (
+    DEFAULT_CONFIG,
+    PgbConfig,
+    parse_dict_to_kv_string,
+)
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
@@ -12,11 +17,6 @@ from constants import (
     DB_ADMIN_RELATION_NAME,
     DB_RELATION_NAME,
     PEER_RELATION_NAME,
-)
-from lib.charms.pgbouncer_k8s.v0.pgb import (
-    DEFAULT_CONFIG,
-    PgbConfig,
-    parse_dict_to_kv_string,
 )
 
 TEST_UNIT = {

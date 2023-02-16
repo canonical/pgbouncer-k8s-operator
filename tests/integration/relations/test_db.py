@@ -5,11 +5,10 @@ import asyncio
 import logging
 from pathlib import Path
 
-import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers.helpers import (
+from ..helpers.helpers import (
     get_app_relation_databag,
     get_backend_user_pass,
     get_cfg,
@@ -17,7 +16,7 @@ from tests.integration.helpers.helpers import (
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
 )
-from tests.integration.helpers.postgresql_helpers import (
+from ..helpers.postgresql_helpers import (
     check_database_creation,
     check_database_users_existence,
 )
@@ -32,7 +31,6 @@ OPENLDAP = "openldap"
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.legacy_relation
 async def test_create_db_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
@@ -165,7 +163,6 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
         assert "waltz_standby" not in cfg["databases"].keys()
 
 
-@pytest.mark.legacy_relation
 async def test_relation_with_openldap(ops_test: OpsTest):
     """Test the relation with OpenLDAP charm."""
     await ops_test.model.deploy(

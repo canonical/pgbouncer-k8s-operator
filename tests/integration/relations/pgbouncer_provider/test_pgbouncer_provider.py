@@ -11,7 +11,8 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from constants import BACKEND_RELATION_NAME
-from tests.integration.helpers.helpers import (
+
+from ...helpers.helpers import (
     get_app_relation_databag,
     get_backend_relation,
     get_backend_user_pass,
@@ -20,11 +21,11 @@ from tests.integration.helpers.helpers import (
     scale_application,
     wait_for_relation_joined_between,
 )
-from tests.integration.helpers.postgresql_helpers import (
+from ...helpers.postgresql_helpers import (
     check_database_creation,
     check_database_users_existence,
 )
-from tests.integration.relations.pgbouncer_provider.helpers import (
+from .helpers import (
     build_connection_string,
     check_new_relation,
     get_application_relation_data,
@@ -51,9 +52,7 @@ SECONDARY_APPLICATION_FIRST_DBNAME = "secondary_application_first_database"
 SECONDARY_APPLICATION_SECOND_DBNAME = "secondary_application_second_database"
 
 
-@pytest.mark.smoke
 @pytest.mark.abort_on_fail
-@pytest.mark.client_relation
 async def test_database_relation_with_charm_libraries(
     ops_test: OpsTest, application_charm, pgb_charm
 ):
@@ -103,7 +102,6 @@ async def test_database_relation_with_charm_libraries(
     )
 
 
-@pytest.mark.client_relation
 async def test_database_usage(ops_test: OpsTest):
     """Check we can update and delete things."""
     update_query = (
@@ -123,7 +121,6 @@ async def test_database_usage(ops_test: OpsTest):
     assert "some data" in json.loads(run_update_query["results"])[0]
 
 
-@pytest.mark.client_relation
 async def test_database_version(ops_test: OpsTest):
     """Check version is accurate."""
     version_query = "SELECT version();"
@@ -143,7 +140,6 @@ async def test_database_version(ops_test: OpsTest):
     assert version in json.loads(run_version_query["results"])[0][0]
 
 
-@pytest.mark.client_relation
 async def test_readonly_reads(ops_test: OpsTest):
     """Check we can read things in readonly."""
     select_query = "SELECT data FROM test;"
@@ -159,7 +155,6 @@ async def test_readonly_reads(ops_test: OpsTest):
     assert "some data" in json.loads(run_select_query_readonly["results"])[0]
 
 
-@pytest.mark.client_relation
 async def test_cant_write_in_readonly(ops_test: OpsTest):
     """Check we can't write in readonly."""
     drop_query = "DROP TABLE test;"
@@ -175,7 +170,6 @@ async def test_cant_write_in_readonly(ops_test: OpsTest):
     assert run_drop_query_readonly["Code"] == "1"
 
 
-@pytest.mark.client_relation
 async def test_database_admin_permissions(ops_test: OpsTest):
     """Test admin permissions."""
     create_database_query = "CREATE DATABASE another_database;"
@@ -201,7 +195,6 @@ async def test_database_admin_permissions(ops_test: OpsTest):
     assert "no results to fetch" in json.loads(run_create_user_query["results"])
 
 
-@pytest.mark.client_relation
 async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
     """Test that there is no read-only endpoint in a standalone cluster."""
     unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
@@ -225,7 +218,6 @@ async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
     ), f"read-only-endpoints in pgb databag: {databag}"
 
 
-@pytest.mark.client_relation
 async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
     """Test that there is read-only endpoint in a scaled up cluster."""
     await scale_application(ops_test, PGB, 2)
@@ -244,7 +236,6 @@ async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
     assert read_only_endpoints, f"read-only-endpoints not in pgb databag: {databag}"
 
 
-@pytest.mark.client_relation
 async def test_each_relation_has_unique_credentials(ops_test: OpsTest, application_charm):
     """Test that two different applications connect to the database with different credentials."""
     all_app_names = [SECONDARY_CLIENT_APP_NAME] + APP_NAMES
@@ -294,7 +285,6 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest, applicati
     assert app_connstr != secondary_app_connstr
 
 
-@pytest.mark.client_relation
 async def test_an_application_can_request_multiple_databases(ops_test: OpsTest):
     """Test that an application can request additional databases using the same interface."""
     # Relate the charms using another relation and wait for them exchanging some connection data.
@@ -314,8 +304,6 @@ async def test_an_application_can_request_multiple_databases(ops_test: OpsTest):
     assert first_database_connection_string != second_database_connection_string
 
 
-@pytest.mark.smoke
-@pytest.mark.client_relation
 async def test_legacy_relation_compatibility(ops_test: OpsTest):
     finos = "finos-waltz-k8s"
     await ops_test.model.deploy(finos, application_name=finos, channel="edge"),
@@ -342,7 +330,6 @@ async def test_legacy_relation_compatibility(ops_test: OpsTest):
     )
 
 
-@pytest.mark.client_relation
 async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_charm):
     pgb_secondary = f"{PGB}-secondary"
     await ops_test.model.deploy(
@@ -384,8 +371,6 @@ async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_ch
     )
 
 
-@pytest.mark.smoke
-@pytest.mark.client_relation
 async def test_scaling(ops_test: OpsTest):
     """Check these relations all work when scaling pgbouncer."""
     await scale_application(ops_test, PGB, 1)
@@ -409,7 +394,6 @@ async def test_scaling(ops_test: OpsTest):
     )
 
 
-@pytest.mark.client_relation
 async def test_relation_broken(ops_test: OpsTest):
     """Test that the user is removed when the relation is broken."""
     async with ops_test.fast_forward():
@@ -438,7 +422,6 @@ async def test_relation_broken(ops_test: OpsTest):
     assert "first-database_readonly" not in cfg["databases"].keys()
 
 
-@pytest.mark.client_relation
 async def test_relation_with_data_integrator(ops_test: OpsTest):
     """Test that the charm can be related to the data integrator without extra user roles."""
     config = {"database-name": "test-database"}

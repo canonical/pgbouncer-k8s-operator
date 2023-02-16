@@ -9,7 +9,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers.helpers import get_cfg, run_command_on_unit
+from .helpers.helpers import get_cfg, run_command_on_unit
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,6 @@ METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
 
 
-@pytest.mark.standalone
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test: OpsTest):
     """Build and deploy pgbouncer charm."""
@@ -34,7 +33,6 @@ async def test_build_and_deploy(ops_test: OpsTest):
         await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)
 
 
-@pytest.mark.standalone
 async def test_config_updates(ops_test: OpsTest):
     """Test updating charm config updates pgbouncer config & relation data."""
     pgbouncer_app = ops_test.model.applications[PGB]
@@ -49,7 +47,6 @@ async def test_config_updates(ops_test: OpsTest):
         assert cfg["pgbouncer"]["listen_port"] == port
 
 
-@pytest.mark.standalone
 async def test_multiple_pebble_services(ops_test: OpsTest):
     """Test we have the correct pebble services."""
     unit = ops_test.model.applications[PGB].units[0]

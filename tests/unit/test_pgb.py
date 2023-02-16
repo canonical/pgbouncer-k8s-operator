@@ -5,9 +5,8 @@ import string
 import unittest
 
 import pytest
-
-from lib.charms.pgbouncer_k8s.v0 import pgb
-from lib.charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
+from charms.pgbouncer_k8s.v0 import pgb
+from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
 
 DATA_DIR = "tests/unit/data"
 TEST_VALID_INI = f"{DATA_DIR}/test.ini"

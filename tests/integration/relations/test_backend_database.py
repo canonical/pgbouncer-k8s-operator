@@ -10,7 +10,7 @@ import yaml
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
-from tests.integration.helpers.helpers import (
+from ..helpers.helpers import (
     get_app_relation_databag,
     get_backend_relation,
     get_backend_user_pass,
@@ -20,7 +20,7 @@ from tests.integration.helpers.helpers import (
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
 )
-from tests.integration.helpers.postgresql_helpers import (
+from ..helpers.postgresql_helpers import (
     check_database_users_existence,
     enable_connections_logging,
     get_postgres_primary,
@@ -37,7 +37,6 @@ TLS = "tls-certificates-operator"
 RELATION = "backend-database"
 
 
-@pytest.mark.backend
 @pytest.mark.abort_on_fail
 async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -107,7 +106,6 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
         logging.info(cfg.render())
 
 
-@pytest.mark.backend
 async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
         # Relate PgBouncer to PostgreSQL.
@@ -150,7 +148,6 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
         ), "TLS is not being used on connections to PostgreSQL"
 
 
-@pytest.mark.backend
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
         await scale_application(ops_test, PGB, 3)
