@@ -43,12 +43,10 @@ microk8s config > ~/.kube/config
 Use the following tox commands to run tests:
 
 ```bash
-tox run -e format                 # update your code according to linting rules
+tox run -e format              # update your code according to linting rules
 tox run -e lint                # code style
 tox run -e unit                # unit tests
-tox run -e smoke-integration   # runs a small subset of integration tests that quickly verifies the charm is mostly working as intended.
-tox run -e dev-integration     # Tag integration tests with `@pytest.mark.dev' to select tests to run using this command.
-tox                        # runs 'fmt', 'lint', and 'unit' environments
+tox                            # runs 'fmt', 'lint', and 'unit' environments
 ```
 
 Integration tests for individual functionality can be found in tox.ini
