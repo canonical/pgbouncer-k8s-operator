@@ -220,17 +220,16 @@ class TestDb(unittest.TestCase):
         )
 
     @patch("relations.db.DbProvides._check_backend", return_value=True)
-    @patch("relations.db.DbProvides.get_databags", return_value=[{}])
+    @patch("relations.db.DbProvides.get_databags")
     @patch(
         "relations.backend_database.BackendDatabaseRequires.postgres_databag",
         new_callable=PropertyMock,
-        return_value={},
     )
     @patch(
         "relations.backend_database.BackendDatabaseRequires.get_read_only_endpoints",
         return_value=[],
     )
-    @patch("charm.PgBouncerK8sCharm.read_pgb_config", return_value=PgbConfig(DEFAULT_CONFIG))
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_update_postgres_endpoints(
         self,
@@ -242,9 +241,10 @@ class TestDb(unittest.TestCase):
         _check_backend,
     ):
         database = "test_db"
-        _get_databags.return_value[0] = {"database": database}
+        _get_databags.return_value = [{"database": database}]
         _pg_databag.return_value = {"endpoints": "ip:port"}
-        cfg = _read_cfg.return_value
+        cfg = PgbConfig(DEFAULT_CONFIG)
+        _read_cfg.side_effect = [cfg, PgbConfig(DEFAULT_CONFIG)]
 
         relation = MagicMock()
         reload_pgbouncer = False
@@ -252,8 +252,11 @@ class TestDb(unittest.TestCase):
         self.db_relation.update_postgres_endpoints(relation, reload_pgbouncer=reload_pgbouncer)
         assert database in cfg["databases"].keys()
         assert f"{database}_standby" not in cfg["databases"].keys()
+
         _render_cfg.assert_called_with(cfg, reload_pgbouncer=reload_pgbouncer)
         _read_only_endpoint.return_value = ["readonly:endpoint"]
+        _read_cfg.side_effect = [cfg, PgbConfig(DEFAULT_CONFIG)]
+
         self.db_relation.update_postgres_endpoints(relation, reload_pgbouncer=reload_pgbouncer)
         assert database in cfg["databases"].keys()
         assert f"{database}_standby" in cfg["databases"].keys()
