@@ -31,8 +31,8 @@ juju add-model dev
 juju model-config logging-config="<root>=INFO;unit=DEBUG"
 
 # initialise an environment using tox
-tox --notest -e unit
-source .tox/unit/bin/activate
+tox devenv -e integration
+source venv/bin/activate
 
 # export kubernetes config to lightkube, for integration testing.
 microk8s config > ~/.kube/config
@@ -43,12 +43,10 @@ microk8s config > ~/.kube/config
 Use the following tox commands to run tests:
 
 ```bash
-tox -e fmt                 # update your code according to linting rules
-tox -e lint                # code style
-tox -e unit                # unit tests
-tox -e smoke-integration   # runs a small subset of integration tests that quickly verifies the charm is mostly working as intended.
-tox -e dev-integration     # Tag integration tests with `@pytest.mark.dev' to select tests to run using this command.
-tox                        # runs 'fmt', 'lint', and 'unit' environments
+tox run -e format              # update your code according to linting rules
+tox run -e lint                # code style
+tox run -e unit                # unit tests
+tox                            # runs 'fmt', 'lint', and 'unit' environments
 ```
 
 Integration tests for individual functionality can be found in tox.ini

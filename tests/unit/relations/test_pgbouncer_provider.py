@@ -4,11 +4,11 @@
 import unittest
 from unittest.mock import MagicMock, PropertyMock, patch
 
+from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
 from constants import BACKEND_RELATION_NAME, CLIENT_RELATION_NAME, PEER_RELATION_NAME
-from lib.charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
 
 
 class TestPgbouncerProvider(unittest.TestCase):

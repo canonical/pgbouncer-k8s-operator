@@ -9,7 +9,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers.helpers import (
+from ..helpers.helpers import (
     scale_application,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
@@ -24,7 +24,6 @@ RELATION = "backend-database"
 FINOS_WALTZ = "finos-waltz"
 
 
-@pytest.mark.scaling
 @pytest.mark.abort_on_fail
 # TODO order marks aren't behaving
 async def test_deploy_at_scale(ops_test):
@@ -40,7 +39,6 @@ async def test_deploy_at_scale(ops_test):
         ),
 
 
-@pytest.mark.scaling
 @pytest.mark.abort_on_fail
 async def test_scaled_relations(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -80,7 +78,6 @@ async def test_scaled_relations(ops_test: OpsTest):
         )
 
 
-@pytest.mark.scaling
 async def test_scaling(ops_test: OpsTest):
     """Test data is replicated to new units after a scale up."""
     # Ensure the initial number of units in the application.
@@ -104,7 +101,6 @@ async def test_scaling(ops_test: OpsTest):
         )
 
 
-@pytest.mark.scaling
 async def test_exit_relations(ops_test: OpsTest):
     """Test that we can exit relations with multiple units without breaking anything."""
     async with ops_test.fast_forward():

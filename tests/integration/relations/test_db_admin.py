@@ -5,16 +5,15 @@ import asyncio
 import logging
 from pathlib import Path
 
-import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from tests.integration.helpers.helpers import (
+from ..helpers.helpers import (
     get_backend_user_pass,
     get_legacy_relation_username,
     wait_for_relation_joined_between,
 )
-from tests.integration.helpers.postgresql_helpers import (
+from ..helpers.postgresql_helpers import (
     check_database_creation,
     check_database_users_existence,
     get_unit_address,
@@ -30,7 +29,6 @@ PGB = METADATA["name"]
 PG = "postgresql-k8s"
 
 
-@pytest.mark.legacy_relation
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
     # Build, deploy, and relate charms.
     charm = await ops_test.build_charm(".")
