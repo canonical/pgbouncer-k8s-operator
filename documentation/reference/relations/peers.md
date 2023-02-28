@@ -10,7 +10,7 @@ These are the expected contents of the databags in this relation (all values are
 |---|---|
 | **metadata** |  |
 | relation name       | pgb-peers|
-| interface           | pgb_peers|
+| interface           | pgb-peers|
 | leader unit         | 0|
 | type                | peer|
 | **application databag** |  |

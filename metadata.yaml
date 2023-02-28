@@ -51,4 +51,4 @@ requires:
 
 peers:
   pgb-peers:
-    interface: pgb_peers
+    interface: pgb-peers
