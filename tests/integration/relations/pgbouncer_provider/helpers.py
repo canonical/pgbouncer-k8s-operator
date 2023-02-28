@@ -7,7 +7,7 @@ import logging
 from typing import Optional
 
 import yaml
-from lightkube.core.client import AsyncClient
+from lightkube import AsyncClient
 from lightkube.resources.core_v1 import Pod
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_attempt, wait_exponential
