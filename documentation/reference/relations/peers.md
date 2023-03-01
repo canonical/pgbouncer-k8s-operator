@@ -9,8 +9,8 @@ These are the expected contents of the databags in this relation (all values are
 | relation (id: 2) | pgbouncer-k8s |
 |---|---|
 | **metadata** |  |
-| relation name       | pgb-peers|
-| interface           | pgb-peers|
+| relation name       | pgb_peers|
+| interface           | pgb_peers|
 | leader unit         | 0|
 | type                | peer|
 | **application databag** |  |
