@@ -1125,18 +1125,19 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "ops"
-version = "2.0.0"
+version = "2.1.1"
 description = "The Python library behind great charms"
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "ops-2.0.0-py3-none-any.whl", hash = "sha256:f0eebaa321a139395912afa686d7091fc11150010cf375d38b135b9a499be2f2"},
-    {file = "ops-2.0.0.tar.gz", hash = "sha256:39d61bc6e2e71eb120de3037fee549c547ce68300688bbc6de7b76b6041a9065"},
+    {file = "ops-2.1.1-py3-none-any.whl", hash = "sha256:bed9f14b785efaa83f89b9c76b87bd1b3b82b0350c453b41dce778b39c7410b4"},
+    {file = "ops-2.1.1.tar.gz", hash = "sha256:b2802068557c64121bf50ccfe101b043ed08c02ac5f958e55752c476b09de63d"},
 ]
 
 [package.dependencies]
-PyYAML = "*"
+PyYAML = ">=6.0.0,<7.0.0"
+websocket-client = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "packaging"
@@ -1881,14 +1882,14 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "tenacity"
-version = "8.2.1"
+version = "8.2.2"
 description = "Retry code until it succeeds"
 category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "tenacity-8.2.1-py3-none-any.whl", hash = "sha256:dd1b769ca7002fda992322939feca5bee4fa11f39146b0af14e0b8d9f27ea854"},
-    {file = "tenacity-8.2.1.tar.gz", hash = "sha256:c7bb4b86425b977726a7b49971542d4f67baf72096597d283f3ffd01f33b92df"},
+    {file = "tenacity-8.2.2-py3-none-any.whl", hash = "sha256:2f277afb21b851637e8f52e6a613ff08734c347dc19ade928e519d7d2d8569b0"},
+    {file = "tenacity-8.2.2.tar.gz", hash = "sha256:43af037822bd0029025877f3b2d97cc4d7bb0c2991000a3d59d71517c5c969e0"},
 ]
 
 [package.extras]
@@ -2011,7 +2012,7 @@ files = [
 name = "websocket-client"
 version = "1.5.1"
 description = "WebSocket client for Python with low level API options"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -2185,4 +2186,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "f6b21b490dd52f7406eb8b7c59f24ae259a08344239fca569a7e2f61021b7fa0"
+content-hash = "e8c26dbd36a8e6bfe44c912ace321394b44d969f3bb397f6bc2b79a969b7ed34"
