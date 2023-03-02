@@ -50,5 +50,5 @@ requires:
     limit: 1
 
 peers:
-  pgb_peers:
+  pgb-peers:
     interface: pgb_peers
