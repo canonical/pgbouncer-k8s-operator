@@ -38,7 +38,7 @@ LIBID = "113f4a7480c04631bfdf5fe776f760cd"
 LIBAPI = 0
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 6
+LIBPATCH = 7
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ class PgbConfig(MutableMapping):
 
     The PgbConfig class provides an abstraction for the pgbouncer.ini config file. This file
     essentially governs how each instance of pgbouncer operates, including the connection
-    information for each database, user authentication, local file managment, and how connections
+    information for each database, user authentication, local file management, and how connections
     are pooled in detail. This config also contains a `validate` function that allows a user to
     verify their changes will result in a valid pgbouncer config, and a `render` function to render
     this object out to a string.

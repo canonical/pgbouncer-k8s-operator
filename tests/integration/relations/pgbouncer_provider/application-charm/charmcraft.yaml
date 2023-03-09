@@ -13,4 +13,4 @@ bases:
 
 parts:
   charm:
-    charm-binary-python-packages: [psycopg2-binary==2.9.5, setuptools]
+    charm-binary-python-packages: [psycopg2-binary==2.9.5]
