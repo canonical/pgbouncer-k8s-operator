@@ -5,6 +5,7 @@ import pytest as pytest
 from pytest_operator.plugin import OpsTest
 
 from .helpers.helpers import (
+    CHARM_SERIES,
     CLIENT_APP_NAME,
     PGB,
     PGB_METADATA,
@@ -39,6 +40,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
                 },
                 application_name=PGB,
                 num_units=APPLICATION_UNITS,
+                series=CHARM_SERIES,
             )
 
     if not await app_name(ops_test, CLIENT_APP_NAME):
@@ -50,6 +52,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
             await ops_test.model.deploy(
                 application_charm,
                 application_name=CLIENT_APP_NAME,
+                series=CHARM_SERIES,
             )
     # remove preexisting relation if any so that we can know the rel id
     relations = [
@@ -79,7 +82,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
         wait_for_apps = True
         # Deploy TLS Certificates operator.
         config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
-        await ops_test.model.deploy(TLS_CERTIFICATES_APP_NAME, channel="beta", config=config)
+        await ops_test.model.deploy(TLS_CERTIFICATES_APP_NAME, config=config)
         # Relate it to the PgBouncer to enable TLS.
         await ops_test.model.relate(PGB, TLS_CERTIFICATES_APP_NAME)
         await ops_test.model.relate(TLS_CERTIFICATES_APP_NAME, POSTGRESQL_APP_NAME)

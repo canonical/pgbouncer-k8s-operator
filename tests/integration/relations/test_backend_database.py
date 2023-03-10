@@ -11,6 +11,7 @@ from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from ..helpers.helpers import (
+    CHARM_SERIES,
     get_app_relation_databag,
     get_backend_relation,
     get_backend_user_pass,
@@ -52,6 +53,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
                 charm,
                 resources=resources,
                 application_name=PGB,
+                series=CHARM_SERIES,
             ),
             # Edge 5 is the new postgres charm
             ops_test.model.deploy(PG, channel="edge", trust=True, num_units=3),
@@ -116,7 +118,7 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
 
         # Deploy TLS Certificates operator.
         config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
-        await ops_test.model.deploy(TLS, channel="beta", config=config)
+        await ops_test.model.deploy(TLS, config=config)
         await ops_test.model.wait_for_idle(apps=[TLS], status="active", timeout=1000)
 
         # Relate it to the PostgreSQL to enable TLS.
