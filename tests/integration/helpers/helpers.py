@@ -20,6 +20,7 @@ from tenacity import (
 
 from constants import AUTH_FILE_PATH, INI_PATH
 
+CHARM_SERIES = "jammy"
 CLIENT_APP_NAME = "application"
 PGB_METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = PGB_METADATA["name"]

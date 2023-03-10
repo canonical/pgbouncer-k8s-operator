@@ -10,6 +10,7 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from ..helpers.helpers import (
+    CHARM_SERIES,
     scale_application,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
@@ -33,7 +34,9 @@ async def test_deploy_at_scale(ops_test):
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
     async with ops_test.fast_forward():
-        await ops_test.model.deploy(charm, resources=resources, application_name=PGB, num_units=3)
+        await ops_test.model.deploy(
+            charm, resources=resources, application_name=PGB, num_units=3, series=CHARM_SERIES
+        )
         await ops_test.model.wait_for_idle(
             apps=[PGB], status="blocked", timeout=1000, wait_for_exact_units=3
         ),

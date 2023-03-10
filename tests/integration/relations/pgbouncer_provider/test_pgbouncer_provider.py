@@ -13,6 +13,7 @@ from pytest_operator.plugin import OpsTest
 from constants import BACKEND_RELATION_NAME
 
 from ...helpers.helpers import (
+    CHARM_SERIES,
     get_app_relation_databag,
     get_backend_relation,
     get_backend_user_pass,
@@ -63,12 +64,14 @@ async def test_database_relation_with_charm_libraries(
         ops_test.model.deploy(
             application_charm,
             application_name=CLIENT_APP_NAME,
+            series=CHARM_SERIES,
         ),
         ops_test.model.deploy(
             pgb_charm,
             resources=PGB_RESOURCES,
             application_name=PGB,
             num_units=2,
+            series=CHARM_SERIES,
         ),
         ops_test.model.deploy(
             PG,
@@ -244,6 +247,7 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest, applicati
     await ops_test.model.deploy(
         application_charm,
         application_name=SECONDARY_CLIENT_APP_NAME,
+        series=CHARM_SERIES,
     )
     await ops_test.model.wait_for_idle(status="active", apps=all_app_names)
 
@@ -336,6 +340,7 @@ async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_ch
         pgb_charm,
         resources=PGB_RESOURCES,
         application_name=pgb_secondary,
+        series=CHARM_SERIES,
     )
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(apps=[pgb_secondary], status="blocked"),

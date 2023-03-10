@@ -9,6 +9,7 @@ import yaml
 from pytest_operator.plugin import OpsTest
 
 from ..helpers.helpers import (
+    CHARM_SERIES,
     get_backend_user_pass,
     get_legacy_relation_username,
     wait_for_relation_joined_between,
@@ -42,6 +43,7 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
                 charm,
                 resources=resources,
                 application_name=PGB,
+                series=CHARM_SERIES,
             ),
             ops_test.model.deploy(PG, trust=True, num_units=3, channel="edge"),
             ops_test.model.deploy(

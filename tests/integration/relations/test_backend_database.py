@@ -11,6 +11,7 @@ from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from ..helpers.helpers import (
+    CHARM_SERIES,
     get_app_relation_databag,
     get_backend_relation,
     get_backend_user_pass,
@@ -52,6 +53,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
                 charm,
                 resources=resources,
                 application_name=PGB,
+                series=CHARM_SERIES,
             ),
             # Edge 5 is the new postgres charm
             ops_test.model.deploy(PG, channel="edge", trust=True, num_units=3),

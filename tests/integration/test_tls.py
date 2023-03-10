@@ -5,6 +5,7 @@ import pytest as pytest
 from pytest_operator.plugin import OpsTest
 
 from .helpers.helpers import (
+    CHARM_SERIES,
     CLIENT_APP_NAME,
     PGB,
     PGB_METADATA,
@@ -39,6 +40,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
                 },
                 application_name=PGB,
                 num_units=APPLICATION_UNITS,
+                series=CHARM_SERIES,
             )
 
     if not await app_name(ops_test, CLIENT_APP_NAME):
@@ -50,6 +52,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
             await ops_test.model.deploy(
                 application_charm,
                 application_name=CLIENT_APP_NAME,
+                series=CHARM_SERIES,
             )
     # remove preexisting relation if any so that we can know the rel id
     relations = [

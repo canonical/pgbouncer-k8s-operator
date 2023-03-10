@@ -9,7 +9,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from .helpers.helpers import get_cfg, run_command_on_unit
+from .helpers.helpers import CHARM_SERIES, get_cfg, run_command_on_unit
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
             charm,
             resources=resources,
             application_name=PGB,
+            series=CHARM_SERIES,
         )
         await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)
 
