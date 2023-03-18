@@ -8,6 +8,12 @@ concurrency:
 
 on:
   pull_request:
+    paths-ignore:
+      - '.gitignore'
+      - '.jujuignore'
+      - 'LICENSE'
+      - '**.md'
+      - 'renovate.json'
   schedule:
     - cron: '53 0 * * *' # Daily at 00:53 UTC
   # Triggered on push to branch "main" by .github/workflows/release.yaml
@@ -66,8 +72,7 @@ jobs:
         tox-environments:
           - standalone-integration
           - legacy-client-relation-integration
-        agents-version:
-          - "2.9.42" # Latest
+        agents-version: ["2.9.42"]  # renovate: latest
         include:
           - tox-environments: backend-integration
             agents-version: "2.9.29"
