@@ -41,5 +41,6 @@
       "versioningTemplate": "loose"
     }
   ],
+  "ignorePaths": [],
   "ignoreDeps": []
 }
