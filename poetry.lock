@@ -1626,14 +1626,14 @@ testing = ["coverage (>=6.2)", "flaky (>=3.5.0)", "hypothesis (>=5.7.1)", "mypy 
 
 [[package]]
 name = "pytest-operator"
-version = "0.25.0"
+version = "0.26.0"
 description = "Fixtures for Operators"
 category = "dev"
 optional = false
 python-versions = "*"
 files = [
-    {file = "pytest-operator-0.25.0.tar.gz", hash = "sha256:70165d81a56b17bb236f900f12a9ec280d26e5037aec854a0ce4fbd0d0aeaf5f"},
-    {file = "pytest_operator-0.25.0-py3-none-any.whl", hash = "sha256:91fa2f9d650f8a8b040876138b503193bd10f858d2eaddc5b41e18c55a37d21f"},
+    {file = "pytest-operator-0.26.0.tar.gz", hash = "sha256:eda39d058c0152fa2b2b4a733836c3b187a8d5688ba386926fe06fab51d61725"},
+    {file = "pytest_operator-0.26.0-py3-none-any.whl", hash = "sha256:43216ec874ad07a270bff1c166723461c4be01500ee455e0c7724c8b12349611"},
 ]
 
 [package.dependencies]
@@ -2174,4 +2174,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "f1b83703b0bbb8189fe63c2a154a9cd140ebfc26a382623992c3a3f7e27483d1"
+content-hash = "b543352fa5b7f87a4ccdd02426d71a5353741510bc1787e38a3677297bbabf4e"
