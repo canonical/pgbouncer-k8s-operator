@@ -153,6 +153,8 @@ class PgBouncerProvider(Object):
 
         # Share the credentials and updated connection info with the client application.
         self.database_provides.set_credentials(rel_id, user, password)
+        # Set the database name
+        self.database_provides.set_database(rel_id, databases)
         self.update_connection_info(event.relation)
 
     def _on_relation_departed(self, event: RelationDepartedEvent) -> None:
