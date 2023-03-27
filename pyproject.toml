@@ -14,7 +14,7 @@ repository = "https://github.com/canonical/pgbouncer-k8s-operator"
 [tool.poetry.dependencies]
 python = "^3.8.10"
 ops = "2.1.1"
-cryptography = "39.0.2"
+cryptography = "40.0.1"
 jsonschema = "4.17.3"
 tenacity = "8.2.2"
 # psycopg2 = "^2.9.5" # Injected in charmcraft.yaml
