@@ -13,7 +13,7 @@ repository = "https://github.com/canonical/pgbouncer-k8s-operator"
 
 [tool.poetry.dependencies]
 python = "^3.8.10"
-ops = "2.1.1"
+ops = "2.2.0"
 cryptography = "40.0.1"
 jsonschema = "4.17.3"
 tenacity = "8.2.2"
@@ -61,7 +61,7 @@ psycopg2 = {version = "2.9.5", extras = ["binary"]}
 optional = true
 
 [tool.poetry.group.relation_charm.dependencies]
-ops = "2.1.1"
+ops = "2.2.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

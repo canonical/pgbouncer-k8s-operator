@@ -1109,14 +1109,14 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "ops"
-version = "2.1.1"
+version = "2.2.0"
 description = "The Python library behind great charms"
 category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "ops-2.1.1-py3-none-any.whl", hash = "sha256:bed9f14b785efaa83f89b9c76b87bd1b3b82b0350c453b41dce778b39c7410b4"},
-    {file = "ops-2.1.1.tar.gz", hash = "sha256:b2802068557c64121bf50ccfe101b043ed08c02ac5f958e55752c476b09de63d"},
+    {file = "ops-2.2.0-py3-none-any.whl", hash = "sha256:14d4c43f4a4dc0830af1b2cb21313ef93308d3c389f7bedecc14a70b69000b64"},
+    {file = "ops-2.2.0.tar.gz", hash = "sha256:90fa55249f5c3a7bcb7cc73731227eac867f9bb8426100d10724fe461de142a8"},
 ]
 
 [package.dependencies]
@@ -2170,4 +2170,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "6bfac1a32e851fefea94b59eb4f8a66dd1e5d2891b3de2b50278d3325d6b6531"
+content-hash = "4faea46990d46dd27389373973b24f0ac2a4e4c15e7fa44c2f30c65e6e90d537"
