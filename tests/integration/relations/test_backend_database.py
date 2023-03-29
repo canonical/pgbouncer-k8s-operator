@@ -58,8 +58,15 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
             # Edge 5 is the new postgres charm
             ops_test.model.deploy(PG, channel="edge", trust=True, num_units=3),
         )
+        await asyncio.gather(
+            ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000),
+            ops_test.model.wait_for_idle(
+                apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
+            ),
+        )
 
         relation = await ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database")
+        wait_for_relation_joined_between(ops_test, PG, PGB)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),
 
         cfg = await get_cfg(ops_test, f"{PGB}/0")
