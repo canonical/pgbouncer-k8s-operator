@@ -87,8 +87,10 @@ class TestCharm(unittest.TestCase):
         layer = self.charm._pgbouncer_layer()
         assert len(layer["services"]) == self.charm._cores
 
+    @patch("ops.model.Container.exec")
     @patch("ops.model.Container.make_dir")
-    def test_on_pgbouncer_pebble_ready(self, _mkdir):
+    def test_on_pgbouncer_pebble_ready(self, _mkdir, _exec):
+        _exec.return_value.wait_output.return_value = ("PGB 1.16.1\nOther things", "")
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         # emit on start to ensure config file render
@@ -126,12 +128,14 @@ class TestCharm(unittest.TestCase):
         self.assertIsInstance(self.harness.model.unit.status, WaitingStatus)
         self.assertEqual(self.harness.model.unit.status.message, "Waiting for certificates")
 
+    @patch("ops.model.Container.exec")
     @patch("charm.PgBouncerK8sCharm.push_tls_files_to_workload")
     @patch("charm.PostgreSQLTLS.get_tls_files")
     @patch("ops.model.Container.make_dir")
     def test_on_pgbouncer_pebble_ready_ensure_tls_files(
-        self, _mkdir, get_tls_files, push_tls_files_to_workload
+        self, _mkdir, get_tls_files, push_tls_files_to_workload, _exec
     ):
+        _exec.return_value.wait_output.return_value = ("", "")
         get_tls_files.return_value = ("key", "ca", "cert")
 
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
@@ -174,9 +178,10 @@ class TestCharm(unittest.TestCase):
         read_cfg = self.charm.read_pgb_config()
         self.assertEqual(PgbConfig(read_cfg).render(), test_cfg.render())
 
+    @patch("ops.model.Container.exec")
     @patch("ops.model.Container.make_dir")
     @patch("ops.model.Container.restart")
-    def test_reload_pgbouncer(self, _restart, _mkdir):
+    def test_reload_pgbouncer(self, _restart, _mkdir, _exec):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         # necessary hooks before we can check reloads

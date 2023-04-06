@@ -129,6 +129,22 @@ class PgBouncerK8sCharm(CharmBase):
             # pebble_ready hook not fired yet, so defer.
             event.defer()
 
+    @property
+    def version(self) -> str:
+        """Returns the version Pgbouncer."""
+        container = self.unit.get_container(PGB)
+        if container.can_connect():
+            try:
+                output, _ = container.exec(
+                    ["pgbouncer", "--version"], user=PG_USER, group=PG_USER
+                ).wait_output()
+                if output:
+                    return output.split("\n")[0].split(" ")[1]
+            except Exception:
+                logger.exception("Unable to get Pgbouncer version")
+                return ""
+        return ""
+
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Define and start pgbouncer workload.
 
@@ -176,6 +192,8 @@ class PgBouncerK8sCharm(CharmBase):
             logger.error(not_running)
             self.unit.status = WaitingStatus(not_running)
             event.defer()
+
+        self.unit.set_workload_version(self.version)
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration.
