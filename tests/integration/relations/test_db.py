@@ -32,10 +32,9 @@ OPENLDAP = "openldap"
 logger = logging.getLogger(__name__)
 
 
-async def test_create_db_legacy_relation(ops_test: OpsTest):
+async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
-    charm = await ops_test.build_charm(".")
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
@@ -43,7 +42,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
     async with ops_test.fast_forward():
         await asyncio.gather(
             ops_test.model.deploy(
-                charm,
+                pgb_charm,
                 resources=resources,
                 application_name=PGB,
                 num_units=3,

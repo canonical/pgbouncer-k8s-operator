@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.abort_on_fail
-async def test_deploy(ops_test: OpsTest):
+async def test_deploy(ops_test: OpsTest, pgb_charm):
     await asyncio.gather(
         ops_test.model.deploy(DATA_INTEGRATOR, channel="edge", num_units=1, series="jammy"),
     )
@@ -74,17 +74,16 @@ async def test_deploy_and_relate_postgresql(ops_test: OpsTest):
     )
 
 
-async def test_deploy_and_relate_pgbouncer(ops_test: OpsTest):
+async def test_deploy_and_relate_pgbouncer(ops_test: OpsTest, pgb_charm):
     """Test the relation with PgBouncer and database accessibility."""
     logger.info(f"Test the relation with {PGBOUNCER}.")
-    charm = await ops_test.build_charm(".")
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
 
     await asyncio.gather(
         ops_test.model.deploy(
-            charm,
+            pgb_charm,
             application_name=PGBOUNCER,
             resources=resources,
             num_units=1,

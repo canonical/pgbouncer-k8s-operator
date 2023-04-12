@@ -18,15 +18,14 @@ PGB = METADATA["name"]
 
 
 @pytest.mark.abort_on_fail
-async def test_build_and_deploy(ops_test: OpsTest):
+async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
     """Build and deploy pgbouncer charm."""
-    charm = await ops_test.build_charm(".")
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
     async with ops_test.fast_forward():
         await ops_test.model.deploy(
-            charm,
+            pgb_charm,
             resources=resources,
             application_name=PGB,
             series=CHARM_SERIES,

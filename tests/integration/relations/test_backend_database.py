@@ -39,18 +39,16 @@ RELATION = "backend-database"
 
 
 @pytest.mark.abort_on_fail
-async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
+async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
-    global charm
-    charm = await ops_test.build_charm(".")
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
     async with ops_test.fast_forward():
         await asyncio.gather(
             ops_test.model.deploy(
-                charm,
+                pgb_charm,
                 resources=resources,
                 application_name=PGB,
                 series=CHARM_SERIES,
