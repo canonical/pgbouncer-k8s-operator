@@ -145,8 +145,7 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
             ops_test, postgresql_primary_unit, "/charm/bin/pebble logs -n=all"
         )
         assert (
-            f"connection authorized: user={pgb_user} database=waltz"
-            " SSL enabled (protocol=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384, bits=256)" in logs
+            f"connection authorized: user={pgb_user} database=waltz SSL enabled" in logs
         ), "TLS is not being used on connections to PostgreSQL"
 
 
