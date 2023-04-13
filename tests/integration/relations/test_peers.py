@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -28,6 +29,9 @@ FINOS_WALTZ = "finos-waltz"
 @pytest.mark.abort_on_fail
 # TODO order marks aren't behaving
 async def test_deploy_at_scale(ops_test):
+    # Constrain pods
+    subprocess.check_output(["juju", "set-model-constraints", "cores=2", "mem=1G"])
+
     # Build, deploy, and relate charms.
     charm = await ops_test.build_charm(".")
     resources = {

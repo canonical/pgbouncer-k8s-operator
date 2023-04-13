@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import subprocess
 from pathlib import Path
 
 import yaml
@@ -34,6 +35,9 @@ logger = logging.getLogger(__name__)
 
 async def test_create_db_legacy_relation(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
+    # Constrain pods
+    subprocess.check_output(["juju", "set-model-constraints", "cores=2", "mem=1G"])
+
     # Build, deploy, and relate charms.
     charm = await ops_test.build_charm(".")
     resources = {

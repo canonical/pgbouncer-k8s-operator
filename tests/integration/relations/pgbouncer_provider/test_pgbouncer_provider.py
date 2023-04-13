@@ -4,6 +4,7 @@
 import asyncio
 import json
 import logging
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -58,6 +59,9 @@ async def test_database_relation_with_charm_libraries(
     ops_test: OpsTest, application_charm, pgb_charm
 ):
     """Test basic functionality of database relation interface."""
+    # Constrain pods
+    subprocess.check_output(["juju", "set-model-constraints", "cores=2", "mem=1G"])
+
     # Deploy both charms (multiple units for each application to test that later they correctly
     # set data in the relation application databag using only the leader unit).
     await asyncio.gather(

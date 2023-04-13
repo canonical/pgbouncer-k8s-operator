@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import subprocess
 from pathlib import Path
 
 import yaml
@@ -31,6 +32,9 @@ PG = "postgresql-k8s"
 
 
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
+    # Constrain pods
+    subprocess.check_output(["juju", "set-model-constraints", "cores=2", "mem=1G"])
+
     # Build, deploy, and relate charms.
     charm = await ops_test.build_charm(".")
     resources = {

@@ -3,6 +3,7 @@
 # See LICENSE file for licensing details.
 
 import logging
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,9 @@ PGB = METADATA["name"]
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test: OpsTest):
     """Build and deploy pgbouncer charm."""
+    # Add constraints
+    subprocess.check_output(["juju", "set-model-constraints", "cores=2", "mem=1G"])
+
     charm = await ops_test.build_charm(".")
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],

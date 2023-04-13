@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -41,6 +42,9 @@ RELATION = "backend-database"
 @pytest.mark.abort_on_fail
 async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
+    # Constrain pods
+    subprocess.check_output(["juju", "set-model-constraints", "cores=2", "mem=1G"])
+
     # Build, deploy, and relate charms.
     global charm
     charm = await ops_test.build_charm(".")

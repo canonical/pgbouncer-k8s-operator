@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
+import subprocess
+
 import pytest as pytest
 from pytest_operator.plugin import OpsTest
 
@@ -26,6 +28,9 @@ DATABASE_UNITS = 3
 async def test_build_and_deploy(ops_test: OpsTest):
     """Build and deploy pgbouncer charm."""
     wait_for_apps = False
+
+    # Constrain pods
+    subprocess.check_output(["juju", "set-model-constraints", "cores=2", "mem=1G"])
 
     if not await app_name(ops_test):
         wait_for_apps = True
