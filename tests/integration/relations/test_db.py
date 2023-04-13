@@ -49,7 +49,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest):
                 num_units=3,
                 series=CHARM_SERIES,
             ),
-            ops_test.model.deploy(PG, num_units=3, trust=True, channel="edge"),
+            ops_test.model.deploy(PG, num_units=3, trust=True, channel="14/edge"),
             ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
         )
 

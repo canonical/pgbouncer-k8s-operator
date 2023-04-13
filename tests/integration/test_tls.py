@@ -74,7 +74,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
         wait_for_apps = True
         # Deploy Postgresql operator
         await ops_test.model.deploy(
-            POSTGRESQL_APP_NAME, channel="edge", trust=True, num_units=DATABASE_UNITS
+            POSTGRESQL_APP_NAME, channel="14/edge", trust=True, num_units=DATABASE_UNITS
         )
         await ops_test.model.relate(PGB, POSTGRESQL_APP_NAME)
 
