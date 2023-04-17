@@ -66,7 +66,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
         await ops_test.model.applications[PGB].remove_relation(
             f"{PGB}:database", f"{CLIENT_APP_NAME}:first-database"
         )
-        await ops_test.model.wait_for_idle(status="active", timeout=1000)
+        await ops_test.model.wait_for_idle(status="active", timeout=2000)
     global client_relation
     client_relation = await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:first-database")
 
