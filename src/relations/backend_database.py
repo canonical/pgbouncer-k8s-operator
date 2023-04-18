@@ -211,9 +211,13 @@ class BackendDatabaseRequires(Object):
         self.charm.unit.status = MaintenanceStatus("Initialising backend-database relation")
 
         try:
-            self.charm.check_pgb_running()
+            if not self.charm.check_pgb_running():
+                logger.debug("_on_database_created deferred: PGB not running")
+                event.defer()
+                return
         except ConnectionError:
             # on_pebble_ready hasn't been fired yet, so wait
+            logger.debug("_on_database_created deferred: pebble ready not fired")
             event.defer()
             return
 

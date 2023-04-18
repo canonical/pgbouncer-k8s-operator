@@ -13,7 +13,7 @@ from typing import Optional
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
-from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent, StartEvent
+from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, WaitingStatus
@@ -48,7 +48,6 @@ class PgBouncerK8sCharm(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
 
-        self.framework.observe(self.on.start, self._on_start)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
         self.framework.observe(self.on.update_status, self._on_update_status)
@@ -75,60 +74,6 @@ class PgBouncerK8sCharm(CharmBase):
     #  Charm Lifecycle Hooks
     # =======================
 
-    def _on_start(self, event: StartEvent) -> None:
-        """Renders basic PGB config.
-
-        Deferrals:
-            - If pgbouncer container cannot connect, since this makes rendering config impossible.
-            - If config is unavailable in filesystem or peer databag, and this unit isn't the
-              leader, and therefore can't generate a default config.
-            - When we try and update relation endpoints, and pebble throws an error, implying that
-              it hasn't started yet.
-        """
-        container = self.unit.get_container(PGB)
-        if not container.can_connect():
-            logger.debug("pgbouncer container unavailable, deferring start hook...")
-            event.defer()
-            return
-
-        config = None
-        try:
-            # Try and get pgb config. If it only exists in the peer databag, pull it and write it
-            # to filesystem.
-            config = self.read_pgb_config()
-        except FileNotFoundError:
-            config = self.peers.get_cfg()
-
-        if not config:
-            if self.unit.is_leader():
-                # If there's no config in the container or the peer databag, the leader creates a
-                # default
-                config = PgbConfig(pgb.DEFAULT_CONFIG)
-            else:
-                # follower units wait for the leader to define a config.
-                event.defer()
-                return
-
-        # Initialise filesystem - _push_file()'s make_dirs option sets the permissions for those
-        # dirs to root, so we build them ourselves to control permissions.
-        for service in self._services:
-            if not container.exists(service["dir"]):
-                container.make_dir(
-                    service["dir"],
-                    user=PG_USER,
-                    group=PG_USER,
-                    permissions=0o700,
-                )
-
-        self.render_pgb_config(config)
-
-        try:
-            # Update postgres endpoints in config to match the current state of the charm.
-            self.update_postgres_endpoints(reload_pgbouncer=True)
-        except ConnectionError:
-            # pebble_ready hook not fired yet, so defer.
-            event.defer()
-
     @property
     def version(self) -> str:
         """Returns the version Pgbouncer."""
@@ -145,6 +90,38 @@ class PgBouncerK8sCharm(CharmBase):
                 return ""
         return ""
 
+    def _init_config(self, container) -> bool:
+        """Helper method to initialise the configuration file and directories."""
+        try:
+            # Try and get pgb config. If it only exists in the peer databag, pull it and write it
+            # to filesystem.
+            config = self.read_pgb_config()
+        except FileNotFoundError:
+            config = self.peers.get_cfg()
+
+        if not config:
+            if self.unit.is_leader():
+                # If there's no config in the container or the peer databag, the leader creates a
+                # default
+                config = PgbConfig(pgb.DEFAULT_CONFIG)
+            else:
+                # follower units wait for the leader to define a config.
+                return False
+
+        # Initialise filesystem - _push_file()'s make_dirs option sets the permissions for those
+        # dirs to root, so we build them ourselves to control permissions.
+        for service in self._services:
+            if not container.exists(service["dir"]):
+                container.make_dir(
+                    service["dir"],
+                    user=PG_USER,
+                    group=PG_USER,
+                    permissions=0o700,
+                )
+
+        self.render_pgb_config(config)
+        return True
+
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Define and start pgbouncer workload.
 
@@ -155,15 +132,9 @@ class PgBouncerK8sCharm(CharmBase):
               yet accessible in the container.
             - If the unit is waiting for certificates to be issued
         """
-        try:
-            # Check config is available before running pgbouncer.
-            self.read_pgb_config()
-        except FileNotFoundError as err:
-            # TODO this may need to change to a Blocked or Error status, depending on why the
-            # config can't be found.
-            config_err_msg = f"Unable to read config, error: {err}"
-            logger.warning(config_err_msg)
-            self.unit.status = WaitingStatus(config_err_msg)
+        container = event.workload
+
+        if not self._init_config(container):
             event.defer()
             return
 
@@ -179,7 +150,6 @@ class PgBouncerK8sCharm(CharmBase):
         elif tls_enabled:
             self.push_tls_files_to_workload(False)
 
-        container = event.workload
         pebble_layer = self._pgbouncer_layer()
         container.add_layer(PGB, pebble_layer, combine=True)
         container.autostart()
@@ -194,6 +164,9 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
 
         self.unit.set_workload_version(self.version)
+
+        # Update postgres endpoints in config to match the current state of the charm.
+        self.update_postgres_endpoints(reload_pgbouncer=True)
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration.

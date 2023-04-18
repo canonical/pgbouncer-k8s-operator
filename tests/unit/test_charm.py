@@ -21,17 +21,6 @@ class TestCharm(unittest.TestCase):
         self.harness.begin_with_initial_hooks()
         self.charm = self.harness.charm
 
-    @patch("ops.model.Container.make_dir")
-    def test_on_start(self, _mkdir):
-        self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
-        self.harness.set_leader(True)
-        self.charm.on.start.emit()
-        pgb_container = self.harness.model.unit.get_container(PGB)
-
-        # assert config is set to default - it gets updated in the config-changed hook fired later
-        ini = pgb_container.pull(INI_PATH).read()
-        self.assertEqual(ini, PgbConfig(DEFAULT_CONFIG).render())
-
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
     @patch("ops.model.Container.make_dir")
@@ -39,7 +28,8 @@ class TestCharm(unittest.TestCase):
     def test_on_config_changed(self, _check_pgb_running, _mkdir, _reload, _update_connection_info):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
-        self.charm.on.start.emit()
+        container = self.harness.model.unit.get_container(PGB)
+        self.charm.on.pgbouncer_pebble_ready.emit(container)
         self.harness.update_config()
 
         mock_cores = 1
@@ -93,8 +83,6 @@ class TestCharm(unittest.TestCase):
         _exec.return_value.wait_output.return_value = ("PGB 1.16.1\nOther things", "")
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
-        # emit on start to ensure config file render
-        self.charm.on.start.emit()
         initial_plan = self.harness.get_container_pebble_plan(PGB)
         self.assertEqual(initial_plan.to_yaml(), "{}\n")
 

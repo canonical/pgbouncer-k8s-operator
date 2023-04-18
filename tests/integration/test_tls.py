@@ -25,7 +25,7 @@ DATABASE_UNITS = 3
 
 
 @pytest.mark.abort_on_fail
-async def test_build_and_deploy(ops_test: OpsTest):
+async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
     """Build and deploy pgbouncer charm."""
     wait_for_apps = False
 
@@ -34,10 +34,9 @@ async def test_build_and_deploy(ops_test: OpsTest):
 
     if not await app_name(ops_test):
         wait_for_apps = True
-        charm = await ops_test.build_charm(".")
         async with ops_test.fast_forward():
             await ops_test.model.deploy(
-                charm,
+                pgb_charm,
                 resources={
                     "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"][
                         "upstream-source"
@@ -79,7 +78,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
         wait_for_apps = True
         # Deploy Postgresql operator
         await ops_test.model.deploy(
-            POSTGRESQL_APP_NAME, channel="edge", trust=True, num_units=DATABASE_UNITS
+            POSTGRESQL_APP_NAME, channel="14/edge", trust=True, num_units=DATABASE_UNITS
         )
         await ops_test.model.relate(PGB, POSTGRESQL_APP_NAME)
 

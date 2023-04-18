@@ -28,18 +28,17 @@ FINOS_WALTZ = "finos-waltz"
 
 @pytest.mark.abort_on_fail
 # TODO order marks aren't behaving
-async def test_deploy_at_scale(ops_test):
+async def test_deploy_at_scale(ops_test, pgb_charm):
     # Constrain pods
     subprocess.check_output(["juju", "set-model-constraints", "cores=2", "mem=1G"])
 
     # Build, deploy, and relate charms.
-    charm = await ops_test.build_charm(".")
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
     async with ops_test.fast_forward():
         await ops_test.model.deploy(
-            charm, resources=resources, application_name=PGB, num_units=3, series=CHARM_SERIES
+            pgb_charm, resources=resources, application_name=PGB, num_units=3, series=CHARM_SERIES
         )
         await ops_test.model.wait_for_idle(
             apps=[PGB], status="blocked", timeout=1000, wait_for_exact_units=3
@@ -53,7 +52,7 @@ async def test_scaled_relations(ops_test: OpsTest):
     async with ops_test.fast_forward():
         await asyncio.gather(
             # Edge 5 is the new postgres charm
-            ops_test.model.deploy(PG, channel="edge", trust=True, num_units=3),
+            ops_test.model.deploy(PG, channel="14/edge", trust=True, num_units=3),
             ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
         )
 
