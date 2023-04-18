@@ -30,9 +30,8 @@ PGB = METADATA["name"]
 PG = "postgresql-k8s"
 
 
-async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
+async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
     # Build, deploy, and relate charms.
-    charm = await ops_test.build_charm(".")
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
@@ -40,7 +39,7 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest):
     async with ops_test.fast_forward():
         await asyncio.gather(
             ops_test.model.deploy(
-                charm,
+                pgb_charm,
                 resources=resources,
                 application_name=PGB,
                 series=CHARM_SERIES,

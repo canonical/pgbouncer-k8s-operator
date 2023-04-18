@@ -10,6 +10,13 @@ import pytest
 from pytest_operator.plugin import OpsTest
 
 
+@pytest.mark.abort_on_fail
+@pytest.fixture(scope="module")
+async def pgb_charm(ops_test: OpsTest):
+    """Build the pgbouncer charm."""
+    return await ops_test.build_charm(".", bases_index=0)
+
+
 @pytest.fixture(scope="module")
 def ops_test(ops_test: OpsTest) -> OpsTest:
     if os.environ.get("CI") == "true":
