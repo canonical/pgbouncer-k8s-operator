@@ -250,16 +250,14 @@ class BackendDatabaseRequires(Object):
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
         self.charm.update_client_connection_info()
 
-    def _on_relation_changed(self, event):
+    def _on_relation_changed(self, _):
         try:
             if not self.charm.check_pgb_running():
-                logger.debug("_on_relation_changed deferred: PGB not running")
-                event.defer()
+                logger.debug("_on_relation_changed early exit: PGB not running")
                 return
         except ConnectionError:
             # on_pebble_ready hasn't been fired yet, so wait
-            logger.debug("_on_reltion_changed deferred: pebble ready not fired")
-            event.defer()
+            logger.debug("_on_reltion_changed early exit: pebble ready not fired")
             return
 
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
