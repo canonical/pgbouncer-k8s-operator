@@ -946,18 +946,18 @@ adal = ["adal (>=1.0.2)"]
 
 [[package]]
 name = "lightkube"
-version = "0.12.0"
+version = "0.13.0"
 description = "Lightweight kubernetes client library"
 category = "dev"
 optional = false
 python-versions = "*"
 files = [
-    {file = "lightkube-0.12.0-py3-none-any.whl", hash = "sha256:ddb9455fd5241682349cec6cb1abec6707cdf9f934580af3a942cade76b60ef5"},
-    {file = "lightkube-0.12.0.tar.gz", hash = "sha256:32692b6ac1b3fee0c89662c9dd72eec6fff6ea602275fff94ed9a9d91eb5f9e6"},
+    {file = "lightkube-0.13.0-py3-none-any.whl", hash = "sha256:1ca46d3b9fae83858149c95af09cd92e34eed611a54c42d1034b02c73ce683d9"},
+    {file = "lightkube-0.13.0.tar.gz", hash = "sha256:9eea3f2e123c672aaba7eca90af9cec1b39b97b318e07aec3ad0fe1a14cf5a31"},
 ]
 
 [package.dependencies]
-httpx = ">=0.20.0"
+httpx = ">=0.24.0"
 lightkube-models = ">=1.15.12.0"
 PyYAML = "*"
 
@@ -1622,14 +1622,14 @@ testing = ["coverage (>=6.2)", "flaky (>=3.5.0)", "hypothesis (>=5.7.1)", "mypy 
 
 [[package]]
 name = "pytest-operator"
-version = "0.26.0"
+version = "0.27.0"
 description = "Fixtures for Operators"
 category = "dev"
 optional = false
 python-versions = "*"
 files = [
-    {file = "pytest-operator-0.26.0.tar.gz", hash = "sha256:eda39d058c0152fa2b2b4a733836c3b187a8d5688ba386926fe06fab51d61725"},
-    {file = "pytest_operator-0.26.0-py3-none-any.whl", hash = "sha256:43216ec874ad07a270bff1c166723461c4be01500ee455e0c7724c8b12349611"},
+    {file = "pytest-operator-0.27.0.tar.gz", hash = "sha256:d02ae9ef071c77238647f2ec5261331ddd0832b3f6ded3e2c49e8faef36c8738"},
+    {file = "pytest_operator-0.27.0-py3-none-any.whl", hash = "sha256:a7ca56c0142fc4e04f12a3da3ac2a14834f900a8584ea46cef5d474fef44a2a5"},
 ]
 
 [package.dependencies]
@@ -2153,4 +2153,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "8ed04b9d72f67bc5ec15d7f8471a1a2fc70582f0fef0f4c85f1b9aa3e5700a15"
+content-hash = "875ed5b939df2002c7baaa722db3b0fc75177cebe6ce6bccfc0c5931209e43aa"
