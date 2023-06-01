@@ -26,7 +26,7 @@ resources:
     type: oci-image
     description: OCI image for pgbouncer
     # Rock version, using pgbouncer v1.18.
-    upstream-source: ghcr.io/dragomirp/renovate-charm@sha256:f346e500f53922054f8bbbfb6c94ee848252e23b1c82a548e320fd710d8c1a79
+    upstream-source: ghcr.io/dragomirp/renovate-charm@sha256:711b7d2ddb6984f04ee66defc3fc00c89aa99f79fe625820a62d1f1b5f4744b9
 
 provides:
   database:
