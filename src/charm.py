@@ -114,7 +114,6 @@ class PgBouncerK8sCharm(CharmBase):
             if not container.exists(service["dir"]):
                 container.make_dir(
                     service["dir"],
-                    make_parents=True,
                     user=PG_USER,
                     group=PG_USER,
                     permissions=0o700,

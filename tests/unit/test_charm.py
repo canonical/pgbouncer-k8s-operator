@@ -197,9 +197,9 @@ class TestCharm(unittest.TestCase):
         self.assertEqual(
             read_pgb_config.return_value["pgbouncer"],
             {
-                "client_tls_ca_file": "/var/lib/postgresql/pgbouncer/ca.pem",
-                "client_tls_cert_file": "/var/lib/postgresql/pgbouncer/cert.pem",
-                "client_tls_key_file": "/var/lib/postgresql/pgbouncer/key.pem",
+                "client_tls_ca_file": "/var/lib/pgbouncer/ca.pem",
+                "client_tls_cert_file": "/var/lib/pgbouncer/cert.pem",
+                "client_tls_key_file": "/var/lib/pgbouncer/key.pem",
                 "client_tls_sslmode": "prefer",
             },
         )
@@ -248,9 +248,9 @@ class TestCharm(unittest.TestCase):
         get_tls_files.assert_called_once_with()
         update_config.assert_called_once_with()
         assert push_file.call_count == 3
-        push_file.assert_any_call("/var/lib/postgresql/pgbouncer/key.pem", "key", 0o400)
-        push_file.assert_any_call("/var/lib/postgresql/pgbouncer/ca.pem", "ca", 0o400)
-        push_file.assert_any_call("/var/lib/postgresql/pgbouncer/cert.pem", "cert", 0o400)
+        push_file.assert_any_call("/var/lib/pgbouncer/key.pem", "key", 0o400)
+        push_file.assert_any_call("/var/lib/pgbouncer/ca.pem", "ca", 0o400)
+        push_file.assert_any_call("/var/lib/pgbouncer/cert.pem", "cert", 0o400)
 
     @patch("charm.PgBouncerK8sCharm.push_file")
     @patch("charm.PgBouncerK8sCharm.update_config")
