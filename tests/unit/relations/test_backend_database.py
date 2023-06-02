@@ -4,16 +4,11 @@
 import unittest
 from unittest.mock import MagicMock, PropertyMock, call, patch
 
-from charms.pgbouncer_k8s.v0.pgb import (
-    DEFAULT_CONFIG,
-    PGB_DIR,
-    PgbConfig,
-    get_hashed_password,
-)
+from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig, get_hashed_password
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
-from constants import BACKEND_RELATION_NAME, PEER_RELATION_NAME
+from constants import BACKEND_RELATION_NAME, PEER_RELATION_NAME, PGB_DIR
 
 # TODO clean up mocks
 
