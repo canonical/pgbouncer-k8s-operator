@@ -30,7 +30,8 @@ Juju CLI:
 Juju agent: 
 
 <!-- App revision from `juju status` or (advanced) commit hash -->
-Charm revision: 
+postgresql-k8s charm revision: 
+pgbouncer-k8s charm revision: 
 
 <!-- Run `microk8s version` -->
 microk8s: 
