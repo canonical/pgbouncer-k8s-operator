@@ -71,10 +71,9 @@ from ops.framework import Object
 from ops.model import MaintenanceStatus, Relation, Unit
 from ops.pebble import ConnectionError
 
-from constants import PEER_RELATION_NAME
+from constants import AUTH_FILE_DATABAG_KEY, PEER_RELATION_NAME
 
 CFG_FILE_DATABAG_KEY = "cfg_file"
-AUTH_FILE_DATABAG_KEY = "auth_file"
 ADDRESS_KEY = "private-address"
 LEADER_ADDRESS_KEY = "leader_hostname"
 

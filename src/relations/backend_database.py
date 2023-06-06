@@ -58,7 +58,15 @@ from ops.model import (
 )
 from ops.pebble import ConnectionError
 
-from constants import AUTH_FILE_PATH, BACKEND_RELATION_NAME, PG, PGB, PGB_DIR
+from constants import (
+    AUTH_FILE_DATABAG_KEY,
+    AUTH_FILE_PATH,
+    BACKEND_RELATION_NAME,
+    MONITORING_PASSWORD_KEY,
+    PG,
+    PGB,
+    PGB_DIR,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -144,6 +152,11 @@ class BackendDatabaseRequires(Object):
         if username is None:
             return None
         return f"pgbouncer_auth_{username}".replace("-", "_")
+
+    @property
+    def stats_user(self):
+        """Username for stats."""
+        return f"pgbouncer_stats_{self.charm.app.name}".replace("-", "_")
 
     @property
     def postgres_databag(self) -> Dict:
@@ -232,10 +245,21 @@ class BackendDatabaseRequires(Object):
         self.postgres.create_user(self.auth_user, plaintext_password, admin=True)
         self.initialise_auth_function([self.database.database, PG])
         hashed_password = pgb.get_hashed_password(self.auth_user, plaintext_password)
-        self.charm.render_auth_file(f'"{self.auth_user}" "{hashed_password}"')
+
+        # Add the monitoring user.
+        if not (
+            monitoring_password := self.charm.peers.get_secret("app", MONITORING_PASSWORD_KEY)
+        ):
+            monitoring_password = pgb.generate_password()
+            self.charm.peers.set_secret("app", MONITORING_PASSWORD_KEY, monitoring_password)
+        hashed_monitoring_password = pgb.get_hashed_password(self.stats_user, monitoring_password)
+
+        auth_file = f'"{self.auth_user}" "{hashed_password}"\n"{self.stats_user}" "{hashed_monitoring_password}"'
+        self.charm.peers.set_secret("app", AUTH_FILE_DATABAG_KEY, auth_file)
+        self.charm.render_auth_file(auth_file)
 
         cfg = self.charm.read_pgb_config()
-        cfg.add_user(user=event.username, admin=True)
+        cfg.add_user(user=self.stats_user, stats=True)
         cfg["pgbouncer"][
             "auth_query"
         ] = f"SELECT username, password FROM {self.auth_user}.get_auth($1)"
@@ -243,6 +267,7 @@ class BackendDatabaseRequires(Object):
         self.charm.render_pgb_config(cfg)
 
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
+        self.charm.enable_monitoring()
 
         self.charm.unit.status = ActiveStatus("backend-database relation initialised.")
 

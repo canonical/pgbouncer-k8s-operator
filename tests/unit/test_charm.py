@@ -75,7 +75,7 @@ class TestCharm(unittest.TestCase):
 
     def test_pgbouncer_layer(self):
         layer = self.charm._pgbouncer_layer()
-        assert len(layer["services"]) == self.charm._cores
+        assert len(layer.services) == self.charm._cores + 1
 
     @patch("ops.model.Container.exec")
     @patch("ops.model.Container.make_dir")

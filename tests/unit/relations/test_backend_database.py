@@ -31,7 +31,13 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         self.peers_rel_id = self.harness.add_relation(PEER_RELATION_NAME, "pgbouncer/0")
         self.harness.add_relation_unit(self.peers_rel_id, self.unit)
 
+    @patch("charm.Peers.get_secret", return_value=None)
     @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.stats_user",
+        new_callable=PropertyMock,
+        return_value="stats_user",
+    )
     @patch(
         "relations.backend_database.BackendDatabaseRequires.auth_user",
         new_callable=PropertyMock,
@@ -60,7 +66,9 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         _relation,
         _postgres,
         _auth_user,
+        _stats_user,
         _app_databag,
+        _,
     ):
         self.harness.set_leader(True)
         pw = _gen_pw.return_value
@@ -76,10 +84,13 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         _init_auth.assert_has_calls([call([self.backend.database.database, "postgres"])])
 
         hash_pw = get_hashed_password(self.backend.auth_user, pw)
-        _render_auth_file.assert_any_call(f'"{self.backend.auth_user}" "{hash_pw}"')
+        hash_mon_pw = get_hashed_password(self.backend.stats_user, pw)
+        _render_auth_file.assert_any_call(
+            f'"{self.backend.auth_user}" "{hash_pw}"\n"{self.backend.stats_user}" "{hash_mon_pw}"'
+        )
 
         cfg = _cfg.return_value
-        assert mock_event.username in cfg["pgbouncer"]["admin_users"]
+        assert self.backend.stats_user in cfg["pgbouncer"]["stats_users"]
         assert (
             cfg["pgbouncer"]["auth_query"]
             == f"SELECT username, password FROM {self.backend.auth_user}.get_auth($1)"

@@ -10,9 +10,12 @@ import os
 import socket
 from typing import Optional
 
+from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
+from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
+from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
@@ -23,11 +26,14 @@ from constants import (
     AUTH_FILE_PATH,
     CLIENT_RELATION_NAME,
     INI_PATH,
+    METRICS_PORT,
+    MONITORING_PASSWORD_KEY,
     PEER_RELATION_NAME,
     PG_GROUP,
     PG_USER,
     PGB,
     PGB_DIR,
+    PGBOUNCER_LOG_FILES,
     TLS_CA_FILE,
     TLS_CERT_FILE,
     TLS_KEY_FILE,
@@ -69,6 +75,18 @@ class PgBouncerK8sCharm(CharmBase):
             }
             for service_id in range(self._cores)
         ]
+        self._metrics_service = "metrics_server"
+        self.grafana_dashboards = GrafanaDashboardProvider(self)
+        self.metrics_endpoint = MetricsEndpointProvider(
+            self,
+            jobs=[{"static_configs": [{"targets": [f"*:{METRICS_PORT}"]}]}],
+        )
+        self.loki_push = LogProxyConsumer(
+            self,
+            log_files=PGBOUNCER_LOG_FILES,
+            relation_name="logging",
+            container_name="pgbouncer",
+        )
 
     # =======================
     #  Charm Lifecycle Hooks
@@ -233,12 +251,21 @@ class PgBouncerK8sCharm(CharmBase):
                 "startup": "enabled",
                 "override": "replace",
             }
-
-        return {
-            "summary": "pgbouncer layer",
-            "description": "pebble config layer for pgbouncer",
-            "services": pebble_services,
+        pebble_services[self._metrics_service] = {
+            "override": "merge",
+            "summary": "postgresql metrics exporter",
+            "user": PG_USER,
+            "group": PG_GROUP,
+            "command": "true",
         }
+
+        return Layer(
+            {
+                "summary": "pgbouncer layer",
+                "description": "pebble config layer for pgbouncer",
+                "services": pebble_services,
+            }
+        )
 
     def _on_update_status(self, _) -> None:
         """Update Status hook.
@@ -294,6 +321,29 @@ class PgBouncerK8sCharm(CharmBase):
 
         self.check_pgb_running()
 
+    def enable_monitoring(self):
+        """Reconfigures and enables the monitoring service."""
+        stats_password = self.peers.get_secret("app", MONITORING_PASSWORD_KEY)
+        pebble_layer = Layer(
+            {
+                "services": {
+                    self._metrics_service: {
+                        "override": "merge",
+                        "command": f'pgbouncer_exporter --web.listen-address=:{METRICS_PORT} --pgBouncer.connectionString="'
+                        f'postgres://{self.backend.stats_user}:{stats_password}@localhost:{self.config["listen_port"]}/pgbouncer?sslmode=disable"',
+                        "startup": "enabled",
+                    }
+                }
+            }
+        )
+        pgb_container = self.unit.get_container(PGB)
+        pgb_container.add_layer(PGB, pebble_layer, combine=True)
+        pgb_container.replan()
+
+    def disable_monitoring(self):
+        """Stops the monitoring service."""
+        pass
+
     def check_pgb_running(self):
         """Checks that pgbouncer pebble service is running, and updates status accordingly."""
         pgb_container_unavailable = "PgBouncer container currently unavailable"
@@ -304,13 +354,18 @@ class PgBouncerK8sCharm(CharmBase):
             return False
 
         pebble_services = pgb_container.get_services()
-        for service in self._services:
-            if service["name"] not in pebble_services.keys():
+
+        services = [service["name"] for service in self._services]
+        if self.backend.ready:
+            services.append(self._metrics_service)
+
+        for service in services:
+            if service not in pebble_services.keys():
                 # pebble_ready event hasn't fired so pgbouncer layer has not been added to pebble
                 raise ConnectionError
-            pgb_service_status = pgb_container.get_services().get(service["name"]).current
+            pgb_service_status = pgb_container.get_services().get(service).current
             if pgb_service_status != ServiceStatus.ACTIVE:
-                pgb_not_running = f"PgBouncer service {service['name']} not running: service status = {pgb_service_status}"
+                pgb_not_running = f"PgBouncer service {service} not running: service status = {pgb_service_status}"
                 self.unit.status = BlockedStatus(pgb_not_running)
                 logger.error(pgb_not_running)
                 return False
