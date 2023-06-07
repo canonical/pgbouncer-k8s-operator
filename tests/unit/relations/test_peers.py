@@ -18,9 +18,15 @@ class TestPeers(unittest.TestCase):
         self.addCleanup(self.harness.cleanup)
         self.harness.begin()
 
+        self.togggle_monitoring_patch = patch("charm.PgBouncerK8sCharm.toggle_monitoring_layer")
+        self.toggle_monitoring_layer = self.togggle_monitoring_patch.start()
+
         self.charm = self.harness.charm
         self.app = self.charm.app.name
         self.unit = self.charm.unit.name
+
+    def tearDown(self):
+        self.togggle_monitoring_patch.stop()
 
     @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
     @patch("relations.peers.Peers.unit_databag", new_callable=PropertyMock)

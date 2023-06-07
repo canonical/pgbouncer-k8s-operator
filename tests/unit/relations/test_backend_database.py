@@ -19,6 +19,9 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         self.addCleanup(self.harness.cleanup)
         self.harness.begin()
 
+        self.togggle_monitoring_patch = patch("charm.PgBouncerK8sCharm.toggle_monitoring_layer")
+        self.toggle_monitoring_layer = self.togggle_monitoring_patch.start()
+
         self.charm = self.harness.charm
         self.unit = self.charm.unit.name
         self.backend = self.charm.backend
@@ -30,6 +33,9 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         # Define a peer relation
         self.peers_rel_id = self.harness.add_relation(PEER_RELATION_NAME, "pgbouncer/0")
         self.harness.add_relation_unit(self.peers_rel_id, self.unit)
+
+    def tearDown(self):
+        self.togggle_monitoring_patch.stop()
 
     @patch("charm.Peers.get_secret", return_value=None)
     @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
@@ -97,7 +103,8 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         )
         assert cfg["pgbouncer"]["auth_file"] == f"{PGB_DIR}/userlist.txt"
 
-        _update_endpoints.assert_called_once()
+        _update_endpoints.assert_called_once_with(reload_pgbouncer=True)
+        self.toggle_monitoring_layer.assert_called_with(True)
 
     @patch(
         "relations.backend_database.BackendDatabaseRequires.auth_user",
@@ -144,6 +151,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
 
         _render.assert_called_with(cfg)
         _delete_file.assert_called_with(f"{PGB_DIR}/userlist.txt")
+        self.toggle_monitoring_layer.assert_called_with(False)
 
     @patch(
         "relations.backend_database.BackendDatabaseRequires.auth_user",

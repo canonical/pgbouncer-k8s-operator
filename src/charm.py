@@ -8,7 +8,7 @@
 import logging
 import os
 import socket
-from typing import Optional
+from typing import Dict, Optional
 
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
@@ -251,14 +251,9 @@ class PgBouncerK8sCharm(CharmBase):
                 "startup": "enabled",
                 "override": "replace",
             }
-        pebble_services[self._metrics_service] = {
-            "override": "merge",
-            "summary": "postgresql metrics exporter",
-            "user": PG_USER,
-            "group": PG_GROUP,
-            "command": "true",
-        }
-
+        pebble_services[self._metrics_service] = self._generate_monitoring_service(
+            self.backend.postgres
+        )
         return Layer(
             {
                 "summary": "pgbouncer layer",
@@ -321,28 +316,35 @@ class PgBouncerK8sCharm(CharmBase):
 
         self.check_pgb_running()
 
-    def enable_monitoring(self):
+    def _generate_monitoring_service(self, enabled: bool = True) -> Dict[str, str]:
+        if enabled:
+            stats_password = self.peers.get_secret("app", MONITORING_PASSWORD_KEY)
+            command = (
+                f'pgbouncer_exporter --web.listen-address=:{METRICS_PORT} --pgBouncer.connectionString="'
+                f'postgres://{self.backend.stats_user}:{stats_password}@localhost:{self.config["listen_port"]}/pgbouncer?sslmode=disable"'
+            )
+            startup = "enabled"
+        else:
+            command = "true"
+            startup = "disabled"
+        return {
+            "override": "merge",
+            "summary": "postgresql metrics exporter",
+            "user": PG_USER,
+            "group": PG_GROUP,
+            "command": command,
+            "startup": startup,
+        }
+
+    def toggle_monitoring_layer(self, enabled: bool) -> None:
         """Reconfigures and enables the monitoring service."""
-        stats_password = self.peers.get_secret("app", MONITORING_PASSWORD_KEY)
         pebble_layer = Layer(
-            {
-                "services": {
-                    self._metrics_service: {
-                        "override": "merge",
-                        "command": f'pgbouncer_exporter --web.listen-address=:{METRICS_PORT} --pgBouncer.connectionString="'
-                        f'postgres://{self.backend.stats_user}:{stats_password}@localhost:{self.config["listen_port"]}/pgbouncer?sslmode=disable"',
-                        "startup": "enabled",
-                    }
-                }
-            }
+            {"services": {self._metrics_service: self._generate_monitoring_service(enabled)}}
         )
         pgb_container = self.unit.get_container(PGB)
         pgb_container.add_layer(PGB, pebble_layer, combine=True)
         pgb_container.replan()
-
-    def disable_monitoring(self):
-        """Stops the monitoring service."""
-        pass
+        self.check_pgb_running()
 
     def check_pgb_running(self):
         """Checks that pgbouncer pebble service is running, and updates status accordingly."""

@@ -267,7 +267,7 @@ class BackendDatabaseRequires(Object):
         self.charm.render_pgb_config(cfg)
 
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
-        self.charm.enable_monitoring()
+        self.charm.toggle_monitoring_layer(True)
 
         self.charm.unit.status = ActiveStatus("backend-database relation initialised.")
 
@@ -339,6 +339,7 @@ class BackendDatabaseRequires(Object):
         Removes all traces of this relation from pgbouncer config.
         """
         depart_flag = f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing"
+        self.charm.toggle_monitoring_layer(False)
         if (
             self.charm.peers.unit_databag.get(depart_flag, False)
             or not self.charm.unit.is_leader()

@@ -227,6 +227,8 @@ class Peers(Object):
                 )
                 event.defer()
 
+        self.charm.toggle_monitoring_layer(self.charm.backend.ready)
+
     def _on_departed(self, event):
         self.update_leader()
         self.charm.update_client_connection_info()

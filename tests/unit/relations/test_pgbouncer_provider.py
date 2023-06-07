@@ -17,6 +17,9 @@ class TestPgbouncerProvider(unittest.TestCase):
         self.addCleanup(self.harness.cleanup)
         self.harness.begin()
 
+        self.togggle_monitoring_patch = patch("charm.PgBouncerK8sCharm.toggle_monitoring_layer")
+        self.toggle_monitoring_layer = self.togggle_monitoring_patch.start()
+
         self.charm = self.harness.charm
         self.app = self.charm.app.name
         self.unit = self.charm.unit.name
@@ -34,6 +37,9 @@ class TestPgbouncerProvider(unittest.TestCase):
         # Define a pgbouncer provider relation
         self.client_rel_id = self.harness.add_relation(CLIENT_RELATION_NAME, "application")
         self.harness.add_relation_unit(self.client_rel_id, "application/0")
+
+    def tearDown(self):
+        self.togggle_monitoring_patch.stop()
 
     @patch("relations.pgbouncer_provider.PgBouncerProvider._check_backend")
     @patch(

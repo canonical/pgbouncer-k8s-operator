@@ -54,9 +54,11 @@ async def test_multiple_pebble_services(ops_test: OpsTest):
     get_services = await run_command_on_unit(ops_test, unit.name, "/charm/bin/pebble services")
 
     services = get_services.splitlines()[1:]
-    assert len(services) == int(core_count)
+    # PGB services per core plus one monitoring service
+    assert len(services) == int(core_count) + 1
 
     for service in services:
         service = service.split()
-        assert service[1] == "enabled"
-        assert service[2] == "active"
+        if service[0] != "metrics_server":
+            assert service[1] == "enabled"
+            assert service[2] == "active"
