@@ -69,7 +69,7 @@ from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, RelationChangedEvent, RelationCreatedEvent
 from ops.framework import Object
 from ops.model import MaintenanceStatus, Relation, Unit
-from ops.pebble import ConnectionError
+from ops.pebble import ChangeError, ConnectionError
 
 from constants import AUTH_FILE_DATABAG_KEY, PEER_RELATION_NAME
 
@@ -222,7 +222,7 @@ class Peers(Object):
                 # raises an error if this is fired before on_pebble_ready.
                 self.charm.reload_pgbouncer()
                 self.charm.toggle_monitoring_layer(self.charm.backend.ready)
-            except ConnectionError:
+            except (ConnectionError, ChangeError):
                 logger.error(
                     "failed to reload pgbouncer - deferring change_event and waiting for pebble."
                 )

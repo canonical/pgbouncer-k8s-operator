@@ -170,7 +170,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         pebble_layer = self._pgbouncer_layer()
         container.add_layer(PGB, pebble_layer, combine=True)
-        container.autostart()
+        container.replan()
 
         try:
             if self.check_pgb_running():
@@ -330,6 +330,7 @@ class PgBouncerK8sCharm(CharmBase):
         return {
             "override": "merge",
             "summary": "postgresql metrics exporter",
+            "after": [service["name"] for service in self._services],
             "user": PG_USER,
             "group": PG_GROUP,
             "command": command,

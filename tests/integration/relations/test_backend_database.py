@@ -159,18 +159,18 @@ async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
 
         relation = get_backend_relation(ops_test)
         username = f"relation_id_{relation.id}"
-        monitoring_username = f"pgbouncer_stats_{PGB}"
+        monitoring_username = f"pgbouncer_stats_{PGB}".replace("-", "_")
         leader_cfg = await get_cfg(ops_test, f"{PGB}/0")
         leader_userlist = await get_userlist(ops_test, f"{PGB}/0")
 
-        assert username in leader_cfg["pgbouncer"]["stat_users"]
+        assert monitoring_username in leader_cfg["pgbouncer"]["stats_users"]
         assert username in leader_userlist
 
         for unit_id in [1, 2]:
             unit_name = f"{PGB}/{unit_id}"
             cfg = await get_cfg(ops_test, unit_name)
             userlist = await get_userlist(ops_test, unit_name)
-            assert monitoring_username in cfg["pgbouncer"]["admin_users"]
+            assert monitoring_username in cfg["pgbouncer"]["stats_users"]
             assert username in userlist
 
             assert cfg == leader_cfg
