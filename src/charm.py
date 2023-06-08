@@ -33,7 +33,7 @@ from constants import (
     PG_USER,
     PGB,
     PGB_DIR,
-    PGBOUNCER_LOG_FILES,
+    PGB_LOG_DIR,
     TLS_CA_FILE,
     TLS_CERT_FILE,
     TLS_KEY_FILE,
@@ -72,6 +72,7 @@ class PgBouncerK8sCharm(CharmBase):
                 "id": service_id,
                 "dir": f"{PGB_DIR}/instance_{service_id}",
                 "ini_path": f"{PGB_DIR}/instance_{service_id}/pgbouncer.ini",
+                "log_dir": f"{PGB_LOG_DIR}/instance_{service_id}",
             }
             for service_id in range(self._cores)
         ]
@@ -83,7 +84,7 @@ class PgBouncerK8sCharm(CharmBase):
         )
         self.loki_push = LogProxyConsumer(
             self,
-            log_files=PGBOUNCER_LOG_FILES,
+            log_files=[f'{service["log_dir"]}/pgbouncer.log' for service in self._services],
             relation_name="logging",
             container_name="pgbouncer",
         )
@@ -132,6 +133,13 @@ class PgBouncerK8sCharm(CharmBase):
             if not container.exists(service["dir"]):
                 container.make_dir(
                     service["dir"],
+                    user=PG_USER,
+                    group=PG_USER,
+                    permissions=0o700,
+                )
+            if not container.exists(service["log_dir"]):
+                container.make_dir(
+                    service["log_dir"],
                     user=PG_USER,
                     group=PG_USER,
                     permissions=0o700,
@@ -548,7 +556,7 @@ class PgBouncerK8sCharm(CharmBase):
         for service in self._services:
             s_config = pgb.PgbConfig(config)
             s_config[PGB]["unix_socket_dir"] = service["dir"]
-            s_config[PGB]["logfile"] = f"{service['dir']}/pgbouncer.log"
+            s_config[PGB]["logfile"] = f"{service['log_dir']}/pgbouncer.log"
             s_config[PGB]["pidfile"] = f"{service['dir']}/pgbouncer.pid"
             self.push_file(service["ini_path"], s_config.render(), perm)
         self.push_file(INI_PATH, config.render(), perm)
