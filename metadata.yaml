@@ -50,6 +50,7 @@ requires:
   backend-database:
     interface: postgresql_client
     optional: false
+    limit: 1
   certificates:
     interface: tls-certificates
     optional: true
