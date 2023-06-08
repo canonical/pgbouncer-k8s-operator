@@ -221,13 +221,12 @@ class Peers(Object):
             try:
                 # raises an error if this is fired before on_pebble_ready.
                 self.charm.reload_pgbouncer()
+                self.charm.toggle_monitoring_layer(self.charm.backend.ready)
             except ConnectionError:
                 logger.error(
                     "failed to reload pgbouncer - deferring change_event and waiting for pebble."
                 )
                 event.defer()
-
-        self.charm.toggle_monitoring_layer(self.charm.backend.ready)
 
     def _on_departed(self, event):
         self.update_leader()

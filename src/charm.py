@@ -337,13 +337,16 @@ class PgBouncerK8sCharm(CharmBase):
         }
 
     def toggle_monitoring_layer(self, enabled: bool) -> None:
-        """Reconfigures and enables the monitoring service."""
+        """Starts or stops the monitoring service."""
         pebble_layer = Layer(
             {"services": {self._metrics_service: self._generate_monitoring_service(enabled)}}
         )
         pgb_container = self.unit.get_container(PGB)
         pgb_container.add_layer(PGB, pebble_layer, combine=True)
-        pgb_container.replan()
+        if enabled:
+            pgb_container.replan()
+        else:
+            pgb_container.stop(self._metrics_service)
         self.check_pgb_running()
 
     def check_pgb_running(self):

@@ -33,9 +33,6 @@ class TestDb(unittest.TestCase):
         self.addCleanup(self.harness.cleanup)
         self.harness.begin()
 
-        self.togggle_monitoring_patch = patch("charm.PgBouncerK8sCharm.toggle_monitoring_layer")
-        self.toggle_monitoring_layer = self.togggle_monitoring_patch.start()
-
         self.charm = self.harness.charm
         self.app = self.charm.app.name
         self.unit = self.charm.unit.name
@@ -58,9 +55,6 @@ class TestDb(unittest.TestCase):
         # Define a db-admin relation
         self.db_admin_rel_id = self.harness.add_relation(DB_ADMIN_RELATION_NAME, "admin_client")
         self.harness.add_relation_unit(self.db_admin_rel_id, "admin_client/0")
-
-    def tearDown(self):
-        self.togggle_monitoring_patch.stop()
 
     def test_correct_admin_perms_set_in_constructor(self):
         assert self.charm.legacy_db_relation.relation_name == "db"
