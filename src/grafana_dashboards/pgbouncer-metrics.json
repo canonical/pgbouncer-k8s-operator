@@ -1079,7 +1079,7 @@
   ],
   "schemaVersion": 26,
   "style": "dark",
-  "tags": ["pgbouncer"],
+  "tags": ["pgbouncer", "k8s"],
   "templating": {
     "list": [
       {
@@ -1238,7 +1238,7 @@
     ]
   },
   "timezone": "browser",
-  "title": "PgBouncer",
-  "uid": "aek-7cbd6b6f87",
+  "title": "PgBouncer K8S",
+  "uid": "aek-FXwL2_l4k",
   "version": 2
 }
