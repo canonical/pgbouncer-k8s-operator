@@ -8,11 +8,14 @@
 import logging
 import os
 import socket
-from typing import Optional
+from typing import Dict, Optional
 
+from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
+from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
+from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
@@ -23,11 +26,14 @@ from constants import (
     AUTH_FILE_PATH,
     CLIENT_RELATION_NAME,
     INI_PATH,
+    METRICS_PORT,
+    MONITORING_PASSWORD_KEY,
     PEER_RELATION_NAME,
     PG_GROUP,
     PG_USER,
     PGB,
     PGB_DIR,
+    PGB_LOG_DIR,
     TLS_CA_FILE,
     TLS_CERT_FILE,
     TLS_KEY_FILE,
@@ -66,9 +72,22 @@ class PgBouncerK8sCharm(CharmBase):
                 "id": service_id,
                 "dir": f"{PGB_DIR}/instance_{service_id}",
                 "ini_path": f"{PGB_DIR}/instance_{service_id}/pgbouncer.ini",
+                "log_dir": f"{PGB_LOG_DIR}/instance_{service_id}",
             }
             for service_id in range(self._cores)
         ]
+        self._metrics_service = "metrics_server"
+        self.grafana_dashboards = GrafanaDashboardProvider(self)
+        self.metrics_endpoint = MetricsEndpointProvider(
+            self,
+            jobs=[{"static_configs": [{"targets": [f"*:{METRICS_PORT}"]}]}],
+        )
+        self.loki_push = LogProxyConsumer(
+            self,
+            log_files=[f'{service["log_dir"]}/pgbouncer.log' for service in self._services],
+            relation_name="logging",
+            container_name="pgbouncer",
+        )
 
     # =======================
     #  Charm Lifecycle Hooks
@@ -118,6 +137,13 @@ class PgBouncerK8sCharm(CharmBase):
                     group=PG_USER,
                     permissions=0o700,
                 )
+            if not container.exists(service["log_dir"]):
+                container.make_dir(
+                    service["log_dir"],
+                    user=PG_USER,
+                    group=PG_USER,
+                    permissions=0o700,
+                )
 
         self.render_pgb_config(config)
         return True
@@ -152,7 +178,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         pebble_layer = self._pgbouncer_layer()
         container.add_layer(PGB, pebble_layer, combine=True)
-        container.autostart()
+        container.replan()
 
         try:
             if self.check_pgb_running():
@@ -233,12 +259,16 @@ class PgBouncerK8sCharm(CharmBase):
                 "startup": "enabled",
                 "override": "replace",
             }
-
-        return {
-            "summary": "pgbouncer layer",
-            "description": "pebble config layer for pgbouncer",
-            "services": pebble_services,
-        }
+        pebble_services[self._metrics_service] = self._generate_monitoring_service(
+            self.backend.postgres
+        )
+        return Layer(
+            {
+                "summary": "pgbouncer layer",
+                "description": "pebble config layer for pgbouncer",
+                "services": pebble_services,
+            }
+        )
 
     def _on_update_status(self, _) -> None:
         """Update Status hook.
@@ -294,6 +324,40 @@ class PgBouncerK8sCharm(CharmBase):
 
         self.check_pgb_running()
 
+    def _generate_monitoring_service(self, enabled: bool = True) -> Dict[str, str]:
+        if enabled:
+            stats_password = self.peers.get_secret("app", MONITORING_PASSWORD_KEY)
+            command = (
+                f'pgbouncer_exporter --web.listen-address=:{METRICS_PORT} --pgBouncer.connectionString="'
+                f'postgres://{self.backend.stats_user}:{stats_password}@localhost:{self.config["listen_port"]}/pgbouncer?sslmode=disable"'
+            )
+            startup = "enabled"
+        else:
+            command = "true"
+            startup = "disabled"
+        return {
+            "override": "merge",
+            "summary": "postgresql metrics exporter",
+            "after": [service["name"] for service in self._services],
+            "user": PG_USER,
+            "group": PG_GROUP,
+            "command": command,
+            "startup": startup,
+        }
+
+    def toggle_monitoring_layer(self, enabled: bool) -> None:
+        """Starts or stops the monitoring service."""
+        pebble_layer = Layer(
+            {"services": {self._metrics_service: self._generate_monitoring_service(enabled)}}
+        )
+        pgb_container = self.unit.get_container(PGB)
+        pgb_container.add_layer(PGB, pebble_layer, combine=True)
+        if enabled:
+            pgb_container.replan()
+        else:
+            pgb_container.stop(self._metrics_service)
+        self.check_pgb_running()
+
     def check_pgb_running(self):
         """Checks that pgbouncer pebble service is running, and updates status accordingly."""
         pgb_container_unavailable = "PgBouncer container currently unavailable"
@@ -304,13 +368,18 @@ class PgBouncerK8sCharm(CharmBase):
             return False
 
         pebble_services = pgb_container.get_services()
-        for service in self._services:
-            if service["name"] not in pebble_services.keys():
+
+        services = [service["name"] for service in self._services]
+        if self.backend.ready:
+            services.append(self._metrics_service)
+
+        for service in services:
+            if service not in pebble_services.keys():
                 # pebble_ready event hasn't fired so pgbouncer layer has not been added to pebble
                 raise ConnectionError
-            pgb_service_status = pgb_container.get_services().get(service["name"]).current
+            pgb_service_status = pgb_container.get_services().get(service).current
             if pgb_service_status != ServiceStatus.ACTIVE:
-                pgb_not_running = f"PgBouncer service {service['name']} not running: service status = {pgb_service_status}"
+                pgb_not_running = f"PgBouncer service {service} not running: service status = {pgb_service_status}"
                 self.unit.status = BlockedStatus(pgb_not_running)
                 logger.error(pgb_not_running)
                 return False
@@ -487,7 +556,7 @@ class PgBouncerK8sCharm(CharmBase):
         for service in self._services:
             s_config = pgb.PgbConfig(config)
             s_config[PGB]["unix_socket_dir"] = service["dir"]
-            s_config[PGB]["logfile"] = f"{service['dir']}/pgbouncer.log"
+            s_config[PGB]["logfile"] = f"{service['log_dir']}/pgbouncer.log"
             s_config[PGB]["pidfile"] = f"{service['dir']}/pgbouncer.pid"
             self.push_file(service["ini_path"], s_config.render(), perm)
         self.push_file(INI_PATH, config.render(), perm)

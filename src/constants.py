@@ -20,3 +20,8 @@ CLIENT_RELATION_NAME = "database"
 TLS_KEY_FILE = "key.pem"
 TLS_CA_FILE = "ca.pem"
 TLS_CERT_FILE = "cert.pem"
+
+METRICS_PORT = 9127
+PGB_LOG_DIR = "/var/log/pgbouncer"
+MONITORING_PASSWORD_KEY = "monitoring_password"
+AUTH_FILE_DATABAG_KEY = "auth_file"

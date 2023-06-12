@@ -39,15 +39,26 @@ provides:
   db-admin:
     interface: pgsql
     optional: true
+  metrics-endpoint:
+    interface: prometheus_scrape
+    optional: true
+  grafana-dashboard:
+    interface: grafana_dashboard
+    optional: true
 
 requires:
   backend-database:
     interface: postgresql_client
     optional: false
+    limit: 1
   certificates:
     interface: tls-certificates
     optional: true
     limit: 1
+  logging:
+    interface: loki_push_api
+    limit: 1
+    optional: true
 
 peers:
   pgb-peers:
