@@ -72,7 +72,7 @@ jobs:
         tox-environments:
           - standalone-integration
           - legacy-client-relation-integration
-        agents-version: ["2.9.42"]  # renovate: latest
+        agents-version: ["2.9.43"]  # renovate: latest
         include:
           - tox-environments: backend-integration
             agents-version: "2.9.29"
