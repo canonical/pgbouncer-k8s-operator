@@ -70,18 +70,13 @@ jobs:
       fail-fast: false
       matrix:
         tox-environments:
+          - backend-integration
+          - client-relation-integration
+          - scaling-integration
+          - tls-integration
           - standalone-integration
           - legacy-client-relation-integration
-        agents-version: ["2.9.42"]  # renovate: latest
-        include:
-          - tox-environments: backend-integration
-            agents-version: "2.9.29"
-          - tox-environments: client-relation-integration
-            agents-version: "2.9.29"
-          - tox-environments: scaling-integration
-            agents-version: "2.9.29"
-          - tox-environments: tls-integration
-            agents-version: "2.9.29"
+        agents-version: ["2.9.43"]  # renovate: latest
     name: ${{ matrix.tox-environments }} | ${{ matrix.agents-version }}
     needs:
       - lib-check
