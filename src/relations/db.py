@@ -56,7 +56,7 @@ Some example relation data is below. All values are examples, generated in a run
 """
 
 import logging
-from typing import Dict, Iterable
+from typing import Dict, Iterable, List
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import (
@@ -81,6 +81,7 @@ from ops.model import (
     WaitingStatus,
 )
 
+EXTENSIONS_BLOCKING_MESSAGE = "bad relation request - remote app requested extensions, which are unsupported. Please remove this relation."
 logger = logging.getLogger(__name__)
 
 
@@ -136,6 +137,59 @@ class DbProvides(Object):
     def _depart_flag(self, relation):
         return f"{self.relation_name}_{relation.id}_departing"
 
+    def _check_extensions(self, extensions: List) -> bool:
+        """Checks if requested extensions are enabled."""
+        for extension in extensions:
+            extension_name = extension.split(":")[0]
+            if not self.charm.backend.database.is_postgresql_plugin_enabled(extension_name):
+                return False
+        return True
+
+    def _block_on_extensions(self, relation, remote_app_databag: Dict) -> bool:
+        """Verifies that extensions are enabled or blocks the charm."""
+        if "extensions" in remote_app_databag:
+            self.update_databags(
+                relation,
+                {
+                    "extensions": remote_app_databag["extensions"],
+                },
+            )
+            if not self._check_extensions(remote_app_databag["extensions"].split(",")):
+                # Do not allow apps requesting extensions to be installed.
+                logger.error(
+                    "ERROR - `extensions` cannot be requested through relations"
+                    " - they should be installed through a database charm config in the future"
+                )
+                self.charm.unit.status = BlockedStatus(EXTENSIONS_BLOCKING_MESSAGE)
+                return False
+        return True
+
+    def _get_relation_extensions(self, relation: Relation) -> List[str]:
+        """Get enabled extensions for a relation."""
+        for data in relation.data.values():
+            if "extensions" in data:
+                return data["extensions"].split(",")
+        return []
+
+    def _check_for_blocking_relations(self, relation_id: int) -> bool:
+        """Checks if there are still blocking relations and resets the status.
+
+        Args:
+            relation_id: current relation to be skipped
+        """
+        if (
+            self.charm._has_blocked_status
+            and self.charm.unit.status.message == EXTENSIONS_BLOCKING_MESSAGE
+        ):
+            for relname in ["db", "db-admin"]:
+                for relation in self.charm.model.relations.get(relname, []):
+                    if relation.id == relation_id:
+                        continue
+                    for data in relation.data.values():
+                        if not self._check_extensions(self._get_relation_extensions(relation)):
+                            return
+            self.charm.unit.status = ActiveStatus()
+
     def _on_relation_joined(self, join_event: RelationJoinedEvent):
         """Handle db-relation-joined event.
 
@@ -170,15 +224,7 @@ class DbProvides(Object):
 
         remote_app_databag = join_event.relation.data[join_event.app]
 
-        # Do not allow apps requesting extensions to be installed.
-        if "extensions" in remote_app_databag:
-            logger.error(
-                "ERROR - `extensions` cannot be requested through relations"
-                " - they should be installed through a database charm config in the future"
-            )
-            self.charm.unit.status = BlockedStatus(
-                "bad relation request - remote app requested extensions, which are unsupported. Please remove this relation."
-            )
+        if not self._block_on_extensions(join_event.relation, remote_app_databag):
             return
 
         database = remote_app_databag.get("database")
@@ -414,10 +460,14 @@ class DbProvides(Object):
         if not self._check_backend() or None in [user, database]:
             # this relation was never created, so wait for it to be initialised before removing
             # everything.
-            logger.warning(
-                f"backend relation not yet available - deferring {self.relation_name}-relation-broken event."
-            )
-            broken_event.defer()
+            if self._check_extensions(self._get_relation_extensions(broken_event.relation)):
+                logger.warning(
+                    f"backend relation not yet available - deferring {self.relation_name}-relation-broken event."
+                )
+                broken_event.defer()
+            else:
+                # check if this relation was blocking the charm
+                self._check_for_blocking_relations(broken_event.relation.id)
             return
 
         cfg = self.charm.read_pgb_config()
@@ -444,6 +494,8 @@ class DbProvides(Object):
         if self.charm.unit.is_leader():
             self.charm.peers.remove_user(user)
             self.charm.backend.postgres.delete_user(user)
+
+        self._check_for_blocking_relations(broken_event.relation.id)
 
     def update_databags(self, relation, updates: Dict[str, str]):
         """Updates databag with the given dict."""
