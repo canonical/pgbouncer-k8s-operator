@@ -81,7 +81,8 @@ from ops.model import (
     WaitingStatus,
 )
 
-EXTENSIONS_BLOCKING_MESSAGE = "bad relation request - remote app requested extensions, which are unsupported. Please remove this relation."
+from constants import EXTENSIONS_BLOCKING_MESSAGE
+
 logger = logging.getLogger(__name__)
 
 
@@ -154,11 +155,12 @@ class DbProvides(Object):
                     "extensions": remote_app_databag["extensions"],
                 },
             )
-            if not self._check_extensions(remote_app_databag["extensions"].split(",")):
+            extensions = remote_app_databag["extensions"].split(",")
+            if not self._check_extensions(extensions):
                 # Do not allow apps requesting extensions to be installed.
                 logger.error(
-                    "ERROR - `extensions` cannot be requested through relations"
-                    " - they should be installed through a database charm config in the future"
+                    f"ERROR - `extensions` ({', '.join(extensions)}) cannot be requested through relations"
+                    " - Please enable extensions through `juju config` and add the relation again."
                 )
                 self.charm.unit.status = BlockedStatus(EXTENSIONS_BLOCKING_MESSAGE)
                 return False
