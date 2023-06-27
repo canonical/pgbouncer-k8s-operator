@@ -8,6 +8,8 @@ from pathlib import Path
 import yaml
 from pytest_operator.plugin import OpsTest
 
+from constants import EXTENSIONS_BLOCKING_MESSAGE
+
 from ..helpers.helpers import (
     CHARM_SERIES,
     get_app_relation_databag,
@@ -162,6 +164,52 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
         assert finos_user not in cfg["pgbouncer"]["admin_users"]
         assert "waltz" not in cfg["databases"].keys()
         assert "waltz_standby" not in cfg["databases"].keys()
+
+
+async def test_relation_with_indico(ops_test: OpsTest):
+    """Test the relation with Indico charm."""
+    logger.info("Deploying indico")
+    await ops_test.model.deploy("indico", channel="stable")
+    await ops_test.model.deploy("redis-k8s", channel="stable", application_name="redis-broker")
+    await ops_test.model.deploy("redis-k8s", channel="stable", application_name="redis-cache")
+    await asyncio.gather(
+        ops_test.model.relate("redis-broker", "indico"),
+        ops_test.model.relate("redis-cache", "indico"),
+    )
+    await ops_test.model.add_relation(f"{PGB}:db", "indico:db")
+
+    # Wait for model to stabilise
+    await ops_test.model.wait_for_idle(
+        apps=["indico"],
+        status="waiting",
+        raise_on_blocked=False,
+        timeout=1000,
+    )
+    unit = ops_test.model.units.get("indico/0")
+    await ops_test.model.block_until(
+        lambda: unit.workload_status_message == "Waiting for database availability",
+        timeout=1000,
+    )
+
+    logger.info("Wait for PGB to block due to extensions")
+    await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)
+    assert (
+        ops_test.model.applications[PGB].units[0].workload_status_message
+        == EXTENSIONS_BLOCKING_MESSAGE
+    )
+    await ops_test.model.applications[PGB].destroy_relation(f"{PGB}:db", "indico:db")
+
+    logger.info("Rerelate with extensions enabled")
+    config = {"plugin_pg_trgm_enable": "True", "plugin_unaccent_enable": "True"}
+    await ops_test.model.applications[PG].set_config(config)
+    await ops_test.model.wait_for_idle(apps=[PG], status="active", idle_period=15)
+    await ops_test.model.relate(f"{PGB}:db", "indico:db")
+    await ops_test.model.wait_for_idle(
+        apps=[PG, PGB, "indico"],
+        status="active",
+        raise_on_blocked=False,
+        timeout=2000,
+    )
 
 
 async def test_relation_with_openldap(ops_test: OpsTest):

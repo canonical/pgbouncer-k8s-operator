@@ -642,6 +642,11 @@ class PgBouncerK8sCharm(CharmBase):
         """Gets leader hostname."""
         return self.peers.leader_hostname
 
+    @property
+    def _has_blocked_status(self) -> bool:
+        """Returns whether the unit is in a blocked state."""
+        return isinstance(self.unit.status, BlockedStatus)
+
 
 if __name__ == "__main__":
     main(PgBouncerK8sCharm)
