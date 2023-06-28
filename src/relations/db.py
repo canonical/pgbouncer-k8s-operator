@@ -163,8 +163,8 @@ class DbProvides(Object):
                     " - Please enable extensions through `juju config` and add the relation again."
                 )
                 self.charm.unit.status = BlockedStatus(EXTENSIONS_BLOCKING_MESSAGE)
-                return False
-        return True
+                return True
+        return False
 
     def _get_relation_extensions(self, relation: Relation) -> List[str]:
         """Get enabled extensions for a relation."""
@@ -226,7 +226,7 @@ class DbProvides(Object):
 
         remote_app_databag = join_event.relation.data[join_event.app]
 
-        if not self._block_on_extensions(join_event.relation, remote_app_databag):
+        if self._block_on_extensions(join_event.relation, remote_app_databag):
             return
 
         database = remote_app_databag.get("database")
@@ -265,7 +265,7 @@ class DbProvides(Object):
             self.charm.backend.postgres.create_database(database, user)
 
             created_msg = f"database and user for {self.relation_name} relation created"
-            self.charm.unit.status = ActiveStatus(created_msg)
+            self.charm.unit.status = ActiveStatus()
             logger.info(created_msg)
         except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
             err_msg = f"failed to create database or user for {self.relation_name}"
