@@ -55,7 +55,7 @@ async def test_multiple_pebble_services(ops_test: OpsTest):
 
     services = get_services.splitlines()[1:]
     # PGB services per core plus one monitoring service
-    assert len(services) == int(core_count) + 1
+    assert len(services) == int(core_count) + 2
 
     for service in services:
         service = service.split()

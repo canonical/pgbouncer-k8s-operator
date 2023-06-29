@@ -20,6 +20,7 @@ class TestCharm(unittest.TestCase):
         self.addCleanup(self.harness.cleanup)
         self.harness.begin_with_initial_hooks()
         self.charm = self.harness.charm
+        self.harness.model.unit.get_container(PGB).make_dir("/etc/logrotate.d", make_parents=True)
 
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
@@ -75,7 +76,7 @@ class TestCharm(unittest.TestCase):
 
     def test_pgbouncer_layer(self):
         layer = self.charm._pgbouncer_layer()
-        assert len(layer.services) == self.charm._cores + 1
+        assert len(layer.services) == self.charm._cores + 2
 
     @patch("ops.model.Container.exec")
     @patch("ops.model.Container.make_dir")
