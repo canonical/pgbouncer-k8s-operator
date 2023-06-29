@@ -55,10 +55,10 @@ async def test_multiple_pebble_services(ops_test: OpsTest):
 
     services = get_services.splitlines()[1:]
     # PGB services per core plus one monitoring service
-    assert len(services) == int(core_count) + 1
+    assert len(services) == int(core_count) + 2
 
     for service in services:
         service = service.split()
-        if service[0] != "metrics_server":
+        if service[0] not in ["metrics_server", "logrotate"]:
             assert service[1] == "enabled"
             assert service[2] == "active"
