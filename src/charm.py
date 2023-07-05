@@ -258,7 +258,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         pebble_services = {
             "logrotate": {
-                "command": "logrotate -f /etc/logrotate.conf",
+                "command": "logrotate -vf /etc/logrotate.conf",
                 "startup": "enabled",
                 "backoff-delay": "24h",
                 "backoff-factor": 1,
