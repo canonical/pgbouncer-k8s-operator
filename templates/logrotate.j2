@@ -10,7 +10,7 @@
     dateformat -%Y%m%d_%H:%M.log
     postrotate
     {% for id in service_ids %}
-         pebble restart pgbouncer_{{ id }}
+         pebble signal HUP pgbouncer_{{ id }}
     {% endfor %}
     endscript
 }
