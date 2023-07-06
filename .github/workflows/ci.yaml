@@ -91,6 +91,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Set channel
+        run: |
+          version=$(cut -c 1-3 << ${{ matrix.agent.versions }})
+          echo "channel=${version}/stable" >> "$GITHUB_ENV"
       - name: Setup operator environment
         # TODO: Replace with custom image on self-hosted runner
         uses: charmed-kubernetes/actions-operator@main
@@ -98,7 +102,7 @@ jobs:
           provider: microk8s
           channel: "1.27-strict/stable"
           bootstrap-options: "--agent-version ${{ matrix.agent.versions }}"
-          juju-channel: "${{ matrix.agent-versions[0:3] }}/stable"
+          juju-channel: "${{ env.channel }}"
       - name: Download packed charm(s)
         uses: actions/download-artifact@v3
         with:
