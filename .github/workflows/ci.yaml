@@ -77,9 +77,11 @@ jobs:
           - tls-integration
           - standalone-integration
           - legacy-client-relation-integration
-        agents-version: 
-          - "2.9.43"  # renovate: latest juju 2
-          - "3.1.5"  # renovate: latest juju 3
+        agents:
+          - version: "2.9.43"  # renovate: latest juju 2
+            channel: "2.9"
+          - version: "3.1.5"  # renovate: latest juju 3
+            channel: "3.1"
     name: ${{ matrix.tox-environments }} | ${{ matrix.agents-version }}
     needs:
       - lib-check
@@ -96,7 +98,8 @@ jobs:
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: microk8s
-          bootstrap-options: "--agent-version ${{ matrix.agents-version }}"
+          bootstrap-options: "--agent-version ${{ matrix.agents.version }}"
+          juju-channel: "${{ matrix.agents.channel }}/stable"
       - name: Download packed charm(s)
         uses: actions/download-artifact@v3
         with:
