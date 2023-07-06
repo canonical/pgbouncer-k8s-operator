@@ -22,6 +22,11 @@
       "extractVersion": "^juju-(?<version>.*)$",
       "groupName": "Juju agent"
     }, {
+      "matchPackageNames": ["juju/juju"],
+      "allowedVersions": ">3.0.0",
+      "extractVersion": "^juju-(?<version>.*)$",
+      "groupName": "Juju agent"
+    }, {
       "matchPackageNames": ["juju"],
       "allowedVersions": "<3.0.0"
     }
@@ -29,7 +34,14 @@
   "regexManagers": [
     {
       "fileMatch": ["^(workflow-templates|\\.github/workflows)/[^/]+\\.ya?ml$"],
-      "matchStrings": ["agents-version: \\[\"(?<currentValue>.*?)\"\\] +# renovate: latest"],
+      "matchStrings": ["agents-version: \\- \"(?<currentValue>.*?)\"\\] +# renovate: latest juju 2"],
+      "depNameTemplate": "juju/juju",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "loose",
+      "extractVersionTemplate": "Juju release"
+    }, {
+      "fileMatch": ["^(workflow-templates|\\.github/workflows)/[^/]+\\.ya?ml$"],
+      "matchStrings": ["agents-version: \\- \"(?<currentValue>.*?)\"\\] +# renovate: latest juju 3"],
       "depNameTemplate": "juju/juju",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "loose",

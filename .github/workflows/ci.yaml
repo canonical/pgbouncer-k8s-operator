@@ -68,6 +68,7 @@ jobs:
   integration-test:
     strategy:
       fail-fast: false
+      max-parallel: 6
       matrix:
         tox-environments:
           - backend-integration
@@ -76,7 +77,9 @@ jobs:
           - tls-integration
           - standalone-integration
           - legacy-client-relation-integration
-        agents-version: ["2.9.43"]  # renovate: latest
+        agents-version: 
+          - "2.9.43"  # renovate: latest juju 2
+          - "3.1.5"  # renovate: latest juju 3
     name: ${{ matrix.tox-environments }} | ${{ matrix.agents-version }}
     needs:
       - lib-check
