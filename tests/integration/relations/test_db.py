@@ -35,8 +35,8 @@ logger = logging.getLogger(__name__)
 
 
 async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
-    """Test that the pgbouncer and postgres charms can relate to one another."""
-    # Build, deploy, and relate charms.
+    """Test that the pgbouncer and postgres charms can integrate to one another."""
+    # Build, deploy, and integrate charms.
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
@@ -173,8 +173,8 @@ async def test_relation_with_indico(ops_test: OpsTest):
     await ops_test.model.deploy("redis-k8s", channel="stable", application_name="redis-broker")
     await ops_test.model.deploy("redis-k8s", channel="stable", application_name="redis-cache")
     await asyncio.gather(
-        ops_test.model.relate("redis-broker", "indico"),
-        ops_test.model.relate("redis-cache", "indico"),
+        ops_test.model.integrate("redis-broker", "indico"),
+        ops_test.model.integrate("redis-cache", "indico"),
     )
     await ops_test.model.add_relation(f"{PGB}:db", "indico:db")
 
@@ -199,11 +199,11 @@ async def test_relation_with_indico(ops_test: OpsTest):
     )
     await ops_test.model.applications[PGB].destroy_relation(f"{PGB}:db", "indico:db")
 
-    logger.info("Rerelate with extensions enabled")
+    logger.info("Reintegrate with extensions enabled")
     config = {"plugin_pg_trgm_enable": "True", "plugin_unaccent_enable": "True"}
     await ops_test.model.applications[PG].set_config(config)
     await ops_test.model.wait_for_idle(apps=[PG], status="active", idle_period=15)
-    await ops_test.model.relate(f"{PGB}:db", "indico:db")
+    await ops_test.model.integrate(f"{PGB}:db", "indico:db")
     await ops_test.model.wait_for_idle(
         apps=[PG, PGB, "indico"],
         status="active",

@@ -31,7 +31,7 @@ PG = "postgresql-k8s"
 
 
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
-    # Build, deploy, and relate charms.
+    # Build, deploy, and integrate charms.
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
@@ -131,7 +131,7 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
             apps=[SECOND_DISCOURSE_APP_NAME], status="blocked", timeout=1000
         )
 
-        # Relate PostgreSQL and Discourse, waiting for Discourse to be ready.
+        # Integrate PostgreSQL and Discourse, waiting for Discourse to be ready.
         second_discourse_relation = await ops_test.model.add_relation(
             f"{PGB}:db-admin",
             SECOND_DISCOURSE_APP_NAME,
