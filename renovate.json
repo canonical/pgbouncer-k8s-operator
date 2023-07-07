@@ -12,6 +12,7 @@
     {
       "matchManagers": ["poetry", "pip_requirements", "regex"],
       "matchDatasources": ["pypi"],
+      "excludePackageNames": ["juju"],
       "groupName": "Python dependencies"
     }, {
       "matchManagers": ["github-actions"],
@@ -21,16 +22,25 @@
       "matchPackageNames": ["juju/juju"],
       "allowedVersions": "<3.2.0",
       "extractVersion": "^juju-(?<version>.*)$",
-      "groupName": "Juju agent"
+      "groupName": "Juju 3"
     }, {
       "matchDepNames": ["Juju 2"],
       "matchPackageNames": ["juju/juju"],
       "allowedVersions": "<3.0.0",
       "extractVersion": "^juju-(?<version>.*)$",
-      "groupName": "Juju agent"
+      "groupName": "Juju 2"
     }, {
+      "matchDepNames": ["libjuju 3"],
       "matchPackageNames": ["juju"],
-      "allowedVersions": "<3.0.0"
+      "matchDatasources": ["pypi"],
+      "allowedVersions": "<3.2.0",
+      "groupName": "Juju 3"
+    }, {
+      "matchDepNames": ["libjuju 2"],
+      "matchPackageNames": ["juju"],
+      "matchDatasources": ["pypi"],
+      "allowedVersions": "<3.0.0",
+      "groupName": "Juju 2"
     }
   ],
   "regexManagers": [
@@ -50,6 +60,32 @@
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "loose",
       "extractVersionTemplate": "Juju release"
+    }, {
+      "fileMatch": [
+        "(^|/)pyproject\\.toml$",
+        "(^|/)tox\\.ini$"
+      ],
+      "matchStrings": [
+        "juju = \".* \\|\\| (?<currentValue>.*?)\" *# renovate libjuju",
+        "LIBJUJU=\"(?<currentValue>.*?)\" *# libjuju3"
+      ],
+      "depNameTemplate": "libjuju 3",
+      "packageNameTemplate": "juju",
+      "datasourceTemplate": "pypi",
+      "versioningTemplate": "loose",
+    }, {
+      "fileMatch": [
+        "(^|/)pyproject\\.toml$",
+        "(^|/)tox\\.ini$"
+      ],
+      "matchStrings": [
+        "juju = \"(?<currentValue>.*?) \\|\\| .*\" *# renovate libjuju",
+        "LIBJUJU=\"(?<currentValue>.*?)\" *# libjuju2"
+      ],
+      "depNameTemplate": "libjuju 2",
+      "packageNameTemplate": "juju",
+      "datasourceTemplate": "pypi",
+      "versioningTemplate": "loose",
     }, {
       "fileMatch": ["(^|/)([\\w-]*)charmcraft\\.ya?ml$"],
       "matchStrings": ["- (?<depName>.*?)(?:\\[.*?\\])?==(?<currentValue>.*?) +# renovate"],
