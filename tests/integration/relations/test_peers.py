@@ -28,7 +28,7 @@ FINOS_WALTZ = "finos-waltz"
 @pytest.mark.abort_on_fail
 # TODO order marks aren't behaving
 async def test_deploy_at_scale(ops_test, pgb_charm):
-    # Build, deploy, and integrate charms.
+    # Build, deploy, and relate charms.
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
@@ -43,8 +43,8 @@ async def test_deploy_at_scale(ops_test, pgb_charm):
 
 @pytest.mark.abort_on_fail
 async def test_scaled_relations(ops_test: OpsTest):
-    """Test that the pgbouncer and postgres charms can integrate with one another."""
-    # Build, deploy, and integrate charms.
+    """Test that the pgbouncer and postgres charms can relate to one another."""
+    # Build, deploy, and relate charms.
     async with ops_test.fast_forward():
         await asyncio.gather(
             # Edge 5 is the new postgres charm

@@ -39,9 +39,9 @@ RELATION = "backend-database"
 
 
 @pytest.mark.abort_on_fail
-async def test_integrate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
-    """Test that the pgbouncer and postgres charms can integrate to one another."""
-    # Build, deploy, and integrate charms.
+async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
+    """Test that the pgbouncer and postgres charms can relate to one another."""
+    # Build, deploy, and relate charms.
     resources = {
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
@@ -104,7 +104,7 @@ async def test_integrate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
 
 async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
-        # Integrate PgBouncer to PostgreSQL.
+        # Relate PgBouncer to PostgreSQL.
         relation = await ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database")
         wait_for_relation_joined_between(ops_test, PG, PGB)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
@@ -115,15 +115,15 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
         await ops_test.model.deploy(TLS, config=config)
         await ops_test.model.wait_for_idle(apps=[TLS], status="active", timeout=1000)
 
-        # Integrate it to the PostgreSQL to enable TLS.
-        await ops_test.model.integrate(PG, TLS)
+        # Relate it to the PostgreSQL to enable TLS.
+        await ops_test.model.relate(PG, TLS)
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
 
         # Enable additional logs on the PostgreSQL instance to check TLS
         # being used in a later step.
         await enable_connections_logging(ops_test, f"{PG}/0")
 
-        # Deploy an app and integrate it to PgBouncer to open a connection
+        # Deploy an app and relate it to PgBouncer to open a connection
         # between PgBouncer and PostgreSQL.
         await ops_test.model.deploy(
             "finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"

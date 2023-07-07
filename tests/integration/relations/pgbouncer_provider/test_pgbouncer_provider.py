@@ -86,9 +86,9 @@ async def test_database_relation_with_charm_libraries(
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active")
 
-    # Integrate the charms and wait for them exchanging some connection data.
+    # Relate the charms and wait for them exchanging some connection data.
     global client_relation
-    client_relation = await ops_test.model.integrate(
+    client_relation = await ops_test.model.add_relation(
         f"{CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB
     )
 
@@ -251,7 +251,7 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest, applicati
     )
     await ops_test.model.wait_for_idle(status="active", apps=all_app_names)
 
-    # Integrate the new application with the database
+    # Relate the new application with the database
     # and wait for them exchanging some connection data.
     secondary_relation = await ops_test.model.add_relation(
         f"{SECONDARY_CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB
@@ -291,8 +291,8 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest, applicati
 
 async def test_an_application_can_request_multiple_databases(ops_test: OpsTest):
     """Test that an application can request additional databases using the same interface."""
-    # Integrate the charms using another relation and wait for them to exchange connection data.
-    await ops_test.model.integration(f"{CLIENT_APP_NAME}:{SECOND_DATABASE_RELATION_NAME}", PGB)
+    # Relate the charms using another relation and wait for them exchanging some connection data.
+    await ops_test.model.add_relation(f"{CLIENT_APP_NAME}:{SECOND_DATABASE_RELATION_NAME}", PGB)
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active")
 
@@ -428,13 +428,13 @@ async def test_relation_broken(ops_test: OpsTest):
 
 
 async def test_relation_with_data_integrator(ops_test: OpsTest):
-    """Test that the charm can be integrate to the data integrator without extra user roles."""
+    """Test that the charm can be related to the data integrator without extra user roles."""
     config = {"database-name": "test-database"}
     await ops_test.model.deploy(
         DATA_INTEGRATOR_APP_NAME,
         channel="edge",
         config=config,
     )
-    await ops_test.model.integrate(f"{PGB}:database", DATA_INTEGRATOR_APP_NAME)
+    await ops_test.model.add_relation(f"{PGB}:database", DATA_INTEGRATOR_APP_NAME)
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(status="active")

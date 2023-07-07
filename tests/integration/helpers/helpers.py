@@ -216,16 +216,16 @@ async def scale_application(
     )
 
 
-async def deploy_and_integrate_application_with_pgbouncer(
+async def deploy_and_relate_application_with_pgbouncer(
     ops_test: OpsTest,
     charm: str,
     application_name: str,
     number_of_units: int,
     channel: str = "stable",
-    interface: str = "db",
+    relation: str = "db",
     status: str = "blocked",
 ) -> int:
-    """Helper function to deploy and integrate application with PgBouncer.
+    """Helper function to deploy and relate application with PgBouncer.
 
     Args:
         ops_test: The ops test framework.
@@ -233,7 +233,7 @@ async def deploy_and_integrate_application_with_pgbouncer(
         application_name: The name of the application to deploy.
         number_of_units: The number of units to deploy.
         channel: The channel to use for the charm.
-        integration: Name of the PgBouncer interface to integrate
+        relation: Name of the PgBouncer relation to relate
             the application to.
         status: The status to wait for in the application (default: blocked).
 
@@ -254,8 +254,8 @@ async def deploy_and_integrate_application_with_pgbouncer(
         timeout=1000,
     )
 
-    # Integrate application to PgBouncer.
-    integration = await ops_test.model.integrate(f"{application_name}", f"{PGB}:{interface}")
+    # Relate application to PgBouncer.
+    relation = await ops_test.model.relate(f"{application_name}", f"{PGB}:{relation}")
     await ops_test.model.wait_for_idle(
         apps=[application_name],
         status="active",
@@ -263,7 +263,7 @@ async def deploy_and_integrate_application_with_pgbouncer(
         timeout=1000,
     )
 
-    return integration.id
+    return relation.id
 
 
 async def app_name(ops_test: OpsTest, application_name: str = "pgbouncer") -> Optional[str]:
@@ -282,7 +282,7 @@ async def app_name(ops_test: OpsTest, application_name: str = "pgbouncer") -> Op
 
 
 async def check_tls(ops_test: OpsTest, relation_id: int, enabled: bool) -> bool:
-    """Returns whether TLS is enabled on a integrated PgBouncer cluster.
+    """Returns whether TLS is enabled on a related PgBouncer cluster.
 
     Args:
         ops_test: The ops test framework instance.

@@ -12,7 +12,7 @@ from .helpers.helpers import (
     POSTGRESQL_APP_NAME,
     app_name,
     check_tls,
-    deploy_and_integrate_application_with_pgbouncer,
+    deploy_and_relate_application_with_pgbouncer,
     scale_application,
 )
 
@@ -67,7 +67,7 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
         )
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
     global client_relation
-    client_relation = await ops_test.model.integrate(PGB, f"{CLIENT_APP_NAME}:first-database")
+    client_relation = await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:first-database")
 
     if not await app_name(ops_test, POSTGRESQL_APP_NAME):
         wait_for_apps = True
@@ -75,16 +75,16 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
         await ops_test.model.deploy(
             POSTGRESQL_APP_NAME, channel="14/edge", trust=True, num_units=DATABASE_UNITS
         )
-        await ops_test.model.integrate(PGB, POSTGRESQL_APP_NAME)
+        await ops_test.model.relate(PGB, POSTGRESQL_APP_NAME)
 
     if not await app_name(ops_test, TLS_CERTIFICATES_APP_NAME):
         wait_for_apps = True
         # Deploy TLS Certificates operator.
         config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
         await ops_test.model.deploy(TLS_CERTIFICATES_APP_NAME, config=config)
-        # Integrate it to the PgBouncer to enable TLS.
-        await ops_test.model.integrate(PGB, TLS_CERTIFICATES_APP_NAME)
-        await ops_test.model.integrate(TLS_CERTIFICATES_APP_NAME, POSTGRESQL_APP_NAME)
+        # Relate it to the PgBouncer to enable TLS.
+        await ops_test.model.relate(PGB, TLS_CERTIFICATES_APP_NAME)
+        await ops_test.model.relate(TLS_CERTIFICATES_APP_NAME, POSTGRESQL_APP_NAME)
 
     if wait_for_apps:
         async with ops_test.fast_forward():
@@ -140,7 +140,7 @@ async def test_add_tls(ops_test: OpsTest) -> None:
     Args:
         ops_test: The ops test framework
     """
-    await ops_test.model.integrate(PGB, TLS_CERTIFICATES_APP_NAME)
+    await ops_test.model.relate(PGB, TLS_CERTIFICATES_APP_NAME)
     await ops_test.model.wait_for_idle(status="active", timeout=1000)
     assert await check_tls(ops_test, client_relation.id, True)
 
@@ -155,7 +155,7 @@ async def test_mattermost_db(ops_test: OpsTest) -> None:
     """
     async with ops_test.fast_forward():
         # Deploy Mattermost
-        await deploy_and_integrate_application_with_pgbouncer(
+        await deploy_and_relate_application_with_pgbouncer(
             ops_test, MATTERMOST_APP_NAME, MATTERMOST_APP_NAME, APPLICATION_UNITS, status="waiting"
         )
         await ops_test.model.remove_application(MATTERMOST_APP_NAME, block_until_done=True)
