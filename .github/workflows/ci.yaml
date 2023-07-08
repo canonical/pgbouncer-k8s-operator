@@ -71,12 +71,12 @@ jobs:
       max-parallel: 6
       matrix:
         tox-environments:
-          - standalone-integration
-          - legacy-client-relation-integration
           - backend-integration
           - client-relation-integration
           - scaling-integration
           - tls-integration
+          - standalone-integration
+          - legacy-client-relation-integration
         agent-versions: 
           - "2.9.43"  # renovate: latest juju 2
           - "3.1.5"  # renovate: latest juju 3
