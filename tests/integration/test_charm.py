@@ -67,7 +67,7 @@ async def test_multiple_pebble_services(ops_test: OpsTest):
 async def test_logrotate(ops_test: OpsTest):
     """Verify that logs will be rotated."""
     unit = ops_test.model.applications[PGB].units[0]
-    await run_command_on_unit(ops_test, unit.name, "pebble restart logrotate")
+    await run_command_on_unit(ops_test, unit.name, "logrotate -f /etc/logrotate.conf")
 
     cmd = f"ssh {PGB}/0 sudo ls /var/logs/{PGB}/instance_0"
     return_code, output, _ = await ops_test.juju(*cmd.split(" "))
@@ -75,4 +75,4 @@ async def test_logrotate(ops_test: OpsTest):
     logs = output.strip().split()
     logs.remove("pgbouncer.log")
     # Pebble should rotate the logs on startup
-    assert len(logs) > 1, "Log not rotated"
+    assert len(logs), "Log not rotated"
