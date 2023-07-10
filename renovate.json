@@ -12,7 +12,7 @@
     {
       "matchManagers": ["poetry", "pip_requirements", "regex"],
       "matchDatasources": ["pypi"],
-      "excludePackageNames": ["juju"],
+      "excludePackageNames": ["juju", "libjuju 2", "libjuju 3"],
       "groupName": "Python dependencies"
     }, {
       "matchManagers": ["github-actions"],
