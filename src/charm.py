@@ -180,14 +180,7 @@ class PgBouncerK8sCharm(CharmBase):
         container.add_layer(PGB, pebble_layer, combine=True)
         container.replan()
 
-        try:
-            if self.check_pgb_running():
-                self.unit.status = ActiveStatus()
-        except ConnectionError:
-            not_running = "pgbouncer not running"
-            logger.error(not_running)
-            self.unit.status = WaitingStatus(not_running)
-            event.defer()
+        self.update_status()
 
         self.unit.set_workload_version(self.version)
 
