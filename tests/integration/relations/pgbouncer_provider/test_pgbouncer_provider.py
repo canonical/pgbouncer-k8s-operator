@@ -170,7 +170,11 @@ async def test_cant_write_in_readonly(ops_test: OpsTest):
         relation_name=FIRST_DATABASE_RELATION_NAME,
         readonly=True,
     )
-    assert run_drop_query_readonly["Code"] == "1"
+    if "Code" in run_drop_query_readonly:
+        retcode = run_drop_query_readonly["Code"]
+    else:
+        retcode = run_drop_query_readonly["return-code"]
+    assert int(retcode) == 1
 
 
 async def test_database_admin_permissions(ops_test: OpsTest):
