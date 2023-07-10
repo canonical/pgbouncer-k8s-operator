@@ -4,10 +4,10 @@
 # Learn more about testing at: https://juju.is/docs/sdk/testing
 
 import unittest
-from unittest.mock import call, patch
+from unittest.mock import PropertyMock, call, patch
 
 from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
-from ops.model import ActiveStatus, WaitingStatus
+from ops.model import WaitingStatus
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
@@ -16,6 +16,13 @@ from constants import BACKEND_RELATION_NAME, INI_PATH, PGB
 
 class TestCharm(unittest.TestCase):
     def setUp(self):
+        backend_ready_patch = patch(
+            "relations.backend_database.BackendDatabaseRequires.ready",
+            new_callable=PropertyMock,
+            return_value=True,
+        )
+        backend_ready_patch.start()
+
         self.harness = Harness(PgBouncerK8sCharm)
         self.addCleanup(self.harness.cleanup)
         self.harness.begin_with_initial_hooks()
@@ -78,9 +85,10 @@ class TestCharm(unittest.TestCase):
         layer = self.charm._pgbouncer_layer()
         assert len(layer.services) == self.charm._cores + 2
 
+    @patch("charm.PgBouncerK8sCharm.update_status")
     @patch("ops.model.Container.exec")
     @patch("ops.model.Container.make_dir")
-    def test_on_pgbouncer_pebble_ready(self, _mkdir, _exec):
+    def test_on_pgbouncer_pebble_ready(self, _mkdir, _exec, _update_status):
         _exec.return_value.wait_output.return_value = ("PGB 1.16.1\nOther things", "")
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
@@ -94,7 +102,7 @@ class TestCharm(unittest.TestCase):
                 service["name"]
             )
             self.assertTrue(container_service.is_running())
-        self.assertIsInstance(self.harness.model.unit.status, ActiveStatus)
+        _update_status.assert_called_once_with()
 
     @patch("charm.PostgreSQLTLS.get_tls_files")
     @patch("ops.model.Container.make_dir")
@@ -117,12 +125,13 @@ class TestCharm(unittest.TestCase):
         self.assertIsInstance(self.harness.model.unit.status, WaitingStatus)
         self.assertEqual(self.harness.model.unit.status.message, "Waiting for certificates")
 
+    @patch("charm.PgBouncerK8sCharm.update_status")
     @patch("ops.model.Container.exec")
     @patch("charm.PgBouncerK8sCharm.push_tls_files_to_workload")
     @patch("charm.PostgreSQLTLS.get_tls_files")
     @patch("ops.model.Container.make_dir")
     def test_on_pgbouncer_pebble_ready_ensure_tls_files(
-        self, _mkdir, get_tls_files, push_tls_files_to_workload, _exec
+        self, _mkdir, get_tls_files, push_tls_files_to_workload, _exec, _update_status
     ):
         _exec.return_value.wait_output.return_value = ("", "")
         get_tls_files.return_value = ("key", "ca", "cert")
@@ -140,7 +149,7 @@ class TestCharm(unittest.TestCase):
 
         get_tls_files.assert_called_once_with()
         push_tls_files_to_workload.assert_called_once_with(False)
-        self.assertIsInstance(self.harness.model.unit.status, ActiveStatus)
+        _update_status.assert_called_once_with()
 
     @patch("ops.model.Container.can_connect", return_value=False)
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
@@ -167,10 +176,11 @@ class TestCharm(unittest.TestCase):
         read_cfg = self.charm.read_pgb_config()
         self.assertEqual(PgbConfig(read_cfg).render(), test_cfg.render())
 
+    @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     @patch("ops.model.Container.exec")
     @patch("ops.model.Container.make_dir")
     @patch("ops.model.Container.restart")
-    def test_reload_pgbouncer(self, _restart, _mkdir, _exec):
+    def test_reload_pgbouncer(self, _restart, _mkdir, _exec, _check_pgb_running):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         # necessary hooks before we can check reloads
@@ -179,7 +189,7 @@ class TestCharm(unittest.TestCase):
         self.charm.on.pgbouncer_pebble_ready.emit(container)
 
         self.charm.reload_pgbouncer()
-        self.assertIsInstance(self.charm.unit.status, ActiveStatus)
+        _check_pgb_running.assert_called_once_with()
         calls = [call(service["name"]) for service in self.charm._services]
         _restart.assert_has_calls(calls)
 
