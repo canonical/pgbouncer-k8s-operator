@@ -6,6 +6,7 @@ import json
 import logging
 from pathlib import Path
 
+import psycopg2 as psycopg2
 import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
@@ -291,6 +292,30 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest, applicati
     logger.info(app_connstr)
     logger.info(secondary_app_connstr)
     assert app_connstr != secondary_app_connstr
+
+    # Check that the user cannot access other databases.
+    for application, other_application_database in [
+        (CLIENT_APP_NAME, "another_application_first_database"),
+        (SECONDARY_CLIENT_APP_NAME, "application_first_database"),
+    ]:
+        connection_string = await build_connection_string(
+            ops_test, application, FIRST_DATABASE_RELATION_NAME, database="postgres"
+        )
+        with pytest.raises(psycopg2.Error):
+            psycopg2.connect(connection_string)
+        connection_string = await build_connection_string(
+            ops_test, application, FIRST_DATABASE_RELATION_NAME, database="pgbouncer"
+        )
+        with pytest.raises(psycopg2.Error):
+            psycopg2.connect(connection_string)
+        connection_string = await build_connection_string(
+            ops_test,
+            application,
+            FIRST_DATABASE_RELATION_NAME,
+            database=other_application_database,
+        )
+        with pytest.raises(psycopg2.Error):
+            psycopg2.connect(connection_string)
 
 
 async def test_an_application_can_request_multiple_databases(ops_test: OpsTest):
