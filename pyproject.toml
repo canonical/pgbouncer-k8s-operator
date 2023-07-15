@@ -45,6 +45,7 @@ optional = true
 coverage = {extras = ["toml"], version = "7.2.7"}
 pytest = "7.4.0"
 pytest-asyncio = "0.21.0"
+jinja2 = "3.1.2"
 psycopg2 = {version = "2.9.6", extras = ["binary"]}
 
 [tool.poetry.group.integration]
