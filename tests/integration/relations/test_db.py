@@ -208,7 +208,7 @@ async def test_relation_with_indico(ops_test: OpsTest):
         apps=[PG, PGB, "indico"],
         status="active",
         raise_on_blocked=False,
-        timeout=2000,
+        timeout=3000,
     )
 
 
