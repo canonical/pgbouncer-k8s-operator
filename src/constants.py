@@ -40,4 +40,5 @@ SECRET_KEY_OVERRIDES = {
     "cfg_file": "cfg-file",
     "ca": "cauth",
     "monitoring_password": "monitoring-password",
+    "auth_file": "auth-file",
 }
