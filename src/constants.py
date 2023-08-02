@@ -36,4 +36,4 @@ SECRET_DELETED_LABEL = "None"
 APP_SCOPE = "app"
 UNIT_SCOPE = "unit"
 
-SECRET_KEY_OVERRIDES = {"cfg_file": "cfg-file", "ca": "cauth"}
+SECRET_KEY_OVERRIDES = {"cfg_file": "cfg-file", "ca": "cauth", "monitoring_password": "monitoring-password"}
