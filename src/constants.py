@@ -39,5 +39,5 @@ UNIT_SCOPE = "unit"
 SECRET_KEY_OVERRIDES = {
     "cfg_file": "cfg-file",
     "ca": "cauth",
-  "monitoring_password": "monitoring-password",
+    "monitoring_password": "monitoring-password",
 }
