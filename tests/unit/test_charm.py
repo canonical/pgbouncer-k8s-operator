@@ -7,19 +7,19 @@ import unittest
 from unittest.mock import Mock, PropertyMock, call, patch
 
 from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
-from ops.model import SecretNotFoundError, WaitingStatus
+from ops.model import WaitingStatus
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
 from constants import (
     BACKEND_RELATION_NAME,
     INI_PATH,
+    PEER_RELATION_NAME,
     PGB,
     SECRET_CACHE_LABEL,
     SECRET_DELETED_LABEL,
     SECRET_INTERNAL_LABEL,
     SECRET_LABEL,
-    PEER_RELATION_NAME,
 )
 
 
