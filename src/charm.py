@@ -17,13 +17,15 @@ from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from jinja2 import Template
+from ops import JujuVersion
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus, BlockedStatus, WaitingStatus
+from ops.model import ActiveStatus, BlockedStatus, SecretNotFoundError, WaitingStatus
 from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
 
 from constants import (
+    APP_SCOPE,
     AUTH_FILE_PATH,
     CLIENT_RELATION_NAME,
     INI_PATH,
@@ -35,9 +37,14 @@ from constants import (
     PGB,
     PGB_DIR,
     PGB_LOG_DIR,
+    SECRET_CACHE_LABEL,
+    SECRET_DELETED_LABEL,
+    SECRET_INTERNAL_LABEL,
+    SECRET_LABEL,
     TLS_CA_FILE,
     TLS_CERT_FILE,
     TLS_KEY_FILE,
+    UNIT_SCOPE,
 )
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
@@ -54,6 +61,8 @@ class PgBouncerK8sCharm(CharmBase):
 
     def __init__(self, *args):
         super().__init__(*args)
+
+        self.secrets = {APP_SCOPE: {}, UNIT_SCOPE: {}}
 
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
@@ -406,13 +415,162 @@ class PgBouncerK8sCharm(CharmBase):
         unit_id = unit_name.split("/")[1]
         return f"{self.app.name}-{unit_id}.{self.app.name}-endpoints"
 
+    def _scope_obj(self, scope: str):
+        if scope == APP_SCOPE:
+            return self.framework.model.app
+        if scope == UNIT_SCOPE:
+            return self.framework.model.unit
+
+    def _juju_secrets_get(self, scope: str) -> Optional[bool]:
+        """Helper function to get Juju secret."""
+        if scope == UNIT_SCOPE:
+            peer_data = self.peers.unit_databag
+        else:
+            peer_data = self.peers.app_databag
+
+        if not peer_data.get(SECRET_INTERNAL_LABEL):
+            return
+
+        if SECRET_CACHE_LABEL not in self.secrets[scope]:
+            try:
+                # NOTE: Secret contents are not yet available!
+                secret = self.model.get_secret(id=peer_data[SECRET_INTERNAL_LABEL])
+            except SecretNotFoundError as e:
+                logging.debug(f"No secret found for ID {peer_data[SECRET_INTERNAL_LABEL]}, {e}")
+                return
+
+            logging.debug(f"Secret {peer_data[SECRET_INTERNAL_LABEL]} downloaded")
+
+            # We keep the secret object around -- needed when applying modifications
+            self.secrets[scope][SECRET_LABEL] = secret
+
+            # We retrieve and cache actual secret data for the lifetime of the event scope
+            self.secrets[scope][SECRET_CACHE_LABEL] = secret.get_content()
+
+        return bool(self.secrets[scope].get(SECRET_CACHE_LABEL))
+
+    def _juju_secret_get_key(self, scope: str, key: str) -> Optional[str]:
+        if not key:
+            return
+
+        if self._juju_secrets_get(scope):
+            secret_cache = self.secrets[scope].get(SECRET_CACHE_LABEL)
+            if secret_cache:
+                secret_data = secret_cache.get(key)
+                if secret_data and secret_data != SECRET_DELETED_LABEL:
+                    logging.debug(f"Getting secret {scope}:{key}")
+                    return secret_data
+        logging.debug(f"No value found for secret {scope}:{key}")
+
     def get_secret(self, scope: str, key: str) -> Optional[str]:
         """Get secret from the secret storage."""
-        return self.peers.get_secret(scope, key)
+        if scope not in [APP_SCOPE, UNIT_SCOPE]:
+            raise RuntimeError("Unknown secret scope.")
 
-    def set_secret(self, scope: str, key: str, value: Optional[str]) -> None:
+        if scope == UNIT_SCOPE:
+            result = self.peers.unit_databag.get(key, None)
+        else:
+            result = self.peers.app_databag.get(key, None)
+
+        # TODO change upgrade to switch to secrets once minor version upgrades is done
+        if result:
+            return result
+
+        juju_version = JujuVersion.from_environ()
+        if juju_version.has_secrets:
+            return self._juju_secret_get_key(scope, key)
+
+    def _juju_secret_set(self, scope: str, key: str, value: str) -> str:
+        """Helper function setting Juju secret."""
+        if scope == UNIT_SCOPE:
+            peer_data = self.peers.unit_databag
+        else:
+            peer_data = self.peers.app_databag
+        self._juju_secrets_get(scope)
+
+        secret = self.secrets[scope].get(SECRET_LABEL)
+
+        # It's not the first secret for the scope, we can re-use the existing one
+        # that was fetched in the previous call
+        if secret:
+            secret_cache = self.secrets[scope][SECRET_CACHE_LABEL]
+
+            if secret_cache.get(key) == value:
+                logging.debug(f"Key {scope}:{key} has this value defined already")
+            else:
+                secret_cache[key] = value
+                try:
+                    secret.set_content(secret_cache)
+                except OSError as error:
+                    logging.error(
+                        f"Error in attempt to set {scope}:{key}. "
+                        f"Existing keys were: {list(secret_cache.keys())}. {error}"
+                    )
+                logging.debug(f"Secret {scope}:{key} was {key} set")
+
+        # We need to create a brand-new secret for this scope
+        else:
+            scope_obj = self._scope_obj(scope)
+
+            secret = scope_obj.add_secret({key: value})
+            if not secret:
+                raise RuntimeError(f"Couldn't set secret {scope}:{key}")
+
+            self.secrets[scope][SECRET_LABEL] = secret
+            self.secrets[scope][SECRET_CACHE_LABEL] = {key: value}
+            logging.debug(f"Secret {scope}:{key} published (as first). ID: {secret.id}")
+            peer_data.update({SECRET_INTERNAL_LABEL: secret.id})
+
+        return self.secrets[scope][SECRET_LABEL].id
+
+    def set_secret(self, scope: str, key: str, value: Optional[str]) -> Optional[str]:
         """Set secret from the secret storage."""
-        self.peers.set_secret(scope, key, value)
+        if scope not in [APP_SCOPE, UNIT_SCOPE]:
+            raise RuntimeError("Unknown secret scope.")
+
+        if not value:
+            return self.remove_secret(scope, key)
+
+        juju_version = JujuVersion.from_environ()
+
+        if juju_version.has_secrets:
+            self._juju_secret_set(scope, key, value)
+            return
+        if scope == UNIT_SCOPE:
+            self.peers.unit_databag.update({key: value})
+        else:
+            self.peers.app_databag.update({key: value})
+
+    def _juju_secret_remove(self, scope: str, key: str) -> None:
+        """Remove a Juju 3.x secret."""
+        self._juju_secrets_get(scope)
+
+        secret = self.secrets[scope].get(SECRET_LABEL)
+        if not secret:
+            logging.error(f"Secret {scope}:{key} wasn't deleted: no secrets are available")
+            return
+
+        secret_cache = self.secrets[scope].get(SECRET_CACHE_LABEL)
+        if not secret_cache or key not in secret_cache:
+            logging.error(f"No secret {scope}:{key}")
+            return
+
+        secret_cache[key] = SECRET_DELETED_LABEL
+        secret.set_content(secret_cache)
+        logging.debug(f"Secret {scope}:{key}")
+
+    def remove_secret(self, scope: str, key: str) -> None:
+        """Removing a secret."""
+        if scope not in [APP_SCOPE, UNIT_SCOPE]:
+            raise RuntimeError("Unknown secret scope.")
+
+        juju_version = JujuVersion.from_environ()
+        if juju_version.has_secrets:
+            return self._juju_secret_remove(scope, key)
+        if scope == UNIT_SCOPE:
+            del self.peers.unit_databag[key]
+        else:
+            del self.peers.app_databag[key]
 
     def push_tls_files_to_workload(self, update_config: bool = True) -> None:
         """Uploads TLS files to the workload container."""

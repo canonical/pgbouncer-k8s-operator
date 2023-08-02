@@ -37,7 +37,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     def tearDown(self):
         self.togggle_monitoring_patch.stop()
 
-    @patch("charm.Peers.get_secret", return_value=None)
+    @patch("charm.PgBouncerK8sCharm.get_secret", return_value=None)
     @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
     @patch(
         "relations.backend_database.BackendDatabaseRequires.stats_user",

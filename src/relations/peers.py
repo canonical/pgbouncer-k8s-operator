@@ -71,7 +71,7 @@ from ops.framework import Object
 from ops.model import MaintenanceStatus, Relation, Unit
 from ops.pebble import ChangeError, ConnectionError
 
-from constants import AUTH_FILE_DATABAG_KEY, PEER_RELATION_NAME
+from constants import APP_SCOPE, AUTH_FILE_DATABAG_KEY, PEER_RELATION_NAME
 
 CFG_FILE_DATABAG_KEY = "cfg_file"
 ADDRESS_KEY = "private-address"
@@ -214,7 +214,7 @@ class Peers(Object):
         if cfg := self.get_cfg():
             self.charm.render_pgb_config(PgbConfig(cfg))
 
-        if auth_file := self.get_secret("app", AUTH_FILE_DATABAG_KEY):
+        if auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
             self.charm.render_auth_file(auth_file)
 
         if cfg is not None or auth_file is not None:
@@ -245,50 +245,6 @@ class Peers(Object):
         if self.charm.unit.is_leader():
             self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
 
-    def set_secret(self, scope: str, key: str, value: str):
-        """Sets secret value.
-
-        Pass in "None" to the value to delete the secret.
-
-        Placeholder method for Juju Secrets interface.
-
-        Args:
-            scope: scope for data. Can be "unit" or "app".
-            key: key to set value to
-            value: value to be set
-        """
-        if scope == "unit":
-            if not value:
-                self.unit_databag.pop(key, None)
-                return
-            self.unit_databag.update({key: value})
-        elif scope == "app":
-            if not value:
-                self.app_databag.pop(key, None)
-                return
-            self.app_databag.update({key: value})
-        else:
-            raise RuntimeError("Unknown secret scope.")
-
-    def get_secret(self, scope: str, key: str) -> Optional[str]:
-        """Gets secret value.
-
-        Placeholder method for Juju Secrets interface.
-
-        Args:
-            scope: scope for data. Can be "unit" or "app".
-            key: key to access data
-
-        Returns:
-            value at `key` in `scope` databag.
-        """
-        if scope == "unit":
-            return self.unit_databag.get(key, None)
-        elif scope == "app":
-            return self.app_databag.get(key, None)
-        else:
-            raise RuntimeError("Unknown secret scope.")
-
     def update_cfg(self, cfg: PgbConfig) -> None:
         """Writes cfg to app databag if leader.
 
@@ -302,12 +258,12 @@ class Peers(Object):
         if not self.charm.unit.is_leader() or not self.relation:
             return
 
-        self.set_secret("app", CFG_FILE_DATABAG_KEY, cfg.render())
+        self.charm.set_secret(APP_SCOPE, CFG_FILE_DATABAG_KEY, cfg.render())
         logger.debug("updated config file in peer databag")
 
     def get_cfg(self) -> PgbConfig:
         """Retrieves the pgbouncer config from the peer databag."""
-        if cfg := self.get_secret("app", CFG_FILE_DATABAG_KEY):
+        if cfg := self.charm.get_secret(APP_SCOPE, CFG_FILE_DATABAG_KEY):
             return PgbConfig(cfg)
         else:
             return None
@@ -317,7 +273,7 @@ class Peers(Object):
         if not self.charm.unit.is_leader() or not self.relation:
             return
 
-        self.set_secret("app", AUTH_FILE_DATABAG_KEY, auth_file)
+        self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, auth_file)
         logger.debug("updated auth file in peer databag")
 
     def add_user(self, username: str, password: str):
@@ -325,11 +281,11 @@ class Peers(Object):
         if not self.charm.unit.is_leader():
             return
 
-        self.set_secret("app", username, password)
+        self.charm.set_secret(APP_SCOPE, username, password)
 
     def remove_user(self, username: str):
         """Removes user from app databag."""
         if not self.charm.unit.is_leader():
             return
 
-        self.set_secret("app", username, None)
+        self.charm.set_secret(APP_SCOPE, username, None)
