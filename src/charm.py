@@ -40,6 +40,7 @@ from constants import (
     SECRET_CACHE_LABEL,
     SECRET_DELETED_LABEL,
     SECRET_INTERNAL_LABEL,
+    SECRET_KEY_OVERRIDES,
     SECRET_LABEL,
     TLS_CA_FILE,
     TLS_CERT_FILE,
@@ -453,6 +454,8 @@ class PgBouncerK8sCharm(CharmBase):
         if not key:
             return
 
+        key = SECRET_KEY_OVERRIDES.get(key, key)
+
         if self._juju_secrets_get(scope):
             secret_cache = self.secrets[scope].get(SECRET_CACHE_LABEL)
             if secret_cache:
@@ -487,6 +490,8 @@ class PgBouncerK8sCharm(CharmBase):
         else:
             peer_data = self.peers.app_databag
         self._juju_secrets_get(scope)
+
+        key = SECRET_KEY_OVERRIDES.get(key, key)
 
         secret = self.secrets[scope].get(SECRET_LABEL)
 
@@ -544,6 +549,8 @@ class PgBouncerK8sCharm(CharmBase):
     def _juju_secret_remove(self, scope: str, key: str) -> None:
         """Remove a Juju 3.x secret."""
         self._juju_secrets_get(scope)
+
+        key = SECRET_KEY_OVERRIDES.get(key, key)
 
         secret = self.secrets[scope].get(SECRET_LABEL)
         if not secret:
