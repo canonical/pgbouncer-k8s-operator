@@ -40,16 +40,26 @@ class TestCharm(unittest.TestCase):
 
         self.rel_id = self.harness.model.relations[PEER_RELATION_NAME][0].id
 
+    @patch("charm.PgBouncerK8sCharm.read_pgb_config")
+    @patch("charm.PgBouncerK8sCharm.push_file")
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
     @patch("ops.model.Container.make_dir")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
-    def test_on_config_changed(self, _check_pgb_running, _mkdir, _reload, _update_connection_info):
+    def test_on_config_changed(
+        self,
+        _check_pgb_running,
+        _mkdir,
+        _reload,
+        _update_connection_info,
+        _push_file,
+        _read_pgb_config,
+    ):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
+        _read_pgb_config.side_effect = lambda: PgbConfig(DEFAULT_CONFIG)
         self.harness.set_leader(True)
         container = self.harness.model.unit.get_container(PGB)
         self.charm.on.pgbouncer_pebble_ready.emit(container)
-        self.harness.update_config()
 
         mock_cores = 1
         self.charm._cores = mock_cores
@@ -71,14 +81,12 @@ class TestCharm(unittest.TestCase):
                 "listen_port": 6464,
             }
         )
-        _reload.assert_called()
-        _update_connection_info.assert_called()
-        _check_pgb_running.assert_called()
-
-        # Test changing charm config propagates to container config file.
-        pgb_container = self.harness.model.unit.get_container(PGB)
-        container_config = pgb_container.pull(INI_PATH).read()
-        self.assertEqual(container_config, test_config.render())
+        _reload.assert_called_once_with()
+        _update_connection_info.assert_called_with(6464)
+        _check_pgb_running.assert_called_once_with()
+        _push_file.assert_called_with(
+            "/var/lib/pgbouncer/pgbouncer.ini", test_config.render(), 0o400
+        )
 
     @patch("ops.model.Container.can_connect", return_value=False)
     @patch("ops.charm.ConfigChangedEvent.defer")
