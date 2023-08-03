@@ -416,6 +416,12 @@ class PgBouncerK8sCharm(CharmBase):
         unit_id = unit_name.split("/")[1]
         return f"{self.app.name}-{unit_id}.{self.app.name}-endpoints"
 
+    def _normalize_secret_key(self, key: str) -> str:
+        new_key = key.replace("_", "-")
+        new_key = new_key.strip("-")
+
+        return new_key
+
     def _scope_obj(self, scope: str):
         if scope == APP_SCOPE:
             return self.framework.model.app
@@ -454,7 +460,7 @@ class PgBouncerK8sCharm(CharmBase):
         if not key:
             return
 
-        key = SECRET_KEY_OVERRIDES.get(key, key)
+        key = SECRET_KEY_OVERRIDES.get(key, self._normalize_secret_key(key))
 
         if self._juju_secrets_get(scope):
             secret_cache = self.secrets[scope].get(SECRET_CACHE_LABEL)
@@ -491,7 +497,7 @@ class PgBouncerK8sCharm(CharmBase):
             peer_data = self.peers.app_databag
         self._juju_secrets_get(scope)
 
-        key = SECRET_KEY_OVERRIDES.get(key, key)
+        key = SECRET_KEY_OVERRIDES.get(key, self._normalize_secret_key(key))
 
         secret = self.secrets[scope].get(SECRET_LABEL)
 
@@ -550,7 +556,7 @@ class PgBouncerK8sCharm(CharmBase):
         """Remove a Juju 3.x secret."""
         self._juju_secrets_get(scope)
 
-        key = SECRET_KEY_OVERRIDES.get(key, key)
+        key = SECRET_KEY_OVERRIDES.get(key, self._normalize_secret_key(key))
 
         secret = self.secrets[scope].get(SECRET_LABEL)
         if not secret:
