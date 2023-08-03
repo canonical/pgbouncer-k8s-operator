@@ -66,7 +66,7 @@ import logging
 from typing import Optional, Set
 
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
-from ops.charm import CharmBase, RelationChangedEvent, RelationCreatedEvent
+from ops.charm import CharmBase, HookEvent, RelationCreatedEvent
 from ops.framework import Object
 from ops.model import MaintenanceStatus, Relation, Unit
 from ops.pebble import ChangeError, ConnectionError
@@ -100,6 +100,8 @@ class Peers(Object):
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_created, self._on_created)
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_joined, self._on_changed)
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_changed, self._on_changed)
+        self.framework.observe(charm.on.secret_changed, self._on_changed)
+        self.framework.observe(charm.on.secret_remove, self._on_changed)
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_departed, self._on_departed)
         self.framework.observe(charm.on.leader_elected, self._on_leader_elected)
 
@@ -184,7 +186,7 @@ class Peers(Object):
             # writes it to the container, so no need to add it now.
             self.update_auth_file(self.charm.read_auth_file())
 
-    def _on_changed(self, event: RelationChangedEvent):
+    def _on_changed(self, event: HookEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem.
 
         Every time the pgbouncer config is changed, update_cfg is called. This updates the leader's
