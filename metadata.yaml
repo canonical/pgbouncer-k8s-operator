@@ -15,7 +15,7 @@ source: |
 issues: |
   https://github.com/canonical/pgbouncer-k8s-operator/issues
 maintainers:
-  - "Canonical Data Platform <data-platform@lists.launchpad.net>"
+  - Canonical Data Platform <data-platform@lists.launchpad.net>
 
 containers:
   pgbouncer:
