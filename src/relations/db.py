@@ -192,6 +192,25 @@ class DbProvides(Object):
                             return
             self.charm.unit.status = ActiveStatus()
 
+    def _on_relation_joined_init_checks(self) -> bool:
+        if not self._check_backend():
+            # We can't relate an app to the backend database without a backend postgres relation
+            return False
+
+        try:
+            self.charm.read_pgb_config()
+        except FileNotFoundError:
+            wait_str = "waiting for pgbouncer to start"
+            logger.warning(wait_str)
+            self.charm.unit.status = WaitingStatus(wait_str)
+            return False
+
+        logger.info(f"Setting up {self.relation_name} relation")
+        logger.warning(
+            f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
+        )
+        return True
+
     def _on_relation_joined(self, join_event: RelationJoinedEvent):
         """Handle db-relation-joined event.
 
@@ -205,26 +224,15 @@ class DbProvides(Object):
             - If password hasn't been added to the databag by this charm, implying that a user
               has not been created.
         """
-        if not self._check_backend():
-            # We can't relate an app to the backend database without a backend postgres relation
+        if not self._on_relation_joined_init_checks():
             join_event.defer()
             return
 
-        try:
-            cfg = self.charm.read_pgb_config()
-        except FileNotFoundError:
-            wait_str = "waiting for pgbouncer to start"
-            logger.warning(wait_str)
-            self.charm.unit.status = WaitingStatus(wait_str)
+        remote_app_databag = join_event.relation.data.get(join_event.app)
+        if remote_app_databag is None:
+            logger.warning("Defer relation joined: No remote app databag")
             join_event.defer()
             return
-
-        logger.info(f"Setting up {self.relation_name} relation")
-        logger.warning(
-            f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
-        )
-
-        remote_app_databag = join_event.relation.data[join_event.app]
 
         if self._block_on_extensions(join_event.relation, remote_app_databag):
             return
