@@ -585,7 +585,7 @@ class PgBouncerK8sCharm(CharmBase):
         else:
             del self.peers.app_databag[key]
 
-    def push_tls_files_to_workload(self, update_config: bool = True) -> None:
+    def push_tls_files_to_workload(self, update_config: bool = True) -> bool:
         """Uploads TLS files to the workload container."""
         key, ca, cert = self.tls.get_tls_files()
         if key is not None:
@@ -607,15 +607,16 @@ class PgBouncerK8sCharm(CharmBase):
                 0o400,
             )
         if update_config:
-            self.update_config()
+            return self.update_config()
+        return True
 
-    def update_config(self) -> None:
+    def update_config(self) -> bool:
         """Updates PgBouncer config file based on the existence of the TLS files."""
         try:
             config = self.read_pgb_config()
         except FileNotFoundError as err:
             logger.warning(f"update_config: Unable to read config, error: {err}")
-            return
+            return False
 
         if all(self.tls.get_tls_files()):
             config["pgbouncer"]["client_tls_key_file"] = f"{PGB_DIR}/{TLS_KEY_FILE}"
@@ -629,6 +630,8 @@ class PgBouncerK8sCharm(CharmBase):
             config["pgbouncer"].pop("client_tls_ca_file", None)
             config["pgbouncer"].pop("client_tls_sslmode", None)
         self.render_pgb_config(config, True)
+
+        return True
 
     # =============================
     #  File Management
