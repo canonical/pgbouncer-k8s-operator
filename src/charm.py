@@ -26,6 +26,7 @@ from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
 from constants import (
     AUTH_FILE_PATH,
     CLIENT_RELATION_NAME,
+    EXTENSIONS_BLOCKING_MESSAGE,
     INI_PATH,
     METRICS_PORT,
     MONITORING_PASSWORD_KEY,
@@ -301,6 +302,9 @@ class PgBouncerK8sCharm(CharmBase):
 
         if not self.backend.ready:
             self.unit.status = BlockedStatus("backend database relation not ready")
+            return
+
+        if self.unit.status.message == EXTENSIONS_BLOCKING_MESSAGE:
             return
 
         try:
