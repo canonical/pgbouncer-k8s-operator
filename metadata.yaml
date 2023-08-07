@@ -15,7 +15,7 @@ source: |
 issues: |
   https://github.com/canonical/pgbouncer-k8s-operator/issues
 maintainers:
-  "Will Fitch <will.fitch@canonical.com>"
+  - Canonical Data Platform <data-platform@lists.launchpad.net>
 
 containers:
   pgbouncer:
