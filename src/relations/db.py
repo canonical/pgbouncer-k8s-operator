@@ -76,6 +76,7 @@ from ops.model import (
     Application,
     BlockedStatus,
     MaintenanceStatus,
+    ModelError,
     Relation,
     Unit,
     WaitingStatus,
@@ -168,9 +169,12 @@ class DbProvides(Object):
 
     def _get_relation_extensions(self, relation: Relation) -> List[str]:
         """Get enabled extensions for a relation."""
-        for data in relation.data.values():
-            if "extensions" in data:
-                return data["extensions"].split(",")
+        try:
+            for data in relation.data.values():
+                if "extensions" in data:
+                    return data["extensions"].split(",")
+        except ModelError:
+            logger.warning(f"Unable to access relation data for relation {relation.id}")
         return []
 
     def _check_for_blocking_relations(self, relation_id: int) -> bool:
