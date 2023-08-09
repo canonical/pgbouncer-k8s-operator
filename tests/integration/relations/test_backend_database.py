@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -46,6 +47,9 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
     async with ops_test.fast_forward():
+        subprocess.run(
+            f"juju deploy --model {ops_test.model.info.name} postgresql-k8s --channel 14/edge/test --trust -n 3 --series=jammy".split()
+        )
         await asyncio.gather(
             ops_test.model.deploy(
                 pgb_charm,
@@ -53,8 +57,6 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
                 application_name=PGB,
                 series=CHARM_SERIES,
             ),
-            # Edge 5 is the new postgres charm
-            ops_test.model.deploy(PG, channel="14/edge", trust=True, num_units=3),
         )
         await asyncio.gather(
             ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000),

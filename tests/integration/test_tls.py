@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
+import subprocess
+
 import pytest as pytest
 from pytest_operator.plugin import OpsTest
 
@@ -72,8 +74,8 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
     if not await app_name(ops_test, POSTGRESQL_APP_NAME):
         wait_for_apps = True
         # Deploy Postgresql operator
-        await ops_test.model.deploy(
-            POSTGRESQL_APP_NAME, channel="14/edge", trust=True, num_units=DATABASE_UNITS
+        subprocess.run(
+            f"juju deploy --model {ops_test.model.info.name} postgresql-k8s --channel 14/edge/test --trust -n {DATABASE_UNITS} --series=jammy".split()
         )
         await ops_test.model.relate(PGB, POSTGRESQL_APP_NAME)
 

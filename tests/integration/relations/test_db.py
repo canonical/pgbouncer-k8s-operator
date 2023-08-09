@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import subprocess
 from pathlib import Path
 
 import yaml
@@ -42,6 +43,9 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
     }
 
     async with ops_test.fast_forward():
+        subprocess.run(
+            f"juju deploy --model {ops_test.model.info.name} postgresql-k8s --channel 14/edge/test --trust -n 3 --series=jammy".split()
+        )
         await asyncio.gather(
             ops_test.model.deploy(
                 pgb_charm,
@@ -50,7 +54,6 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
                 num_units=3,
                 series=CHARM_SERIES,
             ),
-            ops_test.model.deploy(PG, num_units=3, trust=True, channel="14/edge"),
             ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
         )
 

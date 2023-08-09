@@ -4,6 +4,7 @@
 import asyncio
 import json
 import logging
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -60,6 +61,9 @@ async def test_database_relation_with_charm_libraries(
     """Test basic functionality of database relation interface."""
     # Deploy both charms (multiple units for each application to test that later they correctly
     # set data in the relation application databag using only the leader unit).
+    subprocess.run(
+        f"juju deploy --model {ops_test.model.info.name} postgresql-k8s --channel 14/edge/test --trust -n 2 --series=jammy".split()
+    )
     await asyncio.gather(
         ops_test.model.deploy(
             application_charm,
@@ -72,13 +76,6 @@ async def test_database_relation_with_charm_libraries(
             application_name=PGB,
             num_units=2,
             series=CHARM_SERIES,
-        ),
-        ops_test.model.deploy(
-            PG,
-            application_name=PG,
-            num_units=2,
-            channel="14/edge",
-            trust=True,
         ),
     )
     await ops_test.model.add_relation(f"{PGB}:{BACKEND_RELATION_NAME}", f"{PG}:database")

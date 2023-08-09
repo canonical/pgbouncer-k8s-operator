@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -46,9 +47,10 @@ async def test_scaled_relations(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
     async with ops_test.fast_forward():
+        subprocess.run(
+            f"juju deploy --model {ops_test.model.info.name} postgresql-k8s --channel 14/edge/test --trust -n 3 --series=jammy".split()
+        )
         await asyncio.gather(
-            # Edge 5 is the new postgres charm
-            ops_test.model.deploy(PG, channel="14/edge", trust=True, num_units=3),
             ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
         )
 
