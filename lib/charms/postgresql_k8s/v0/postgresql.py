@@ -19,7 +19,7 @@ The `postgresql` module provides methods for interacting with the PostgreSQL ins
 Any charm using this library should import the `psycopg2` or `psycopg2-binary` dependency.
 """
 import logging
-from typing import Set
+from typing import List, Set
 
 import psycopg2
 from psycopg2 import sql
@@ -32,7 +32,7 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 9
+LIBPATCH = 11
 
 
 logger = logging.getLogger(__name__)
@@ -44,6 +44,10 @@ class PostgreSQLCreateDatabaseError(Exception):
 
 class PostgreSQLCreateUserError(Exception):
     """Exception raised when creating a user fails."""
+
+
+class PostgreSQLDatabasesSetupError(Exception):
+    """Exception raised when the databases setup fails."""
 
 
 class PostgreSQLDeleteUserError(Exception):
@@ -76,12 +80,14 @@ class PostgreSQL:
         user: str,
         password: str,
         database: str,
+        system_users: List[str] = [],
     ):
         self.primary_host = primary_host
         self.current_host = current_host
         self.user = user
         self.password = password
         self.database = database
+        self.system_users = system_users
 
     def _connect_to_database(
         self, database: str = None, connect_to_current_host: bool = False
@@ -119,10 +125,16 @@ class PostgreSQL:
             if cursor.fetchone() is None:
                 cursor.execute(sql.SQL("CREATE DATABASE {};").format(sql.Identifier(database)))
             cursor.execute(
-                sql.SQL("GRANT ALL PRIVILEGES ON DATABASE {} TO {};").format(
-                    sql.Identifier(database), sql.Identifier(user)
+                sql.SQL("REVOKE ALL PRIVILEGES ON DATABASE {} FROM PUBLIC;").format(
+                    sql.Identifier(database)
                 )
             )
+            for user_to_grant_access in [user, "admin"] + self.system_users:
+                cursor.execute(
+                    sql.SQL("GRANT ALL PRIVILEGES ON DATABASE {} TO {};").format(
+                        sql.Identifier(database), sql.Identifier(user_to_grant_access)
+                    )
+                )
             with self._connect_to_database(database=database) as conn:
                 with conn.cursor() as curs:
                     statements = []
@@ -153,7 +165,7 @@ class PostgreSQL:
             raise PostgreSQLCreateDatabaseError()
 
     def create_user(
-        self, user: str, password: str, admin: bool = False, extra_user_roles: str = None
+        self, user: str, password: str = None, admin: bool = False, extra_user_roles: str = None
     ) -> None:
         """Creates a database user.
 
@@ -166,18 +178,20 @@ class PostgreSQL:
         try:
             with self._connect_to_database() as connection, connection.cursor() as cursor:
                 # Separate roles and privileges from the provided extra user roles.
+                admin_role = False
                 roles = privileges = None
                 if extra_user_roles:
                     extra_user_roles = tuple(extra_user_roles.lower().split(","))
                     cursor.execute(
                         "SELECT rolname FROM pg_roles WHERE rolname IN %s;", (extra_user_roles,)
                     )
-                    roles = [role[0] for role in cursor.fetchall()]
-                    privileges = [
+                    admin_role = "admin" in extra_user_roles
+                    roles = [role[0] for role in cursor.fetchall() if role[0] != "admin"]
+                    privileges = {
                         extra_user_role
                         for extra_user_role in extra_user_roles
-                        if extra_user_role not in roles
-                    ]
+                        if extra_user_role not in roles and extra_user_role != "admin"
+                    }
 
                 # Create or update the user.
                 cursor.execute(f"SELECT TRUE FROM pg_roles WHERE rolname='{user}';")
@@ -185,9 +199,7 @@ class PostgreSQL:
                     user_definition = "ALTER ROLE {}"
                 else:
                     user_definition = "CREATE ROLE {}"
-                user_definition += (
-                    f"WITH LOGIN{' SUPERUSER' if admin else ''} ENCRYPTED PASSWORD '{password}'"
-                )
+                user_definition += f"WITH {'NOLOGIN' if user == 'admin' else 'LOGIN'}{' SUPERUSER' if admin else ''} ENCRYPTED PASSWORD '{password}'{'IN ROLE admin CREATEDB' if admin_role else ''}"
                 if privileges:
                     user_definition += f' {" ".join(privileges)}'
                 cursor.execute(sql.SQL(f"{user_definition};").format(sql.Identifier(user)))
@@ -330,6 +342,32 @@ class PostgreSQL:
         except psycopg2.Error as e:
             logger.error(f"Failed to list PostgreSQL database users: {e}")
             raise PostgreSQLListUsersError()
+
+    def set_up_database(self) -> None:
+        """Set up postgres database with the right permissions."""
+        connection = None
+        try:
+            self.create_user(
+                "admin",
+                extra_user_roles="pg_read_all_data,pg_write_all_data",
+            )
+            with self._connect_to_database() as connection, connection.cursor() as cursor:
+                # Allow access to the postgres database only to the system users.
+                cursor.execute("REVOKE ALL PRIVILEGES ON DATABASE postgres FROM PUBLIC;")
+                cursor.execute("REVOKE CREATE ON SCHEMA public FROM PUBLIC;")
+                for user in self.system_users:
+                    cursor.execute(
+                        sql.SQL("GRANT ALL PRIVILEGES ON DATABASE postgres TO {};").format(
+                            sql.Identifier(user)
+                        )
+                    )
+                cursor.execute("GRANT CONNECT ON DATABASE postgres TO admin;")
+        except psycopg2.Error as e:
+            logger.error(f"Failed to set up databases: {e}")
+            raise PostgreSQLDatabasesSetupError()
+        finally:
+            if connection is not None:
+                connection.close()
 
     def update_user_password(self, username: str, password: str) -> None:
         """Update a user password.
