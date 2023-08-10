@@ -153,7 +153,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
         assert "waltz_standby" in cfg["databases"].keys()
 
         # Remove the first deployment of Finos Waltz.
-        await ops_test.model.remove_application(FINOS_WALTZ)
+        await ops_test.model.remove_application(FINOS_WALTZ, block_until_done=True)
         wait_for_relation_removed_between(ops_test, PGB, FINOS_WALTZ)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
 
@@ -198,6 +198,7 @@ async def test_relation_with_indico(ops_test: OpsTest):
         == EXTENSIONS_BLOCKING_MESSAGE
     )
     await ops_test.model.applications[PGB].destroy_relation(f"{PGB}:db", "indico:db")
+    await ops_test.model.wait_for_idle(apps=[PGB], status="active", idle_period=15)
 
     logger.info("Rerelate with extensions enabled")
     config = {"plugin_pg_trgm_enable": "True", "plugin_unaccent_enable": "True"}
