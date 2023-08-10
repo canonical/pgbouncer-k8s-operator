@@ -16,6 +16,7 @@ from charms.pgbouncer_k8s.v0 import pgb
 from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
+from jinja2 import Template
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
@@ -25,6 +26,7 @@ from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
 from constants import (
     AUTH_FILE_PATH,
     CLIENT_RELATION_NAME,
+    EXTENSIONS_BLOCKING_MESSAGE,
     INI_PATH,
     METRICS_PORT,
     MONITORING_PASSWORD_KEY,
@@ -146,6 +148,13 @@ class PgBouncerK8sCharm(CharmBase):
                 )
 
         self.render_pgb_config(config)
+        # Render the logrotate config
+        with open("templates/logrotate.j2", "r") as file:
+            template = Template(file.read())
+        container.push(
+            "/etc/logrotate.d/pgbouncer",
+            template.render(service_ids=range(self._cores)),
+        )
         return True
 
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
@@ -241,7 +250,17 @@ class PgBouncerK8sCharm(CharmBase):
             A pebble configuration layer for as many charm services as there are available CPU
             cores
         """
-        pebble_services = {}
+        pebble_services = {
+            "logrotate": {
+                "command": "sh -c 'logrotate -v /etc/logrotate.conf; sleep 5'",
+                "startup": "enabled",
+                "backoff-delay": "24h",
+                "backoff-factor": 1,
+                "override": "replace",
+                "after": [service["name"] for service in self._services],
+            },
+            self._metrics_service: self._generate_monitoring_service(self.backend.postgres),
+        }
         for service in self._services:
             pebble_services[service["name"]] = {
                 "summary": f"pgbouncer service {service['id']}",
@@ -252,9 +271,6 @@ class PgBouncerK8sCharm(CharmBase):
                 "startup": "enabled",
                 "override": "replace",
             }
-        pebble_services[self._metrics_service] = self._generate_monitoring_service(
-            self.backend.postgres
-        )
         return Layer(
             {
                 "summary": "pgbouncer layer",
@@ -286,6 +302,9 @@ class PgBouncerK8sCharm(CharmBase):
 
         if not self.backend.ready:
             self.unit.status = BlockedStatus("backend database relation not ready")
+            return
+
+        if self.unit.status.message == EXTENSIONS_BLOCKING_MESSAGE:
             return
 
         try:
@@ -329,7 +348,7 @@ class PgBouncerK8sCharm(CharmBase):
             command = "true"
             startup = "disabled"
         return {
-            "override": "merge",
+            "override": "replace",
             "summary": "postgresql metrics exporter",
             "after": [service["name"] for service in self._services],
             "user": PG_USER,

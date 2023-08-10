@@ -85,11 +85,11 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         mock_event = MagicMock()
         mock_event.username = "mock_user"
         self.backend._on_database_created(mock_event)
+        hash_pw = get_hashed_password(self.backend.auth_user, pw)
 
-        postgres.create_user.assert_called_with(self.backend.auth_user, pw, admin=True)
+        postgres.create_user.assert_called_with(self.backend.auth_user, hash_pw, admin=True)
         _init_auth.assert_has_calls([call([self.backend.database.database, "postgres"])])
 
-        hash_pw = get_hashed_password(self.backend.auth_user, pw)
         hash_mon_pw = get_hashed_password(self.backend.stats_user, pw)
         _render_auth_file.assert_any_call(
             f'"{self.backend.auth_user}" "{hash_pw}"\n"{self.backend.stats_user}" "{hash_mon_pw}"'
