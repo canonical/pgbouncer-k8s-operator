@@ -56,7 +56,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Check libs
-        uses: canonical/charming-actions/check-libraries@2.3.0
+        uses: canonical/charming-actions/check-libraries@2.4.0
         with:
           credentials: "${{ secrets.CHARMHUB_TOKEN }}"
           github-token: "${{ secrets.GITHUB_TOKEN }}"
@@ -78,7 +78,7 @@ jobs:
           - standalone-integration
           - legacy-client-relation-integration
         agent-versions: 
-          - "2.9.43"  # renovate: latest juju 2
+          - "2.9.44"  # renovate: latest juju 2
           - "3.1.5"  # renovate: latest juju 3
     name: ${{ matrix.tox-environments }} | ${{ matrix.agent-versions }}
     needs:

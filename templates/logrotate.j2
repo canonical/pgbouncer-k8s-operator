@@ -1,0 +1,16 @@
+/var/log/pgbouncer/instance_*/pgbouncer.log {
+    rotate 10
+    missingok
+    sharedscripts
+    notifempty
+    nocompress
+    daily
+    create 0600 postgres postgres
+    dateext
+    dateformat -%Y%m%d_%H:%M.log
+    postrotate
+    {% for id in service_ids %}
+         pebble restart pgbouncer_{{ id }}
+    {% endfor %}
+    endscript
+}
