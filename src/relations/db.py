@@ -82,7 +82,7 @@ from ops.model import (
     WaitingStatus,
 )
 
-from constants import EXTENSIONS_BLOCKING_MESSAGE
+from constants import APP_SCOPE, EXTENSIONS_BLOCKING_MESSAGE
 
 logger = logging.getLogger(__name__)
 
@@ -248,7 +248,7 @@ class DbProvides(Object):
             password = pgb.generate_password()
             self.charm.peers.add_user(user, password)
         else:
-            password = self.charm.peers.app_databag.get(user)
+            password = self.charm.get_secret(APP_SCOPE, user)
 
         if None in [database, password]:
             # If database isn't available, defer
