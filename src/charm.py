@@ -633,7 +633,7 @@ class PgBouncerK8sCharm(CharmBase):
             config["pgbouncer"].pop("client_tls_cert_file", None)
             config["pgbouncer"].pop("client_tls_ca_file", None)
             config["pgbouncer"].pop("client_tls_sslmode", None)
-        self.render_pgb_config(config, True)
+        self.render_pgb_config(config, True, True)
 
         return True
 
@@ -711,7 +711,7 @@ class PgBouncerK8sCharm(CharmBase):
         """
         return pgb.PgbConfig(self._read_file(INI_PATH))
 
-    def render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
+    def render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False, force=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
         Every time the config is rendered, `peers.update_cfg` is called. This updates the config in
@@ -727,9 +727,10 @@ class PgBouncerK8sCharm(CharmBase):
                 in the container. When config files are updated, pgbouncer must be restarted for
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
+            force: Ignore config diff.
         """
         try:
-            if config == self.read_pgb_config():
+            if not force and config == self.read_pgb_config():
                 # Skip updating config if it's exactly the same as the existing config.
                 return
         except FileNotFoundError:
