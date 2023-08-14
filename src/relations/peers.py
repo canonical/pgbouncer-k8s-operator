@@ -260,12 +260,12 @@ class Peers(Object):
         if not self.charm.unit.is_leader() or not self.relation:
             return
 
-        self.charm.set_secret(APP_SCOPE, CFG_FILE_DATABAG_KEY, cfg.render())
+        self.app_databag.update({CFG_FILE_DATABAG_KEY: cfg.render()})
         logger.debug("updated config file in peer databag")
 
     def get_cfg(self) -> PgbConfig:
         """Retrieves the pgbouncer config from the peer databag."""
-        if cfg := self.charm.get_secret(APP_SCOPE, CFG_FILE_DATABAG_KEY):
+        if cfg := self.app_databag.get(CFG_FILE_DATABAG_KEY):
             return PgbConfig(cfg)
         else:
             return None
