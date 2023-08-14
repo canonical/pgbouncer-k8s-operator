@@ -445,7 +445,9 @@ class PgBouncerK8sCharm(CharmBase):
 
         if SECRET_CACHE_LABEL not in self.secrets[scope]:
             try:
-                for attempt in Retrying(stop=stop_after_attempt(3), wait=wait_fixed(1), reraise=True):
+                for attempt in Retrying(
+                    stop=stop_after_attempt(3), wait=wait_fixed(1), reraise=True
+                ):
                     with attempt:
                         # NOTE: Secret contents are not yet available!
                         secret = self.model.get_secret(id=peer_data[SECRET_INTERNAL_LABEL])
