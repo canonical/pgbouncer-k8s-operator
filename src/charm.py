@@ -23,6 +23,7 @@ from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, SecretNotFoundError, WaitingStatus
 from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
+from tenacity import Retrying, stop_after_attempt, wait_fixed
 
 from constants import (
     APP_SCOPE,
@@ -443,12 +444,16 @@ class PgBouncerK8sCharm(CharmBase):
             return
 
         if SECRET_CACHE_LABEL not in self.secrets[scope]:
-            try:
-                # NOTE: Secret contents are not yet available!
-                secret = self.model.get_secret(id=peer_data[SECRET_INTERNAL_LABEL])
-            except SecretNotFoundError as e:
-                logging.debug(f"No secret found for ID {peer_data[SECRET_INTERNAL_LABEL]}, {e}")
-                return
+            for attempt in Retrying(stop=stop_after_attempt(3), wait=wait_fixed(1), reraise=True):
+                with attempt:
+                    try:
+                        # NOTE: Secret contents are not yet available!
+                        secret = self.model.get_secret(id=peer_data[SECRET_INTERNAL_LABEL])
+                    except SecretNotFoundError as e:
+                        logging.debug(
+                            f"No secret found for ID {peer_data[SECRET_INTERNAL_LABEL]}, {e}"
+                        )
+                        return
 
             logging.debug(f"Secret {peer_data[SECRET_INTERNAL_LABEL]} downloaded")
 
