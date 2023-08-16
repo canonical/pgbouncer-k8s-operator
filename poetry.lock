@@ -1083,13 +1083,13 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "ops"
-version = "2.5.0"
+version = "2.5.1"
 description = "The Python library behind great charms"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "ops-2.5.0-py3-none-any.whl", hash = "sha256:7d8310c0324c8bcc4f54a93bf71e09b9b7f0842d07c0006e739410472dc7560c"},
-    {file = "ops-2.5.0.tar.gz", hash = "sha256:3ffacae19e385765d8ce38c31f89c06552385fe871403e270ff7a255cc3e1fac"},
+    {file = "ops-2.5.1-py3-none-any.whl", hash = "sha256:b7efc373031c52cb4ce61a455bcb990330bc1b81c01b1061626ed957bc58bbc1"},
+    {file = "ops-2.5.1.tar.gz", hash = "sha256:7f74552e48ee42af3ae87148767fd0cedef03e6d28248728f2258e05a0dfd86d"},
 ]
 
 [package.dependencies]
@@ -1862,13 +1862,13 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "tenacity"
-version = "8.2.2"
+version = "8.2.3"
 description = "Retry code until it succeeds"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "tenacity-8.2.2-py3-none-any.whl", hash = "sha256:2f277afb21b851637e8f52e6a613ff08734c347dc19ade928e519d7d2d8569b0"},
-    {file = "tenacity-8.2.2.tar.gz", hash = "sha256:43af037822bd0029025877f3b2d97cc4d7bb0c2991000a3d59d71517c5c969e0"},
+    {file = "tenacity-8.2.3-py3-none-any.whl", hash = "sha256:ce510e327a630c9e1beaf17d42e6ffacc88185044ad85cf74c0a8887c6a0f88c"},
+    {file = "tenacity-8.2.3.tar.gz", hash = "sha256:5398ef0d78e63f40007c1fb4c0bff96e1911394d2fa8d194f77619c05ff6cc8a"},
 ]
 
 [package.extras]
@@ -2154,4 +2154,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "f2512bb34f948c48a368fbdf6bbd1284c40e97552f6d7b135a87cd28f7c2ece9"
+content-hash = "a20abae077b170515e79618439c92714978da8d9a20210bb4d549654bc3c98e8"
