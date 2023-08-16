@@ -223,7 +223,7 @@ class TestCharm(unittest.TestCase):
 
         get_tls_files.assert_called_once_with()
         read_pgb_config.assert_called_once_with()
-        render_pgb_config.assert_called_once_with(read_pgb_config.return_value, True, True)
+        render_pgb_config.assert_called_once_with(read_pgb_config.return_value, True)
         self.assertEqual(
             read_pgb_config.return_value["pgbouncer"],
             {
@@ -252,7 +252,7 @@ class TestCharm(unittest.TestCase):
 
         get_tls_files.assert_called_once_with()
         read_pgb_config.assert_called_once_with()
-        render_pgb_config.assert_called_once_with(read_pgb_config.return_value, True, True)
+        render_pgb_config.assert_called_once_with(read_pgb_config.return_value, True)
         self.assertEqual(read_pgb_config.return_value["pgbouncer"], {})
 
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
