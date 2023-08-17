@@ -18,6 +18,7 @@ parts:
       - rustc
       - cargo
       - pkg-config
+    charm-python-packages: ["."]
     charm-binary-python-packages:
       - psycopg2-binary==2.9.7  # renovate
       - psycopg[binary]==3.1.10  # renovate

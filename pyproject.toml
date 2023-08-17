@@ -10,6 +10,9 @@ license = "Apache-2.0"
 readme = "README.md"
 homepage = "https://charmhub.io/pgbouncer-k8s"
 repository = "https://github.com/canonical/pgbouncer-k8s-operator"
+packages = [
+    { include = "src" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.8.10"
@@ -65,7 +68,7 @@ optional = true
 ops = "2.5.1"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 # Testing tools configuration
