@@ -286,7 +286,8 @@ async def check_tls(ops_test: OpsTest, relation_id: int, enabled: bool) -> bool:
 
     Args:
         ops_test: The ops test framework instance.
-        enabled: check if TLS is enabled/disabled
+        relation_id: The id of the relation.
+        enabled: check if TLS is enabled/disabled.
 
     Returns:
         Whether TLS is enabled/disabled.
