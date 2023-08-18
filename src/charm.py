@@ -24,6 +24,7 @@ from ops.model import ActiveStatus, BlockedStatus, WaitingStatus
 from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
 
 from constants import (
+    AUTH_FILE_DATABAG_KEY,
     AUTH_FILE_PATH,
     CLIENT_RELATION_NAME,
     EXTENSIONS_BLOCKING_MESSAGE,
@@ -59,6 +60,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
         self.framework.observe(self.on.update_status, self._on_update_status)
+        self.framework.observe(self.on.upgrade_charm, self._on_upgrade_charm)
 
         self.peers = Peers(self)
         self.backend = BackendDatabaseRequires(self)
@@ -314,6 +316,11 @@ class PgBouncerK8sCharm(CharmBase):
             not_running = "pgbouncer not running"
             logger.error(not_running)
             self.unit.status = WaitingStatus(not_running)
+
+    def _on_upgrade_charm(self, _) -> None:
+        """Re-render the auth file, which is lost in a pod reschedule."""
+        if auth_file := self.get_secret("app", AUTH_FILE_DATABAG_KEY):
+            self.render_auth_file(auth_file)
 
     def reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
