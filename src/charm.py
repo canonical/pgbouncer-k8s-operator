@@ -59,6 +59,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
+        self.framework.observe(self.on.start, self._on_start)
         self.framework.observe(self.on.update_status, self._on_update_status)
         self.framework.observe(self.on.upgrade_charm, self._on_upgrade_charm)
 
@@ -281,6 +282,15 @@ class PgBouncerK8sCharm(CharmBase):
             }
         )
 
+    def _on_start(self, _) -> None:
+        """Re-render the auth file, which is lost if the host machine is restarted."""
+        self.render_auth_file_if_available()
+
+    def render_auth_file_if_available(self):
+        """Render the auth file if it's available in the secret store."""
+        if auth_file := self.get_secret("app", AUTH_FILE_DATABAG_KEY):
+            self.render_auth_file(auth_file)
+
     def _on_update_status(self, _) -> None:
         """Update Status hook.
 
@@ -319,8 +329,7 @@ class PgBouncerK8sCharm(CharmBase):
 
     def _on_upgrade_charm(self, _) -> None:
         """Re-render the auth file, which is lost in a pod reschedule."""
-        if auth_file := self.get_secret("app", AUTH_FILE_DATABAG_KEY):
-            self.render_auth_file(auth_file)
+        self.render_auth_file_if_available()
 
     def reload_pgbouncer(self) -> None:
         """Reloads pgbouncer application.
