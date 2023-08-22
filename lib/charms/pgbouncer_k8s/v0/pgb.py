@@ -38,7 +38,7 @@ LIBID = "113f4a7480c04631bfdf5fe776f760cd"
 LIBAPI = 0
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 7
+LIBPATCH = 8
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +134,8 @@ class PgbConfig(MutableMapping):
         Args:
             config: an existing config. Can be passed in as a string, dict, or PgbConfig object.
                 pgb.DEFAULT_CONFIG can be used here as a default dict.
+            args: arguments.
+            kwargs: keyword arguments.
         """
         self.__dict__.update(*args, **kwargs)
 
@@ -180,29 +182,29 @@ class PgbConfig(MutableMapping):
         """Returns items of PgbConfig object."""
         return self.__dict__.items()
 
-    def read_dict(self, input: Dict) -> None:
+    def read_dict(self, data: Dict) -> None:
         """Populates this object from a dictionary.
 
         Args:
-            input: Dict to be read into this object. This dict must follow the pgbouncer config
-                spec (https://pgbouncer.org/config.html) to pass validation, implementing each
-                section as its own subdict. Lists should be represented as python lists, not
-                comma-separated strings.
+            data: Dict to be read into this object. This dict must follow the pgbouncer config
+                  spec (https://pgbouncer.org/config.html) to pass validation, implementing each
+                  section as its own subdict. Lists should be represented as python lists, not
+                  comma-separated strings.
         """
-        self.update(deepcopy(input))
+        self.update(deepcopy(data))
         self.validate()
 
-    def read_string(self, input: str) -> None:
+    def read_string(self, data: str) -> None:
         """Populates this class from a pgbouncer.ini file, passed in as a string.
 
         Args:
-            input: pgbouncer.ini file to be parsed, represented as a string. This string must
-                follow the pgbouncer config spec (https://pgbouncer.org/config.html)
+            data: pgbouncer.ini file to be parsed, represented as a string. This string must
+                  follow the pgbouncer config spec (https://pgbouncer.org/config.html)
         """
         # Since the parser persists data across reads, we have to create a new one for every read.
         parser = ConfigParser()
         parser.optionxform = str
-        parser.read_string(input)
+        parser.read_string(data)
 
         self.update(deepcopy(dict(parser)))
         # Convert Section objects to dictionaries, so they can hold dictionaries themselves.
@@ -235,7 +237,7 @@ class PgbConfig(MutableMapping):
         except KeyError as err:
             raise PgbConfig.ConfigParsingError(source=str(err))
 
-        for name, cfg_string in self.get(users, dict()).items():
+        for name, cfg_string in self.get(users, {}).items():
             self[users][name] = parse_kv_string_to_dict(cfg_string)
 
         for user_type in PgbConfig.user_types:

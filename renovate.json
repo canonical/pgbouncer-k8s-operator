@@ -41,9 +41,6 @@
       "matchDatasources": ["pypi"],
       "allowedVersions": "<3.0.0",
       "groupName": "Juju 2"
-    }, {
-      "matchPackageNames": ["flake8"],
-      "allowedVersions": "<6.1.0"
     }
   ],
   "regexManagers": [
