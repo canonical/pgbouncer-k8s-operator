@@ -6,6 +6,7 @@ import json
 import logging
 from pathlib import Path
 
+import psycopg2
 import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
@@ -29,6 +30,7 @@ from ...helpers.postgresql_helpers import (
 from .helpers import (
     build_connection_string,
     check_new_relation,
+    delete_pod,
     get_application_relation_data,
     run_sql_on_application_charm,
 )
@@ -442,3 +444,25 @@ async def test_relation_with_data_integrator(ops_test: OpsTest):
     await ops_test.model.add_relation(f"{PGB}:database", DATA_INTEGRATOR_APP_NAME)
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(status="active")
+
+
+async def test_connection_is_possible_after_pod_deletion(ops_test: OpsTest) -> None:
+    """Tests that the connection is possible after the pod is deleted."""
+    # Delete the pod.
+    unit = ops_test.model.applications[PGB].units[0]
+    await delete_pod(ops_test, unit.name)
+    await ops_test.model.wait_for_idle(status="active", idle_period=3)
+
+    # Test the connection.
+    connection_string = await build_connection_string(
+        ops_test, DATA_INTEGRATOR_APP_NAME, relation_name="postgresql", database="test-database"
+    )
+    connection_string += " port=6432"
+    connection = None
+    try:
+        connection = psycopg2.connect(connection_string)
+    except psycopg2.Error:
+        assert False, "failed to connect to PgBouncer after deleting it's pod"
+    finally:
+        if connection is not None:
+            connection.close()

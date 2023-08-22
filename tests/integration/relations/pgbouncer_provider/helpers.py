@@ -130,6 +130,7 @@ async def build_connection_string(
     *,
     relation_id: str = None,
     read_only_endpoint: bool = False,
+    database: str = None,
 ) -> str:
     """Build a PostgreSQL connection string.
 
@@ -140,12 +141,14 @@ async def build_connection_string(
         relation_id: id of the relation to get connection data from
         read_only_endpoint: whether to choose the read-only endpoint
             instead of the read/write endpoint
+        database: optional database to be used in the connection string
 
     Returns:
         a PostgreSQL connection string
     """
     # Get the connection data exposed to the application through the relation.
-    database = f'{application_name.replace("-", "_")}_{relation_name.replace("-", "_")}'
+    if database is None:
+        database = f'{application_name.replace("-", "_")}_{relation_name.replace("-", "_")}'
     username = await get_application_relation_data(
         ops_test, application_name, relation_name, "username", relation_id
     )
@@ -197,3 +200,10 @@ async def check_new_relation(
     assert (
         test_data in json.loads(run_query["results"])[0]
     ), f"smoke check failed. Query output: {run_query}"
+
+
+async def delete_pod(ops_test: OpsTest, unit_name: str) -> None:
+    """Delete a pod."""
+    model = ops_test.model.info
+    client = AsyncClient(namespace=model.name)
+    await client.delete(Pod, name=unit_name.replace("/", "-"))
