@@ -17,6 +17,7 @@ ops = "2.5.1"
 cryptography = "41.0.3"
 jsonschema = "4.19.0"
 tenacity = "8.2.3"
+cosl = "0.0.5"
 # psycopg2 = "^2.9.5" # Injected in charmcraft.yaml
 
 [tool.poetry.group.format]
