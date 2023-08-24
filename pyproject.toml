@@ -24,7 +24,7 @@ optional = true
 
 [tool.poetry.group.format.dependencies]
 black = "23.7.0"
-ruff = "0.0.284"
+ruff = "0.0.285"
 
 [tool.poetry.group.lint]
 optional = true
@@ -48,7 +48,7 @@ optional = true
 [tool.poetry.group.integration.dependencies]
 lightkube = "0.14.0"
 pytest = "7.4.0"
-pytest-operator = "0.28.0"
+pytest-operator = "0.29.0"
 juju = "2.9.44.0 || 3.2.0.1"  # renovate libjuju
 psycopg2 = {version = "2.9.7", extras = ["binary"]}
 
