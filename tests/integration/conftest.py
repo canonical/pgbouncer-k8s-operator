@@ -12,6 +12,14 @@ from pytest_operator.plugin import OpsTest
 
 @pytest.mark.abort_on_fail
 @pytest.fixture(scope="module")
+async def postgresql_test_app_charm(ops_test: OpsTest):
+    """Build the application charm."""
+    test_charm_path = "./tests/integration/postgresql-test-app"
+    return await ops_test.build_charm(test_charm_path)
+
+
+@pytest.mark.abort_on_fail
+@pytest.fixture(scope="module")
 async def pgb_charm(ops_test: OpsTest):
     """Build the pgbouncer charm."""
     return await ops_test.build_charm(".", bases_index=0)

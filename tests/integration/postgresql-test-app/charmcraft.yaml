@@ -1,4 +1,4 @@
-# Copyright 2023 Canonical Ltd.
+# Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 type: charm
@@ -9,8 +9,6 @@ bases:
     run-on:
       - name: "ubuntu"
         channel: "22.04"
-
-
 parts:
   charm:
     charm-binary-python-packages:
