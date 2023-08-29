@@ -295,7 +295,7 @@ async def check_tls(ops_test: OpsTest, relation_id: int, enabled: bool) -> bool:
     cleint_name = await app_name(ops_test, CLIENT_APP_NAME)
     unit = ops_test.model.applications[cleint_name].units[0]
     params = {
-        "dbname": "application_first_database",
+        "dbname": f"{CLIENT_APP_NAME.replace("-", "_")}_first_database",
         "relation-id": relation_id,
         "relation-name": "first-database",
         "readonly": False,
