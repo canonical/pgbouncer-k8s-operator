@@ -37,7 +37,7 @@ from .helpers import (
 
 logger = logging.getLogger(__name__)
 
-CLIENT_APP_NAME = "application"
+CLIENT_APP_NAME = "postgresql-test-app"
 SECONDARY_CLIENT_APP_NAME = "secondary-application"
 DATA_INTEGRATOR_APP_NAME = "data-integrator"
 PG = "postgresql-k8s"
@@ -50,23 +50,22 @@ APP_NAMES = [CLIENT_APP_NAME, PG, PGB]
 FIRST_DATABASE_RELATION_NAME = "first-database"
 SECOND_DATABASE_RELATION_NAME = "second-database"
 
-APPLICATION_FIRST_DBNAME = "application_first_database"
+APPLICATION_FIRST_DBNAME = "postgresql_test_app_first_database"
 SECONDARY_APPLICATION_FIRST_DBNAME = "secondary_application_first_database"
 SECONDARY_APPLICATION_SECOND_DBNAME = "secondary_application_second_database"
 
 
 @pytest.mark.abort_on_fail
-async def test_database_relation_with_charm_libraries(
-    ops_test: OpsTest, application_charm, pgb_charm
-):
+async def test_database_relation_with_charm_libraries(ops_test: OpsTest, pgb_charm):
     """Test basic functionality of database relation interface."""
     # Deploy both charms (multiple units for each application to test that later they correctly
     # set data in the relation application databag using only the leader unit).
     await asyncio.gather(
         ops_test.model.deploy(
-            application_charm,
+            CLIENT_APP_NAME,
             application_name=CLIENT_APP_NAME,
             series=CHARM_SERIES,
+            channel="edge",
         ),
         ops_test.model.deploy(
             pgb_charm,
@@ -245,15 +244,16 @@ async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
     assert read_only_endpoints, f"read-only-endpoints not in pgb databag: {databag}"
 
 
-async def test_each_relation_has_unique_credentials(ops_test: OpsTest, application_charm):
+async def test_each_relation_has_unique_credentials(ops_test: OpsTest):
     """Test that two different applications connect to the database with different credentials."""
     all_app_names = [SECONDARY_CLIENT_APP_NAME] + APP_NAMES
 
     # Deploy secondary application.
     await ops_test.model.deploy(
-        application_charm,
+        CLIENT_APP_NAME,
         application_name=SECONDARY_CLIENT_APP_NAME,
         series=CHARM_SERIES,
+        channel="edge",
     )
     await ops_test.model.wait_for_idle(status="active", apps=all_app_names)
 
