@@ -13,7 +13,7 @@ repository = "https://github.com/canonical/pgbouncer-k8s-operator"
 
 [tool.poetry.dependencies]
 python = "^3.8.10"
-ops = "2.5.1"
+ops = "2.6.0"
 cryptography = "41.0.3"
 jsonschema = "4.19.0"
 tenacity = "8.2.3"
@@ -25,7 +25,7 @@ optional = true
 
 [tool.poetry.group.format.dependencies]
 black = "23.7.0"
-ruff = "0.0.285"
+ruff = "0.0.286"
 
 [tool.poetry.group.lint]
 optional = true
