@@ -23,7 +23,7 @@ DATABASE_UNITS = 3
 
 
 @pytest.mark.abort_on_fail
-async def test_build_and_deploy(ops_test: OpsTest, postgresql_test_app_charm, pgb_charm):
+async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
     """Build and deploy pgbouncer charm."""
     wait_for_apps = False
 
@@ -46,9 +46,10 @@ async def test_build_and_deploy(ops_test: OpsTest, postgresql_test_app_charm, pg
         wait_for_apps = True
         async with ops_test.fast_forward():
             await ops_test.model.deploy(
-                postgresql_test_app_charm,
+                CLIENT_APP_NAME,
                 application_name=CLIENT_APP_NAME,
                 series=CHARM_SERIES,
+                channel="edge",
             )
     # remove preexisting relation if any so that we can know the rel id
     relations = [
