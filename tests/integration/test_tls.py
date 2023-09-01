@@ -44,14 +44,12 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
 
     if not await app_name(ops_test, CLIENT_APP_NAME):
         wait_for_apps = True
-        application_charm = await ops_test.build_charm(
-            "tests/integration/relations/pgbouncer_provider/application-charm"
-        )
         async with ops_test.fast_forward():
             await ops_test.model.deploy(
-                application_charm,
+                CLIENT_APP_NAME,
                 application_name=CLIENT_APP_NAME,
                 series=CHARM_SERIES,
+                channel="edge",
             )
     # remove preexisting relation if any so that we can know the rel id
     relations = [

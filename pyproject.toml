@@ -13,7 +13,7 @@ repository = "https://github.com/canonical/pgbouncer-k8s-operator"
 
 [tool.poetry.dependencies]
 python = "^3.8.10"
-ops = "2.5.1"
+ops = "2.6.0"
 cryptography = "41.0.3"
 jsonschema = "4.19.0"
 tenacity = "8.2.3"
@@ -25,7 +25,7 @@ optional = true
 
 [tool.poetry.group.format.dependencies]
 black = "23.7.0"
-ruff = "0.0.285"
+ruff = "0.0.286"
 
 [tool.poetry.group.lint]
 optional = true
@@ -52,12 +52,6 @@ pytest = "7.4.0"
 pytest-operator = "0.29.0"
 juju = "2.9.44.0 || 3.2.0.1"  # renovate libjuju
 psycopg2 = {version = "2.9.7", extras = ["binary"]}
-
-[tool.poetry.group.relation_charm]
-optional = true
-
-[tool.poetry.group.relation_charm.dependencies]
-ops = "2.5.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
