@@ -237,8 +237,9 @@ class DbProvides(Object):
         user = self._generate_username(join_event)
 
         if self.charm.unit.is_leader():
-            password = pgb.generate_password()
-            self.charm.peers.add_user(user, password)
+            if not (password := self.charm.get_secret(APP_SCOPE, user)):
+                password = pgb.generate_password()
+                self.charm.peers.add_user(user, password)
         else:
             password = self.charm.get_secret(APP_SCOPE, user)
 
