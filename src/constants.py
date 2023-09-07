@@ -27,3 +27,18 @@ MONITORING_PASSWORD_KEY = "monitoring_password"
 AUTH_FILE_DATABAG_KEY = "auth_file"
 
 EXTENSIONS_BLOCKING_MESSAGE = "bad relation request - remote app requested extensions, which are unsupported. Please remove this relation."
+
+SECRET_LABEL = "secret"
+SECRET_CACHE_LABEL = "cache"
+SECRET_INTERNAL_LABEL = "internal-secret"
+SECRET_DELETED_LABEL = "None"
+
+APP_SCOPE = "app"
+UNIT_SCOPE = "unit"
+
+SECRET_KEY_OVERRIDES = {
+    "cfg_file": "cfg-file",
+    "ca": "cauth",
+    "monitoring_password": "monitoring-password",
+    "auth_file": "auth-file",
+}

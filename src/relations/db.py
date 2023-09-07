@@ -76,12 +76,13 @@ from ops.model import (
     Application,
     BlockedStatus,
     MaintenanceStatus,
+    ModelError,
     Relation,
     Unit,
     WaitingStatus,
 )
 
-from constants import EXTENSIONS_BLOCKING_MESSAGE
+from constants import APP_SCOPE, EXTENSIONS_BLOCKING_MESSAGE
 
 logger = logging.getLogger(__name__)
 
@@ -168,9 +169,12 @@ class DbProvides(Object):
 
     def _get_relation_extensions(self, relation: Relation) -> List[str]:
         """Get enabled extensions for a relation."""
-        for data in relation.data.values():
-            if "extensions" in data:
-                return data["extensions"].split(",")
+        try:
+            for data in relation.data.values():
+                if "extensions" in data:
+                    return data["extensions"].split(",")
+        except ModelError:
+            logger.warning(f"Unable to access relation data for relation {relation.id}")
         return []
 
     def _check_for_blocking_relations(self, relation_id: int) -> bool:
@@ -233,10 +237,11 @@ class DbProvides(Object):
         user = self._generate_username(join_event)
 
         if self.charm.unit.is_leader():
-            password = pgb.generate_password()
-            self.charm.peers.add_user(user, password)
+            if not (password := self.charm.get_secret(APP_SCOPE, user)):
+                password = pgb.generate_password()
+                self.charm.peers.add_user(user, password)
         else:
-            password = self.charm.peers.app_databag.get(user)
+            password = self.charm.get_secret(APP_SCOPE, user)
 
         if None in [database, password]:
             # If database isn't available, defer
