@@ -45,6 +45,7 @@ from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
 from relations.peers import Peers
 from relations.pgbouncer_provider import PgBouncerProvider
+from upgrade import PgbouncerUpgrade, get_pgbouncer_k8s_dependencies_model
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +93,13 @@ class PgBouncerK8sCharm(CharmBase):
             log_files=[f'{service["log_dir"]}/pgbouncer.log' for service in self._services],
             relation_name="logging",
             container_name="pgbouncer",
+        )
+
+        self.upgrade = PgbouncerUpgrade(
+            self,
+            model=get_pgbouncer_k8s_dependencies_model(),
+            relation_name="upgrade",
+            substrate="k8s",
         )
 
     # =======================

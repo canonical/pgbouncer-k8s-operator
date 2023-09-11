@@ -63,3 +63,5 @@ requires:
 peers:
   pgb-peers:
     interface: pgb_peers
+  upgrade:
+    interface: upgrade
