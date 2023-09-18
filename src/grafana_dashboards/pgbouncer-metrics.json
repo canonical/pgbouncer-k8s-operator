@@ -1079,7 +1079,7 @@
   ],
   "schemaVersion": 26,
   "style": "dark",
-  "tags": ["pgbouncer", "k8s"],
+  "tags": ["postgres", "pgbouncer", "k8s"],
   "templating": {
     "list": [
       {
@@ -1238,7 +1238,7 @@
     ]
   },
   "timezone": "browser",
-  "title": "PgBouncer K8S",
+  "title": "PgBouncer K8s",
   "uid": "aek-FXwL2_l4k",
   "version": 2
 }

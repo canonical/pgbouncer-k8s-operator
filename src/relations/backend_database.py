@@ -59,6 +59,7 @@ from ops.model import (
 from ops.pebble import ConnectionError
 
 from constants import (
+    APP_SCOPE,
     AUTH_FILE_DATABAG_KEY,
     AUTH_FILE_PATH,
     BACKEND_RELATION_NAME,
@@ -247,15 +248,13 @@ class BackendDatabaseRequires(Object):
         self.initialise_auth_function([self.database.database, PG])
 
         # Add the monitoring user.
-        if not (
-            monitoring_password := self.charm.peers.get_secret("app", MONITORING_PASSWORD_KEY)
-        ):
+        if not (monitoring_password := self.charm.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)):
             monitoring_password = pgb.generate_password()
-            self.charm.peers.set_secret("app", MONITORING_PASSWORD_KEY, monitoring_password)
+            self.charm.set_secret(APP_SCOPE, MONITORING_PASSWORD_KEY, monitoring_password)
         hashed_monitoring_password = pgb.get_hashed_password(self.stats_user, monitoring_password)
 
         auth_file = f'"{self.auth_user}" "{hashed_password}"\n"{self.stats_user}" "{hashed_monitoring_password}"'
-        self.charm.peers.set_secret("app", AUTH_FILE_DATABAG_KEY, auth_file)
+        self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, auth_file)
         self.charm.render_auth_file(auth_file)
 
         cfg = self.charm.read_pgb_config()
