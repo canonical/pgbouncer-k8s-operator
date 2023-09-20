@@ -10,3 +10,6 @@ set-tls-private-key:
 
 pre-upgrade-check:
   description: Run necessary pre-upgrade checks before executing a charm upgrade.
+
+resume-upgrade:
+  description: Resume a rolling upgrade after asserting successful upgrade of a new revision.

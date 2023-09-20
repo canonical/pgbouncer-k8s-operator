@@ -13,6 +13,7 @@ from charms.data_platform_libs.v0.upgrade import (
 from pydantic import BaseModel
 from typing_extensions import override
 
+from ops.charm import WorkloadEvent
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,6 @@ logger = logging.getLogger(__name__)
 class PgbouncerDependencyModel(BaseModel):
     """Model for Pgbouncer Operator dependencies."""
 
-    charm: DependencyModel
     rock: DependencyModel
 
 
@@ -34,9 +34,14 @@ def get_pgbouncer_k8s_dependencies_model() -> PgbouncerDependencyModel:
 class PgbouncerUpgrade(DataUpgrade):
     """Implementation of :class:`DataUpgrade` overrides for in-place upgrades."""
 
-    def __init__(self, charm, **kwargs):
-        super().__init__(charm, **kwargs)
+    def __init__(self, charm, model: BaseModel,  **kwargs):
+        super().__init__(charm, model, **kwargs)
         self.charm = charm
+
+        self.framework.observe(self.charm.on.upgrade_relation_changed, self._on_upgrade_changed)
+        self.framework.observe(
+            getattr(self.charm.on, "pgbouncer_pebble_ready"), self._on_pgbouncer_pebble_ready
+        )
 
     @override
     def pre_upgrade_check(self) -> None:
@@ -45,3 +50,21 @@ class PgbouncerUpgrade(DataUpgrade):
         Raises:
             :class:`ClusterNotReadyError`: if cluster is not ready to upgrade
         """
+
+    def _on_pgbouncer_pebble_ready(self, event: WorkloadEvent) -> None:
+        if not self.peer_relation:
+            logger.debug("Deferring on_pebble_ready: no upgrade peer relation yet")
+            event.defer()
+            return
+
+        if self.peer_relation.data[self.charm.unit].get("state") != "upgrading":
+            return
+
+    def _on_upgrade_changed(self, _) -> None:
+        """Update the Patroni nosync tag in the unit if needed."""
+        if not self.peer_relation:
+            return
+
+    @override
+    def log_rollback_instructions(self) -> None:
+        pass
