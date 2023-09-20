@@ -138,7 +138,7 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
         logs = await run_command_on_unit(
             ops_test,
             postgresql_primary_unit,
-            'grep "database=waltz SSL enabled" /var/log/postgresql/postgresql.log',
+            'grep "database=waltz SSL enabled" /var/log/postgresql/postgresql*.log',
         )
         assert (
             f"connection authorized: user={pgb_user} database=waltz SSL enabled" in logs
