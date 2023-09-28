@@ -10,10 +10,9 @@ from charms.data_platform_libs.v0.upgrade import (
     DataUpgrade,
     DependencyModel,
 )
+from ops.charm import WorkloadEvent
 from pydantic import BaseModel
 from typing_extensions import override
-
-from ops.charm import WorkloadEvent
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +33,7 @@ def get_pgbouncer_k8s_dependencies_model() -> PgbouncerDependencyModel:
 class PgbouncerUpgrade(DataUpgrade):
     """Implementation of :class:`DataUpgrade` overrides for in-place upgrades."""
 
-    def __init__(self, charm, model: BaseModel,  **kwargs):
+    def __init__(self, charm, model: BaseModel, **kwargs):
         super().__init__(charm, model, **kwargs)
         self.charm = charm
 
@@ -46,10 +45,13 @@ class PgbouncerUpgrade(DataUpgrade):
     @override
     def pre_upgrade_check(self) -> None:
         """Runs necessary checks validating the cluster is in a healthy state to upgrade.
+
         Called by all units during :meth:`_on_pre_upgrade_check_action`.
+
         Raises:
-            :class:`ClusterNotReadyError`: if cluster is not ready to upgrade
+            :class:`ClusterNotReadyError`: if cluster is not ready to upgrade.
         """
+        pass
 
     def _on_pgbouncer_pebble_ready(self, event: WorkloadEvent) -> None:
         if not self.peer_relation:
@@ -60,6 +62,13 @@ class PgbouncerUpgrade(DataUpgrade):
         if self.peer_relation.data[self.charm.unit].get("state") != "upgrading":
             return
 
+        if not self.charm.check_pgb_running():
+            logger.debug("Deferring on_pebble_ready: services not up yet")
+            event.defer()
+            return
+
+        self.set_unit_completed()
+
     def _on_upgrade_changed(self, _) -> None:
         """Update the Patroni nosync tag in the unit if needed."""
         if not self.peer_relation:
@@ -67,4 +76,9 @@ class PgbouncerUpgrade(DataUpgrade):
 
     @override
     def log_rollback_instructions(self) -> None:
-        pass
+        logger.info(
+            "Run `juju refresh --revision <previous-revision> postgresql-k8s` to initiate the rollback"
+        )
+        logger.info(
+            "and `juju run-action postgresql-k8s/leader resume-upgrade` to resume the rollback"
+        )
