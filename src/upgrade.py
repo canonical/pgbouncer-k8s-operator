@@ -50,6 +50,14 @@ class PgbouncerUpgrade(DataUpgrade):
             getattr(self.charm.on, "pgbouncer_pebble_ready"), self._on_pgbouncer_pebble_ready
         )
 
+    def _cluster_checks(self) -> None:
+        """Check that the cluster is in healthy state."""
+        if not self.charm.check_pgb_running():
+            raise ClusterNotReadyError(DEFAULT_MESSAGE, "Not all pgbouncer services are up yet.")
+
+        if self.charm.backend.postgres and not self.charm.backend.ready:
+            raise ClusterNotReadyError(DEFAULT_MESSAGE, "Backend relation is still initialising.")
+
     @override
     def pre_upgrade_check(self) -> None:
         """Runs necessary checks validating the cluster is in a healthy state to upgrade.
@@ -59,11 +67,7 @@ class PgbouncerUpgrade(DataUpgrade):
         Raises:
             :class:`ClusterNotReadyError`: if cluster is not ready to upgrade.
         """
-        if not self.charm.check_pgb_running():
-            raise ClusterNotReadyError(DEFAULT_MESSAGE, "Not all pgbouncer services are up yet.")
-
-        if self.charm.backend.postgres and not self.charm.backend.ready:
-            raise ClusterNotReadyError(DEFAULT_MESSAGE, "Backend relation is still initialising.")
+        self._cluster_checks()
 
         try:
             self._set_rolling_update_partition(self.charm.app.planned_units() - 1)
@@ -80,7 +84,7 @@ class PgbouncerUpgrade(DataUpgrade):
             return
 
         try:
-            self.pre_upgrade_check()
+            self._cluster_checks()
         except ClusterNotReadyError:
             logger.exception("Deferring on_pebble_ready: checks did not pass")
             event.defer()
