@@ -52,6 +52,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
                 resources=resources,
                 application_name=PGB,
                 series=CHARM_SERIES,
+                trust=True,
             ),
             # Edge 5 is the new postgres charm
             ops_test.model.deploy(PG, channel="14/edge", trust=True, num_units=3),

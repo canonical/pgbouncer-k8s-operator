@@ -34,7 +34,12 @@ async def test_deploy_at_scale(ops_test, pgb_charm):
     }
     async with ops_test.fast_forward():
         await ops_test.model.deploy(
-            pgb_charm, resources=resources, application_name=PGB, num_units=3, series=CHARM_SERIES
+            pgb_charm,
+            resources=resources,
+            application_name=PGB,
+            num_units=3,
+            series=CHARM_SERIES,
+            trust=True,
         )
         await ops_test.model.wait_for_idle(
             apps=[PGB], status="blocked", timeout=1000, wait_for_exact_units=3

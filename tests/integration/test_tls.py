@@ -40,6 +40,7 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
                 application_name=PGB,
                 num_units=APPLICATION_UNITS,
                 series=CHARM_SERIES,
+                trust=True,
             )
 
     if not await app_name(ops_test, CLIENT_APP_NAME):

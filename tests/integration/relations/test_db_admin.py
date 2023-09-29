@@ -43,6 +43,7 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
                 resources=resources,
                 application_name=PGB,
                 series=CHARM_SERIES,
+                trust=True,
             ),
             ops_test.model.deploy(PG, trust=True, num_units=3, channel="14/edge"),
             ops_test.model.deploy(
