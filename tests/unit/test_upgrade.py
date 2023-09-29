@@ -97,9 +97,10 @@ class TestUpgrade(unittest.TestCase):
 
         event.defer.assert_called_once_with()
 
+    @patch("charm.PgBouncerK8sCharm.check_pgb_running", return_value=True)
     @patch("charm.PgBouncerK8sCharm.update_config")
     @patch("charm.PgbouncerUpgrade.peer_relation", new_callable=PropertyMock, return_value=None)
-    def test_on_upgrade_changed(self, _peer_relation: Mock, _update_config: Mock):
+    def test_on_upgrade_changed(self, _peer_relation: Mock, _update_config: Mock, _):
         # Early exit when no peer
         self.charm.upgrade._on_upgrade_changed(None)
 
@@ -111,7 +112,7 @@ class TestUpgrade(unittest.TestCase):
 
         self.charm.upgrade._on_upgrade_changed(None)
 
-        _update_config.called_once_with()
+        _update_config.assert_called_once_with()
 
     @patch("upgrade.logger.info")
     def test_log_rollback_instructions(self, _logger: Mock):

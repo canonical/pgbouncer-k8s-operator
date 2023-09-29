@@ -16,6 +16,7 @@ from lightkube.core.client import Client
 from lightkube.core.exceptions import ApiError
 from lightkube.resources.apps_v1 import StatefulSet
 from ops.charm import WorkloadEvent
+from ops.pebble import ConnectionError
 from pydantic import BaseModel
 from typing_extensions import override
 
@@ -52,8 +53,13 @@ class PgbouncerUpgrade(DataUpgrade):
 
     def _cluster_checks(self) -> None:
         """Check that the cluster is in healthy state."""
-        if not self.charm.check_pgb_running():
-            raise ClusterNotReadyError(DEFAULT_MESSAGE, "Not all pgbouncer services are up yet.")
+        try:
+            if not self.charm.check_pgb_running():
+                raise ClusterNotReadyError(
+                    DEFAULT_MESSAGE, "Not all pgbouncer services are up yet."
+                )
+        except ConnectionError:
+            raise ClusterNotReadyError(DEFAULT_MESSAGE, "Not all pgbouncer services are missing.")
 
         if self.charm.backend.postgres and not self.charm.backend.ready:
             raise ClusterNotReadyError(DEFAULT_MESSAGE, "Backend relation is still initialising.")
@@ -94,7 +100,11 @@ class PgbouncerUpgrade(DataUpgrade):
 
     def _on_upgrade_changed(self, _) -> None:
         """Rerenders the configuration."""
-        if not self.peer_relation:
+        try:
+            if not self.peer_relation or not self.charm.check_pgb_running():
+                return
+        except ConnectionError:
+            logger.debug("on_upgrade_changed early exit: Cannot get pebble services")
             return
 
         self.charm.update_config()
