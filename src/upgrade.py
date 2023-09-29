@@ -19,6 +19,8 @@ from ops.charm import WorkloadEvent
 from pydantic import BaseModel
 from typing_extensions import override
 
+DEFAULT_MESSAGE = "Pre-upgrade check failed and cannot safely upgrade"
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,7 +32,7 @@ class PgbouncerDependencyModel(BaseModel):
 
 
 def get_pgbouncer_k8s_dependencies_model() -> PgbouncerDependencyModel:
-    """Return the PostgreSQL dependencies model."""
+    """Return the Pgbouncer dependencies model."""
     with open("src/dependency.json") as dependency_file:
         _deps = json.load(dependency_file)
     return PgbouncerDependencyModel(**_deps)
@@ -57,6 +59,12 @@ class PgbouncerUpgrade(DataUpgrade):
         Raises:
             :class:`ClusterNotReadyError`: if cluster is not ready to upgrade.
         """
+        if not self.charm.check_pgb_running():
+            raise ClusterNotReadyError(DEFAULT_MESSAGE, "Not all pgbouncer services are up yet.")
+
+        if self.charm.backend.postgres and not self.charm.backend.ready:
+            raise ClusterNotReadyError(DEFAULT_MESSAGE, "Backend relation is still initialising.")
+
         try:
             self._set_rolling_update_partition(self.charm.app.planned_units() - 1)
         except KubernetesClientError as e:
@@ -71,15 +79,17 @@ class PgbouncerUpgrade(DataUpgrade):
         if self.peer_relation.data[self.charm.unit].get("state") != "upgrading":
             return
 
-        if not self.charm.check_pgb_running():
-            logger.debug("Deferring on_pebble_ready: services not up yet")
+        try:
+            self.pre_upgrade_check()
+        except ClusterNotReadyError:
+            logger.exception("Deferring on_pebble_ready: checks did not pass")
             event.defer()
             return
 
         self.set_unit_completed()
 
     def _on_upgrade_changed(self, _) -> None:
-        """Update the Patroni nosync tag in the unit if needed."""
+        """Rerenders the configuration."""
         if not self.peer_relation:
             return
 
@@ -88,10 +98,10 @@ class PgbouncerUpgrade(DataUpgrade):
     @override
     def log_rollback_instructions(self) -> None:
         logger.info(
-            "Run `juju refresh --revision <previous-revision> postgresql-k8s` to initiate the rollback"
+            "Run `juju refresh --revision <previous-revision> pgbouncer-k8s` to initiate the rollback"
         )
         logger.info(
-            "and `juju run-action postgresql-k8s/leader resume-upgrade` to resume the rollback"
+            "and `juju run-action pgbouncerl-k8s/leader resume-upgrade` to resume the rollback"
         )
 
     @override

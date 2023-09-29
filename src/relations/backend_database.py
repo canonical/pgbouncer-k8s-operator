@@ -129,7 +129,8 @@ class BackendDatabaseRequires(Object):
         if not self.relation:
             return None
 
-        databag = self.postgres_databag
+        if not (databag := self.postgres_databag):
+            return None
         endpoint = databag.get("endpoints")
         user = databag.get("username")
         password = databag.get("password")
