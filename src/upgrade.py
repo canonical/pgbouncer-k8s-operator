@@ -7,9 +7,14 @@ import json
 import logging
 
 from charms.data_platform_libs.v0.upgrade import (
+    ClusterNotReadyError,
     DataUpgrade,
     DependencyModel,
+    KubernetesClientError,
 )
+from lightkube.core.client import Client
+from lightkube.core.exceptions import ApiError
+from lightkube.resources.apps_v1 import StatefulSet
 from ops.charm import WorkloadEvent
 from pydantic import BaseModel
 from typing_extensions import override
@@ -20,6 +25,7 @@ logger = logging.getLogger(__name__)
 class PgbouncerDependencyModel(BaseModel):
     """Model for Pgbouncer Operator dependencies."""
 
+    charm: DependencyModel
     rock: DependencyModel
 
 
@@ -51,7 +57,10 @@ class PgbouncerUpgrade(DataUpgrade):
         Raises:
             :class:`ClusterNotReadyError`: if cluster is not ready to upgrade.
         """
-        pass
+        try:
+            self._set_rolling_update_partition(self.charm.app.planned_units() - 1)
+        except KubernetesClientError as e:
+            raise ClusterNotReadyError(e.message, e.cause)
 
     def _on_pgbouncer_pebble_ready(self, event: WorkloadEvent) -> None:
         if not self.peer_relation:
@@ -74,6 +83,8 @@ class PgbouncerUpgrade(DataUpgrade):
         if not self.peer_relation:
             return
 
+        self.charm.update_config()
+
     @override
     def log_rollback_instructions(self) -> None:
         logger.info(
@@ -82,3 +93,22 @@ class PgbouncerUpgrade(DataUpgrade):
         logger.info(
             "and `juju run-action postgresql-k8s/leader resume-upgrade` to resume the rollback"
         )
+
+    @override
+    def _set_rolling_update_partition(self, partition: int) -> None:
+        """Set the rolling update partition to a specific value."""
+        try:
+            patch = {"spec": {"updateStrategy": {"rollingUpdate": {"partition": partition}}}}
+            Client().patch(
+                StatefulSet,
+                name=self.charm.model.app.name,
+                namespace=self.charm.model.name,
+                obj=patch,
+            )
+            logger.debug(f"Kubernetes StatefulSet partition set to {partition}")
+        except ApiError as e:
+            if e.status.code == 403:
+                cause = "`juju trust` needed"
+            else:
+                cause = str(e)
+            raise KubernetesClientError("Kubernetes StatefulSet patch failed", cause)

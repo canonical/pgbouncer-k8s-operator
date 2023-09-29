@@ -1,4 +1,10 @@
 {
+  "charm": {
+    "dependencies": {},
+    "name": "pgbouncer",
+    "upgrade_supported": ">0",
+    "version": "1"
+  },
   "rock": {
     "dependencies": {},
     "name": "charmed-postgresql",
