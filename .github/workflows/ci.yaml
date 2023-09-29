@@ -77,6 +77,7 @@ jobs:
           - tls-integration
           - standalone-integration
           - legacy-client-relation-integration
+          - upgrade-integration
         agent-versions: 
           - "2.9.45"  # renovate: latest juju 2
           - "3.1.5"  # renovate: latest juju 3
