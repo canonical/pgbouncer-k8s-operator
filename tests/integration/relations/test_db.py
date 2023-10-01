@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 
 import yaml
+import pytest
 from pytest_operator.plugin import OpsTest
 
 from constants import EXTENSIONS_BLOCKING_MESSAGE
