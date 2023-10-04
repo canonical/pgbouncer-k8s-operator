@@ -213,6 +213,7 @@ async def test_relation_with_indico(ops_test: OpsTest):
         timeout=3000,
     )
 
+
 @pytest.mark.unstable
 async def test_relation_with_openldap(ops_test: OpsTest):
     """Test the relation with OpenLDAP charm."""
