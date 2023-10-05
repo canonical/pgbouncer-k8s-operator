@@ -80,7 +80,9 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
         wait_for_apps = True
         # Deploy TLS Certificates operator.
         config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
-        await ops_test.model.deploy(TLS_CERTIFICATES_APP_NAME, config=config)
+        await ops_test.model.deploy(
+            TLS_CERTIFICATES_APP_NAME, config=config, channel="legacy/stable"
+        )
         # Relate it to the PgBouncer to enable TLS.
         await ops_test.model.relate(PGB, TLS_CERTIFICATES_APP_NAME)
         await ops_test.model.relate(TLS_CERTIFICATES_APP_NAME, POSTGRESQL_APP_NAME)
