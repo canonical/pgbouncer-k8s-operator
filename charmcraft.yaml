@@ -19,5 +19,5 @@ parts:
       - cargo
       - pkg-config
     charm-binary-python-packages:
-      - psycopg2-binary==2.9.7  # renovate
+      - psycopg2-binary==2.9.9  # renovate
       - psycopg[binary]==3.1.12  # renovate
