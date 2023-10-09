@@ -4,13 +4,15 @@
 import asyncio
 import json
 import logging
-from typing import Dict, Optional
+from typing import Optional
 
 import yaml
 from lightkube import AsyncClient
 from lightkube.resources.core_v1 import Pod
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_attempt, wait_exponential
+
+from ...helpers.helpers import get_juju_secret
 
 
 async def check_relation_data_existence(
@@ -121,14 +123,6 @@ async def run_sql_on_application_charm(
     result = await asyncio.wait_for(action.wait(), timeout)
     logging.info(f"query results: {result.results}")
     return result.results
-
-
-async def get_juju_secret(ops_test: OpsTest, secret_uri: str) -> Dict[str, str]:
-    """Retrieve juju secret."""
-    secret_unique_id = secret_uri.split("/")[-1]
-    complete_command = f"show-secret {secret_uri} --reveal --format=json"
-    _, stdout, _ = await ops_test.juju(*complete_command.split())
-    return json.loads(stdout)[secret_unique_id]["content"]["Data"]
 
 
 async def build_connection_string(
