@@ -29,6 +29,7 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
             resources=resources,
             application_name=PGB,
             series=CHARM_SERIES,
+            trust=True,
         )
         await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)
 

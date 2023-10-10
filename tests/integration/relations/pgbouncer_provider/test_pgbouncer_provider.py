@@ -73,6 +73,7 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, pgb_cha
             application_name=PGB,
             num_units=2,
             series=CHARM_SERIES,
+            trust=True,
         ),
         ops_test.model.deploy(
             PG,
