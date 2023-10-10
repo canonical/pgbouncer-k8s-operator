@@ -21,7 +21,7 @@ cosl = "0.0.7"
 poetry-core = "1.7.0"
 lightkube = "0.14.0"
 lightkube-models = "1.28.1.4"
-pydantic = "1.10.12"
+pydantic = "1.10.13"
 # psycopg2 = "^2.9.5" # Injected in charmcraft.yaml
 
 [tool.poetry.group.format]

@@ -91,9 +91,21 @@ async def get_app_relation_databag(ops_test: OpsTest, unit_name: str, relation_i
     return None
 
 
+async def get_juju_secret(ops_test: OpsTest, secret_uri: str) -> Dict[str, str]:
+    """Retrieve juju secret."""
+    secret_unique_id = secret_uri.split("/")[-1]
+    complete_command = f"show-secret {secret_uri} --reveal --format=json"
+    _, stdout, _ = await ops_test.juju(*complete_command.split())
+    return json.loads(stdout)[secret_unique_id]["content"]["Data"]
+
+
 async def get_backend_user_pass(ops_test, backend_relation):
     pgb_unit = ops_test.model.applications[PGB].units[0]
     backend_databag = await get_app_relation_databag(ops_test, pgb_unit.name, backend_relation.id)
+    if secret_uri := backend_databag.get("secret-user"):
+        secret_data = await get_juju_secret(ops_test, secret_uri)
+        return (secret_data["username"], secret_data["password"])
+
     pgb_user = backend_databag["username"]
     pgb_password = backend_databag["password"]
     return (pgb_user, pgb_password)
