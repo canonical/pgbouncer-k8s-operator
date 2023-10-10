@@ -131,8 +131,8 @@ class BackendDatabaseRequires(Object):
 
         databag = self.postgres_databag
         endpoint = databag.get("endpoints")
-        user = databag.get("username")
-        password = databag.get("password")
+        user = self.database.fetch_relation_field(self.relation.id, "username")
+        password = self.database.fetch_relation_field(self.relation.id, "password")
         database = self.database.database
 
         if None in [endpoint, user, password]:
@@ -149,7 +149,10 @@ class BackendDatabaseRequires(Object):
     @property
     def auth_user(self):
         """Username for auth_user."""
-        username = self.postgres_databag.get("username")
+        if not self.relation:
+            return None
+
+        username = self.database.fetch_relation_field(self.relation.id, "username")
         if username is None:
             return None
         return f"pgbouncer_auth_{username}".replace("-", "_")
