@@ -2,18 +2,21 @@
 # See LICENSE file for licensing details.
 
 name: pgbouncer-k8s
-display-name: |
-  PgBouncer Kubernetes Operator
+display-name: PgBouncer K8s
+summary: Charmed K8s operator for PgBouncer
 description: |
   Lightweight connection pooler for PostgreSQL.
-summary: |
-  The aim of pgbouncer is to lower the performance impact of opening new connections to PostgreSQL. For more information, see https://www.pgbouncer.org/usage.html
-website: |
-  https://www.pgbouncer.org/
-source: |
-  https://github.com/canonical/pgbouncer-k8s-operator
-issues: |
-  https://github.com/canonical/pgbouncer-k8s-operator/issues
+
+  This charm supports PgBouncer in Kubernetes environments.
+docs: https://discourse.charmhub.io/t/pgbouncer-k8s-documentation/12132
+source: https://github.com/canonical/pgbouncer-k8s-operator
+issues: https://github.com/canonical/pgbouncer-k8s-operator/issues
+website:
+  - https://ubuntu.com/data/postgresql
+  - https://charmhub.io/pgbouncer-k8s
+  - https://github.com/canonical/pgbouncer-k8s-operator
+  - https://chat.charmhub.io/charmhub/channels/data-platform
+  - https://www.pgbouncer.org/
 maintainers:
   - Canonical Data Platform <data-platform@lists.launchpad.net>
 
