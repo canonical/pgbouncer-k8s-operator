@@ -53,7 +53,9 @@ async def test_scaled_relations(ops_test: OpsTest):
     async with ops_test.fast_forward():
         await asyncio.gather(
             # Edge 5 is the new postgres charm
-            ops_test.model.deploy(PG, channel="14/edge", trust=True, num_units=3),
+            ops_test.model.deploy(
+                PG, channel="14/edge", trust=True, num_units=3, config={"profile": "testing"}
+            ),
             ops_test.model.deploy("finos-waltz-k8s", application_name=FINOS_WALTZ, channel="edge"),
         )
 
