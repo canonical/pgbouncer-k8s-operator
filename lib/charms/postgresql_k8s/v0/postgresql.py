@@ -19,7 +19,7 @@ The `postgresql` module provides methods for interacting with the PostgreSQL ins
 Any charm using this library should import the `psycopg2` or `psycopg2-binary` dependency.
 """
 import logging
-from typing import List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import psycopg2
 from psycopg2 import sql
@@ -32,7 +32,7 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 14
+LIBPATCH = 17
 
 INVALID_EXTRA_USER_ROLE_BLOCKING_MESSAGE = "invalid role(s) for extra user roles"
 
@@ -117,12 +117,13 @@ class PostgreSQL:
         connection.autocommit = True
         return connection
 
-    def create_database(self, database: str, user: str) -> None:
+    def create_database(self, database: str, user: str, plugins: List[str] = []) -> None:
         """Creates a new database and grant privileges to a user on it.
 
         Args:
             database: database to be created.
             user: user that will have access to the database.
+            plugins: extensions to enable in the new database.
         """
         try:
             connection = self._connect_to_database()
@@ -169,6 +170,10 @@ class PostgreSQL:
         except psycopg2.Error as e:
             logger.error(f"Failed to create database: {e}")
             raise PostgreSQLCreateDatabaseError()
+
+        # Enable preset extensions
+        for plugin in plugins:
+            self.enable_disable_extension(plugin, True, database)
 
     def create_user(
         self, user: str, password: str = None, admin: bool = False, extra_user_roles: str = None
@@ -406,6 +411,7 @@ class PostgreSQL:
         Raises:
             PostgreSQLUpdateUserPasswordError if the password couldn't be changed.
         """
+        connection = None
         try:
             with self._connect_to_database() as connection, connection.cursor() as cursor:
                 cursor.execute(
@@ -420,19 +426,39 @@ class PostgreSQL:
             if connection is not None:
                 connection.close()
 
+    def is_restart_pending(self) -> bool:
+        """Query pg_settings for pending restart."""
+        connection = None
+        try:
+            with self._connect_to_database() as connection, connection.cursor() as cursor:
+                cursor.execute("SELECT COUNT(*) FROM pg_settings WHERE pending_restart=True;")
+                return cursor.fetchone()[0] > 0
+        except psycopg2.OperationalError:
+            logger.warning("Failed to connect to PostgreSQL.")
+            return False
+        except psycopg2.Error as e:
+            logger.error(f"Failed to check if restart is pending: {e}")
+            return False
+        finally:
+            if connection:
+                connection.close()
+
     @staticmethod
     def build_postgresql_parameters(
-        profile: str, available_memory: int
-    ) -> Optional[dict[str, str]]:
+        profile: str, available_memory: int, limit_memory: Optional[int] = None
+    ) -> Optional[Dict[str, str]]:
         """Builds the PostgreSQL parameters.
 
         Args:
             profile: the profile to use.
             available_memory: available memory to use in calculation in bytes.
+            limit_memory: (optional) limit memory to use in calculation in bytes.
 
         Returns:
             Dictionary with the PostgreSQL parameters.
         """
+        if limit_memory:
+            available_memory = min(available_memory, limit_memory)
         logger.debug(f"Building PostgreSQL parameters for {profile=} and {available_memory=}")
         if profile == "production":
             # Use 25% of the available memory for shared_buffers.
@@ -446,3 +472,6 @@ class PostgreSQL:
             }
 
             return parameters
+        else:
+            # Return default
+            return {"shared_buffers": "128MB"}
