@@ -57,6 +57,7 @@ async def test_in_place_upgrade(ops_test: OpsTest, pgb_charm):
             num_units=2,
             channel="14/edge",
             trust=True,
+            config={"profile": "testing"},
         ),
     )
     await ops_test.model.add_relation(f"{PGB}:{BACKEND_RELATION_NAME}", f"{PG}:database")

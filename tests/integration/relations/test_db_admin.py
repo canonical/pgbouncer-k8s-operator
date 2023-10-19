@@ -45,7 +45,9 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
                 series=CHARM_SERIES,
                 trust=True,
             ),
-            ops_test.model.deploy(PG, trust=True, num_units=3, channel="14/edge"),
+            ops_test.model.deploy(
+                PG, trust=True, num_units=3, channel="14/edge", config={"profile": "testing"}
+            ),
             ops_test.model.deploy(
                 FIRST_DISCOURSE_APP_NAME, application_name=FIRST_DISCOURSE_APP_NAME
             ),

@@ -81,6 +81,7 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, pgb_cha
             num_units=2,
             channel="14/edge",
             trust=True,
+            config={"profile": "testing"},
         ),
     )
     await ops_test.model.add_relation(f"{PGB}:{BACKEND_RELATION_NAME}", f"{PG}:database")
