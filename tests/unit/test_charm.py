@@ -40,6 +40,7 @@ class TestCharm(unittest.TestCase):
 
         self.rel_id = self.harness.model.relations[PEER_RELATION_NAME][0].id
 
+    @patch("charm.PgBouncerK8sCharm._patch_port")
     @patch("charm.PgBouncerK8sCharm.read_pgb_config")
     @patch("charm.PgBouncerK8sCharm.push_file")
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
@@ -54,6 +55,7 @@ class TestCharm(unittest.TestCase):
         _update_connection_info,
         _push_file,
         _read_pgb_config,
+        _,
     ):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         _read_pgb_config.side_effect = lambda: PgbConfig(DEFAULT_CONFIG)
@@ -104,10 +106,11 @@ class TestCharm(unittest.TestCase):
         layer = self.charm._pgbouncer_layer()
         assert len(layer.services) == self.charm._cores + 2
 
+    @patch("charm.PgBouncerK8sCharm._patch_port")
     @patch("charm.PgBouncerK8sCharm.update_status")
     @patch("ops.model.Container.exec")
     @patch("ops.model.Container.make_dir")
-    def test_on_pgbouncer_pebble_ready(self, _mkdir, _exec, _update_status):
+    def test_on_pgbouncer_pebble_ready(self, _mkdir, _exec, _update_status, _):
         _exec.return_value.wait_output.return_value = ("PGB 1.16.1\nOther things", "")
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
@@ -144,13 +147,14 @@ class TestCharm(unittest.TestCase):
         self.assertIsInstance(self.harness.model.unit.status, WaitingStatus)
         self.assertEqual(self.harness.model.unit.status.message, "Waiting for certificates")
 
+    @patch("charm.PgBouncerK8sCharm._patch_port")
     @patch("charm.PgBouncerK8sCharm.update_status")
     @patch("ops.model.Container.exec")
     @patch("charm.PgBouncerK8sCharm.push_tls_files_to_workload")
     @patch("charm.PostgreSQLTLS.get_tls_files")
     @patch("ops.model.Container.make_dir")
     def test_on_pgbouncer_pebble_ready_ensure_tls_files(
-        self, _mkdir, get_tls_files, push_tls_files_to_workload, _exec, _update_status
+        self, _mkdir, get_tls_files, push_tls_files_to_workload, _exec, _update_status, _
     ):
         _exec.return_value.wait_output.return_value = ("", "")
         get_tls_files.return_value = ("key", "ca", "cert")
@@ -195,11 +199,12 @@ class TestCharm(unittest.TestCase):
         read_cfg = self.charm.read_pgb_config()
         self.assertEqual(PgbConfig(read_cfg).render(), test_cfg.render())
 
+    @patch("charm.PgBouncerK8sCharm._patch_port")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     @patch("ops.model.Container.exec")
     @patch("ops.model.Container.make_dir")
     @patch("ops.model.Container.restart")
-    def test_reload_pgbouncer(self, _restart, _mkdir, _exec, _check_pgb_running):
+    def test_reload_pgbouncer(self, _restart, _mkdir, _exec, _check_pgb_running, _):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         # necessary hooks before we can check reloads

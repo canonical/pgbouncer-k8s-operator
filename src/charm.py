@@ -10,6 +10,7 @@ import os
 import socket
 from typing import Dict, Optional
 
+import lightkube
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.pgbouncer_k8s.v0 import pgb
@@ -117,6 +118,57 @@ class PgBouncerK8sCharm(CharmBase):
     #  Charm Lifecycle Hooks
     # =======================
 
+    def _patch_port(self) -> None:
+        """Patch Juju-created k8s service.
+
+        The k8s service will be tied to pod-0 so that the service is auto cleaned by
+        k8s when the last pod is scaled down.
+        """
+        if not self.unit.is_leader():
+            return
+
+        try:
+            logger.debug("Patching k8s service")
+            client = lightkube.Client()
+            pod0 = client.get(
+                res=lightkube.resources.core_v1.Pod,
+                name=self.app.name + "-0",
+                namespace=self.model.name,
+            )
+            service = lightkube.resources.core_v1.Service(
+                metadata=lightkube.models.meta_v1.ObjectMeta(
+                    name=self.app.name,
+                    namespace=self.model.name,
+                    ownerReferences=pod0.metadata.ownerReferences,
+                    labels={
+                        "app.kubernetes.io/name": self.app.name,
+                    },
+                ),
+                spec=lightkube.models.core_v1.ServiceSpec(
+                    ports=[
+                        lightkube.models.core_v1.ServicePort(
+                            name="pgbouncer",
+                            port=self.config["listen_port"],
+                            targetPort=self.config["listen_port"],
+                        )
+                    ],
+                    selector={"app.kubernetes.io/name": self.app.name},
+                ),
+            )
+            client.patch(
+                res=lightkube.resources.core_v1.Service,
+                obj=service,
+                name=service.metadata.name,
+                namespace=service.metadata.namespace,
+                force=True,
+                field_manager=self.app.name,
+                patch_type=lightkube.types.PatchType.MERGE,
+            )
+            logger.debug("Patched k8s service")
+        except lightkube.ApiError:
+            logger.exception("Failed to patch k8s service")
+            raise
+
     @property
     def version(self) -> str:
         """Returns the version Pgbouncer."""
@@ -218,6 +270,11 @@ class PgBouncerK8sCharm(CharmBase):
         # Update postgres endpoints in config to match the current state of the charm.
         self.update_postgres_endpoints(reload_pgbouncer=True)
 
+        if JujuVersion.from_environ().supports_open_port_on_k8s:
+            self.unit.open_port("tcp", self.config["listen_port"])
+        else:
+            self._patch_port()
+
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration.
 
@@ -247,7 +304,14 @@ class PgBouncerK8sCharm(CharmBase):
             # This emits relation-changed events to every client relation, so only do it when
             # necessary
             self.update_client_connection_info(self.config["listen_port"])
+            old_port = config["pgbouncer"]["listen_port"]
             config["pgbouncer"]["listen_port"] = self.config["listen_port"]
+
+            if JujuVersion.from_environ().supports_open_port_on_k8s:
+                self.unit.close_port("tcp", old_port)
+                self.unit.open_port("tcp", self.config["listen_port"])
+            else:
+                self._patch_port()
 
         self.render_pgb_config(config)
         try:
