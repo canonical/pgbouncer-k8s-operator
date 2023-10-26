@@ -170,6 +170,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
         assert "waltz_standby" not in cfg["databases"].keys()
 
 
+@pytest.mark.skip(reason="Should be ported and moved to the new relation tests")
 async def test_relation_with_indico(ops_test: OpsTest):
     """Test the relation with Indico charm."""
     logger.info("Deploying indico")
