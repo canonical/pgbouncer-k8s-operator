@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import List
 
 import psycopg2
-import requests as requests
 import yaml
 from pytest_operator.plugin import OpsTest
 
