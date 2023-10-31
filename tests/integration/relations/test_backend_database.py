@@ -23,7 +23,6 @@ from ..helpers.helpers import (
 )
 from ..helpers.postgresql_helpers import (
     check_database_users_existence,
-    enable_connections_logging,
     get_postgres_primary,
     run_command_on_unit,
 )
@@ -122,9 +121,8 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
         await ops_test.model.relate(PG, TLS)
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
 
-        # Enable additional logs on the PostgreSQL instance to check TLS
-        # being used in a later step.
-        await enable_connections_logging(ops_test, f"{PG}/0")
+        await ops_test.model.applications[PG].set_config({"logging_log_connections": "True"})
+        await ops_test.model.wait_for_idle(apps=[PG], status="active", idle_period=30)
 
         # Deploy an app and relate it to PgBouncer to open a connection
         # between PgBouncer and PostgreSQL.
