@@ -13,13 +13,13 @@ repository = "https://github.com/canonical/pgbouncer-k8s-operator"
 
 [tool.poetry.dependencies]
 python = "^3.8.10"
-ops = "2.7.0"
-cryptography = "41.0.4"
-jsonschema = "4.19.1"
+ops = "2.8.0"
+cryptography = "41.0.5"
+jsonschema = "4.20.0"
 tenacity = "8.2.3"
 cosl = "0.0.7"
-poetry-core = "1.7.0"
-lightkube = "0.14.0"
+poetry-core = "1.8.1"
+lightkube = "0.15.0"
 lightkube-models = "1.28.1.4"
 pydantic = "1.10.13"
 # psycopg2 = "^2.9.5" # Injected in charmcraft.yaml
@@ -28,8 +28,8 @@ pydantic = "1.10.13"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-black = "23.9.1"
-ruff = "0.0.292"
+black = "23.11.0"
+ruff = "0.1.5"
 
 [tool.poetry.group.lint]
 optional = true
@@ -42,7 +42,7 @@ optional = true
 
 [tool.poetry.group.unit.dependencies]
 coverage = {extras = ["toml"], version = "7.3.2"}
-pytest = "7.4.2"
+pytest = "7.4.3"
 pytest-asyncio = "0.21.1"
 jinja2 = "3.1.2"
 psycopg2 = {version = "2.9.9", extras = ["binary"]}
@@ -51,9 +51,9 @@ psycopg2 = {version = "2.9.9", extras = ["binary"]}
 optional = true
 
 [tool.poetry.group.integration.dependencies]
-lightkube = "0.14.0"
-pytest = "7.4.2"
-pytest-operator = "0.29.0"
+lightkube = "0.15.0"
+pytest = "7.4.3"
+pytest-operator = "0.31.0"
 juju = "2.9.44.1 || 3.2.0.1"  # renovate libjuju
 psycopg2 = {version = "2.9.9", extras = ["binary"]}
 
