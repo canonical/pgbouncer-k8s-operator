@@ -320,7 +320,7 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 22
+LIBPATCH = 24
 
 PYDEPS = ["ops>=2.0.0"]
 
@@ -526,7 +526,16 @@ class CachedSecret:
         """Getting cached secret content."""
         if not self._secret_content:
             if self.meta:
-                self._secret_content = self.meta.get_content()
+                try:
+                    self._secret_content = self.meta.get_content(refresh=True)
+                except (ValueError, ModelError) as err:
+                    # https://bugs.launchpad.net/juju/+bug/2042596
+                    # Only triggered when 'refresh' is set
+                    msg = "ERROR either URI or label should be used for getting an owned secret but not both"
+                    if isinstance(err, ModelError) and msg not in str(err):
+                        raise
+                    # Due to: ValueError: Secret owner cannot use refresh=True
+                    self._secret_content = self.meta.get_content()
         return self._secret_content
 
     def set_content(self, content: Dict[str, str]) -> None:
@@ -807,6 +816,9 @@ class DataRelation(Object, ABC):
         This is used typically when the Provides side wants to read the Requires side's data,
         or when the Requires side may want to read its own data.
         """
+        if app not in relation.data or not relation.data[app]:
+            return {}
+
         if fields:
             return {k: relation.data[app][k] for k in fields if k in relation.data[app]}
         else:
@@ -830,6 +842,9 @@ class DataRelation(Object, ABC):
         normal_fields = []
 
         if not fields:
+            if app not in relation.data or not relation.data[app]:
+                return {}
+
             all_fields = list(relation.data[app].keys())
             normal_fields = [field for field in all_fields if not self._is_secret_field(field)]
 
@@ -853,8 +868,11 @@ class DataRelation(Object, ABC):
 
     def _update_relation_data_without_secrets(
         self, app: Application, relation: Relation, data: Dict[str, str]
-    ):
+    ) -> None:
         """Updating databag contents when no secrets are involved."""
+        if app not in relation.data or relation.data[app] is None:
+            return
+
         if any(self._is_secret_field(key) for key in data.keys()):
             raise SecretsIllegalUpdateError("Can't update secret {key}.")
 
@@ -865,8 +883,19 @@ class DataRelation(Object, ABC):
         self, app: Application, relation: Relation, fields: List[str]
     ) -> None:
         """Remove databag fields 'fields' from Relation."""
+        if app not in relation.data or not relation.data[app]:
+            return
+
         for field in fields:
-            relation.data[app].pop(field)
+            try:
+                relation.data[app].pop(field)
+            except KeyError:
+                logger.debug(
+                    "Non-existing field was attempted to be removed from the databag %s, %s",
+                    str(relation.id),
+                    str(field),
+                )
+                pass
 
     # Public interface methods
     # Handling Relation Fields seamlessly, regardless if in databag or a Juju Secret
@@ -879,9 +908,6 @@ class DataRelation(Object, ABC):
             raise DataInterfacesError(
                 "Relation %s %s couldn't be retrieved", relation_name, relation_id
             )
-
-        if not relation.app:
-            raise DataInterfacesError("Relation's application missing")
 
         return relation
 
@@ -1068,7 +1094,7 @@ class DataProvides(DataRelation):
         secret = self._get_relation_secret(relation.id, group)
 
         if not secret:
-            logging.error("Can't update secret for relation %s", str(relation.id))
+            logging.error("Can't delete secret for relation %s", str(relation.id))
             return False
 
         old_content = secret.get_content()
@@ -1089,7 +1115,10 @@ class DataProvides(DataRelation):
         # Remove secret from the relation if it's fully gone
         if not new_content:
             field = self._generate_secret_field_name(group)
-            relation.data[self.local_app].pop(field)
+            try:
+                relation.data[self.local_app].pop(field)
+            except KeyError:
+                pass
 
         # Return the content that was removed
         return True
@@ -1807,7 +1836,8 @@ class DatabaseRequires(DataRequires):
 
         # We need to set relation alias also on the application level so,
         # it will be accessible in show-unit juju command, executed for a consumer application unit
-        self.update_relation_data(relation_id, {"alias": available_aliases[0]})
+        if self.local_unit.is_leader():
+            self.update_relation_data(relation_id, {"alias": available_aliases[0]})
 
     def _emit_aliased_event(self, event: RelationChangedEvent, event_name: str) -> None:
         """Emit an aliased event to a particular relation if it has an alias.
@@ -1894,6 +1924,9 @@ class DatabaseRequires(DataRequires):
 
         # Sets both database and extra user roles in the relation
         # if the roles are provided. Otherwise, sets only the database.
+        if not self.local_unit.is_leader():
+            return
+
         if self.extra_user_roles:
             self.update_relation_data(
                 event.relation.id,
@@ -2153,6 +2186,9 @@ class KafkaRequires(DataRequires):
         """Event emitted when the Kafka relation is created."""
         super()._on_relation_created_event(event)
 
+        if not self.local_unit.is_leader():
+            return
+
         # Sets topic, extra user roles, and "consumer-group-prefix" in the relation
         relation_data = {
             f: getattr(self, f.replace("-", "_"), "")
@@ -2324,6 +2360,9 @@ class OpenSearchRequires(DataRequires):
     def _on_relation_created_event(self, event: RelationCreatedEvent) -> None:
         """Event emitted when the OpenSearch relation is created."""
         super()._on_relation_created_event(event)
+
+        if not self.local_unit.is_leader():
+            return
 
         # Sets both index and extra user roles in the relation if the roles are provided.
         # Otherwise, sets only the index.

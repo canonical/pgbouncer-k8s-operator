@@ -3,16 +3,18 @@
 
 import asyncio
 import logging
-from pathlib import Path
 
 import pytest
-import yaml
 from pytest_operator.plugin import OpsTest
 
 from constants import EXTENSIONS_BLOCKING_MESSAGE
 
 from ..helpers.helpers import (
     CHARM_SERIES,
+    CLIENT_APP_NAME,
+    PG,
+    PGB,
+    PGB_METADATA,
     get_app_relation_databag,
     get_backend_user_pass,
     get_cfg,
@@ -25,9 +27,6 @@ from ..helpers.postgresql_helpers import (
     check_database_users_existence,
 )
 
-METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
-PGB = METADATA["name"]
-PG = "postgresql-k8s"
 FINOS_WALTZ = "finos-waltz"
 ANOTHER_FINOS_WALTZ = "another-finos-waltz"
 OPENLDAP = "openldap"
@@ -39,7 +38,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
     resources = {
-        "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
+        "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
 
     async with ops_test.fast_forward():
@@ -170,31 +169,11 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
         assert "waltz_standby" not in cfg["databases"].keys()
 
 
-@pytest.mark.skip(reason="Should be ported and moved to the new relation tests")
-async def test_relation_with_indico(ops_test: OpsTest):
-    """Test the relation with Indico charm."""
-    logger.info("Deploying indico")
-    await ops_test.model.deploy("indico", channel="stable")
-    await ops_test.model.deploy("redis-k8s", channel="edge", application_name="redis-broker")
-    await ops_test.model.deploy("redis-k8s", channel="edge", application_name="redis-cache")
-    await asyncio.gather(
-        ops_test.model.relate("redis-broker", "indico"),
-        ops_test.model.relate("redis-cache", "indico"),
-    )
-    await ops_test.model.add_relation(f"{PGB}:db", "indico:db")
-
-    # Wait for model to stabilise
-    await ops_test.model.wait_for_idle(
-        apps=["indico"],
-        status="waiting",
-        raise_on_blocked=False,
-        timeout=1000,
-    )
-    unit = ops_test.model.units.get("indico/0")
-    await ops_test.model.block_until(
-        lambda: unit.workload_status_message == "Waiting for database availability",
-        timeout=1000,
-    )
+async def test_extensions_blocking(ops_test: OpsTest) -> None:
+    """Test the relation blocks with extensions."""
+    logger.info("Deploying test app")
+    await ops_test.model.deploy(CLIENT_APP_NAME)
+    await ops_test.model.add_relation(f"{PGB}:db", f"{CLIENT_APP_NAME}:db")
 
     logger.info("Wait for PGB to block due to extensions")
     await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)
@@ -202,16 +181,16 @@ async def test_relation_with_indico(ops_test: OpsTest):
         ops_test.model.applications[PGB].units[0].workload_status_message
         == EXTENSIONS_BLOCKING_MESSAGE
     )
-    await ops_test.model.applications[PGB].destroy_relation(f"{PGB}:db", "indico:db")
+    await ops_test.model.applications[PGB].destroy_relation(f"{PGB}:db", f"{CLIENT_APP_NAME}:db")
     await ops_test.model.wait_for_idle(apps=[PGB], status="active", idle_period=15)
 
     logger.info("Rerelate with extensions enabled")
     config = {"plugin_pg_trgm_enable": "True", "plugin_unaccent_enable": "True"}
     await ops_test.model.applications[PG].set_config(config)
     await ops_test.model.wait_for_idle(apps=[PG], status="active", idle_period=15)
-    await ops_test.model.relate(f"{PGB}:db", "indico:db")
+    await ops_test.model.relate(f"{PGB}:db", f"{CLIENT_APP_NAME}:db")
     await ops_test.model.wait_for_idle(
-        apps=[PG, PGB, "indico"],
+        apps=[PG, PGB, CLIENT_APP_NAME],
         status="active",
         raise_on_blocked=False,
         timeout=3000,

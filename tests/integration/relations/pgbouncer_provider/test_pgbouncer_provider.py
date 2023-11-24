@@ -4,17 +4,18 @@
 import asyncio
 import json
 import logging
-from pathlib import Path
 
 import psycopg2
 import pytest
-import yaml
 from pytest_operator.plugin import OpsTest
 
 from constants import BACKEND_RELATION_NAME
 
 from ...helpers.helpers import (
     CHARM_SERIES,
+    PG,
+    PGB,
+    PGB_METADATA,
     get_app_relation_databag,
     get_backend_relation,
     get_backend_user_pass,
@@ -40,12 +41,9 @@ logger = logging.getLogger(__name__)
 CLIENT_APP_NAME = "postgresql-test-app"
 SECONDARY_CLIENT_APP_NAME = "secondary-application"
 DATA_INTEGRATOR_APP_NAME = "data-integrator"
-PG = "postgresql-k8s"
-PGB_METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB_RESOURCES = {
     "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"]
 }
-PGB = "pgbouncer-k8s"
 APP_NAMES = [CLIENT_APP_NAME, PG, PGB]
 FIRST_DATABASE_RELATION_NAME = "first-database"
 SECOND_DATABASE_RELATION_NAME = "second-database"
@@ -466,6 +464,42 @@ async def test_relation_with_data_integrator(ops_test: OpsTest):
     await ops_test.model.add_relation(f"{PGB}:database", DATA_INTEGRATOR_APP_NAME)
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(status="active")
+
+
+async def test_indico_datatabase(ops_test: OpsTest) -> None:
+    """Tests deploying and relating to the Indico charm."""
+    async with ops_test.fast_forward(fast_interval="30s"):
+        await ops_test.model.deploy(
+            "indico",
+            channel="stable",
+            application_name="indico",
+            num_units=1,
+        )
+        await ops_test.model.deploy("redis-k8s", channel="stable", application_name="redis-broker")
+        await ops_test.model.deploy("redis-k8s", channel="stable", application_name="redis-cache")
+        await asyncio.gather(
+            ops_test.model.relate("redis-broker", "indico:redis-broker"),
+            ops_test.model.relate("redis-cache", "indico:redis-cache"),
+        )
+
+        # Wait for model to stabilise
+        await ops_test.model.wait_for_idle(
+            apps=["indico"],
+            status="waiting",
+            timeout=1000,
+        )
+
+        # Verify that the charm doesn't block when the extensions are enabled.
+        logger.info("Verifying that the charm doesn't block when the extensions are enabled")
+        config = {"plugin_pg_trgm_enable": "True", "plugin_unaccent_enable": "True"}
+        await ops_test.model.applications[PG].set_config(config)
+        await ops_test.model.wait_for_idle(apps=[PG], status="active")
+        await ops_test.model.relate(PGB, "indico")
+        await ops_test.model.wait_for_idle(
+            apps=[PG, PGB, "indico"],
+            status="active",
+            timeout=2000,
+        )
 
 
 async def test_connection_is_possible_after_pod_deletion(ops_test: OpsTest) -> None:
