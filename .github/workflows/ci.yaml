@@ -64,7 +64,7 @@ jobs:
           - legacy-client-relation-integration
           - upgrade-integration
         agent-versions: 
-          - "2.9.45"  # renovate: latest juju 2
+          - "2.9.46"  # renovate: latest juju 2
           - "3.1.6"  # renovate: latest juju 3
     name: ${{ matrix.tox-environments }} | ${{ matrix.agent-versions }}
     needs:
