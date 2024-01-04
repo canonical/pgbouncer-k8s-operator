@@ -6,3 +6,5 @@ build/
 __pycache__/
 *.py[cod]
 *.log
+requirements.txt
+requirements-last-build.txt
