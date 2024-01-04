@@ -30,6 +30,7 @@ FIRST_DATABASE_RELATION_NAME = "first-database"
 APPLICATION_FIRST_DBNAME = "postgresql_test_app_first_database"
 
 
+@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
 async def test_in_place_upgrade(ops_test: OpsTest, pgb_charm):
     """Test basic functionality of database relation interface."""

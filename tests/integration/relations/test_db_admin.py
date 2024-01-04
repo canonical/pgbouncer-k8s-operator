@@ -5,6 +5,7 @@ import asyncio
 import logging
 from pathlib import Path
 
+import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
@@ -30,6 +31,7 @@ PGB = METADATA["name"]
 PG = "postgresql-k8s"
 
 
+@pytest.mark.group(1)
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
     # Build, deploy, and relate charms.
     resources = {

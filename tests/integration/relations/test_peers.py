@@ -25,6 +25,7 @@ RELATION = "backend-database"
 FINOS_WALTZ = "finos-waltz"
 
 
+@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
 # TODO order marks aren't behaving
 async def test_deploy_at_scale(ops_test, pgb_charm):
@@ -46,6 +47,7 @@ async def test_deploy_at_scale(ops_test, pgb_charm):
         ),
 
 
+@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
 async def test_scaled_relations(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -87,6 +89,7 @@ async def test_scaled_relations(ops_test: OpsTest):
         )
 
 
+@pytest.mark.group(1)
 async def test_scaling(ops_test: OpsTest):
     """Test data is replicated to new units after a scale up."""
     # Ensure the initial number of units in the application.
@@ -110,6 +113,7 @@ async def test_scaling(ops_test: OpsTest):
         )
 
 
+@pytest.mark.group(1)
 async def test_exit_relations(ops_test: OpsTest):
     """Test that we can exit relations with multiple units without breaking anything."""
     async with ops_test.fast_forward():
