@@ -51,7 +51,7 @@ jobs:
         juju:
           - agent: 2.9.46
             libjuju: ^2
-          - agent: 3.1.7
+          - agent: 3.1.6
     name: Integration test charm | ${{ matrix.juju.agent }}
     needs:
       - lint
