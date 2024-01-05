@@ -99,7 +99,7 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
             f"{PGB}:db-admin",
             DISCOURSE_APP_NAME,
         )
-        wait_for_relation_joined_between(ops_test, PGB, SECOND_DISCOURSE_APP_NAME)
+        wait_for_relation_joined_between(ops_test, PGB, DISCOURSE_APP_NAME)
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, DISCOURSE_APP_NAME, REDIS_APP_NAME],
             status="active",
