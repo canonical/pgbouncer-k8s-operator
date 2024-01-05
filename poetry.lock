@@ -1508,13 +1508,13 @@ testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "no
 
 [[package]]
 name = "pytest-asyncio"
-version = "0.23.3"
+version = "0.21.1"
 description = "Pytest support for asyncio"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.7"
 files = [
-    {file = "pytest-asyncio-0.23.3.tar.gz", hash = "sha256:af313ce900a62fbe2b1aed18e37ad757f1ef9940c6b6a88e2954de38d6b1fb9f"},
-    {file = "pytest_asyncio-0.23.3-py3-none-any.whl", hash = "sha256:37a9d912e8338ee7b4a3e917381d1c95bfc8682048cb0fbc35baba316ec1faba"},
+    {file = "pytest-asyncio-0.21.1.tar.gz", hash = "sha256:40a7eae6dded22c7b604986855ea48400ab15b069ae38116e8c01238e9eeb64d"},
+    {file = "pytest_asyncio-0.21.1-py3-none-any.whl", hash = "sha256:8666c1c8ac02631d7c51ba282e0c69a8a452b211ffedf2599099845da5c5c37b"},
 ]
 
 [package.dependencies]
@@ -1522,7 +1522,7 @@ pytest = ">=7.0.0"
 
 [package.extras]
 docs = ["sphinx (>=5.3)", "sphinx-rtd-theme (>=1.0)"]
-testing = ["coverage (>=6.2)", "hypothesis (>=5.7.1)"]
+testing = ["coverage (>=6.2)", "flaky (>=3.5.0)", "hypothesis (>=5.7.1)", "mypy (>=0.931)", "pytest-trio (>=0.7.0)"]
 
 [[package]]
 name = "pytest-github-secrets"
@@ -1542,13 +1542,13 @@ subdirectory = "python/pytest_plugins/github_secrets"
 
 [[package]]
 name = "pytest-operator"
-version = "0.31.0"
+version = "0.31.1"
 description = "Fixtures for Operators"
 optional = false
 python-versions = "*"
 files = [
-    {file = "pytest-operator-0.31.0.tar.gz", hash = "sha256:c12baf4e690d1dbba92369e4fd567f1dfc1dff5b7c955797e495e49b0671451d"},
-    {file = "pytest_operator-0.31.0-py3-none-any.whl", hash = "sha256:afa47f1278e53eca3fbed80e777735df069da8987f5b941f86ac510e10d3aece"},
+    {file = "pytest-operator-0.31.1.tar.gz", hash = "sha256:83a5c5a2ec781eeea97e678b777cf3469e4502fc07ff8b1b8b0f9b160cff4d32"},
+    {file = "pytest_operator-0.31.1-py3-none-any.whl", hash = "sha256:103fd6a2dfe66c7d8f317359ca0f10bd9b3a8483581d9351e5e96aff1d4e8349"},
 ]
 
 [package.dependencies]
@@ -1556,7 +1556,7 @@ ipdb = "*"
 jinja2 = "*"
 juju = "*"
 pytest = "*"
-pytest-asyncio = "*"
+pytest-asyncio = "<0.23"
 pyyaml = "*"
 
 [[package]]
@@ -2216,4 +2216,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "2165297a5174010c3f678810ee4c273a790e31e717025dd9ab70b0947df55880"
+content-hash = "fd16ed669cbabf1b1535908945562f4e4c22a3bdeb299d4800f8139acae04bc5"
