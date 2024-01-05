@@ -62,14 +62,14 @@ psycopg2-binary = "^2.9.9"
 optional = true
 
 [tool.poetry.group.integration.dependencies]
-lightkube = "^0.15.0"
+lightkube = "*"
 pytest = "^7.4.4"
 pytest-github-secrets = {git = "https://github.com/canonical/data-platform-workflows", tag = "v8.0.0", subdirectory = "python/pytest_plugins/github_secrets"}
 pytest-operator = "^0.31.1"
 pytest-operator-cache = {git = "https://github.com/canonical/data-platform-workflows", tag = "v8.0.0", subdirectory = "python/pytest_plugins/pytest_operator_cache"}
 pytest-operator-groups = {git = "https://github.com/canonical/data-platform-workflows", tag = "v8.0.0", subdirectory = "python/pytest_plugins/pytest_operator_groups"}
 juju = "^3.2.0.1"
-tenacity = "^8.2.3"
+tenacity = "*"
 psycopg2-binary = "^2.9.9"
 
 [build-system]
