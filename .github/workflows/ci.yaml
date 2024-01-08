@@ -48,7 +48,7 @@ jobs:
 
   build:
     name: Build charms
-    uses: canonical/data-platform-workflows/.github/workflows/build_charms_with_cache.yaml@v2
+    uses: canonical/data-platform-workflows/.github/workflows/build_charms_with_cache.yaml@v9
 
   integration-test:
     strategy:
@@ -91,7 +91,7 @@ jobs:
           bootstrap-options: "--agent-version ${{ matrix.agent-versions }}"
           juju-channel: "${{ env.channel }}"
       - name: Download packed charm(s)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ needs.build.outputs.artifact-name }}
       - name: Select tests
