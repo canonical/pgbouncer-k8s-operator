@@ -36,6 +36,7 @@ jobs:
       - name: Generate requirements
         run: |
           tox run -e pack-wrapper
+          mv requirements-last-build.txt requirements.txt
       - name: Check libs
         uses: canonical/charming-actions/check-libraries@2.4.0
         with:
