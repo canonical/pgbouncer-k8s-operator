@@ -22,7 +22,8 @@ poetry-core = "^1.8.1"
 lightkube = "^0.15.0"
 lightkube-models = "^1.29.0.6"
 pydantic = "^1.10.13"
-# psycopg2 = "^2.9.5" # Injected in charmcraft.yaml
+psycopg2-binary = "^2.9.9"
+psycopg-binary = "^3.1.17"
 
 [tool.poetry.group.charm-libs.dependencies]
 # data_platform_libs/v0/data_interfaces.py
