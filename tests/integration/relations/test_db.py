@@ -34,6 +34,7 @@ OPENLDAP = "openldap"
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.group(1)
 async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
@@ -169,6 +170,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
         assert "waltz_standby" not in cfg["databases"].keys()
 
 
+@pytest.mark.group(1)
 async def test_extensions_blocking(ops_test: OpsTest) -> None:
     """Test the relation blocks with extensions."""
     logger.info("Deploying test app")
@@ -197,6 +199,7 @@ async def test_extensions_blocking(ops_test: OpsTest) -> None:
     )
 
 
+@pytest.mark.group(1)
 @pytest.mark.unstable
 async def test_relation_with_openldap(ops_test: OpsTest):
     """Test the relation with OpenLDAP charm."""

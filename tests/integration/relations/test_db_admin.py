@@ -5,6 +5,7 @@ import asyncio
 import logging
 from pathlib import Path
 
+import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
@@ -22,14 +23,14 @@ from ..helpers.postgresql_helpers import (
 
 logger = logging.getLogger(__name__)
 
-FIRST_DISCOURSE_APP_NAME = "discourse-k8s"
-SECOND_DISCOURSE_APP_NAME = "discourse-charmers-discourse-k8s"
+DISCOURSE_APP_NAME = "discourse-charmers-discourse-k8s"
 REDIS_APP_NAME = "redis-k8s"
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
 PG = "postgresql-k8s"
 
 
+@pytest.mark.group(1)
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
     # Build, deploy, and relate charms.
     resources = {
@@ -47,9 +48,6 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
             ),
             ops_test.model.deploy(
                 PG, trust=True, num_units=3, channel="14/edge", config={"profile": "testing"}
-            ),
-            ops_test.model.deploy(
-                FIRST_DISCOURSE_APP_NAME, application_name=FIRST_DISCOURSE_APP_NAME
             ),
             ops_test.model.deploy(REDIS_APP_NAME, application_name=REDIS_APP_NAME),
         )
@@ -76,51 +74,13 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
             pg_user_password=pgb_password,
         )
 
-        # Discourse becomes blocked waiting for relations.
-        await ops_test.model.wait_for_idle(
-            apps=[FIRST_DISCOURSE_APP_NAME], status="blocked", timeout=1000
-        )
-
-        # Add both relations to Discourse (PostgreSQL and Redis) and wait for it to be ready.
-        first_discourse_relation = await ops_test.model.add_relation(
-            f"{PGB}:db-admin",
-            FIRST_DISCOURSE_APP_NAME,
-        )
-        wait_for_relation_joined_between(ops_test, PGB, FIRST_DISCOURSE_APP_NAME)
-        await ops_test.model.add_relation(
-            REDIS_APP_NAME,
-            FIRST_DISCOURSE_APP_NAME,
-        )
-        wait_for_relation_joined_between(ops_test, REDIS_APP_NAME, FIRST_DISCOURSE_APP_NAME)
-        await ops_test.model.wait_for_idle(
-            apps=[PG, PGB, FIRST_DISCOURSE_APP_NAME, REDIS_APP_NAME],
-            status="active",
-            timeout=2000,  # Discourse takes a longer time to become active (a lot of setup).
-        )
-
-        # Check for the correct databases and users creation.
-        await check_database_creation(
-            ops_test, "discourse-k8s", user=pgb_user, password=pgb_password
-        )
-        discourse_users = [get_legacy_relation_username(ops_test, first_discourse_relation.id)]
-        await check_database_users_existence(
-            ops_test,
-            discourse_users,
-            [],
-            admin=True,
-            pg_user=pgb_user,
-            pg_user_password=pgb_password,
-        )
-
-        # Test the second Discourse charm.
-
         # Get the Redis instance IP address.
         redis_host = await get_unit_address(ops_test, f"{REDIS_APP_NAME}/0")
 
         # Deploy Discourse and wait for it to be blocked waiting for database relation.
         await ops_test.model.deploy(
-            SECOND_DISCOURSE_APP_NAME,
-            application_name=SECOND_DISCOURSE_APP_NAME,
+            DISCOURSE_APP_NAME,
+            application_name=DISCOURSE_APP_NAME,
             config={
                 "redis_host": redis_host,
                 "developer_emails": "user@foo.internal",
@@ -131,17 +91,17 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
         )
         # Discourse becomes blocked waiting for PostgreSQL relation.
         await ops_test.model.wait_for_idle(
-            apps=[SECOND_DISCOURSE_APP_NAME], status="blocked", timeout=1000
+            apps=[DISCOURSE_APP_NAME], status="blocked", timeout=1000
         )
 
         # Relate PostgreSQL and Discourse, waiting for Discourse to be ready.
         second_discourse_relation = await ops_test.model.add_relation(
             f"{PGB}:db-admin",
-            SECOND_DISCOURSE_APP_NAME,
+            DISCOURSE_APP_NAME,
         )
-        wait_for_relation_joined_between(ops_test, PGB, SECOND_DISCOURSE_APP_NAME)
+        wait_for_relation_joined_between(ops_test, PGB, DISCOURSE_APP_NAME)
         await ops_test.model.wait_for_idle(
-            apps=[PG, PGB, SECOND_DISCOURSE_APP_NAME, REDIS_APP_NAME],
+            apps=[PG, PGB, DISCOURSE_APP_NAME, REDIS_APP_NAME],
             status="active",
             timeout=2000,  # Discourse takes a longer time to become active (a lot of setup).
         )

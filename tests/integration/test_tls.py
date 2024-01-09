@@ -22,6 +22,7 @@ APPLICATION_UNITS = 2
 DATABASE_UNITS = 3
 
 
+@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
     """Build and deploy pgbouncer charm."""
@@ -96,6 +97,7 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
             await ops_test.model.wait_for_idle(status="active", timeout=1200)
 
 
+@pytest.mark.group(1)
 async def test_scale_up_pgb(ops_test: OpsTest) -> None:
     """Scale up PGB while TLS is enabled.
 
@@ -111,6 +113,7 @@ async def test_scale_up_pgb(ops_test: OpsTest) -> None:
     assert len(ops_test.model.applications[pgb_app].units) == num_units + 1
 
 
+@pytest.mark.group(1)
 async def test_scale_down_pgb(ops_test: OpsTest) -> None:
     """Scale down PGB while TLS is enabled.
 
@@ -126,6 +129,7 @@ async def test_scale_down_pgb(ops_test: OpsTest) -> None:
     assert len(ops_test.model.applications[pgb_app].units) == num_units - 1
 
 
+@pytest.mark.group(1)
 async def test_remove_tls(ops_test: OpsTest) -> None:
     """Removes the TLS relation and check through the test app the it is off.
 
@@ -139,6 +143,7 @@ async def test_remove_tls(ops_test: OpsTest) -> None:
     assert await check_tls(ops_test, client_relation.id, False)
 
 
+@pytest.mark.group(1)
 async def test_add_tls(ops_test: OpsTest) -> None:
     """Rejoins the TLS relation and check through the test app the it is on.
 
@@ -150,6 +155,7 @@ async def test_add_tls(ops_test: OpsTest) -> None:
     assert await check_tls(ops_test, client_relation.id, True)
 
 
+@pytest.mark.group(1)
 async def test_mattermost_db(ops_test: OpsTest) -> None:
     """Deploy Mattermost to test the 'db' relation.
 

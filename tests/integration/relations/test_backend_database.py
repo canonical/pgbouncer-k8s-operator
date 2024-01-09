@@ -37,6 +37,7 @@ TLS = "tls-certificates-operator"
 RELATION = "backend-database"
 
 
+@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
 async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -104,6 +105,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
         logging.info(cfg.render())
 
 
+@pytest.mark.group(1)
 async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
         # Relate PgBouncer to PostgreSQL.
@@ -146,6 +148,7 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
         ), "TLS is not being used on connections to PostgreSQL"
 
 
+@pytest.mark.group(1)
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
         await scale_application(ops_test, PGB, 3)

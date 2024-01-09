@@ -3,14 +3,15 @@
 
 import asyncio
 import logging
-from pathlib import Path
 
 import pytest
-import yaml
 from pytest_operator.plugin import OpsTest
 
 from ..helpers.helpers import (
     CHARM_SERIES,
+    PG,
+    PGB,
+    PGB_METADATA,
     scale_application,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
@@ -18,19 +19,16 @@ from ..helpers.helpers import (
 
 logger = logging.getLogger(__name__)
 
-METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
-PGB = METADATA["name"]
-PG = "postgresql-k8s"
 RELATION = "backend-database"
 FINOS_WALTZ = "finos-waltz"
 
 
+@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
-# TODO order marks aren't behaving
 async def test_deploy_at_scale(ops_test, pgb_charm):
     # Build, deploy, and relate charms.
     resources = {
-        "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
+        "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
     async with ops_test.fast_forward():
         await ops_test.model.deploy(
@@ -46,6 +44,7 @@ async def test_deploy_at_scale(ops_test, pgb_charm):
         ),
 
 
+@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
 async def test_scaled_relations(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -87,6 +86,7 @@ async def test_scaled_relations(ops_test: OpsTest):
         )
 
 
+@pytest.mark.group(1)
 async def test_scaling(ops_test: OpsTest):
     """Test data is replicated to new units after a scale up."""
     # Ensure the initial number of units in the application.
@@ -110,6 +110,7 @@ async def test_scaling(ops_test: OpsTest):
         )
 
 
+@pytest.mark.group(1)
 async def test_exit_relations(ops_test: OpsTest):
     """Test that we can exit relations with multiple units without breaking anything."""
     async with ops_test.fast_forward():
