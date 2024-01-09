@@ -19,8 +19,6 @@ jobs:
     name: Tests
     uses: ./.github/workflows/ci.yaml
     secrets: inherit
-    permissions:
-      actions: write  # Needed to manage GitHub Actions cache
 
   release-libraries:
     name: Release libraries
