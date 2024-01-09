@@ -56,7 +56,7 @@ Integration tests for individual functionality can be found in tox.ini
 Build the charm in this git repository using:
 
 ```bash
-charmcraft pack
+tox run -e build-dev
 ```
 
 This will generate a file called something like `pgbouncer-k8s_ubuntu-22.04-amd64.charm`. The `22.04` component of this filename relates to the **ubuntu version used in the build container used to build the charm**, designated by the `build-on` parameter in `./metadata.yaml`. It does not relate to the ubuntu version of the charm.
