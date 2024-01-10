@@ -22,7 +22,7 @@ poetry-core = "^1.8.1"
 lightkube = "^0.15.0"
 lightkube-models = "^1.29.0.6"
 pydantic = "^1.10.13"
-psycopg2-binary = "^2.9.9"
+psycopg2 = {extras = ["binary"], version = "^2.9.9"}
 psycopg = {extras = ["binary"], version = "^3.1.17"}
 
 [tool.poetry.group.charm-libs.dependencies]
@@ -57,7 +57,7 @@ coverage = {extras = ["toml"], version = "^7.4.0"}
 pytest = "^7.4.4"
 pytest-asyncio = "*"
 jinja2 = "^3.1.2"
-psycopg2-binary = "^2.9.9"
+psycopg2 = {extras = ["binary"], version = "^2.9.9"}
 
 [tool.poetry.group.integration]
 optional = true
@@ -71,7 +71,7 @@ pytest-operator-cache = {git = "https://github.com/canonical/data-platform-workf
 pytest-operator-groups = {git = "https://github.com/canonical/data-platform-workflows", tag = "v9.0.2", subdirectory = "python/pytest_plugins/pytest_operator_groups"}
 juju = "^3.2.0.1"
 tenacity = "*"
-psycopg2-binary = "^2.9.9"
+psycopg2 = {extras = ["binary"], version = "^2.9.9"}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
