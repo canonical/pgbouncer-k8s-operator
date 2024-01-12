@@ -2,13 +2,13 @@
 # See LICENSE file for licensing details.
 
 import unittest
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
-from constants import BACKEND_RELATION_NAME
+from constants import BACKEND_RELATION_NAME, PEER_RELATION_NAME
 from relations.peers import AUTH_FILE_DATABAG_KEY, CFG_FILE_DATABAG_KEY
 
 
@@ -25,20 +25,15 @@ class TestPeers(unittest.TestCase):
         self.app = self.charm.app.name
         self.unit = self.charm.unit.name
 
+        self.rel_id = self.harness.add_relation(PEER_RELATION_NAME, self.charm.app.name)
+
     def tearDown(self):
         self.togggle_monitoring_patch.stop()
 
-    @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
-    @patch("relations.peers.Peers.unit_databag", new_callable=PropertyMock)
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.render_auth_file")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
-    def test_on_peers_changed(
-        self, reload_pgbouncer, render_auth_file, render_pgb_config, unit_databag, app_databag
-    ):
-        databag = {}
-        app_databag.return_value = databag
-
+    def test_on_peers_changed(self, reload_pgbouncer, render_auth_file, render_pgb_config):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         # We don't want to write anything if we're the leader
         self.harness.set_leader(True)
@@ -55,7 +50,12 @@ class TestPeers(unittest.TestCase):
         reload_pgbouncer.assert_not_called()
 
         # Assert that we're reloading pgb even if we're only changing one thing
-        databag[CFG_FILE_DATABAG_KEY] = PgbConfig(DEFAULT_CONFIG).render()
+        with self.harness.hooks_disabled():
+            self.harness.update_relation_data(
+                self.rel_id,
+                self.charm.app.name,
+                {CFG_FILE_DATABAG_KEY: PgbConfig(DEFAULT_CONFIG).render()},
+            )
         self.charm.peers._on_changed(MagicMock())
         render_pgb_config.assert_called_once()
         render_auth_file.assert_not_called()
@@ -63,7 +63,10 @@ class TestPeers(unittest.TestCase):
         render_pgb_config.reset_mock()
         reload_pgbouncer.reset_mock()
 
-        databag[AUTH_FILE_DATABAG_KEY] = '"user" "pass"'
+        with self.harness.hooks_disabled():
+            self.harness.update_relation_data(
+                self.rel_id, self.charm.app.name, {AUTH_FILE_DATABAG_KEY: '"user" "pass"'}
+            )
         self.charm.peers._on_changed(MagicMock())
         render_pgb_config.assert_called_once()
         render_auth_file.assert_called_once()
