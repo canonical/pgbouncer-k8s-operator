@@ -296,3 +296,50 @@ class TestCharm(unittest.TestCase):
         get_tls_files.assert_called_once_with()
         update_config.assert_not_called()
         push_file.assert_not_called()
+
+    def test_get_secret(self):
+        # App level changes require leader privileges
+        with self.harness.hooks_disabled():
+            self.harness.set_leader()
+        # Test application scope.
+        assert self.charm.get_secret("app", "password") is None
+        self.harness.update_relation_data(
+            self.rel_id, self.charm.app.name, {"password": "test-password"}
+        )
+        assert self.charm.get_secret("app", "password") == "test-password"
+
+        # Unit level changes don't require leader privileges
+        self.harness.set_leader(False)
+        # Test unit scope.
+        assert self.charm.get_secret("unit", "password") is None
+        self.harness.update_relation_data(
+            self.rel_id, self.charm.unit.name, {"password": "test-password"}
+        )
+        assert self.charm.get_secret("unit", "password") == "test-password"
+
+    def test_set_secret(self):
+        with self.harness.hooks_disabled():
+            self.harness.set_leader()
+
+        # Test application scope.
+        assert "password" not in self.harness.get_relation_data(self.rel_id, self.charm.app.name)
+        self.charm.set_secret("app", "password", "test-password")
+        assert (
+            self.harness.get_relation_data(self.rel_id, self.charm.app.name)["password"]
+            == "test-password"
+        )
+        self.charm.set_secret("app", "password", None)
+        assert "password" not in self.harness.get_relation_data(self.rel_id, self.charm.app.name)
+
+        # Test unit scope.
+        assert "password" not in self.harness.get_relation_data(self.rel_id, self.charm.unit.name)
+        self.charm.set_secret("unit", "password", "test-password")
+        assert (
+            self.harness.get_relation_data(self.rel_id, self.charm.unit.name)["password"]
+            == "test-password"
+        )
+        self.charm.set_secret("unit", "password", None)
+        assert "password" not in self.harness.get_relation_data(self.rel_id, self.charm.unit.name)
+
+        with self.assertRaises(RuntimeError):
+            self.charm.set_secret("test", "password", "test")
