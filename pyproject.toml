@@ -22,8 +22,8 @@ poetry-core = "^1.8.1"
 lightkube = "^0.15.0"
 lightkube-models = "^1.29.0.6"
 pydantic = "^1.10.13"
-psycopg2-binary = "^2.9.9"
-psycopg = {extras = ["binary"], version = "^3.1.17"}
+psycopg2 = "^2.9.9"
+psycopg = {extras = ["c"], version = "^3.1.17"}
 
 [tool.poetry.group.charm-libs.dependencies]
 # data_platform_libs/v0/data_interfaces.py
@@ -58,6 +58,10 @@ pytest = "^7.4.4"
 pytest-asyncio = "*"
 jinja2 = "^3.1.2"
 psycopg2-binary = "^2.9.9"
+lightkube = "*"
+cryptography = "*"
+jsonschema = "*"
+tenacity = "*"
 
 [tool.poetry.group.integration]
 optional = true

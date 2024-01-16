@@ -26,6 +26,10 @@ parts:
       - rustc
       - cargo
       - pkg-config
-    charm-binary-python-packages:
-      - psycopg2-binary
-      - psycopg-binary
+      - libpq-dev
+  libpq:
+    plugin: dump
+    source: http://archive.ubuntu.com/ubuntu/pool/main/p/postgresql-14/libpq5_14.10-0ubuntu0.22.04.1_amd64.deb
+    source-type: deb
+    organize:
+      'usr/lib/*-linux-gnu/libpq.so*': binlibs/
