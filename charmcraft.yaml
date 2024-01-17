@@ -28,10 +28,12 @@ parts:
       - pkg-config
       - libpq-dev
   libpq:
+    build-packages:
+      - libpq-dev
     plugin: dump
-    source: http://archive.ubuntu.com/ubuntu/pool/main/p/postgresql-14/libpq5_14.10-0ubuntu0.22.04.1_amd64.deb
-    source-type: deb
+    source: /usr/lib/
+    source-type: local
     prime:
-      - "-usr/share/*"
+      - binlibs/
     organize:
-      'usr/lib/*-linux-gnu/libpq.so*': binlibs/
+      "*-linux-gnu/libpq.so*": binlibs/
