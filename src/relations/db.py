@@ -225,7 +225,7 @@ class DbProvides(Object):
             return
 
         database = remote_app_databag.get("database")
-        user = self._generate_username(join_event)
+        user = self._generate_username(join_event.relation)
 
         if self.charm.unit.is_leader():
             if not (password := self.charm.get_secret(APP_SCOPE, user)):
@@ -445,10 +445,10 @@ class DbProvides(Object):
         for databag in self.get_databags(relation):
             databag.update(updates)
 
-    def _generate_username(self, event):
+    def _generate_username(self, relation):
         """Generates a unique username for this relation."""
         app_name = self.charm.app.name
-        relation_id = event.relation.id
+        relation_id = relation.id
         model_name = self.model.name
         return f"{app_name}_user_{relation_id}_{model_name}".replace("-", "_")
 

@@ -8,7 +8,7 @@
 import logging
 import os
 import socket
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import lightkube
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
@@ -738,32 +738,50 @@ class PgBouncerK8sCharm(CharmBase):
 
         pgb_container.remove_path(path)
 
-    def _get_relation_databases(self) -> List[str]:
+    def _get_relation_databases(self) -> List[Dict[str, str]]:
+        """Collects a list of databases, relation type and admin requirements."""
         databases = []
         for relation in self.model.relations.get("db", []):
             database = self.legacy_db_relation.get_databags(relation)[0].get("database")
             if database:
-                databases.append(database)
+                databases.append(
+                    {
+                        "name": database,
+                        "legacy": True,
+                    }
+                )
 
         for relation in self.model.relations.get("db-admin", []):
             database = self.legacy_db_admin_relation.get_databags(relation)[0].get("database")
             if database:
-                databases.append(database)
+                databases.append(
+                    {
+                        "name": database,
+                        "legacy": True,
+                        "admin": self.legacy_db_admin_relation._generate_username(relation),
+                    }
+                )
 
         for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
             database = self.client_relation.get_database(relation)
             if database:
-                databases.append(database)
+                databases.append(
+                    {
+                        "name": database,
+                        "legacy": False,
+                    }
+                )
         return databases
 
-    def get_databases(self) -> Dict[str, Dict[str, str]]:
-        """Generate list of related databases."""
+    def _get_relation_config(self) -> Tuple[Dict[str, Dict[str, str]], List[str]]:
+        """Generate pgb config for databases and admin users."""
         if not self.backend.relation or not (databases := self._get_relation_databases()):
-            return {}
+            return ({}, set())
 
         # In postgres, "endpoints" will only ever have one value. Other databases using the library
         # can have more, but that's not planned for the postgres charm.
-        postgres_endpoint = self.backend.postgres_databag.get("endpoints")
+        if not (postgres_endpoint := self.backend.postgres_databag.get("endpoints")):
+            return ({}, set())
         host, port = postgres_endpoint.split(":")
 
         read_only_endpoints = self.backend.get_read_only_endpoints()
@@ -773,22 +791,29 @@ class PgBouncerK8sCharm(CharmBase):
                 r_port = host.split(":")[1]
                 break
 
-        result = {}
+        pgb_dbs = {}
+        pgb_admins = []
         for database in databases:
-            result[database] = {
+            pgb_dbs[database["name"]] = {
                 "host": host,
                 "dbname": database,
                 "port": port,
                 "auth_user": self.backend.auth_user,
             }
             if r_hosts:
-                result[f"{database}_readonly"] = {
+                pgb_dbs[f"{database['name']}_readonly"] = {
                     "host": r_hosts,
                     "dbname": database,
                     "port": r_port,
                     "auth_user": self.backend.auth_user,
                 }
-        return result
+                if database["legacy"]:
+                    pgb_dbs[f"{database['name']}_standby"] = pgb_dbs[
+                        f"{database['name']}_readonly"
+                    ]
+            if "admin" in database:
+                pgb_admins.append(pgb_admins)
+        return (pgb_dbs, pgb_admins)
 
     def render_pgb_config(self, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
@@ -801,7 +826,6 @@ class PgBouncerK8sCharm(CharmBase):
         most convenient to have a single source of truth for the whole config.
 
         Args:
-            config: PgbConfig object containing pgbouncer config.
             reload_pgbouncer: A boolean defining whether or not to reload the pgbouncer application
                 in the container. When config files are updated, pgbouncer must be restarted for
                 the changes to take effect. However, these config updates can be done in batches,
@@ -810,7 +834,7 @@ class PgBouncerK8sCharm(CharmBase):
         perm = 0o400
         with open("templates/pgb_config.j2", "r") as file:
             template = Template(file.read())
-            databases = self.get_databases()
+            databases, admins = self._generate_username()
             enable_tls = all(self.tls.get_tls_files())
             for service in self._services:
                 self.push_file(
@@ -826,6 +850,7 @@ class PgBouncerK8sCharm(CharmBase):
                         stats_user=self.backend.stats_user,
                         auth_query=self.backend.auth_query,
                         auth_file=AUTH_FILE_PATH,
+                        admins=",".join(admins),
                         enable_tls=enable_tls,
                         key_file=f"{PGB_DIR}/{TLS_KEY_FILE}",
                         ca_file=f"{PGB_DIR}/{TLS_CA_FILE}",
