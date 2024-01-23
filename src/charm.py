@@ -794,25 +794,24 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_dbs = {}
         pgb_admins = []
         for database in databases:
-            pgb_dbs[database["name"]] = {
+            name = database["name"]
+            pgb_dbs[name] = {
                 "host": host,
-                "dbname": database,
+                "dbname": name,
                 "port": port,
                 "auth_user": self.backend.auth_user,
             }
             if r_hosts:
-                pgb_dbs[f"{database['name']}_readonly"] = {
+                pgb_dbs[f"{name}_readonly"] = {
                     "host": r_hosts,
-                    "dbname": database,
+                    "dbname": name,
                     "port": r_port,
                     "auth_user": self.backend.auth_user,
                 }
                 if database["legacy"]:
-                    pgb_dbs[f"{database['name']}_standby"] = pgb_dbs[
-                        f"{database['name']}_readonly"
-                    ]
+                    pgb_dbs[f"{name}_standby"] = pgb_dbs[f"{name}_readonly"]
             if "admin" in database:
-                pgb_admins.append(pgb_admins)
+                pgb_admins.append(database["admin"])
         return (pgb_dbs, pgb_admins)
 
     def render_pgb_config(self, reload_pgbouncer=False) -> None:
@@ -834,7 +833,7 @@ class PgBouncerK8sCharm(CharmBase):
         perm = 0o400
         with open("templates/pgb_config.j2", "r") as file:
             template = Template(file.read())
-            databases, admins = self._generate_username()
+            databases, admins = self._get_relation_config()
             enable_tls = all(self.tls.get_tls_files())
             for service in self._services:
                 self.push_file(

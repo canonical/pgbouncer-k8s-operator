@@ -18,40 +18,6 @@ Example:
 │ application data │ ╭──────────────────────────────────────────────────────────────────────────────────────────────╮ │
 │                  │ │                                                                                              │ │
 │                  │ │  auth_file        "pgbouncer_auth_relation_id_3" "md5aad46d9afbcc8c8248d254d567b577c1"       │ │
-│                  │ │  cfg_file                                                                                    │ │
-│                  │ │                   application_first_database =                                               │ │
-│                  │ │                   host=postgresql-k8s-primary.test-pgbouncer-provider-gnrj.svc.cluster.loc…  │ │
-│                  │ │                   dbname=application_first_database port=5432                                │ │
-│                  │ │                   auth_user=pgbouncer_auth_relation_id_3                                     │ │
-│                  │ │                   application_first_database_readonly =                                      │ │
-│                  │ │                   host=postgresql-k8s-replicas.test-pgbouncer-provider-gnrj.svc.cluster.lo…  │ │
-│                  │ │                   dbname=application_first_database port=5432                                │ │
-│                  │ │                   auth_user=pgbouncer_auth_relation_id_3                                     │ │
-│                  │ │                                                                                              │ │
-│                  │ │                                                                                              │ │
-│                  │ │                   listen_addr = *                                                            │ │
-│                  │ │                   listen_port = 6432                                                         │ │
-│                  │ │                   logfile = /var/lib/postgresql/pgbouncer/pgbouncer.log                      │ │
-│                  │ │                   pidfile = /var/lib/postgresql/pgbouncer/pgbouncer.pid                      │ │
-│                  │ │                   admin_users = relation_id_3                                                │ │
-│                  │ │                   stats_users =                                                              │ │
-│                  │ │                   auth_type = md5                                                            │ │
-│                  │ │                   user = postgres                                                            │ │
-│                  │ │                   max_client_conn = 10000                                                    │ │
-│                  │ │                   ignore_startup_parameters = extra_float_digits                             │ │
-│                  │ │                   server_tls_sslmode = prefer                                                │ │
-│                  │ │                   so_reuseport = 1                                                           │ │
-│                  │ │                   unix_socket_dir = /var/lib/postgresql/pgbouncer                            │ │
-│                  │ │                   pool_mode = session                                                        │ │
-│                  │ │                   max_db_connections = 100                                                   │ │
-│                  │ │                   default_pool_size = 13                                                     │ │
-│                  │ │                   min_pool_size = 7                                                          │ │
-│                  │ │                   reserve_pool_size = 7                                                      │ │
-│                  │ │                   auth_query = SELECT username, password FROM                                │ │
-│                  │ │                   pgbouncer_auth_relation_id_3.get_auth($1)                                  │ │
-│                  │ │                   auth_file = /var/lib/postgresql/pgbouncer/userlist.txt                     │ │
-│                  │ │                                                                                              │ │
-│                  │ │                                                                                              │ │
 │                  │ │  leader_hostname  pgbouncer-k8s-0.pgbouncer-k8s-endpoints.test-pgbouncer-provider-gnrj.svc…  │ │
 │                  │ │  relation_id_4    Z4OtFCe6r5HG6mk1XuR6LkwZ                                                   │ │
 │                  │ ╰──────────────────────────────────────────────────────────────────────────────────────────────╯ │
@@ -72,7 +38,6 @@ from ops.pebble import ChangeError, ConnectionError
 
 from constants import APP_SCOPE, AUTH_FILE_DATABAG_KEY, PEER_RELATION_NAME
 
-CFG_FILE_DATABAG_KEY = "cfg_file"
 ADDRESS_KEY = "private-address"
 LEADER_ADDRESS_KEY = "leader_hostname"
 
