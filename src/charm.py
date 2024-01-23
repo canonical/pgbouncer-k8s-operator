@@ -672,18 +672,6 @@ class PgBouncerK8sCharm(CharmBase):
 
     def update_config(self) -> bool:
         """Updates PgBouncer config file based on the existence of the TLS files."""
-        # TODO fix tls
-        # if all(self.tls.get_tls_files()):
-        #    config["pgbouncer"]["client_tls_key_file"] = f"{PGB_DIR}/{TLS_KEY_FILE}"
-        #    config["pgbouncer"]["client_tls_ca_file"] = f"{PGB_DIR}/{TLS_CA_FILE}"
-        #    config["pgbouncer"]["client_tls_cert_file"] = f"{PGB_DIR}/{TLS_CERT_FILE}"
-        #    config["pgbouncer"]["client_tls_sslmode"] = "prefer"
-        # else:
-        #    # cleanup tls keys if present
-        #    config["pgbouncer"].pop("client_tls_key_file", None)
-        #    config["pgbouncer"].pop("client_tls_cert_file", None)
-        #    config["pgbouncer"].pop("client_tls_ca_file", None)
-        #    config["pgbouncer"].pop("client_tls_sslmode", None)
         self.render_pgb_config(True)
 
         return True
@@ -823,6 +811,7 @@ class PgBouncerK8sCharm(CharmBase):
         with open("templates/pgb_config.j2", "r") as file:
             template = Template(file.read())
             databases = self.get_databases()
+            enable_tls = all(self.tls.get_tls_files())
             for service in self._services:
                 self.push_file(
                     service["ini_path"],
@@ -837,6 +826,10 @@ class PgBouncerK8sCharm(CharmBase):
                         stats_user=self.backend.stats_user,
                         auth_query=self.backend.auth_query,
                         auth_file=AUTH_FILE_PATH,
+                        enable_tls=enable_tls,
+                        key_file=f"{PGB_DIR}/{TLS_KEY_FILE}",
+                        ca_file=f"{PGB_DIR}/{TLS_CA_FILE}",
+                        cert_file=f"{PGB_DIR}/{TLS_CERT_FILE}",
                     ),
                     perm,
                 )

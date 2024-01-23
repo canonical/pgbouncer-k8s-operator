@@ -24,3 +24,9 @@ min_pool_size = 2
 reserve_pool_size = 2
 auth_query = {{ auth_query }}
 auth_file = {{ auth_file }}
+{% if enable_tls %}
+client_tls_key_file = {{ key_file }}
+client_tls_ca_file = {{ ca_file }}
+client_tls_cert_file = {{ cert_file }}
+client_tls_sslmode = prefer
+{% endif %}

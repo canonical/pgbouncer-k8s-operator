@@ -65,7 +65,6 @@ Example:
 import logging
 from typing import Optional, Set
 
-from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, HookEvent, RelationCreatedEvent
 from ops.framework import Object
 from ops.model import MaintenanceStatus, Relation, Unit
@@ -225,29 +224,6 @@ class Peers(Object):
         """Updates leader hostname in peer databag to match this unit if it's the leader."""
         if self.charm.unit.is_leader():
             self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
-
-    def update_cfg(self, cfg: PgbConfig) -> None:
-        """Writes cfg to app databag if leader.
-
-        Called every time a unit tries to write config. This creates a peer-relation-changed event,
-        meaning that the follower units will receive config updates when the leader adds them.
-
-        Args:
-            cfg: the config file to be sent to the databag. Will be rendered to a string
-            automatically.
-        """
-        if not self.charm.unit.is_leader() or not self.relation:
-            return
-
-        self.charm.set_secret(APP_SCOPE, CFG_FILE_DATABAG_KEY, cfg.render())
-        logger.debug("updated config file in peer databag")
-
-    def get_cfg(self) -> PgbConfig:
-        """Retrieves the pgbouncer config from the peer databag."""
-        if cfg := self.charm.get_secret(APP_SCOPE, CFG_FILE_DATABAG_KEY):
-            return PgbConfig(cfg)
-        else:
-            return None
 
     def update_auth_file(self, auth_file: str) -> None:
         """Writes auth_file to app databag if leader."""

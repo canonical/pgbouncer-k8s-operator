@@ -177,16 +177,11 @@ class PgBouncerProvider(Object):
             self.charm.peers.unit_databag.pop(self._depart_flag(event.relation), None)
             return
 
-        cfg = self.charm.read_pgb_config()
-        database = self.get_database(event.relation)
-        cfg["databases"].pop(database, None)
-        cfg["databases"].pop(f"{database}_readonly", None)
-        user = f"relation_id_{event.relation.id}"
-        cfg.remove_user(user)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm.render_pgb_config(reload_pgbouncer=True)
 
         # Delete the user.
         try:
+            user = f"relation_id_{event.relation.id}"
             self.charm.backend.postgres.delete_user(user)
         except PostgreSQLDeleteUserError as e:
             logger.exception(e)
