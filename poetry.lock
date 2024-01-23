@@ -1663,8 +1663,8 @@ develop = false
 [package.source]
 type = "git"
 url = "https://github.com/canonical/data-platform-workflows"
-reference = "v9.3.1"
-resolved_reference = "f4f3ed58baa025f4a92f945985c42f1cace063b9"
+reference = "v9.3.2"
+resolved_reference = "c27ffebbdadfa13eb09881adddc36ee5a107eae3"
 subdirectory = "python/pytest_plugins/github_secrets"
 
 [[package]]
@@ -1701,8 +1701,8 @@ pyyaml = "*"
 [package.source]
 type = "git"
 url = "https://github.com/canonical/data-platform-workflows"
-reference = "v9.3.1"
-resolved_reference = "f4f3ed58baa025f4a92f945985c42f1cace063b9"
+reference = "v9.3.2"
+resolved_reference = "c27ffebbdadfa13eb09881adddc36ee5a107eae3"
 subdirectory = "python/pytest_plugins/pytest_operator_cache"
 
 [[package]]
@@ -1720,8 +1720,8 @@ pytest = "*"
 [package.source]
 type = "git"
 url = "https://github.com/canonical/data-platform-workflows"
-reference = "v9.3.1"
-resolved_reference = "f4f3ed58baa025f4a92f945985c42f1cace063b9"
+reference = "v9.3.2"
+resolved_reference = "c27ffebbdadfa13eb09881adddc36ee5a107eae3"
 subdirectory = "python/pytest_plugins/pytest_operator_groups"
 
 [[package]]
@@ -2355,4 +2355,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "e0fa187a1e13b0ae11136885c00b42c7a93f4e9d2d0d2a3e1e217589c2fc020f"
+content-hash = "b9f25b3b449950880e6a145457e7566edf4d964b1f6da5978d977ef1d21822bb"
