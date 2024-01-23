@@ -1,6 +1,6 @@
 [databases]
-{% for database in databases %}
-{{ database.database }} = host={{ database.host }} dbname={{ database.dbname }} port={{ database.port }} auth_user={{ database.auth_user }}
+{% for name, database in databases.items() %}
+{{ name }} = host={{ database.host }} dbname={{ database.dbname }} port={{ database.port }} auth_user={{ database.auth_user }}
 {% endfor %}
 
 [pgbouncer]

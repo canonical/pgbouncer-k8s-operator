@@ -18,7 +18,7 @@ from tenacity import (
     wait_fixed,
 )
 
-from constants import AUTH_FILE_PATH, INI_PATH
+from constants import AUTH_FILE_PATH, PGB_DIR
 
 CHARM_SERIES = "jammy"
 CLIENT_APP_NAME = "postgresql-test-app"
@@ -113,7 +113,7 @@ async def get_backend_user_pass(ops_test, backend_relation):
 
 async def get_cfg(ops_test: OpsTest, unit_name: str) -> pgb.PgbConfig:
     """Gets pgbouncer config from pgbouncer container."""
-    cat = await cat_file_from_unit(ops_test, INI_PATH, unit_name)
+    cat = await cat_file_from_unit(ops_test, f"{PGB_DIR}/instance_0/pgbouncer.ini", unit_name)
     return pgb.PgbConfig(cat)
 
 

@@ -753,12 +753,12 @@ class PgBouncerK8sCharm(CharmBase):
     def _get_relation_databases(self) -> List[str]:
         databases = []
         for relation in self.model.relations.get("db", []):
-            database = self.get_databags(relation)[0].get("database")
+            database = self.legacy_db_relation.get_databags(relation)[0].get("database")
             if database:
                 databases.append(database)
 
         for relation in self.model.relations.get("db-admin", []):
-            database = self.get_databags(relation)[0].get("database")
+            database = self.legacy_db_admin_relation.get_databags(relation)[0].get("database")
             if database:
                 databases.append(database)
 
@@ -768,10 +768,10 @@ class PgBouncerK8sCharm(CharmBase):
                 databases.append(database)
         return databases
 
-    def get_databases(self) -> List[Dict[str, str]]:
+    def get_databases(self) -> Dict[str, Dict[str, str]]:
         """Generate list of related databases."""
         if not self.backend.relation or not (databases := self._get_relation_databases()):
-            return []
+            return {}
 
         # In postgres, "endpoints" will only ever have one value. Other databases using the library
         # can have more, but that's not planned for the postgres charm.
@@ -785,27 +785,21 @@ class PgBouncerK8sCharm(CharmBase):
                 r_port = host.split(":")[1]
                 break
 
-        result = []
+        result = {}
         for database in databases:
-            result.append(
-                {
-                    "database": database,
-                    "host": host,
+            result[database] = {
+                "host": host,
+                "dbname": database,
+                "port": port,
+                "auth_user": self.backend.auth_user,
+            }
+            if r_hosts:
+                result[f"{database}_readonly"] = {
+                    "host": r_hosts,
                     "dbname": database,
-                    "port": port,
+                    "port": r_port,
                     "auth_user": self.backend.auth_user,
                 }
-            )
-            if r_hosts:
-                result.append(
-                    {
-                        "database": f"{database}_readonly",
-                        "host": r_hosts,
-                        "dbname": database,
-                        "port": r_port,
-                        "auth_user": self.backend.auth_user,
-                    }
-                )
         return result
 
     def render_pgb_config(self, reload_pgbouncer=False) -> None:
@@ -904,13 +898,7 @@ class PgBouncerK8sCharm(CharmBase):
         if not self.backend.postgres or not self.unit.is_leader():
             return
 
-        for relation in self.model.relations.get("db", []):
-            self.legacy_db_relation.update_postgres_endpoints(relation, reload_pgbouncer=False)
-
-        for relation in self.model.relations.get("db-admin", []):
-            self.legacy_db_admin_relation.update_postgres_endpoints(
-                relation, reload_pgbouncer=False
-            )
+        self.render_pgb_config(False)
 
         if reload_pgbouncer:
             self.reload_pgbouncer()

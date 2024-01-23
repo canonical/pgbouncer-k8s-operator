@@ -214,15 +214,6 @@ class DbProvides(Object):
             join_event.defer()
             return
 
-        try:
-            cfg = self.charm.read_pgb_config()
-        except FileNotFoundError:
-            wait_str = "waiting for pgbouncer to start"
-            logger.warning(wait_str)
-            self.charm.unit.status = WaitingStatus(wait_str)
-            join_event.defer()
-            return
-
         logger.info(f"Setting up {self.relation_name} relation")
         logger.warning(
             f"DEPRECATION WARNING - {self.relation_name} is a legacy relation, and will be deprecated in a future release. "
@@ -281,10 +272,7 @@ class DbProvides(Object):
         # set up auth function
         self.charm.backend.initialise_auth_function([database])
 
-        # Create user in pgbouncer config
-        cfg = self.charm.read_pgb_config()
-        cfg.add_user(user, admin=self.admin)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm.render_pgb_config(reload_pgbouncer=True)
 
     def _on_relation_changed(self, change_event: RelationChangedEvent):
         """Handle db-relation-changed event.
@@ -321,7 +309,7 @@ class DbProvides(Object):
             return
 
         self.update_connection_info(change_event.relation, self.charm.config["listen_port"])
-        self.update_postgres_endpoints(change_event.relation, reload_pgbouncer=True)
+        self.charm.render_pgb_config(reload_pgbouncer=True)
         self.update_databags(
             change_event.relation,
             {
@@ -372,45 +360,6 @@ class DbProvides(Object):
             connection_updates["standbys"] = pgb.parse_dict_to_kv_string(standby_dbconnstr)
 
         self.update_databags(relation, connection_updates)
-
-    def update_postgres_endpoints(self, relation: Relation, reload_pgbouncer: bool = False):
-        """Updates postgres replicas."""
-        database = self.get_databags(relation)[0].get("database")
-        if database is None:
-            logger.warning("relation not fully initialised - skipping postgres endpoint update")
-            return
-
-        # In postgres, "endpoints" will only ever have one value. Other databases using the library
-        # can have more, but that's not planned for the postgres charm.
-        postgres_endpoint = self.charm.backend.postgres_databag.get("endpoints")
-
-        cfg = self.charm.read_pgb_config()
-        cfg["databases"][database] = {
-            "host": postgres_endpoint.split(":")[0],
-            "dbname": database,
-            "port": postgres_endpoint.split(":")[1],
-            "auth_user": self.charm.backend.auth_user,
-        }
-
-        # Only one backend endpoint available in legacy relations
-        r_endpoints = self.charm.backend.get_read_only_endpoints()
-        if len(r_endpoints) > 0:
-            read_only_endpoint = next(iter(r_endpoints))
-            cfg["databases"][f"{database}_standby"] = {
-                "host": read_only_endpoint.split(":")[0],
-                "dbname": database,
-                "port": read_only_endpoint.split(":")[1],
-                "auth_user": self.charm.backend.auth_user,
-            }
-        else:
-            cfg["databases"].pop(f"{database}_standby", None)
-
-        if cfg == pgb.PgbConfig(self.charm.read_pgb_config()):
-            # No change in config, so no need to redo anything.
-            return
-
-        # Write config data to charm filesystem
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
 
     def _on_relation_departed(self, departed_event: RelationDepartedEvent):
         """Handle db-relation-departed event.
@@ -477,27 +426,10 @@ class DbProvides(Object):
                 self._check_for_blocking_relations(broken_event.relation.id)
             return
 
-        cfg = self.charm.read_pgb_config()
-
         # check database can be deleted from pgb config, and if so, delete it. Database is kept on
         # postgres application because we don't want to delete all user data with one command.
-        delete_db = True
-        for relname in ["db", "db-admin"]:
-            for relation in self.model.relations.get(relname, []):
-                if relation.id == broken_event.relation.id:
-                    continue
-                if relation.data[self.charm.unit].get("database") == database:
-                    # There's multiple applications using this database, so don't remove it until
-                    # we can guarantee this is the last one.
-                    delete_db = False
-                    break
-        if delete_db:
-            cfg["databases"].pop(database, None)
-            cfg["databases"].pop(f"{database}_standby", None)
-            self.charm.backend.remove_auth_function([database])
 
-        cfg.remove_user(user)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
+        self.charm.render_pgb_config(reload_pgbouncer=True)
         if self.charm.unit.is_leader():
             self.charm.peers.remove_user(user)
             self.charm.backend.postgres.delete_user(user)
