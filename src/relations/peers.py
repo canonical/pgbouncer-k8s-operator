@@ -171,15 +171,6 @@ class Peers(Object):
         if not self.charm.unit.is_leader():
             return
 
-        try:
-            cfg = self.charm.read_pgb_config()
-            self.update_cfg(cfg)
-        except FileNotFoundError:
-            # If there's no config, the charm start hook hasn't fired yet, so defer until it's
-            # available.
-            event.defer()
-            return
-
         if self.charm.backend.ready:
             # The backend relation creates the userlist, so only upload userlist to databag if
             # backend relation is initialised. If not, it'll be added when that relation first
@@ -201,25 +192,13 @@ class Peers(Object):
         self.charm.update_client_connection_info()
 
         if self.charm.unit.is_leader():
-            try:
-                cfg = self.charm.read_pgb_config()
-            except FileNotFoundError:
-                # If there's no config, the charm start hook hasn't fired yet, so defer until it's
-                # available.
-                event.defer()
-                return
-
-            self.update_cfg(cfg)
             self.update_leader()
             return
-
-        if cfg := self.get_cfg():
-            self.charm.render_pgb_config(PgbConfig(cfg))
 
         if auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
             self.charm.render_auth_file(auth_file)
 
-        if cfg is not None or auth_file is not None:
+        if auth_file is not None:
             try:
                 # raises an error if this is fired before on_pebble_ready.
                 self.charm.reload_pgbouncer()

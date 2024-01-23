@@ -61,7 +61,6 @@ from ops.pebble import ConnectionError
 from constants import (
     APP_SCOPE,
     AUTH_FILE_DATABAG_KEY,
-    AUTH_FILE_PATH,
     BACKEND_RELATION_NAME,
     MONITORING_PASSWORD_KEY,
     PG,
@@ -199,21 +198,10 @@ class BackendDatabaseRequires(Object):
             return False
 
         try:
-            cfg = self.charm.read_pgb_config()
-        except FileNotFoundError:
-            # Not ready, no config
-            return False
-
-        # Check we can authenticate
-        if "auth_query" not in cfg["pgbouncer"].keys():
-            # Not ready, backend relation not initialised
-            return False
-        try:
-            cfg = self.charm.read_auth_file()
+            self.charm.read_auth_file()
         except FileNotFoundError:
             # Not ready, no auth file to authenticate our pgb user
             return False
-
         # Check we can actually connect to backend database by running a command.
         try:
             with self.postgres._connect_to_database(PGB) as conn, conn.cursor() as cursor:
@@ -270,13 +258,7 @@ class BackendDatabaseRequires(Object):
         self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, auth_file)
         self.charm.render_auth_file(auth_file)
 
-        cfg = self.charm.read_pgb_config()
-        cfg.add_user(user=self.stats_user, stats=True)
-        cfg["pgbouncer"][
-            "auth_query"
-        ] = f"SELECT username, password FROM {self.auth_user}.get_auth($1)"
-        cfg["pgbouncer"]["auth_file"] = AUTH_FILE_PATH
-        self.charm.render_pgb_config(cfg)
+        self.charm.render_pgb_config()
 
         self.charm.update_postgres_endpoints(reload_pgbouncer=True)
         self.charm.toggle_monitoring_layer(True)
@@ -359,17 +341,7 @@ class BackendDatabaseRequires(Object):
             logging.info("exiting relation-broken hook - nothing to do")
             return
 
-        try:
-            cfg = self.charm.read_pgb_config()
-        except FileNotFoundError:
-            event.defer()
-            return
-
-        cfg.remove_user(self.postgres.user)
-        cfg["pgbouncer"].pop("auth_user", None)
-        cfg["pgbouncer"].pop("auth_query", None)
-        cfg["pgbouncer"].pop("auth_file", None)
-        self.charm.render_pgb_config(cfg)
+        self.charm.render_pgb_config()
 
         self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
         self.charm.peers.update_auth_file(auth_file=None)

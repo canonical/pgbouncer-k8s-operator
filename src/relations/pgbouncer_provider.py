@@ -38,7 +38,6 @@ from charms.data_platform_libs.v0.data_interfaces import (
     DatabaseRequestedEvent,
 )
 from charms.pgbouncer_k8s.v0 import pgb
-from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from charms.postgresql_k8s.v0.postgresql import (
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
@@ -52,7 +51,6 @@ from ops.model import (
     Application,
     BlockedStatus,
     MaintenanceStatus,
-    Relation,
     WaitingStatus,
 )
 
@@ -145,11 +143,7 @@ class PgBouncerProvider(Object):
         self.charm.peers.add_user(user, password)
 
         # Update pgbouncer config
-        cfg = self.charm.read_pgb_config()
-        cfg.add_user(user, admin=True if "SUPERUSER" in extra_user_roles else False)
-        self.update_postgres_endpoints(
-            event.relation, cfg=cfg, render_cfg=True, reload_pgbouncer=True
-        )
+        self.charm.render_pgb_config(reload_pgbouncer=True)
 
         # Share the credentials and updated connection info with the client application.
         self.database_provides.set_credentials(rel_id, user, password)
@@ -219,57 +213,6 @@ class PgBouncerProvider(Object):
             )
 
         self.charm.unit.status = ActiveStatus()
-
-    def update_postgres_endpoints(
-        self,
-        relation: Relation,
-        cfg: PgbConfig = None,
-        render_cfg: bool = True,
-        reload_pgbouncer: bool = False,
-    ):
-        """Updates postgres replicas.
-
-        TODO rename
-        """
-        database = self.get_database(relation)
-        if database is None:
-            logger.warning("relation not fully initialised - skipping postgres endpoint update")
-            return
-
-        if not cfg:
-            cfg = self.charm.read_pgb_config()
-            render_cfg = True
-
-        # In postgres, "endpoints" will only ever have one value. Other databases using the library
-        # can have more, but that's not planned for the postgres charm.
-        postgres_endpoint = self.charm.backend.postgres_databag.get("endpoints")
-        cfg["databases"][database] = {
-            "host": postgres_endpoint.split(":")[0],
-            "dbname": database,
-            "port": postgres_endpoint.split(":")[1],
-            "auth_user": self.charm.backend.auth_user,
-        }
-
-        read_only_endpoints = self.charm.backend.get_read_only_endpoints()
-        if len(read_only_endpoints) > 0:
-            # remove ports from endpoints, and convert to comma-separated list.
-            # NOTE: comma-separated readonly hosts are only valid in pgbouncer v1.17. This will
-            # enable load balancing once the snap is implemented.
-            for ep in read_only_endpoints:
-                break
-            r_hosts = ",".join([host.split(":")[0] for host in read_only_endpoints])
-            cfg["databases"][f"{database}_readonly"] = {
-                "host": r_hosts,
-                "dbname": database,
-                "port": ep.split(":")[1],
-                "auth_user": self.charm.backend.auth_user,
-            }
-        else:
-            cfg["databases"].pop(f"{database}_readonly", None)
-
-        # Write config data to charm filesystem
-        if render_cfg:
-            self.charm.render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
 
     def update_read_only_endpoints(self, event: DatabaseRequestedEvent = None) -> None:
         """Set the read-only endpoint only if there are replicas."""

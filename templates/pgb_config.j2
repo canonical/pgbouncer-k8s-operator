@@ -1,7 +1,6 @@
 [databases]
 {% for database in databases %}
-{{ database.dbname }} = host={{ database.host }} dbname={{ database.dbname }} port={{ database.port }} auth_user={{ database.auth_user }}
-{{ database.dbname }}_readonly = host={{ database.host }} dbname={{ database.dbname }} port={{ database.port }} auth_user={{ database.auth_user }}
+{{ database.database }} = host={{ database.host }} dbname={{ database.dbname }} port={{ database.port }} auth_user={{ database.auth_user }}
 {% endfor %}
 
 [pgbouncer]

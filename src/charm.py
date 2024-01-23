@@ -13,8 +13,6 @@ from typing import Dict, List, Optional
 import lightkube
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
-from charms.pgbouncer_k8s.v0 import pgb
-from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from jinja2 import Template
@@ -32,7 +30,6 @@ from constants import (
     AUTH_FILE_PATH,
     CLIENT_RELATION_NAME,
     EXTENSIONS_BLOCKING_MESSAGE,
-    INI_PATH,
     METRICS_PORT,
     MONITORING_PASSWORD_KEY,
     PEER_RELATION_NAME,
@@ -187,22 +184,6 @@ class PgBouncerK8sCharm(CharmBase):
 
     def _init_config(self, container) -> bool:
         """Helper method to initialise the configuration file and directories."""
-        try:
-            # Try and get pgb config. If it only exists in the peer databag, pull it and write it
-            # to filesystem.
-            config = self.read_pgb_config()
-        except FileNotFoundError:
-            config = self.peers.get_cfg()
-
-        if not config:
-            if self.unit.is_leader():
-                # If there's no config in the container or the peer databag, the leader creates a
-                # default
-                config = PgbConfig(pgb.DEFAULT_CONFIG)
-            else:
-                # follower units wait for the leader to define a config.
-                return False
-
         # Initialise filesystem - _push_file()'s make_dirs option sets the permissions for those
         # dirs to root, so we build them ourselves to control permissions.
         for service in self._services:
@@ -221,7 +202,7 @@ class PgBouncerK8sCharm(CharmBase):
                     permissions=0o700,
                 )
 
-        self.render_pgb_config(config)
+        self.render_pgb_config()
         # Render the logrotate config
         with open("templates/logrotate.j2", "r") as file:
             template = Template(file.read())
@@ -283,37 +264,19 @@ class PgBouncerK8sCharm(CharmBase):
             - If reloading the pgbouncer pebble service throws a ConnectionError (Implying that
               the pebble service is not yet ready)
         """
-        if not self.unit.is_leader():
-            return
+        # This emits relation-changed events to every client relation, so only do it when
+        # necessary
+        self.update_client_connection_info(self.config["listen_port"])
 
-        try:
-            config = self.read_pgb_config()
-        except FileNotFoundError as err:
-            config_err_msg = f"Unable to read config, error: {err}"
-            logger.warning(config_err_msg)
-            self.unit.status = WaitingStatus(config_err_msg)
-            event.defer()
-            return
-
-        config["pgbouncer"]["pool_mode"] = self.config["pool_mode"]
-        config.set_max_db_connection_derivatives(
-            self.config["max_db_connections"],
-            self._cores,
-        )
-        if config["pgbouncer"]["listen_port"] != self.config["listen_port"]:
-            # This emits relation-changed events to every client relation, so only do it when
-            # necessary
-            self.update_client_connection_info(self.config["listen_port"])
-            old_port = config["pgbouncer"]["listen_port"]
-            config["pgbouncer"]["listen_port"] = self.config["listen_port"]
-
+        if self.unit.is_leader():
             if JujuVersion.from_environ().supports_open_port_on_k8s:
-                self.unit.close_port("tcp", old_port)
+                # TODO save the port to the peer data
+                # self.unit.close_port("tcp", old_port)
                 self.unit.open_port("tcp", self.config["listen_port"])
             else:
                 self._patch_port()
 
-        self.render_pgb_config(config)
+        self.render_pgb_config()
         try:
             if self.check_pgb_running():
                 self.reload_pgbouncer()
@@ -709,24 +672,19 @@ class PgBouncerK8sCharm(CharmBase):
 
     def update_config(self) -> bool:
         """Updates PgBouncer config file based on the existence of the TLS files."""
-        try:
-            config = self.read_pgb_config()
-        except FileNotFoundError as err:
-            logger.warning(f"update_config: Unable to read config, error: {err}")
-            return False
-
-        if all(self.tls.get_tls_files()):
-            config["pgbouncer"]["client_tls_key_file"] = f"{PGB_DIR}/{TLS_KEY_FILE}"
-            config["pgbouncer"]["client_tls_ca_file"] = f"{PGB_DIR}/{TLS_CA_FILE}"
-            config["pgbouncer"]["client_tls_cert_file"] = f"{PGB_DIR}/{TLS_CERT_FILE}"
-            config["pgbouncer"]["client_tls_sslmode"] = "prefer"
-        else:
-            # cleanup tls keys if present
-            config["pgbouncer"].pop("client_tls_key_file", None)
-            config["pgbouncer"].pop("client_tls_cert_file", None)
-            config["pgbouncer"].pop("client_tls_ca_file", None)
-            config["pgbouncer"].pop("client_tls_sslmode", None)
-        self.render_pgb_config(config, True)
+        # TODO fix tls
+        # if all(self.tls.get_tls_files()):
+        #    config["pgbouncer"]["client_tls_key_file"] = f"{PGB_DIR}/{TLS_KEY_FILE}"
+        #    config["pgbouncer"]["client_tls_ca_file"] = f"{PGB_DIR}/{TLS_CA_FILE}"
+        #    config["pgbouncer"]["client_tls_cert_file"] = f"{PGB_DIR}/{TLS_CERT_FILE}"
+        #    config["pgbouncer"]["client_tls_sslmode"] = "prefer"
+        # else:
+        #    # cleanup tls keys if present
+        #    config["pgbouncer"].pop("client_tls_key_file", None)
+        #    config["pgbouncer"].pop("client_tls_cert_file", None)
+        #    config["pgbouncer"].pop("client_tls_ca_file", None)
+        #    config["pgbouncer"].pop("client_tls_sslmode", None)
+        self.render_pgb_config(True)
 
         return True
 
@@ -792,26 +750,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         pgb_container.remove_path(path)
 
-    def read_pgb_config(self) -> PgbConfig:
-        """Get config object from pgbouncer.ini file stored on container.
-
-        Returns:
-            PgbConfig object containing pgbouncer config.
-
-        Raises:
-            FileNotFoundError when the config can't be found at INI_PATH, such as if this is called
-            before the charm has started.
-        """
-        return pgb.PgbConfig(self._read_file(INI_PATH))
-
-    def get_databases(self) -> List[Dict[str, str]]:
-        """Generate list of related databases."""
-        if not self.backend.relation:
-            return []
-
-        # In postgres, "endpoints" will only ever have one value. Other databases using the library
-        # can have more, but that's not planned for the postgres charm.
-        postgres_endpoint = self.backend.postgres_databag.get("endpoints")
+    def _get_relation_databases(self) -> List[str]:
         databases = []
         for relation in self.model.relations.get("db", []):
             database = self.get_databags(relation)[0].get("database")
@@ -827,20 +766,49 @@ class PgBouncerK8sCharm(CharmBase):
             database = self.client_relation.get_database(relation)
             if database:
                 databases.append(database)
+        return databases
+
+    def get_databases(self) -> List[Dict[str, str]]:
+        """Generate list of related databases."""
+        if not self.backend.relation or not (databases := self._get_relation_databases()):
+            return []
+
+        # In postgres, "endpoints" will only ever have one value. Other databases using the library
+        # can have more, but that's not planned for the postgres charm.
+        postgres_endpoint = self.backend.postgres_databag.get("endpoints")
+        host, port = postgres_endpoint.split(":")
+
+        read_only_endpoints = self.backend.get_read_only_endpoints()
+        r_hosts = ",".join([host.split(":")[0] for host in read_only_endpoints])
+        if r_hosts:
+            for host in read_only_endpoints:
+                r_port = host.split(":")[1]
+                break
 
         result = []
         for database in databases:
             result.append(
                 {
-                    "host": postgres_endpoint.split(":")[0],
+                    "database": database,
+                    "host": host,
                     "dbname": database,
-                    "port": postgres_endpoint.split(":")[1],
+                    "port": port,
                     "auth_user": self.backend.auth_user,
                 }
             )
+            if r_hosts:
+                result.append(
+                    {
+                        "database": f"{database}_readonly",
+                        "host": r_hosts,
+                        "dbname": database,
+                        "port": r_port,
+                        "auth_user": self.backend.auth_user,
+                    }
+                )
         return result
 
-    def render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
+    def render_pgb_config(self, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
         Every time the config is rendered, `peers.update_cfg` is called. This updates the config in
@@ -863,7 +831,7 @@ class PgBouncerK8sCharm(CharmBase):
             databases = self.get_databases()
             for service in self._services:
                 self.push_file(
-                    f"{service['ini_path']}.j2",
+                    service["ini_path"],
                     template.render(
                         databases=databases,
                         socket_dir=service["dir"],
@@ -878,23 +846,6 @@ class PgBouncerK8sCharm(CharmBase):
                     ),
                     perm,
                 )
-        try:
-            if config == self.read_pgb_config():
-                # Skip updating config if it's exactly the same as the existing config.
-                return
-        except FileNotFoundError:
-            # config doesn't exist on local filesystem, so update it.
-            pass
-
-        self.peers.update_cfg(config)
-
-        for service in self._services:
-            s_config = pgb.PgbConfig(config)
-            s_config[PGB]["unix_socket_dir"] = service["dir"]
-            s_config[PGB]["logfile"] = f"{service['log_dir']}/pgbouncer.log"
-            s_config[PGB]["pidfile"] = f"{service['dir']}/pgbouncer.pid"
-            self.push_file(service["ini_path"], s_config.render(), perm)
-        self.push_file(INI_PATH, config.render(), perm)
         logger.info("pushed new pgbouncer.ini config files to pgbouncer container")
 
         if reload_pgbouncer:
@@ -960,9 +911,6 @@ class PgBouncerK8sCharm(CharmBase):
             self.legacy_db_admin_relation.update_postgres_endpoints(
                 relation, reload_pgbouncer=False
             )
-
-        for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
-            self.client_relation.update_postgres_endpoints(relation, reload_pgbouncer=False)
 
         if reload_pgbouncer:
             self.reload_pgbouncer()
