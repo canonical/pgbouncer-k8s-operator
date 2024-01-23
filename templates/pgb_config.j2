@@ -1,0 +1,27 @@
+[databases]
+{% for database in databases %}
+{{ database.dbname }} = host={{ database.host }} dbname={{ database.dbname }} port={{ database.port }} auth_user={{ database.auth_user }}
+{{ database.dbname }}_readonly = host={{ database.host }} dbname={{ database.dbname }} port={{ database.port }} auth_user={{ database.auth_user }}
+{% endfor %}
+
+[pgbouncer]
+listen_addr = *
+listen_port = {{ listen_port }}
+logfile = {{ log_file }}
+pidfile = {{ pid_file }}
+admin_users = 
+stats_users = {{ stats_user }}
+auth_type = md5
+user = postgres
+max_client_conn = 10000
+ignore_startup_parameters = extra_float_digits,options
+server_tls_sslmode = prefer
+so_reuseport = 1
+unix_socket_dir = {{ socket_dir }}
+pool_mode = {{ pool_mode }}
+max_db_connections = {{ max_db_connections }}
+default_pool_size = 4
+min_pool_size = 2
+reserve_pool_size = 2
+auth_query = {{ auth_query }}
+auth_file = {{ auth_file }}

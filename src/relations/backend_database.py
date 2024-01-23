@@ -38,7 +38,7 @@ Example:
 """
 
 import logging
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 import psycopg2
 from charms.data_platform_libs.v0.data_interfaces import (
@@ -148,7 +148,7 @@ class BackendDatabaseRequires(Object):
         )
 
     @property
-    def auth_user(self):
+    def auth_user(self) -> Optional[str]:
         """Username for auth_user."""
         if not self.relation:
             return None
@@ -159,9 +159,18 @@ class BackendDatabaseRequires(Object):
         return f"pgbouncer_auth_{username}".replace("-", "_")
 
     @property
-    def stats_user(self):
+    def stats_user(self) -> str:
         """Username for stats."""
+        if not self.relation:
+            return ""
         return f"pgbouncer_stats_{self.charm.app.name}".replace("-", "_")
+
+    @property
+    def auth_query(self) -> str:
+        """Generate auth query."""
+        if not self.relation:
+            return ""
+        return f"SELECT username, password FROM {self.auth_user}.get_auth($1)"
 
     @property
     def postgres_databag(self) -> Dict:

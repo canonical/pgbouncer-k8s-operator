@@ -8,7 +8,7 @@
 import logging
 import os
 import socket
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import lightkube
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
@@ -804,6 +804,42 @@ class PgBouncerK8sCharm(CharmBase):
         """
         return pgb.PgbConfig(self._read_file(INI_PATH))
 
+    def get_databases(self) -> List[Dict[str, str]]:
+        """Generate list of related databases."""
+        if not self.backend.relation:
+            return []
+
+        # In postgres, "endpoints" will only ever have one value. Other databases using the library
+        # can have more, but that's not planned for the postgres charm.
+        postgres_endpoint = self.backend.postgres_databag.get("endpoints")
+        databases = []
+        for relation in self.model.relations.get("db", []):
+            database = self.get_databags(relation)[0].get("database")
+            if database:
+                databases.append(database)
+
+        for relation in self.model.relations.get("db-admin", []):
+            database = self.get_databags(relation)[0].get("database")
+            if database:
+                databases.append(database)
+
+        for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
+            database = self.client_relation.get_database(relation)
+            if database:
+                databases.append(database)
+
+        result = []
+        for database in databases:
+            result.append(
+                {
+                    "host": postgres_endpoint.split(":")[0],
+                    "dbname": database,
+                    "port": postgres_endpoint.split(":")[1],
+                    "auth_user": self.backend.auth_user,
+                }
+            )
+        return result
+
     def render_pgb_config(self, config: PgbConfig, reload_pgbouncer=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
@@ -821,6 +857,27 @@ class PgBouncerK8sCharm(CharmBase):
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
         """
+        perm = 0o400
+        with open("templates/pgb_config.j2", "r") as file:
+            template = Template(file.read())
+            databases = self.get_databases()
+            for service in self._services:
+                self.push_file(
+                    f"{service['ini_path']}.j2",
+                    template.render(
+                        databases=databases,
+                        socket_dir=service["dir"],
+                        log_file=f"{service['log_dir']}/pgbouncer.log",
+                        pid_file=f"{service['dir']}/pgbouncer.pid",
+                        listen_port=self.config["listen_port"],
+                        pool_mode=self.config["pool_mode"],
+                        max_db_connections=self.config["max_db_connections"],
+                        stats_user=self.backend.stats_user,
+                        auth_query=self.backend.auth_query,
+                        auth_file=AUTH_FILE_PATH,
+                    ),
+                    perm,
+                )
         try:
             if config == self.read_pgb_config():
                 # Skip updating config if it's exactly the same as the existing config.
@@ -831,7 +888,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         self.peers.update_cfg(config)
 
-        perm = 0o400
         for service in self._services:
             s_config = pgb.PgbConfig(config)
             s_config[PGB]["unix_socket_dir"] = service["dir"]
