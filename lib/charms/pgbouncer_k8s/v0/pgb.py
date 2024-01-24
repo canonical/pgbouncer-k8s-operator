@@ -46,6 +46,7 @@ PGB = "pgbouncer"
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
 INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
 
+
 class PgbConfig(MutableMapping):
     """A mapping that represents the pgbouncer config.
 
