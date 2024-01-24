@@ -142,7 +142,6 @@ class PgBouncerProvider(Object):
 
         self.charm.peers.add_user(user, password)
 
-        # Update pgbouncer config
         self.charm.render_pgb_config(reload_pgbouncer=True)
 
         # Share the credentials and updated connection info with the client application.

@@ -153,20 +153,17 @@ class Peers(Object):
             - If pgbouncer container is unavailable.
         """
         self.unit_databag.update({ADDRESS_KEY: self.charm.unit_pod_hostname})
-        if self.charm.unit.is_leader():
-            self.charm.update_client_connection_info()
         self.charm.render_pgb_config()
 
         if self.charm.unit.is_leader():
             self.update_leader()
-            return
 
         if auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
             self.charm.render_auth_file(auth_file)
 
         try:
             # raises an error if this is fired before on_pebble_ready.
-            self.charm.reload_pgbouncer()
+            self.charm.render_pgb_config(reload_pgbouncer=True)
             self.charm.toggle_monitoring_layer(self.charm.backend.ready)
         except (ConnectionError, ChangeError):
             logger.error(

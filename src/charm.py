@@ -763,34 +763,37 @@ class PgBouncerK8sCharm(CharmBase):
             database = self.client_relation.get_database(relation)
             if database:
                 # TODO new rel admins
-                databases.append(
-                    {
-                        "name": database,
-                        "legacy": False,
-                    }
-                )
+                db_list = database.split(",")
+                for db in db_list:
+                    databases.append(
+                        {
+                            "name": db,
+                            "legacy": False,
+                        }
+                    )
         return databases
 
     def _get_relation_config(self) -> Tuple[Dict[str, Dict[str, str]], List[str]]:
         """Generate pgb config for databases and admin users."""
         if not self.backend.relation or not (databases := self._get_relation_databases()):
-            return ({}, set())
+            return ({}, [])
 
         # In postgres, "endpoints" will only ever have one value. Other databases using the library
         # can have more, but that's not planned for the postgres charm.
         if not (postgres_endpoint := self.backend.postgres_databag.get("endpoints")):
-            return ({}, set())
+            return ({}, [])
         host, port = postgres_endpoint.split(":")
 
         read_only_endpoints = self.backend.get_read_only_endpoints()
-        r_hosts = ",".join([host.split(":")[0] for host in read_only_endpoints])
+        r_hosts = ",".join([r_host.split(":")[0] for r_host in read_only_endpoints])
         if r_hosts:
-            for host in read_only_endpoints:
-                r_port = host.split(":")[1]
+            for r_host in read_only_endpoints:
+                r_port = r_host.split(":")[1]
                 break
 
         pgb_dbs = {}
         pgb_admins = []
+
         for database in databases:
             name = database["name"]
             pgb_dbs[name] = {
@@ -884,7 +887,7 @@ class PgBouncerK8sCharm(CharmBase):
         TODO rename
         """
         # Skip updates if backend.postgres doesn't exist yet.
-        if not self.backend.postgres:
+        if not self.backend.postgres or not self.unit.is_leader():
             return
 
         if not port:
