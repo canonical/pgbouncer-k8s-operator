@@ -426,9 +426,6 @@ class DbProvides(Object):
                 self._check_for_blocking_relations(broken_event.relation.id)
             return
 
-        # check database can be deleted from pgb config, and if so, delete it. Database is kept on
-        # postgres application because we don't want to delete all user data with one command.
-
         self.charm.render_pgb_config(reload_pgbouncer=True)
         if self.charm.unit.is_leader():
             self.charm.peers.remove_user(user)

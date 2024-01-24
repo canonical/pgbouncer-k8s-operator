@@ -154,6 +154,7 @@ class Peers(Object):
         """
         self.unit_databag.update({ADDRESS_KEY: self.charm.unit_pod_hostname})
         self.charm.update_client_connection_info()
+        self.charm.render_pgb_config()
 
         if self.charm.unit.is_leader():
             self.update_leader()

@@ -886,8 +886,6 @@ class PgBouncerK8sCharm(CharmBase):
         # Skip updates if backend.postgres doesn't exist yet.
         if not self.backend.postgres:
             return
-        # if not self.backend.postgres.ready:
-        #     return
 
         if not port:
             port = self.config["listen_port"]

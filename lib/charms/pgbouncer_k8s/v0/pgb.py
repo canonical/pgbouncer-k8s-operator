@@ -38,33 +38,13 @@ LIBID = "113f4a7480c04631bfdf5fe776f760cd"
 LIBAPI = 0
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 8
+LIBPATCH = 9
 
 logger = logging.getLogger(__name__)
 
 PGB = "pgbouncer"
 PGB_DIR = "/var/lib/postgresql/pgbouncer"
 INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
-
-DEFAULT_CONFIG = {
-    "databases": {},
-    "pgbouncer": {
-        "listen_addr": "*",
-        "listen_port": 6432,
-        "logfile": f"{PGB_DIR}/pgbouncer.log",
-        "pidfile": f"{PGB_DIR}/pgbouncer.pid",
-        "admin_users": set(),
-        "stats_users": set(),
-        "auth_type": "md5",
-        "user": "postgres",
-        "max_client_conn": "10000",
-        "ignore_startup_parameters": "extra_float_digits,options",
-        "server_tls_sslmode": "prefer",
-        "so_reuseport": "1",
-        "unix_socket_dir": PGB_DIR,
-    },
-}
-
 
 class PgbConfig(MutableMapping):
     """A mapping that represents the pgbouncer config.
