@@ -163,16 +163,15 @@ class Peers(Object):
         if auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
             self.charm.render_auth_file(auth_file)
 
-        if auth_file is not None:
-            try:
-                # raises an error if this is fired before on_pebble_ready.
-                self.charm.reload_pgbouncer()
-                self.charm.toggle_monitoring_layer(self.charm.backend.ready)
-            except (ConnectionError, ChangeError):
-                logger.error(
-                    "failed to reload pgbouncer - deferring change_event and waiting for pebble."
-                )
-                event.defer()
+        try:
+            # raises an error if this is fired before on_pebble_ready.
+            self.charm.reload_pgbouncer()
+            self.charm.toggle_monitoring_layer(self.charm.backend.ready)
+        except (ConnectionError, ChangeError):
+            logger.error(
+                "failed to reload pgbouncer - deferring change_event and waiting for pebble."
+            )
+            event.defer()
 
     def _on_departed(self, event):
         self.update_leader()
