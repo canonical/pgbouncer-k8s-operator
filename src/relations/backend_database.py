@@ -258,15 +258,13 @@ class BackendDatabaseRequires(Object):
         self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, auth_file)
         self.charm.render_auth_file(auth_file)
 
-        self.charm.render_pgb_config()
-
-        self.charm.update_postgres_endpoints(reload_pgbouncer=True)
+        self.charm.render_pgb_config(reload_pgbouncer=True)
         self.charm.toggle_monitoring_layer(True)
 
         self.charm.unit.status = ActiveStatus("backend-database relation initialised.")
 
     def _on_endpoints_changed(self, _):
-        self.charm.update_postgres_endpoints(reload_pgbouncer=True)
+        self.charm.render_pgb_config(reload_pgbouncer=True)
         self.charm.update_client_connection_info()
 
     def _on_relation_changed(self, _):
@@ -279,7 +277,7 @@ class BackendDatabaseRequires(Object):
             logger.debug("_on_reltion_changed early exit: pebble ready not fired")
             return
 
-        self.charm.update_postgres_endpoints(reload_pgbouncer=True)
+        self.charm.render_pgb_config(reload_pgbouncer=True)
         self.charm.update_client_connection_info()
 
     def _on_relation_departed(self, event: RelationDepartedEvent):
@@ -289,8 +287,8 @@ class BackendDatabaseRequires(Object):
         the postgres relation-broken hook removes the user needed to remove authentication for the
         users we create.
         """
+        self.charm.render_pgb_config(reload_pgbouncer=True)
         self.charm.update_client_connection_info()
-        self.charm.update_postgres_endpoints(reload_pgbouncer=True)
 
         if event.departing_unit == self.charm.unit:
             # This should only occur when the relation is being removed, not on scale-down

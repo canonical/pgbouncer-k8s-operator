@@ -248,9 +248,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         self.unit.set_workload_version(self.version)
 
-        # Update postgres endpoints in config to match the current state of the charm.
-        self.update_postgres_endpoints(reload_pgbouncer=True)
-
         if JujuVersion.from_environ().supports_open_port_on_k8s:
             self.unit.open_port("tcp", self.config["listen_port"])
         else:
@@ -264,11 +261,11 @@ class PgBouncerK8sCharm(CharmBase):
             - If reloading the pgbouncer pebble service throws a ConnectionError (Implying that
               the pebble service is not yet ready)
         """
-        # This emits relation-changed events to every client relation, so only do it when
-        # necessary
-        self.update_client_connection_info(self.config["listen_port"])
-
         if self.unit.is_leader():
+            # This emits relation-changed events to every client relation, so only do it when
+            # necessary
+            self.update_client_connection_info(self.config["listen_port"])
+
             if JujuVersion.from_environ().supports_open_port_on_k8s:
                 # TODO save the port to the peer data
                 # self.unit.close_port("tcp", old_port)
@@ -765,6 +762,7 @@ class PgBouncerK8sCharm(CharmBase):
         for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
             database = self.client_relation.get_database(relation)
             if database:
+                # TODO new rel admins
                 databases.append(
                     {
                         "name": database,
@@ -902,23 +900,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
             self.client_relation.update_connection_info(relation)
-
-    def update_postgres_endpoints(self, reload_pgbouncer=False):
-        """Update postgres endpoints in relation config values.
-
-        TODO rename
-
-        Raises:
-            ops.pebble.ConnectionError if we can't connect to the pebble container.
-        """
-        # Skip updates if backend.postgres doesn't exist yet.
-        if not self.backend.postgres or not self.unit.is_leader():
-            return
-
-        self.render_pgb_config(False)
-
-        if reload_pgbouncer:
-            self.reload_pgbouncer()
 
     @property
     def unit_pod_hostname(self, name="") -> str:
