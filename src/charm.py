@@ -257,18 +257,19 @@ class PgBouncerK8sCharm(CharmBase):
         """Handle changes in configuration.
 
         Deferrals:
-            - If pgb config is unavailable
             - If reloading the pgbouncer pebble service throws a ConnectionError (Implying that
               the pebble service is not yet ready)
         """
-        if self.unit.is_leader():
+        old_port = self.peers.app_databag.get("current_port")
+        if self.unit.is_leader() and old_port != str(self.config["listen_port"]):
+            self.peers.app_databag["current_port"] = str(self.config["listen_port"])
             # This emits relation-changed events to every client relation, so only do it when
             # necessary
             self.update_client_connection_info(self.config["listen_port"])
 
             if JujuVersion.from_environ().supports_open_port_on_k8s:
-                # TODO save the port to the peer data
-                # self.unit.close_port("tcp", old_port)
+                if old_port:
+                    self.unit.close_port("tcp", int(old_port))
                 self.unit.open_port("tcp", self.config["listen_port"])
             else:
                 self._patch_port()
