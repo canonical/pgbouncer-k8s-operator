@@ -192,6 +192,8 @@ class PgBouncerProvider(Object):
     def update_connection_info(self, relation):
         """Updates client-facing relation information."""
         # Set the read/write endpoint.
+        if not self.charm.unit.is_leader():
+            return
         self.charm.unit.status = MaintenanceStatus(
             f"Updating {self.relation_name} relation connection information"
         )
