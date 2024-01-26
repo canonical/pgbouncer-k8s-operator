@@ -31,6 +31,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: remove libpq
+        run: |
+          sudo apt remove libpq-dev
+          sudo apt remove libpq5
       - name: Install tox & poetry
         run: |
           pipx install tox
