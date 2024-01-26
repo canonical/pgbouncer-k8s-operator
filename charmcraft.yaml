@@ -34,6 +34,6 @@ parts:
     source: /usr/lib/
     source-type: local
     prime:
-      - binlibs/
+      - lib/
     organize:
-      "*-linux-gnu/libpq.so*": binlibs/
+      "*-linux-gnu/libpq.so*": lib/
