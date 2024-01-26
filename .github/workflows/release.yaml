@@ -19,6 +19,8 @@ jobs:
     name: Tests
     uses: ./.github/workflows/ci.yaml
     secrets: inherit
+    permissions:
+      contents: write  # Needed for Allure Report beta
 
   release-libraries:
     name: Release libraries
