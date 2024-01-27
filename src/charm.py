@@ -51,7 +51,7 @@ from constants import (
 )
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
-from relations.peers import Peers
+from relations.peers import CFG_FILE_DATABAG_KEY, Peers
 from relations.pgbouncer_provider import PgBouncerProvider
 from upgrade import PgbouncerUpgrade, get_pgbouncer_k8s_dependencies_model
 
@@ -72,10 +72,9 @@ class PgBouncerK8sCharm(CharmBase):
             self,
             relation_name=PEER_RELATION_NAME,
             additional_secret_fields=[
-                "monitoring-password",
-                "operator-password",
-                "replication-password",
-                "rewind-password",
+                AUTH_FILE_DATABAG_KEY,
+                CFG_FILE_DATABAG_KEY,
+                MONITORING_PASSWORD_KEY,
             ],
             secret_field_name=SECRET_INTERNAL_LABEL,
             deleted_label=SECRET_DELETED_LABEL,
