@@ -3,15 +3,15 @@
 
 import asyncio
 import logging
-from pathlib import Path
 
 import pytest
-import yaml
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from ..helpers.helpers import (
     CHARM_SERIES,
+    PGB,
+    PGB_METADATA,
     get_app_relation_databag,
     get_backend_relation,
     get_backend_user_pass,
@@ -26,14 +26,18 @@ from ..helpers.postgresql_helpers import (
     get_postgres_primary,
     run_command_on_unit,
 )
+from ..juju_ import juju_major_version
 
 logger = logging.getLogger(__name__)
 
-METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
+if juju_major_version < 3:
+    TLS_CERTIFICATES_APP_NAME = "tls-certificates-operator"
+    TLS_CHANNEL = "legacy/stable"
+else:
+    TLS_CERTIFICATES_APP_NAME = "self-signed-certificates"
+    TLS_CHANNEL = "latest/stable"
 FINOS_WALTZ = "finos-waltz"
-PGB = METADATA["name"]
 PG = "postgresql-k8s"
-TLS = "tls-certificates-operator"
 RELATION = "backend-database"
 
 
@@ -43,7 +47,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
     resources = {
-        "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
+        "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
     async with ops_test.fast_forward():
         await asyncio.gather(
@@ -116,11 +120,13 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
 
         # Deploy TLS Certificates operator.
         config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
-        await ops_test.model.deploy(TLS, config=config, channel="legacy/stable")
-        await ops_test.model.wait_for_idle(apps=[TLS], status="active", timeout=1000)
+        await ops_test.model.deploy(TLS_CERTIFICATES_APP_NAME, config=config, channel=TLS_CHANNEL)
+        await ops_test.model.wait_for_idle(
+            apps=[TLS_CERTIFICATES_APP_NAME], status="active", timeout=1000
+        )
 
         # Relate it to the PostgreSQL to enable TLS.
-        await ops_test.model.relate(PG, TLS)
+        await ops_test.model.relate(PG, TLS_CERTIFICATES_APP_NAME)
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
 
         await ops_test.model.applications[PG].set_config({"logging_log_connections": "True"})

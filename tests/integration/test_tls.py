@@ -20,8 +20,10 @@ from .juju_ import juju_major_version
 MATTERMOST_APP_NAME = "mattermost-k8s"
 if juju_major_version < 3:
     TLS_CERTIFICATES_APP_NAME = "tls-certificates-operator"
+    TLS_CHANNEL = "legacy/stable"
 else:
     TLS_CERTIFICATES_APP_NAME = "self-signed-certificates"
+    TLS_CHANNEL = "latest/stable"
 APPLICATION_UNITS = 2
 DATABASE_UNITS = 3
 
@@ -89,9 +91,7 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
         wait_for_apps = True
         # Deploy TLS Certificates operator.
         config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
-        await ops_test.model.deploy(
-            TLS_CERTIFICATES_APP_NAME, config=config, channel="legacy/stable"
-        )
+        await ops_test.model.deploy(TLS_CERTIFICATES_APP_NAME, config=config, channel=TLS_CHANNEL)
         # Relate it to the PgBouncer to enable TLS.
         await ops_test.model.relate(PGB, TLS_CERTIFICATES_APP_NAME)
         await ops_test.model.relate(TLS_CERTIFICATES_APP_NAME, POSTGRESQL_APP_NAME)
