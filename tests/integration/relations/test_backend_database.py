@@ -33,9 +33,11 @@ logger = logging.getLogger(__name__)
 if juju_major_version < 3:
     TLS_CERTIFICATES_APP_NAME = "tls-certificates-operator"
     TLS_CHANNEL = "legacy/stable"
+    TLS_CONFIG = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
 else:
     TLS_CERTIFICATES_APP_NAME = "self-signed-certificates"
     TLS_CHANNEL = "latest/stable"
+    TLS_CONFIG = {"ca-common-name": "Test CA"}
 FINOS_WALTZ = "finos-waltz"
 PG = "postgresql-k8s"
 RELATION = "backend-database"
@@ -119,8 +121,9 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
         pgb_user, _ = await get_backend_user_pass(ops_test, relation)
 
         # Deploy TLS Certificates operator.
-        config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
-        await ops_test.model.deploy(TLS_CERTIFICATES_APP_NAME, config=config, channel=TLS_CHANNEL)
+        await ops_test.model.deploy(
+            TLS_CERTIFICATES_APP_NAME, config=TLS_CONFIG, channel=TLS_CHANNEL
+        )
         await ops_test.model.wait_for_idle(
             apps=[TLS_CERTIFICATES_APP_NAME], status="active", timeout=1000
         )
