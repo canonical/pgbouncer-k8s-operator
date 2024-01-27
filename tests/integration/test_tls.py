@@ -15,9 +15,13 @@ from .helpers.helpers import (
     deploy_and_relate_application_with_pgbouncer,
     scale_application,
 )
+from .juju_ import juju_major_version
 
 MATTERMOST_APP_NAME = "mattermost-k8s"
-TLS_CERTIFICATES_APP_NAME = "tls-certificates-operator"
+if juju_major_version < 3:
+    TLS_CERTIFICATES_APP_NAME = "tls-certificates-operator"
+else:
+    TLS_CERTIFICATES_APP_NAME = "self-signed-certificates"
 APPLICATION_UNITS = 2
 DATABASE_UNITS = 3
 
