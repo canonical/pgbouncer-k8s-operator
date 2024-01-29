@@ -492,7 +492,7 @@ class PgBouncerK8sCharm(CharmBase):
             if pgb_service_status != ServiceStatus.ACTIVE:
                 pgb_not_running = f"PgBouncer service {service} not running: service status = {pgb_service_status}"
                 self.unit.status = BlockedStatus(pgb_not_running)
-                logger.error(pgb_not_running)
+                logger.warning(pgb_not_running)
                 return False
 
         return True
@@ -882,7 +882,7 @@ class PgBouncerK8sCharm(CharmBase):
         TODO rename
         """
         # Skip updates if backend.postgres doesn't exist yet.
-        if not self.backend.postgres:
+        if not self.backend.postgres or not self.unit.is_leader():
             return
         # if not self.backend.postgres.ready:
         #     return
