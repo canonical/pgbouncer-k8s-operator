@@ -308,21 +308,22 @@ class DbProvides(Object):
             change_event.defer()
             return
 
-        self.update_connection_info(change_event.relation, self.charm.config["listen_port"])
         self.charm.render_pgb_config(reload_pgbouncer=True)
-        self.update_databags(
-            change_event.relation,
-            {
-                "allowed-subnets": self.get_allowed_subnets(change_event.relation),
-                "allowed-units": self.get_allowed_units(change_event.relation),
-                "version": self.charm.backend.postgres.get_postgresql_version(),
-                "host": self.charm.unit_pod_hostname,
-                "user": user,
-                "password": password,
-                "database": database,
-                "state": self._get_state(),
-            },
-        )
+        if self.charm.unit.is_leader():
+            self.update_connection_info(change_event.relation, self.charm.config["listen_port"])
+            self.update_databags(
+                change_event.relation,
+                {
+                    "allowed-subnets": self.get_allowed_subnets(change_event.relation),
+                    "allowed-units": self.get_allowed_units(change_event.relation),
+                    "version": self.charm.backend.postgres.get_postgresql_version(),
+                    "host": self.charm.unit_pod_hostname,
+                    "user": user,
+                    "password": password,
+                    "database": database,
+                    "state": self._get_state(),
+                },
+            )
 
     def update_connection_info(self, relation: Relation, port: str):
         """Updates databag connection information."""

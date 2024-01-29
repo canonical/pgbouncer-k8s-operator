@@ -20,7 +20,7 @@ from ops import JujuVersion
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus, BlockedStatus, SecretNotFoundError, WaitingStatus
+from ops.model import ActiveStatus, BlockedStatus, ModelError, SecretNotFoundError, WaitingStatus
 from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
 from tenacity import Retrying, stop_after_attempt, wait_fixed
 
@@ -453,7 +453,7 @@ class PgBouncerK8sCharm(CharmBase):
             if pgb_service_status != ServiceStatus.ACTIVE:
                 pgb_not_running = f"PgBouncer service {service} not running: service status = {pgb_service_status}"
                 self.unit.status = BlockedStatus(pgb_not_running)
-                logger.error(pgb_not_running)
+                logger.warning(pgb_not_running)
                 return False
 
         return True
@@ -510,7 +510,21 @@ class PgBouncerK8sCharm(CharmBase):
             self.secrets[scope][SECRET_LABEL] = secret
 
             # We retrieve and cache actual secret data for the lifetime of the event scope
-            self.secrets[scope][SECRET_CACHE_LABEL] = secret.get_content()
+            try:
+                self.secrets[scope][SECRET_CACHE_LABEL] = secret.get_content(refresh=True)
+            except (ValueError, ModelError) as err:
+                # https://bugs.launchpad.net/juju/+bug/2042596
+                # Only triggered when 'refresh' is set
+                known_model_errors = [
+                    "ERROR either URI or label should be used for getting an owned secret but not both",
+                    "ERROR secret owner cannot use --refresh",
+                ]
+                if isinstance(err, ModelError) and not any(
+                    msg in str(err) for msg in known_model_errors
+                ):
+                    raise
+                # Due to: ValueError: Secret owner cannot use refresh=True
+                self.secrets[scope][SECRET_CACHE_LABEL] = secret.get_content()
 
         return bool(self.secrets[scope].get(SECRET_CACHE_LABEL))
 
