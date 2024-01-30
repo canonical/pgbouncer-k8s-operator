@@ -47,7 +47,7 @@ optional = true
 
 [tool.poetry.group.format.dependencies]
 black = "^24.1.1"
-ruff = "^0.1.14"
+ruff = "^0.1.15"
 
 [tool.poetry.group.lint]
 optional = true
@@ -71,13 +71,14 @@ optional = true
 [tool.poetry.group.integration.dependencies]
 lightkube = "*"
 pytest = "^8.0.0"
-pytest-github-secrets = {git = "https://github.com/canonical/data-platform-workflows", tag = "v11.0.0", subdirectory = "python/pytest_plugins/github_secrets"}
+pytest-github-secrets = {git = "https://github.com/canonical/data-platform-workflows", tag = "v11.0.1", subdirectory = "python/pytest_plugins/github_secrets"}
 pytest-operator = "^0.32.0"
-pytest-operator-cache = {git = "https://github.com/canonical/data-platform-workflows", tag = "v11.0.0", subdirectory = "python/pytest_plugins/pytest_operator_cache"}
-pytest-operator-groups = {git = "https://github.com/canonical/data-platform-workflows", tag = "v11.0.0", subdirectory = "python/pytest_plugins/pytest_operator_groups"}
+pytest-operator-cache = {git = "https://github.com/canonical/data-platform-workflows", tag = "v11.0.1", subdirectory = "python/pytest_plugins/pytest_operator_cache"}
+pytest-operator-groups = {git = "https://github.com/canonical/data-platform-workflows", tag = "v11.0.1", subdirectory = "python/pytest_plugins/pytest_operator_groups"}
 juju = "^3.2.0.1"
 tenacity = "*"
 psycopg2-binary = "^2.9.9"
+allure-pytest = "^2.13.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
