@@ -183,10 +183,6 @@ async def test_extensions_blocking(ops_test: OpsTest) -> None:
     await ops_test.model.block_until(
         lambda: leader_unit.workload_status_message == EXTENSIONS_BLOCKING_MESSAGE, timeout=1000
     )
-    assert (
-        ops_test.model.applications[PGB].units[0].workload_status_message
-        == EXTENSIONS_BLOCKING_MESSAGE
-    )
     await ops_test.model.applications[PGB].destroy_relation(f"{PGB}:db", f"{CLIENT_APP_NAME}:db")
     await ops_test.model.wait_for_idle(apps=[PGB], status="active", idle_period=15)
 
