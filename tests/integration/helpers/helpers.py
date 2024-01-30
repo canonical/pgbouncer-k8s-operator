@@ -9,6 +9,7 @@ from typing import Dict, Optional
 
 import yaml
 from charms.pgbouncer_k8s.v0 import pgb
+from juju.unit import Unit
 from pytest_operator.plugin import OpsTest
 from tenacity import (
     RetryError,
@@ -324,3 +325,13 @@ async def check_tls(ops_test: OpsTest, relation_id: int, enabled: bool) -> bool:
                 return True
     except RetryError:
         return False
+
+
+async def get_leader_unit(ops_test: OpsTest, app: str) -> Optional[Unit]:
+    leader_unit = None
+    for unit in ops_test.model.applications[app].units:
+        if await unit.is_leader_from_status():
+            leader_unit = unit
+            break
+
+    return leader_unit
