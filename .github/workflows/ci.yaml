@@ -28,6 +28,7 @@ jobs:
     name: test poetry
     runs-on: ubuntu-latest
     steps:
+      - run: pipx install poetry
       - run: poetry new foo
       - run: poetry add pyscopg2
         working-directory: foo
