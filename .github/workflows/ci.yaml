@@ -24,6 +24,22 @@ jobs:
     name: Lint
     uses: canonical/data-platform-workflows/.github/workflows/lint.yaml@v11.0.1
 
+  pip-psycopg2-binary:
+    name: psycopg2 bin
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: |
+          sudo pip install psycopg2-binary
+
+  pip-psycopg2:
+    name: psycopg2 source
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: |
+          sudo pip install psycopg2
+
   unit-test:
     name: Unit test charm
     runs-on: ubuntu-latest
