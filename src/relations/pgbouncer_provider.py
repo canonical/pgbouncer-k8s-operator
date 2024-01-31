@@ -142,8 +142,6 @@ class PgBouncerProvider(Object):
             )
             return
 
-        self.charm.peers.add_user(user, password)
-
         # Update pgbouncer config
         cfg = self.charm.read_pgb_config()
         cfg.add_user(user, admin=True if "SUPERUSER" in extra_user_roles else False)
