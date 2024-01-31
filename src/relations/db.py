@@ -82,7 +82,7 @@ from ops.model import (
     WaitingStatus,
 )
 
-from constants import APP_SCOPE, EXTENSIONS_BLOCKING_MESSAGE
+from constants import EXTENSIONS_BLOCKING_MESSAGE
 
 logger = logging.getLogger(__name__)
 
@@ -209,6 +209,9 @@ class DbProvides(Object):
             - If password hasn't been added to the databag by this charm, implying that a user
               has not been created.
         """
+        if not self.charm.unit.is_leader():
+            return
+
         if not self._check_backend():
             # We can't relate an app to the backend database without a backend postgres relation
             join_event.defer()
@@ -237,11 +240,7 @@ class DbProvides(Object):
         user = self._generate_username(join_event)
 
         if self.charm.unit.is_leader():
-            if not (password := self.charm.get_secret(APP_SCOPE, user)):
-                password = pgb.generate_password()
-                self.charm.peers.add_user(user, password)
-        else:
-            password = self.charm.get_secret(APP_SCOPE, user)
+            password = pgb.generate_password()
 
         if None in [database, password]:
             # If database isn't available, defer
@@ -256,9 +255,6 @@ class DbProvides(Object):
                 "database": database,
             },
         )
-
-        if not self.charm.unit.is_leader():
-            return
 
         # Create user and database in backend postgresql database
         try:
@@ -500,7 +496,6 @@ class DbProvides(Object):
         cfg.remove_user(user)
         self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
         if self.charm.unit.is_leader():
-            self.charm.peers.remove_user(user)
             self.charm.backend.postgres.delete_user(user)
 
         self._check_for_blocking_relations(broken_event.relation.id)
