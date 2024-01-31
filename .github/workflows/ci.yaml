@@ -24,6 +24,14 @@ jobs:
     name: Lint
     uses: canonical/data-platform-workflows/.github/workflows/lint.yaml@v11.0.1
 
+  foo:
+    name: test poetry
+    runs-on: ubuntu-latest
+    steps:
+      - run: poetry new foo
+      - run: poetry add pyscopg2
+        working-directory: foo
+
   unit-test:
     name: Unit test charm
     runs-on: ubuntu-latest
