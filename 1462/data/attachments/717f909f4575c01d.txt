@@ -1,0 +1,27 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:784 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.7    unsupported  01:30:58Z
+
+App            Version  Status   Scale  Charm          Channel  Rev  Address        Exposed  Message
+pgbouncer-k8s  1.21.0   waiting      1  pgbouncer-k8s             0  10.152.183.80  no       installing agent
+
+Unit              Workload  Agent  Address       Ports  Message
+pgbouncer-k8s/0*  blocked   idle   10.1.199.200         waiting for backend database relation to initialise
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:790 Juju error logs:
+
+unit-pgbouncer-k8s-0: 01:29:57 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:29:58 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:29:59 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:29:59 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:30:00 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:30:00 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:30:01 ERROR unit.pgbouncer-k8s/0.juju-log upgrade:1: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:30:01 ERROR unit.pgbouncer-k8s/0.juju-log upgrade:1: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:30:01 ERROR unit.pgbouncer-k8s/0.juju-log upgrade:1: PgBouncer container currently unavailable
+unit-pgbouncer-k8s-0: 01:30:02 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:30:02 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:30:02 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:856 Forgetting main...
