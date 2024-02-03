@@ -1,0 +1,109 @@
+[32mINFO    [0m juju.model:model.py:2087 Deploying ch:amd64/focal/mattermost-k8s-27
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  mattermost-k8s/0 [allocating] waiting: installing agent
+  mattermost-k8s/1 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  mattermost-k8s/0 [executing] waiting: Waiting for database relation
+  mattermost-k8s/1 [executing] waiting: Waiting for database relation
+[33mWARNING [0m juju.model:model.py:1553 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+  mattermost-k8s/1 [idle] waiting: Waiting for database relation
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  mattermost-k8s/0 [executing] active: 
+  mattermost-k8s/1 [executing] maintenance: Setting pod spec
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  mattermost-k8s/0 [executing] active: 
+  mattermost-k8s/1 [executing] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:784 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.7    unsupported  01:43:09Z
+
+App                       Version  Status  Scale  Charm                     Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   active      2  pgbouncer-k8s                              0  10.152.183.172  no       
+postgresql-k8s            14.10    active      3  postgresql-k8s            14/edge        193  10.152.183.99   no       
+postgresql-test-app                active      1  postgresql-test-app       edge            50  10.152.183.231  no       received database credentials of the first database
+self-signed-certificates           active      1  self-signed-certificates  latest/stable   72  10.152.183.233  no       
+
+Unit                         Workload  Agent  Address      Ports  Message
+pgbouncer-k8s/0*             active    idle   10.1.249.8          
+pgbouncer-k8s/1              active    idle   10.1.249.9          
+postgresql-k8s/0             active    idle   10.1.249.15         
+postgresql-k8s/1             active    idle   10.1.249.17         
+postgresql-k8s/2*            active    idle   10.1.249.16         Primary
+postgresql-test-app/0*       active    idle   10.1.249.10         received database credentials of the first database
+self-signed-certificates/0*  active    idle   10.1.249.14         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:790 Juju error logs:
+
+unit-pgbouncer-k8s-0: 01:26:27 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:1: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:26:28 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:26:30 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:26:30 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:26:32 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:26:32 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:26:38 ERROR unit.pgbouncer-k8s/1.juju-log pgb-peers:1: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-1: 01:26:39 ERROR unit.pgbouncer-k8s/1.juju-log upgrade:0: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-1: 01:26:40 ERROR unit.pgbouncer-k8s/1.juju-log database:3: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-1: 01:26:41 ERROR unit.pgbouncer-k8s/1.juju-log pgb-peers:1: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-1: 01:26:41 ERROR unit.pgbouncer-k8s/1.juju-log pgb-peers:1: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-1: 01:26:43 ERROR unit.pgbouncer-k8s/1.juju-log upgrade:0: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-1: 01:26:43 ERROR unit.pgbouncer-k8s/1.juju-log upgrade:0: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-1: 01:26:44 ERROR unit.pgbouncer-k8s/1.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-1: 01:26:44 ERROR unit.pgbouncer-k8s/1.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-1: 01:26:46 ERROR unit.pgbouncer-k8s/1.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-1: 01:26:46 ERROR unit.pgbouncer-k8s/1.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-0: 01:26:47 ERROR unit.pgbouncer-k8s/0.juju-log certificates:8: Cannot push TLS certificates: <ops.pebble.ConnectionError ()>
+unit-pgbouncer-k8s-1: 01:26:48 ERROR unit.pgbouncer-k8s/1.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-1: 01:26:48 ERROR unit.pgbouncer-k8s/1.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-postgresql-k8s-0: 01:29:39 ERROR unit.postgresql-k8s/0.juju-log failed to change plugins: 
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 300, in enable_disable_extensions
+    with self._connect_to_database() as connection, connection.cursor() as cursor:
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 127, in _connect_to_database
+    connection = psycopg2.connect(
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "postgresql-k8s-primary.test.svc.cluster.local" (10.152.183.207), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/./src/charm.py", line 488, in enable_disable_extensions
+    self.postgresql.enable_disable_extensions(extensions, database)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 324, in enable_disable_extensions
+    raise PostgreSQLEnableDisableExtensionError()
+charms.postgresql_k8s.v0.postgresql.PostgreSQLEnableDisableExtensionError
+unit-pgbouncer-k8s-2: 01:35:43 ERROR unit.pgbouncer-k8s/2.juju-log pgb-peers:1: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:35:45 ERROR unit.pgbouncer-k8s/2.juju-log upgrade:0: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:35:46 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:35:47 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:35:49 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:35:50 ERROR unit.pgbouncer-k8s/2.juju-log database:3: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:35:51 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:35:53 ERROR unit.pgbouncer-k8s/2.juju-log upgrade:0: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:35:54 ERROR unit.pgbouncer-k8s/2.juju-log pgb-peers:1: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:35:54 ERROR unit.pgbouncer-k8s/2.juju-log pgb-peers:1: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:35:55 ERROR unit.pgbouncer-k8s/2.juju-log database:3: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:35:55 ERROR unit.pgbouncer-k8s/2.juju-log database:3: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:35:57 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:35:57 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:37:43 ERROR unit.pgbouncer-k8s/2.juju-log database:3: This operation (update_relation_data()) can only be performed by the leader unit
+unit-pgbouncer-k8s-2: 01:37:46 ERROR unit.pgbouncer-k8s/2.juju-log database:3: This operation (update_relation_data()) can only be performed by the leader unit
+unit-pgbouncer-k8s-2: 01:37:47 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: added relation-departing flag to peer databag
+unit-pgbouncer-k8s-2: 01:37:50 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing secret cauth was attempted to be removed.
+unit-pgbouncer-k8s-2: 01:37:50 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Can't update secret for relation 1
+unit-pgbouncer-k8s-2: 01:37:50 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing field 'cauth' was attempted to be removed from the databag (relation ID: 1)
+unit-pgbouncer-k8s-2: 01:37:50 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing secret cert was attempted to be removed.
+unit-pgbouncer-k8s-2: 01:37:50 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Can't update secret for relation 1
+unit-pgbouncer-k8s-2: 01:37:50 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing field 'cert' was attempted to be removed from the databag (relation ID: 1)
+unit-pgbouncer-k8s-2: 01:37:50 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing secret chain was attempted to be removed.
+unit-pgbouncer-k8s-2: 01:37:50 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Can't update secret for relation 1
+unit-pgbouncer-k8s-2: 01:37:50 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing field 'chain' was attempted to be removed from the databag (relation ID: 1)
+unit-pgbouncer-k8s-2: 01:37:55 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: added relation-departing flag to peer databag
+unit-pgbouncer-k8s-2: 01:37:56 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: added relation-departing flag to peer databag
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:856 Forgetting main...
