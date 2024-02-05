@@ -29,7 +29,6 @@ AUTH_FILE_DATABAG_KEY = "auth_file"
 EXTENSIONS_BLOCKING_MESSAGE = "bad relation request - remote app requested extensions, which are unsupported. Please remove this relation."
 
 SECRET_LABEL = "secret"
-SECRET_CACHE_LABEL = "cache"
 SECRET_INTERNAL_LABEL = "internal-secret"
 SECRET_DELETED_LABEL = "None"
 

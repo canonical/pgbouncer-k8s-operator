@@ -22,7 +22,7 @@ on:
 jobs:
   lint:
     name: Lint
-    uses: canonical/data-platform-workflows/.github/workflows/lint.yaml@v11.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/lint.yaml@v11.1.0
 
   unit-test:
     name: Unit test charm
@@ -41,7 +41,7 @@ jobs:
 
   build:
     name: Build charm
-    uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v11.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v11.1.0
     with:
       cache: true
 
@@ -52,16 +52,21 @@ jobs:
         juju:
           - agent: 2.9.46
             libjuju: ^2
+            allure: false
           - agent: 3.1.7
+            allure: true
     name: Integration test charm | ${{ matrix.juju.agent }}
     needs:
       - lint
       - unit-test
       - build
-    uses: canonical/data-platform-workflows/.github/workflows/integration_test_charm.yaml@v11.0.0
+    uses: canonical/data-platform-workflows/.github/workflows/integration_test_charm.yaml@v11.1.0
     with:
       artifact-prefix: ${{ needs.build.outputs.artifact-prefix }}
       cloud: microk8s
       microk8s-snap-channel: 1.29-strict/stable
       juju-agent-version: ${{ matrix.juju.agent }}
       libjuju-version-constraint: ${{ matrix.juju.libjuju }}
+      _beta_allure_report: ${{ matrix.juju.allure }}
+    permissions:
+      contents: write  # Needed for Allure Report beta

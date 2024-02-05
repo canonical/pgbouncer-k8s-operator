@@ -18,6 +18,7 @@ from ..helpers.helpers import (
     get_app_relation_databag,
     get_backend_user_pass,
     get_cfg,
+    get_leader_unit,
     get_legacy_relation_username,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
@@ -178,10 +179,9 @@ async def test_extensions_blocking(ops_test: OpsTest) -> None:
     await ops_test.model.add_relation(f"{PGB}:db", f"{CLIENT_APP_NAME}:db")
 
     logger.info("Wait for PGB to block due to extensions")
-    await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)
-    assert (
-        ops_test.model.applications[PGB].units[0].workload_status_message
-        == EXTENSIONS_BLOCKING_MESSAGE
+    leader_unit = await get_leader_unit(ops_test, PGB)
+    await ops_test.model.block_until(
+        lambda: leader_unit.workload_status_message == EXTENSIONS_BLOCKING_MESSAGE, timeout=1000
     )
     await ops_test.model.applications[PGB].destroy_relation(f"{PGB}:db", f"{CLIENT_APP_NAME}:db")
     await ops_test.model.wait_for_idle(apps=[PGB], status="active", idle_period=15)
