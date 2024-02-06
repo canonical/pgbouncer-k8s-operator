@@ -35,7 +35,7 @@ from ops.charm import CharmBase, HookEvent, RelationCreatedEvent
 from ops.framework import Object
 from ops.model import MaintenanceStatus, Relation, Unit
 
-from constants import APP_SCOPE, AUTH_FILE_DATABAG_KEY, PEER_RELATION_NAME
+from constants import PEER_RELATION_NAME
 
 ADDRESS_KEY = "private-address"
 LEADER_ADDRESS_KEY = "leader_hostname"
@@ -145,8 +145,6 @@ class Peers(Object):
         """
         self.unit_databag.update({ADDRESS_KEY: self.charm.unit_pod_hostname})
 
-        self.charm.update_status()
-
         if self.charm.unit.is_leader():
             self.update_leader()
 
@@ -154,9 +152,6 @@ class Peers(Object):
             logger.debug("_on_peer_changed defer: container unavailable")
             event.defer()
             return
-
-        if auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
-            self.charm.render_auth_file(auth_file)
 
         self.charm.render_pgb_config(reload_pgbouncer=True)
         self.charm.toggle_monitoring_layer(self.charm.backend.ready)
