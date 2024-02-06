@@ -34,7 +34,6 @@ from typing import Optional, Set
 from ops.charm import CharmBase, HookEvent, RelationCreatedEvent
 from ops.framework import Object
 from ops.model import MaintenanceStatus, Relation, Unit
-from ops.pebble import ChangeError, ConnectionError
 
 from constants import APP_SCOPE, AUTH_FILE_DATABAG_KEY, PEER_RELATION_NAME
 
@@ -149,18 +148,15 @@ class Peers(Object):
         if self.charm.unit.is_leader():
             self.update_leader()
 
+        if not self.charm.is_container_ready:
+            logger.debug("_on_peer_changed early exit: container unavailable")
+            return
+
         if auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
             self.charm.render_auth_file(auth_file)
 
-        try:
-            # raises an error if this is fired before on_pebble_ready.
-            self.charm.render_pgb_config(reload_pgbouncer=True)
-            self.charm.toggle_monitoring_layer(self.charm.backend.ready)
-        except (ConnectionError, ChangeError):
-            logger.error(
-                "failed to reload pgbouncer - deferring change_event and waiting for pebble."
-            )
-            event.defer()
+        self.charm.render_pgb_config(reload_pgbouncer=True)
+        self.charm.toggle_monitoring_layer(self.charm.backend.ready)
 
     def _on_departed(self, event):
         self.update_leader()

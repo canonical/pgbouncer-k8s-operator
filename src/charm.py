@@ -271,11 +271,20 @@ class PgBouncerK8sCharm(CharmBase):
         self.update_status()
 
         self.unit.set_workload_version(self.version)
+        self.peers.unit_databag.update({"pgb_configured": ""})
 
         if JujuVersion.from_environ().supports_open_port_on_k8s:
             self.unit.open_port("tcp", self.config["listen_port"])
         else:
             self._patch_port()
+
+    @property
+    def is_container_ready(self) -> bool:
+        """Check if we can connect to the container and it was already initialised."""
+        return (
+            "pgb_configured" in self.peers.unit_databag
+            and self.unit.get_container(PGB).can_connect()
+        )
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration.
