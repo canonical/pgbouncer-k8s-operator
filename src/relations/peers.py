@@ -145,11 +145,14 @@ class Peers(Object):
         """
         self.unit_databag.update({ADDRESS_KEY: self.charm.unit_pod_hostname})
 
+        self.charm.update_status()
+
         if self.charm.unit.is_leader():
             self.update_leader()
 
         if not self.charm.is_container_ready:
-            logger.debug("_on_peer_changed early exit: container unavailable")
+            logger.debug("_on_peer_changed defer: container unavailable")
+            event.defer()
             return
 
         if auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
