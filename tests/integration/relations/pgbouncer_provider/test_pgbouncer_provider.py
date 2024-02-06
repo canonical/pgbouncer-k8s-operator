@@ -9,7 +9,7 @@ import psycopg2
 import pytest
 from pytest_operator.plugin import OpsTest
 
-from constants import BACKEND_RELATION_NAME
+from constants import BACKEND_RELATION_NAME, PEER_RELATION_NAME
 
 from ...helpers.helpers import (
     CHARM_SERIES,
@@ -100,7 +100,7 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, pgb_cha
     # Check that on juju 3 we have secrets and no username and password in the rel databag
     if hasattr(ops_test.model, "list_secrets"):
         logger.info("checking for secrets")
-        secret_uri, password = await asyncio.gather(
+        secret_uri, password, auth_file = await asyncio.gather(
             get_application_relation_data(
                 ops_test,
                 CLIENT_APP_NAME,
@@ -113,9 +113,16 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, pgb_cha
                 FIRST_DATABASE_RELATION_NAME,
                 "password",
             ),
+            get_application_relation_data(
+                ops_test,
+                PGB,
+                PEER_RELATION_NAME,
+                "auth_file",
+            ),
         )
         assert secret_uri is not None
         assert password is None
+        assert auth_file is None
 
     # This test hasn't passed if we can't pass a tiny amount of data through the new relation
     await check_new_relation(
