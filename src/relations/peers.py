@@ -149,8 +149,7 @@ class Peers(Object):
             self.update_leader()
 
         if not self.charm.is_container_ready:
-            logger.debug("_on_peer_changed defer: container unavailable")
-            event.defer()
+            logger.debug("_on_peer_changed early exit: container unavailable")
             return
 
         self.charm.render_pgb_config(reload_pgbouncer=True)

@@ -209,6 +209,7 @@ class DbProvides(Object):
               has not been created.
         """
         if not self.charm.unit.is_leader():
+            self.charm.render_pgb_config(reload_pgbouncer=True)
             return
 
         if not self.charm.backend.check_backend():
@@ -422,7 +423,9 @@ class DbProvides(Object):
                 self._check_for_blocking_relations(broken_event.relation.id)
             return
 
-        self.charm.render_pgb_config(reload_pgbouncer=True)
+        self.charm.render_pgb_config(
+            reload_pgbouncer=True, filter_relation=broken_event.relation.id
+        )
         if self.charm.unit.is_leader():
             self.charm.backend.postgres.delete_user(user)
 

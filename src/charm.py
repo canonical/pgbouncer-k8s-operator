@@ -237,8 +237,6 @@ class PgBouncerK8sCharm(CharmBase):
         """Define and start pgbouncer workload.
 
         Deferrals:
-            - If pgbouncer config is not available in container filesystem, ensuring this fires
-              after start hook. This is likely unnecessary, and these hooks could be merged.
             - If checking pgb running raises an error, implying that the pgbouncer services are not
               yet accessible in the container.
             - If the unit is waiting for certificates to be issued
@@ -648,12 +646,12 @@ class PgBouncerK8sCharm(CharmBase):
 
         pgb_container.remove_path(path)
 
-    def _get_relation_databases(self) -> List[Dict[str, str]]:
+    def _get_relation_databases(self, filter_relation=None) -> List[Dict[str, str]]:
         """Collects a list of databases, relation type and admin requirements."""
         databases = []
         for relation in self.model.relations.get("db", []):
             database = self.legacy_db_relation.get_databags(relation)[0].get("database")
-            if database:
+            if database and relation.id != filter_relation:
                 databases.append(
                     {
                         "name": database,
@@ -663,7 +661,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         for relation in self.model.relations.get("db-admin", []):
             database = self.legacy_db_admin_relation.get_databags(relation)[0].get("database")
-            if database:
+            if database and relation.id != filter_relation:
                 databases.append(
                     {
                         "name": database,
@@ -674,7 +672,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
             database = self.client_relation.get_database(relation)
-            if database:
+            if database and relation.id != filter_relation:
                 # TODO new rel admins
                 db_list = database.split(",")
                 for db in db_list:
@@ -686,9 +684,13 @@ class PgBouncerK8sCharm(CharmBase):
                     )
         return databases
 
-    def _get_relation_config(self) -> Tuple[Dict[str, Dict[str, str]], List[str]]:
+    def _get_relation_config(
+        self, filter_relation=None
+    ) -> Tuple[Dict[str, Dict[str, str]], List[str]]:
         """Generate pgb config for databases and admin users."""
-        if not self.backend.relation or not (databases := self._get_relation_databases()):
+        if not self.backend.relation or not (
+            databases := self._get_relation_databases(filter_relation)
+        ):
             return ({}, [])
 
         # In postgres, "endpoints" will only ever have one value. Other databases using the library
@@ -728,7 +730,9 @@ class PgBouncerK8sCharm(CharmBase):
                 pgb_admins.append(database["admin"])
         return (pgb_dbs, pgb_admins)
 
-    def render_pgb_config(self, reload_pgbouncer=False) -> None:
+    def render_pgb_config(
+        self, reload_pgbouncer: bool = False, filter_relation: Optional[int] = None
+    ) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
         Every time the config is rendered, `peers.update_cfg` is called. This updates the config in
@@ -743,11 +747,12 @@ class PgBouncerK8sCharm(CharmBase):
                 in the container. When config files are updated, pgbouncer must be restarted for
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
+            filter_relation: relation to ignore during config generation.
         """
         perm = 0o400
         with open("templates/pgb_config.j2", "r") as file:
             template = Template(file.read())
-            databases, admins = self._get_relation_config()
+            databases, admins = self._get_relation_config(filter_relation)
             enable_tls = all(self.tls.get_tls_files())
             for service in self._services:
                 self.push_file(
