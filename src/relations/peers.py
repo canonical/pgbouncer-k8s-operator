@@ -132,14 +132,6 @@ class Peers(Object):
             - If config is unavailable
         """
         self.unit_databag[ADDRESS_KEY] = self.charm.unit_pod_hostname
-        if not self.charm.unit.is_leader():
-            return
-
-        if self.charm.backend.ready:
-            # The backend relation creates the userlist, so only upload userlist to databag if
-            # backend relation is initialised. If not, it'll be added when that relation first
-            # writes it to the container, so no need to add it now.
-            self.update_auth_file(self.charm.read_auth_file())
 
     def _on_changed(self, event: HookEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem.
@@ -186,11 +178,3 @@ class Peers(Object):
         """Updates leader hostname in peer databag to match this unit if it's the leader."""
         if self.charm.unit.is_leader():
             self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
-
-    def update_auth_file(self, auth_file: str) -> None:
-        """Writes auth_file to app databag if leader."""
-        if not self.charm.unit.is_leader() or not self.relation:
-            return
-
-        self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, auth_file)
-        logger.debug("updated auth file in peer databag")

@@ -79,7 +79,6 @@ from ops.model import (
     ModelError,
     Relation,
     Unit,
-    WaitingStatus,
 )
 
 from constants import EXTENSIONS_BLOCKING_MESSAGE
@@ -212,7 +211,7 @@ class DbProvides(Object):
         if not self.charm.unit.is_leader():
             return
 
-        if not self._check_backend():
+        if not self.charm.backend.check_backend():
             # We can't relate an app to the backend database without a backend postgres relation
             join_event.defer()
             return
@@ -280,7 +279,7 @@ class DbProvides(Object):
             - If backend relation isn't available
             - If relation_joined hook hasn't completed
         """
-        if not self._check_backend():
+        if not self.charm.backend.check_backend():
             # We can't relate an app to the backend database without a backend postgres relation
             change_event.defer()
             return
@@ -410,7 +409,7 @@ class DbProvides(Object):
         user = databag.get("user")
         database = databag.get("database")
 
-        if not self._check_backend() or None in [user, database]:
+        if not self.charm.backend.check_backend() or None in [user, database]:
             # this relation was never created, so wait for it to be initialised before removing
             # everything.
             if self._check_extensions(self._get_relation_extensions(broken_event.relation)):
@@ -505,17 +504,3 @@ class DbProvides(Object):
         for entry in relation.data.keys():
             if isinstance(entry, Application) and entry != self.charm.app:
                 return entry
-
-    def _check_backend(self) -> bool:
-        """Verifies backend is ready, defers event if not.
-
-        Returns:
-            bool signifying whether backend is ready or not
-        """
-        if not self.charm.backend.ready:
-            # We can't relate an app to the backend database without a backend postgres relation
-            wait_str = "waiting for backend-database relation to connect"
-            logger.warning(wait_str)
-            self.charm.unit.status = WaitingStatus(wait_str)
-            return False
-        return True

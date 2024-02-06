@@ -51,7 +51,6 @@ from ops.model import (
     Application,
     BlockedStatus,
     MaintenanceStatus,
-    WaitingStatus,
 )
 
 from constants import CLIENT_RELATION_NAME
@@ -106,7 +105,8 @@ class PgBouncerProvider(Object):
         """
         if not self.charm.unit.is_leader():
             return
-        if not self._check_backend():
+
+        if not self.charm.backend.check_backend():
             event.defer()
             return
 
@@ -166,7 +166,7 @@ class PgBouncerProvider(Object):
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
         """Remove the user created for this relation, and revoke connection permissions."""
         self.update_connection_info(event.relation)
-        if not self._check_backend() or not self.charm.unit.is_leader():
+        if not self.charm.backend.check_backend() or not self.charm.unit.is_leader():
             return
 
         if self._unit_departing(event.relation):
@@ -201,7 +201,7 @@ class PgBouncerProvider(Object):
         self.update_read_only_endpoints()
 
         # Set the database version.
-        if self._check_backend():
+        if self.charm.backend.check_backend():
             self.database_provides.set_version(
                 relation.id, self.charm.backend.postgres.get_postgresql_version()
             )
@@ -240,17 +240,3 @@ class PgBouncerProvider(Object):
         for entry in relation.data.keys():
             if isinstance(entry, Application) and entry != self.charm.app:
                 return entry
-
-    def _check_backend(self) -> bool:
-        """Verifies backend is ready and updates status.
-
-        Returns:
-            bool signifying whether backend is ready or not
-        """
-        if not self.charm.backend.ready:
-            # We can't relate an app to the backend database without a backend postgres relation
-            wait_str = "waiting for backend-database relation to connect"
-            logger.warning(wait_str)
-            self.charm.unit.status = WaitingStatus(wait_str)
-            return False
-        return True

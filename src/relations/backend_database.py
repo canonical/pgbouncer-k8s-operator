@@ -55,6 +55,7 @@ from ops.model import (
     BlockedStatus,
     MaintenanceStatus,
     Relation,
+    WaitingStatus,
 )
 from ops.pebble import ConnectionError
 
@@ -342,7 +343,7 @@ class BackendDatabaseRequires(Object):
         self.charm.render_pgb_config()
 
         self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
-        self.charm.peers.update_auth_file(auth_file=None)
+        self.charm.remove_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
 
     def initialise_auth_function(self, dbs: List[str]):
         """Runs an SQL script to initialise the auth function.
@@ -391,3 +392,17 @@ class BackendDatabaseRequires(Object):
         if not read_only_endpoints:
             return set()
         return set(read_only_endpoints.split(","))
+
+    def check_backend(self) -> bool:
+        """Verifies backend is ready and updates status.
+
+        Returns:
+            bool signifying whether backend is ready or not
+        """
+        if not self.ready:
+            # We can't relate an app to the backend database without a backend postgres relation
+            wait_str = "waiting for backend-database relation to connect"
+            logger.warning(wait_str)
+            self.charm.unit.status = WaitingStatus(wait_str)
+            return False
+        return True
