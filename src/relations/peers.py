@@ -209,7 +209,6 @@ class Peers(Object):
                 event.defer()
                 return
 
-            self.update_cfg(cfg)
             self.update_leader()
             return
 
