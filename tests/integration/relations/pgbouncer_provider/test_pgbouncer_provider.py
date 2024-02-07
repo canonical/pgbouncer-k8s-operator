@@ -117,7 +117,7 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, pgb_cha
                 ops_test,
                 PGB,
                 PEER_RELATION_NAME,
-                "auth_file",
+                "auth-file",
             ),
         )
         assert secret_uri is not None
