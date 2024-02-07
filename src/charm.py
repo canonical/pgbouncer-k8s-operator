@@ -270,16 +270,7 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
-        tls_enabled = all(self.tls.get_tls_files())
-        if self.model.relations.get("certificates", []) and not tls_enabled:
-            logger.debug(
-                "pgbouncer_pebble_ready: Deferring as certificates files are not yet populated for existing certificates relation"
-            )
-            self.unit.status = WaitingStatus("Waiting for certificates")
-            event.defer()
-            return
-        # in case of pod restart
-        elif tls_enabled:
+        if all(self.tls.get_tls_files()):
             self.push_tls_files_to_workload(False)
 
         pebble_layer = self._pgbouncer_layer()
@@ -290,13 +281,14 @@ class PgBouncerK8sCharm(CharmBase):
 
         self.unit.set_workload_version(self.version)
 
-        # Update postgres endpoints in config to match the current state of the charm.
-        self.update_postgres_endpoints(reload_pgbouncer=True)
+        if self.unit.is_leader():
+            # Update postgres endpoints in config to match the current state of the charm.
+            self.update_postgres_endpoints(reload_pgbouncer=True)
 
-        if JujuVersion.from_environ().supports_open_port_on_k8s:
-            self.unit.open_port("tcp", self.config["listen_port"])
-        else:
-            self._patch_port()
+            if JujuVersion.from_environ().supports_open_port_on_k8s:
+                self.unit.open_port("tcp", self.config["listen_port"])
+            else:
+                self._patch_port()
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration.

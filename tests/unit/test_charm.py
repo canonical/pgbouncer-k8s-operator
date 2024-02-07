@@ -130,27 +130,6 @@ class TestCharm(unittest.TestCase):
             self.assertTrue(container_service.is_running())
         _update_status.assert_called_once_with()
 
-    @patch("charm.PostgreSQLTLS.get_tls_files")
-    @patch("ops.model.Container.make_dir")
-    def test_on_pgbouncer_pebble_ready_defer_tls(self, _mkdir, get_tls_files):
-        get_tls_files.return_value = (None, None, None)
-
-        self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
-        self.harness.add_relation("certificates", "tls_op")
-        self.harness.set_leader(True)
-        # emit on start to ensure config file render
-        self.charm.on.start.emit()
-        initial_plan = self.harness.get_container_pebble_plan(PGB)
-        self.assertEqual(initial_plan.to_yaml(), "{}\n")
-
-        container = self.harness.model.unit.get_container(PGB)
-        self.charm.on.pgbouncer_pebble_ready.emit(container)
-
-        assert not len(self.harness.model.unit.get_container(PGB).get_services())
-        get_tls_files.assert_called_once_with()
-        self.assertIsInstance(self.harness.model.unit.status, WaitingStatus)
-        self.assertEqual(self.harness.model.unit.status.message, "Waiting for certificates")
-
     @patch("charm.PgBouncerK8sCharm._patch_port")
     @patch("charm.PgBouncerK8sCharm.update_status")
     @patch("ops.model.Container.exec")
