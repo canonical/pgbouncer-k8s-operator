@@ -69,8 +69,8 @@ class PgBouncerK8sCharm(CharmBase):
             self,
             relation_name=PEER_RELATION_NAME,
             additional_secret_fields=[
-                AUTH_FILE_DATABAG_KEY,
-                MONITORING_PASSWORD_KEY,
+                self._translate_field_to_secret_key(AUTH_FILE_DATABAG_KEY),
+                self._translate_field_to_secret_key(MONITORING_PASSWORD_KEY),
             ],
             secret_field_name=SECRET_INTERNAL_LABEL,
             deleted_label=SECRET_DELETED_LABEL,
@@ -250,16 +250,8 @@ class PgBouncerK8sCharm(CharmBase):
         if auth_file := self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
             self.render_auth_file(auth_file)
 
-        tls_enabled = all(self.tls.get_tls_files())
-        if self.model.relations.get("certificates", []) and not tls_enabled:
-            logger.debug(
-                "pgbouncer_pebble_ready: Deferring as certificates files are not yet populated for existing certificates relation"
-            )
-            self.unit.status = WaitingStatus("Waiting for certificates")
-            event.defer()
-            return
         # in case of pod restart
-        elif tls_enabled:
+        if all(self.tls.get_tls_files()):
             self.push_tls_files_to_workload(False)
 
         pebble_layer = self._pgbouncer_layer()
@@ -270,6 +262,8 @@ class PgBouncerK8sCharm(CharmBase):
 
         self.unit.set_workload_version(self.version)
 
+        self.peers.unit_databag["container_initialised"] = "True"
+
         if JujuVersion.from_environ().supports_open_port_on_k8s:
             self.unit.open_port("tcp", self.config["listen_port"])
         else:
@@ -278,7 +272,10 @@ class PgBouncerK8sCharm(CharmBase):
     @property
     def is_container_ready(self) -> bool:
         """Check if we can connect to the container and it was already initialised."""
-        return self.unit.get_container(PGB).can_connect()
+        return (
+            self.unit.get_container(PGB).can_connect()
+            and "container_initialised" in self.peers.unit_databag
+        )
 
     def _on_config_changed(self, event: ConfigChangedEvent) -> None:
         """Handle changes in configuration.
