@@ -663,18 +663,24 @@ class PgBouncerK8sCharm(CharmBase):
                     }
                 )
 
-        for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
-            database = self.client_relation.get_database(relation)
+        for rel_id, data in self.client_relation.database_provides.fetch_relation_data(
+            fields=["database", "extra-user-roles"]
+        ).items():
+            database = data.get("database")
+            roles = data.get("extra-user-roles", "").lower().split(",")
+            admin = None
+            if "admin" in roles or "superuser" in roles:
+                admin = f"relation_id_{rel_id}"
             if database and relation.id != filter_relation:
-                # TODO new rel admins
                 db_list = database.split(",")
                 for db in db_list:
-                    databases.append(
-                        {
-                            "name": db,
-                            "legacy": False,
-                        }
-                    )
+                    record = {
+                        "name": db,
+                        "legacy": False,
+                    }
+                    if admin:
+                        record["admin"] = admin
+                    databases.append(record)
         return databases
 
     def _get_relation_config(

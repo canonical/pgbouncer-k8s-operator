@@ -57,7 +57,7 @@ from ops.model import (
     Relation,
     WaitingStatus,
 )
-from ops.pebble import ConnectionError
+from ops.pebble import ConnectionError, PathError
 
 from constants import (
     APP_SCOPE,
@@ -349,7 +349,10 @@ class BackendDatabaseRequires(Object):
             logging.info("exiting relation-broken hook - nothing to do")
             return
 
-        self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
+        try:
+            self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
+        except PathError:
+            logger.warning("Cannot delete userlist.txt")
         if self.charm.unit.is_leader():
             self.charm.remove_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
 
