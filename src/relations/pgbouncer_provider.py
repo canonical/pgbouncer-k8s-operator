@@ -174,7 +174,7 @@ class PgBouncerProvider(Object):
             self.charm.peers.unit_databag.pop(self._depart_flag(event.relation), None)
             return
 
-        self.charm.render_pgb_config(reload_pgbouncer=True)
+        self.charm.render_pgb_config(reload_pgbouncer=True, filter_relation=event.relation.id)
 
         # Delete the user.
         try:

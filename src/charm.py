@@ -671,7 +671,7 @@ class PgBouncerK8sCharm(CharmBase):
             admin = None
             if "admin" in roles or "superuser" in roles:
                 admin = f"relation_id_{rel_id}"
-            if database and relation.id != filter_relation:
+            if database and rel_id != filter_relation:
                 db_list = database.split(",")
                 for db in db_list:
                     record = {
