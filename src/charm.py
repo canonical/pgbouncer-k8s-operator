@@ -249,6 +249,9 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
+        if auth_file := self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
+            self.render_auth_file(auth_file)
+
         if all(self.tls.get_tls_files()):
             self.push_tls_files_to_workload(False)
 

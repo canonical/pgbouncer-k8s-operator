@@ -18,6 +18,7 @@ Example:
 │ application data │ ╭──────────────────────────────────────────────────────────────────────────────────────────────╮ │
 │                  │ │                                                                                              │ │
 │                  │ │  auth_file        "pgbouncer_auth_relation_id_3" "md5aad46d9afbcc8c8248d254d567b577c1"       │ │
+│                  │ │  pgb_dbs_config   '{"1": {"name": "db_name", "legacy": false}}'                              │ │
 │                  │ │  leader_hostname  pgbouncer-k8s-0.pgbouncer-k8s-endpoints.test-pgbouncer-provider-gnrj.svc…  │ │
 │                  │ │  relation_id_4    Z4OtFCe6r5HG6mk1XuR6LkwZ                                                   │ │
 │                  │ ╰──────────────────────────────────────────────────────────────────────────────────────────────╯ │
