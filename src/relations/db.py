@@ -270,8 +270,6 @@ class DbProvides(Object):
         # set up auth function
         self.charm.backend.initialise_auth_function([database])
 
-        self.charm.render_pgb_config(reload_pgbouncer=True)
-
     def _on_relation_changed(self, change_event: RelationChangedEvent):
         """Handle db-relation-changed event.
 

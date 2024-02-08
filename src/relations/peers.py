@@ -61,7 +61,7 @@ class Peers(Object):
         self.charm = charm
 
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_created, self._on_created)
-        self.framework.observe(charm.on[PEER_RELATION_NAME].relation_joined, self._on_changed)
+        self.framework.observe(charm.on[PEER_RELATION_NAME].relation_joined, self._on_joined)
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_changed, self._on_changed)
         self.framework.observe(charm.on.secret_changed, self._on_changed)
         self.framework.observe(charm.on.secret_remove, self._on_changed)
@@ -132,6 +132,11 @@ class Peers(Object):
         """
         self.unit_databag[ADDRESS_KEY] = self.charm.unit_pod_hostname
 
+    def _on_joined(self, event: HookEvent):
+        self._on_changed(self, event)
+        if self.charm.unit.is_leader():
+            self.charm.client_relation.update_read_only_endpoints()
+
     def _on_changed(self, event: HookEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem.
 
@@ -163,6 +168,8 @@ class Peers(Object):
             self.charm.unit.status = MaintenanceStatus(
                 "Leader unit removed - waiting for leader_elected event"
             )
+        if self.charm.unit.is_leader():
+            self.charm.client_relation.update_read_only_endpoints()
 
     def _on_leader_elected(self, _):
         self.update_leader()
