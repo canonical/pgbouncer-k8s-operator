@@ -196,12 +196,11 @@ class BackendDatabaseRequires(Object):
         """
         # Check we have connection information
         if not self.postgres:
+            logger.debug("Backend not ready: no connection info")
             return False
 
-        try:
-            self.charm.read_auth_file()
-        except FileNotFoundError:
-            # Not ready, no auth file to authenticate our pgb user
+        if not self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
+            logger.debug("Backend not ready: no auth file secret set")
             return False
 
         # Check we can actually connect to backend database by running a command.
@@ -211,7 +210,7 @@ class BackendDatabaseRequires(Object):
                 cursor.execute("SELECT version();")
             conn.close()
         except (psycopg2.Error, psycopg2.OperationalError):
-            logger.error("PostgreSQL connection failed")
+            logger.warning("PostgreSQL connection failed")
             return False
 
         return True
@@ -309,7 +308,7 @@ class BackendDatabaseRequires(Object):
             self.charm.peers.unit_databag.update(
                 {f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing": "true"}
             )
-            logger.error("added relation-departing flag to peer databag")
+            logger.warning("added relation-departing flag to peer databag")
             return
 
         if not self.charm.unit.is_leader() or event.departing_unit.app != self.charm.app:

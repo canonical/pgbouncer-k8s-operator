@@ -252,6 +252,7 @@ class PgBouncerK8sCharm(CharmBase):
         if auth_file := self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
             self.render_auth_file(auth_file)
 
+        # in case of pod restart
         if all(self.tls.get_tls_files()):
             self.push_tls_files_to_workload(False)
 
@@ -781,10 +782,6 @@ class PgBouncerK8sCharm(CharmBase):
 
         if reload_pgbouncer:
             self.reload_pgbouncer()
-
-    def read_auth_file(self) -> str:
-        """Gets the auth file from the pgbouncer container filesystem."""
-        return self._read_file(AUTH_FILE_PATH)
 
     def render_auth_file(self, auth_file: str, reload_pgbouncer=False):
         """Renders the given auth_file to the correct location."""
