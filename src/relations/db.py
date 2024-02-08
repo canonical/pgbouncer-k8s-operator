@@ -237,7 +237,7 @@ class DbProvides(Object):
             return
 
         dbs = self.charm.generate_relation_databases()
-        dbs[join_event.relation.id] = [{"name": database, "legacy": True}]
+        dbs[join_event.relation.id] = {"name": database, "legacy": True}
         self.charm.set_relation_databases(dbs)
 
         self.update_databags(

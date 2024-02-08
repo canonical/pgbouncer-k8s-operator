@@ -111,7 +111,7 @@ class PgBouncerProvider(Object):
             return
 
         # Retrieve the database name and extra user roles using the charm library.
-        databases = event.database
+        database = event.database
         extra_user_roles = event.extra_user_roles or ""
         rel_id = event.relation.id
 
@@ -124,11 +124,9 @@ class PgBouncerProvider(Object):
                 user, password, extra_user_roles=extra_user_roles
             )
             logger.debug("creating database")
-            dblist = databases.split(",")
-            for database in dblist:
-                self.charm.backend.postgres.create_database(database, user)
+            self.charm.backend.postgres.create_database(database, user)
             # set up auth function
-            self.charm.backend.initialise_auth_function(dbs=dblist)
+            self.charm.backend.initialise_auth_function(dbs=[database])
         except (
             PostgreSQLCreateDatabaseError,
             PostgreSQLCreateUserError,
@@ -141,13 +139,13 @@ class PgBouncerProvider(Object):
             return
 
         dbs = self.charm.generate_relation_databases()
-        dbs[event.relation.id] = [{"name": database, "legacy": False} for database in dblist]
+        dbs[event.relation.id] = {"name": database, "legacy": False}
         self.charm.set_relation_databases(dbs)
 
         # Share the credentials and updated connection info with the client application.
         self.database_provides.set_credentials(rel_id, user, password)
         # Set the database name
-        self.database_provides.set_database(rel_id, databases)
+        self.database_provides.set_database(rel_id, database)
         self.update_connection_info(event.relation)
 
     def _on_relation_departed(self, event: RelationDepartedEvent) -> None:

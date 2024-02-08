@@ -133,7 +133,7 @@ class Peers(Object):
         self.unit_databag[ADDRESS_KEY] = self.charm.unit_pod_hostname
 
     def _on_joined(self, event: HookEvent):
-        self._on_changed(self, event)
+        self._on_changed(event)
         if self.charm.unit.is_leader():
             self.charm.client_relation.update_read_only_endpoints()
 

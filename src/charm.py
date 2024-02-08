@@ -9,7 +9,7 @@ import json
 import logging
 import os
 import socket
-from typing import Dict, List, Literal, Optional, Union, get_args
+from typing import Dict, Literal, Optional, Union, get_args
 
 import lightkube
 from charms.data_platform_libs.v0.data_interfaces import DataPeer, DataPeerUnit
@@ -632,20 +632,18 @@ class PgBouncerK8sCharm(CharmBase):
 
         pgb_container.remove_path(path)
 
-    def set_relation_databases(
-        self, databases: Dict[int, List[Dict[str, Union[str, bool]]]]
-    ) -> None:
+    def set_relation_databases(self, databases: Dict[int, Dict[str, Union[str, bool]]]) -> None:
         """Updates the relation databases."""
         self.peers.app_databag["pgb_dbs_config"] = json.dumps(databases)
 
-    def get_relation_databases(self) -> Dict[str, List[Dict[str, Union[str, bool]]]]:
+    def get_relation_databases(self) -> Dict[str, Dict[str, Union[str, bool]]]:
         """Get relation databases."""
         if "pgb_dbs_config" in self.peers.app_databag:
             return json.loads(self.peers.app_databag["pgb_dbs_config"])
         # TODO add generator based off the old data strurcture for upgrade
         return {}
 
-    def generate_relation_databases(self) -> Dict[str, List[Dict[str, Union[str, bool]]]]:
+    def generate_relation_databases(self) -> Dict[str, Dict[str, Union[str, bool]]]:
         """Generates a mapping between relation and database and sets it in the app databag."""
         if not self.unit.is_leader():
             return {}
@@ -656,36 +654,28 @@ class PgBouncerK8sCharm(CharmBase):
         for relation in self.model.relations.get("db", []):
             database = self.legacy_db_relation.get_databags(relation)[0].get("database")
             if database:
-                databases[relation.id] = [
-                    {
-                        "name": database,
-                        "legacy": True,
-                    }
-                ]
+                databases[relation.id] = {
+                    "name": database,
+                    "legacy": True,
+                }
 
         for relation in self.model.relations.get("db-admin", []):
             database = self.legacy_db_admin_relation.get_databags(relation)[0].get("database")
             if database:
-                databases[relation.id] = [
-                    {
-                        "name": database,
-                        "legacy": True,
-                    }
-                ]
+                databases[relation.id] = {
+                    "name": database,
+                    "legacy": True,
+                }
 
         for rel_id, data in self.client_relation.database_provides.fetch_relation_data(
             fields=["database"]
         ).items():
             database = data.get("database")
-            if database and rel_id:
-                db_list = database.split(",")
-                databases[rel_id] = [
-                    {
-                        "name": db,
-                        "legacy": False,
-                    }
-                    for db in db_list
-                ]
+            if database:
+                databases[rel_id] = {
+                    "name": database,
+                    "legacy": False,
+                }
         self.set_relation_databases(databases)
         return databases
 
@@ -709,24 +699,23 @@ class PgBouncerK8sCharm(CharmBase):
 
         pgb_dbs = {}
 
-        for rels_dbs in databases.values():
-            for database in rels_dbs:
-                name = database["name"]
-                pgb_dbs[name] = {
-                    "host": host,
+        for database in databases.values():
+            name = database["name"]
+            pgb_dbs[name] = {
+                "host": host,
+                "dbname": name,
+                "port": port,
+                "auth_user": self.backend.auth_user,
+            }
+            if r_hosts:
+                pgb_dbs[f"{name}_readonly"] = {
+                    "host": r_hosts,
                     "dbname": name,
-                    "port": port,
+                    "port": r_port,
                     "auth_user": self.backend.auth_user,
                 }
-                if r_hosts:
-                    pgb_dbs[f"{name}_readonly"] = {
-                        "host": r_hosts,
-                        "dbname": name,
-                        "port": r_port,
-                        "auth_user": self.backend.auth_user,
-                    }
-                    if database["legacy"]:
-                        pgb_dbs[f"{name}_standby"] = pgb_dbs[f"{name}_readonly"]
+                if database["legacy"]:
+                    pgb_dbs[f"{name}_standby"] = pgb_dbs[f"{name}_readonly"]
         return pgb_dbs
 
     def render_pgb_config(self, reload_pgbouncer: bool = False) -> None:
