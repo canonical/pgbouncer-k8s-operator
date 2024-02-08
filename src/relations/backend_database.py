@@ -203,6 +203,7 @@ class BackendDatabaseRequires(Object):
         except FileNotFoundError:
             # Not ready, no auth file to authenticate our pgb user
             return False
+
         # Check we can actually connect to backend database by running a command.
         try:
             with self.postgres._connect_to_database(PGB) as conn, conn.cursor() as cursor:

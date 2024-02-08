@@ -449,7 +449,7 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
             self.unit.status = BlockedStatus(pgb_container_unavailable)
-            logger.error(pgb_container_unavailable)
+            logger.warning(pgb_container_unavailable)
             return False
 
         pebble_services = pgb_container.get_services()
