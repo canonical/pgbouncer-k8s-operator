@@ -18,9 +18,9 @@ so_reuseport = 1
 unix_socket_dir = {{ socket_dir }}
 pool_mode = {{ pool_mode }}
 max_db_connections = {{ max_db_connections }}
-default_pool_size = 4
-min_pool_size = 2
-reserve_pool_size = 2
+default_pool_size = {{ default_pool_size }}
+min_pool_size = {{ min_pool_size }}
+reserve_pool_size = {{ reserve_pool_size }}
 auth_query = {{ auth_query }}
 auth_file = {{ auth_file }}
 {% if enable_tls %}

@@ -7,6 +7,7 @@
 
 import json
 import logging
+import math
 import os
 import socket
 from typing import Dict, Literal, Optional, Union, get_args
@@ -735,6 +736,16 @@ class PgBouncerK8sCharm(CharmBase):
                 minimising the amount of necessary restarts.
         """
         perm = 0o400
+        max_db_connections = self.config["max_db_connections"]
+        if max_db_connections == 0:
+            default_pool_size = 20
+            min_pool_size = 10
+            reserve_pool_size = 10
+        else:
+            effective_db_connections = max_db_connections / self._cores
+            default_pool_size = math.ceil(effective_db_connections / 2)
+            min_pool_size = math.ceil(effective_db_connections / 4)
+            reserve_pool_size = math.ceil(effective_db_connections / 4)
         with open("templates/pgb_config.j2", "r") as file:
             template = Template(file.read())
             databases = self._get_relation_config()
@@ -749,7 +760,10 @@ class PgBouncerK8sCharm(CharmBase):
                         pid_file=f"{service['dir']}/pgbouncer.pid",
                         listen_port=self.config["listen_port"],
                         pool_mode=self.config["pool_mode"],
-                        max_db_connections=self.config["max_db_connections"],
+                        max_db_connections=max_db_connections,
+                        default_pool_size=default_pool_size,
+                        min_pool_size=min_pool_size,
+                        reserve_pool_size=reserve_pool_size,
                         stats_user=self.backend.stats_user,
                         auth_query=self.backend.auth_query,
                         auth_file=AUTH_FILE_PATH,
