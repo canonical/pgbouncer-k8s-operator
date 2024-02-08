@@ -209,7 +209,6 @@ class DbProvides(Object):
               has not been created.
         """
         if not self.charm.unit.is_leader():
-            self.charm.render_pgb_config(reload_pgbouncer=True)
             return
 
         if not self.charm.backend.check_backend():
@@ -230,13 +229,16 @@ class DbProvides(Object):
         database = remote_app_databag.get("database")
         user = self._generate_username(join_event.relation)
 
-        if self.charm.unit.is_leader():
-            password = pgb.generate_password()
+        password = pgb.generate_password()
 
         if None in [database, password]:
             # If database isn't available, defer
             join_event.defer()
             return
+
+        dbs = self.charm.generate_relation_databases()
+        dbs[join_event.relation.id] = [{"name": database, "legacy": True}]
+        self.charm.set_relation_databases(dbs)
 
         self.update_databags(
             join_event.relation,
@@ -423,9 +425,9 @@ class DbProvides(Object):
                 self._check_for_blocking_relations(broken_event.relation.id)
             return
 
-        self.charm.render_pgb_config(
-            reload_pgbouncer=True, filter_relation=broken_event.relation.id
-        )
+        dbs = self.charm.generate_relation_databases()
+        dbs.pop(broken_event.relation.id, None)
+        self.charm.set_relation_databases(dbs)
         if self.charm.unit.is_leader():
             self.charm.backend.postgres.delete_user(user)
 

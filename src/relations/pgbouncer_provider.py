@@ -140,7 +140,9 @@ class PgBouncerProvider(Object):
             )
             return
 
-        self.charm.render_pgb_config(reload_pgbouncer=True)
+        dbs = self.charm.generate_relation_databases()
+        dbs[event.relation.id] = [{"name": database, "legacy": False} for database in dblist]
+        self.charm.set_relation_databases(dbs)
 
         # Share the credentials and updated connection info with the client application.
         self.database_provides.set_credentials(rel_id, user, password)
@@ -174,7 +176,9 @@ class PgBouncerProvider(Object):
             self.charm.peers.unit_databag.pop(self._depart_flag(event.relation), None)
             return
 
-        self.charm.render_pgb_config(reload_pgbouncer=True, filter_relation=event.relation.id)
+        dbs = self.charm.generate_relation_databases()
+        dbs.pop(event.relation.id, None)
+        self.charm.set_relation_databases(dbs)
 
         # Delete the user.
         try:
