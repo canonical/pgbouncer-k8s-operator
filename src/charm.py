@@ -248,10 +248,6 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
-        if auth_file := self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
-            self.render_auth_file(auth_file)
-
-        # in case of pod restart
         if all(self.tls.get_tls_files()):
             self.push_tls_files_to_workload(False)
 
@@ -264,7 +260,6 @@ class PgBouncerK8sCharm(CharmBase):
         self.unit.set_workload_version(self.version)
 
         self.peers.unit_databag["container_initialised"] = "True"
-
         if JujuVersion.from_environ().supports_open_port_on_k8s:
             self.unit.open_port("tcp", self.config["listen_port"])
         else:
@@ -499,6 +494,13 @@ class PgBouncerK8sCharm(CharmBase):
         if scope == UNIT_SCOPE:
             return self.unit
 
+    def peer_relation_data(self, scope: Scopes) -> DataPeer:
+        """Returns the peer relation data per scope."""
+        if scope == APP_SCOPE:
+            return self.peer_relation_app
+        elif scope == UNIT_SCOPE:
+            return self.peer_relation_unit
+
     def _translate_field_to_secret_key(self, key: str) -> str:
         """Change 'key' to secrets-compatible key field."""
         if not JujuVersion.from_environ().has_secrets:
@@ -514,11 +516,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         peers = self.model.get_relation(PEER_RELATION_NAME)
         secret_key = self._translate_field_to_secret_key(key)
-        if scope == APP_SCOPE:
-            value = self.peer_relation_app.fetch_my_relation_field(peers.id, secret_key)
-        else:
-            value = self.peer_relation_unit.fetch_my_relation_field(peers.id, secret_key)
-        return value
+        return self.peer_relation_data(scope).fetch_my_relation_field(peers.id, secret_key)
 
     def set_secret(self, scope: Scopes, key: str, value: Optional[str]) -> Optional[str]:
         """Set secret from the secret storage."""
@@ -530,10 +528,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         peers = self.model.get_relation(PEER_RELATION_NAME)
         secret_key = self._translate_field_to_secret_key(key)
-        if scope == APP_SCOPE:
-            self.peer_relation_app.update_relation_data(peers.id, {secret_key: value})
-        else:
-            self.peer_relation_unit.update_relation_data(peers.id, {secret_key: value})
+        self.peer_relation_data(scope).update_relation_data(peers.id, {secret_key: value})
 
     def remove_secret(self, scope: Scopes, key: str) -> None:
         """Removing a secret."""
@@ -542,10 +537,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         peers = self.model.get_relation(PEER_RELATION_NAME)
         secret_key = self._translate_field_to_secret_key(key)
-        if scope == APP_SCOPE:
-            self.peer_relation_app.delete_relation_data(peers.id, [secret_key])
-        else:
-            self.peer_relation_unit.delete_relation_data(peers.id, [secret_key])
+        self.peer_relation_data(scope).delete_relation_data(peers.id, [secret_key])
 
     def push_tls_files_to_workload(self, update_config: bool = True) -> bool:
         """Uploads TLS files to the workload container."""
