@@ -426,7 +426,7 @@ class DbProvides(Object):
             return
 
         dbs = self.charm.generate_relation_databases()
-        dbs.pop(broken_event.relation.id, None)
+        dbs.pop(str(broken_event.relation.id), None)
         self.charm.set_relation_databases(dbs)
         if self.charm.unit.is_leader():
             self.charm.backend.postgres.delete_user(user)

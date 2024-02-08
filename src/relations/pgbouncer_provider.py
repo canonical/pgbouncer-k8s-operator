@@ -177,7 +177,7 @@ class PgBouncerProvider(Object):
             return
 
         dbs = self.charm.generate_relation_databases()
-        dbs.pop(event.relation.id, None)
+        dbs.pop(str(event.relation.id), None)
         self.charm.set_relation_databases(dbs)
 
         # Delete the user.

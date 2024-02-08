@@ -646,13 +646,14 @@ class PgBouncerK8sCharm(CharmBase):
         """Updates the relation databases."""
         self.peers.app_databag["pgb_dbs_config"] = json.dumps(databases)
 
-    def get_relation_databases(self) -> Dict[int, List[Dict[str, Union[str, bool]]]]:
+    def get_relation_databases(self) -> Dict[str, List[Dict[str, Union[str, bool]]]]:
         """Get relation databases."""
         if "pgb_dbs_config" in self.peers.app_databag:
             return json.loads(self.peers.app_databag["pgb_dbs_config"])
+        # TODO add generator based off the old data strurcture for upgrade
         return {}
 
-    def generate_relation_databases(self) -> Dict[int, List[Dict[str, Union[str, bool]]]]:
+    def generate_relation_databases(self) -> Dict[str, List[Dict[str, Union[str, bool]]]]:
         """Generates a mapping between relation and database and sets it in the app databag."""
         if not self.unit.is_leader():
             return {}
