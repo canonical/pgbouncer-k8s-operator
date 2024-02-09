@@ -25,6 +25,7 @@ METRICS_PORT = 9127
 PGB_LOG_DIR = "/var/log/pgbouncer"
 MONITORING_PASSWORD_KEY = "monitoring_password"
 AUTH_FILE_DATABAG_KEY = "auth_file"
+CFG_FILE_DATABAG_KEY = "cfg_file"
 
 EXTENSIONS_BLOCKING_MESSAGE = "bad relation request - remote app requested extensions, which are unsupported. Please remove this relation."
 

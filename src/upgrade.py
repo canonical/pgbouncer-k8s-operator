@@ -97,6 +97,7 @@ class PgbouncerUpgrade(DataUpgrade):
             return
 
         self.set_unit_completed()
+        self.charm.update_status()
 
     def _on_upgrade_changed(self, _) -> None:
         """Rerenders the configuration."""

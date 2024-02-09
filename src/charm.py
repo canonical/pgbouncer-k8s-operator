@@ -10,6 +10,7 @@ import logging
 import math
 import os
 import socket
+from configparser import ConfigParser
 from typing import Dict, Literal, Optional, Union, get_args
 
 import lightkube
@@ -30,6 +31,7 @@ from constants import (
     APP_SCOPE,
     AUTH_FILE_DATABAG_KEY,
     AUTH_FILE_PATH,
+    CFG_FILE_DATABAG_KEY,
     CLIENT_RELATION_NAME,
     EXTENSIONS_BLOCKING_MESSAGE,
     METRICS_PORT,
@@ -72,6 +74,7 @@ class PgBouncerK8sCharm(CharmBase):
             relation_name=PEER_RELATION_NAME,
             additional_secret_fields=[
                 self._translate_field_to_secret_key(AUTH_FILE_DATABAG_KEY),
+                self._translate_field_to_secret_key(CFG_FILE_DATABAG_KEY),
                 self._translate_field_to_secret_key(MONITORING_PASSWORD_KEY),
             ],
             secret_field_name=SECRET_INTERNAL_LABEL,
@@ -645,7 +648,26 @@ class PgBouncerK8sCharm(CharmBase):
         """Get relation databases."""
         if "pgb_dbs_config" in self.peers.app_databag:
             return json.loads(self.peers.app_databag["pgb_dbs_config"])
-        # TODO add generator based off the old data strurcture for upgrade
+        # Nothing set in the config peer data trying to regenerate based on old data in case of update.
+        elif not self.unit.is_leader():
+            if cfg := self.get_secret(APP_SCOPE, CFG_FILE_DATABAG_KEY):
+                try:
+                    parser = ConfigParser()
+                    parser.optionxform = str
+                    parser.read_string(cfg)
+                    old_cfg = dict(parser)
+                    if databases := old_cfg.get("databases"):
+                        databases.pop("DEFAULT", None)
+                        result = {}
+                        i = 1
+                        for database in dict(databases):
+                            if database.endswith("_standby") or database.endswith("_readonly"):
+                                continue
+                            result[str(i)] = {"name": database, "legacy": False}
+                            i += 1
+                        return result
+                except Exception:
+                    logger.exception("Unable to parse legacy config format")
         return {}
 
     def generate_relation_databases(self) -> Dict[str, Dict[str, Union[str, bool]]]:
