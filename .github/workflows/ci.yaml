@@ -36,8 +36,7 @@ jobs:
           pipx install tox
           pipx install poetry
       - name: Run tests
-        # run: tox run -e unit
-        run: true
+        run: tox run -e unit
 
   build:
     name: Build charm
