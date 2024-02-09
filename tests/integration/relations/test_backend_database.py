@@ -77,7 +77,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),
 
         cfg = await get_cfg(ops_test, f"{PGB}/0")
-        logging.info(cfg.render())
+        logging.info(cfg)
         pgb_user, pgb_password = await get_backend_user_pass(ops_test, relation)
         assert cfg["pgbouncer"]["auth_query"]
 
@@ -108,7 +108,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
             assert False, "pgbouncer config files failed to update in 3 minutes"
 
         cfg = await get_cfg(ops_test, f"{PGB}/0")
-        logging.info(cfg.render())
+        logging.info(cfg)
 
 
 @pytest.mark.group(1)
