@@ -1,0 +1,354 @@
+[32mINFO    [0m juju.model:model.py:2087 Deploying ch:amd64/focal/mattermost-k8s-27
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  mattermost-k8s/0 [allocating] waiting: installing agent
+  mattermost-k8s/1 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  mattermost-k8s/0 [executing] waiting: Waiting for database relation
+  mattermost-k8s/1 [executing] waiting: Waiting for database relation
+[33mWARNING [0m juju.model:model.py:1553 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+  mattermost-k8s/1 [idle] waiting: Waiting for database relation
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  mattermost-k8s/0 [executing] active: 
+  mattermost-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  mattermost-k8s/0 [executing] active: 
+  mattermost-k8s/1 [executing] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:784 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.7    unsupported  01:47:32Z
+
+App                       Version  Status  Scale  Charm                     Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   active      2  pgbouncer-k8s                              0  10.152.183.198  no       
+postgresql-k8s            14.10    active      3  postgresql-k8s            14/edge        198  10.152.183.218  no       
+postgresql-test-app                active      1  postgresql-test-app       edge            51  10.152.183.30   no       received database credentials of the first database
+self-signed-certificates           active      1  self-signed-certificates  latest/stable   72  10.152.183.152  no       
+
+Unit                         Workload  Agent  Address      Ports  Message
+pgbouncer-k8s/0*             active    idle   10.1.98.136         
+pgbouncer-k8s/1              active    idle   10.1.98.137         
+postgresql-k8s/0*            active    idle   10.1.98.143         Primary
+postgresql-k8s/1             active    idle   10.1.98.145         
+postgresql-k8s/2             active    idle   10.1.98.144         
+postgresql-test-app/0*       active    idle   10.1.98.138         received database credentials of the first database
+self-signed-certificates/0*  active    idle   10.1.98.141         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:790 Juju error logs:
+
+unit-pgbouncer-k8s-0: 01:26:26 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:26:28 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:26:29 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:26:29 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:26:31 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:26:31 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:26:32 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:26:32 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:26:32 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:27:03 ERROR unit.pgbouncer-k8s/1.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-1: 01:27:05 ERROR unit.pgbouncer-k8s/1.juju-log upgrade:1: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-1: 01:27:06 ERROR unit.pgbouncer-k8s/1.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-0: 01:31:20 ERROR unit.pgbouncer-k8s/0.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-1: 01:31:21 ERROR unit.pgbouncer-k8s/1.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-0: 01:31:21 ERROR unit.pgbouncer-k8s/0.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-0: 01:31:30 ERROR unit.pgbouncer-k8s/0.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-1: 01:31:30 ERROR unit.pgbouncer-k8s/1.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-0: 01:31:30 ERROR unit.pgbouncer-k8s/0.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-0: 01:31:40 ERROR unit.pgbouncer-k8s/0.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-1: 01:31:40 ERROR unit.pgbouncer-k8s/1.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-0: 01:31:40 ERROR unit.pgbouncer-k8s/0.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-0: 01:31:52 ERROR unit.pgbouncer-k8s/0.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-1: 01:31:52 ERROR unit.pgbouncer-k8s/1.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-0: 01:31:52 ERROR unit.pgbouncer-k8s/0.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-2: 01:39:00 ERROR unit.pgbouncer-k8s/2.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 830, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 436, in main
+    _emit_charm_event(charm, dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 144, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 351, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 853, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 942, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 278, in _on_pgbouncer_pebble_ready
+    container.replan()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/model.py", line 2104, in replan
+    self._pebble.replan_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1782, in replan_services
+    return self._services_action('replan', [], timeout, delay)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1866, in _services_action
+    raise ChangeError(change.err, change)
+ops.pebble.ChangeError: cannot perform the following tasks:
+- Start service "pgbouncer_0" (cannot start service: exited quickly with code 1)
+----- Logs from task 0 -----
+2024-02-10T01:39:00Z INFO Most recent service output:
+    2024-02-10 01:39:00.084 UTC [15] ERROR could not open auth_file /var/lib/pgbouncer/userlist.txt: No such file or directory
+    2024-02-10 01:39:00.087 UTC [15] ERROR TLS setup failed: failed to load certificate file "/var/lib/pgbouncer/cert.pem": (null)
+    2024-02-10 01:39:00.087 UTC [15] FATAL TLS setup failed
+2024-02-10T01:39:00Z ERROR cannot start service: exited quickly with code 1
+-----
+unit-pgbouncer-k8s-2: 01:39:00 ERROR juju.worker.uniter.operation hook "pgbouncer-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-2: 01:39:00 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: hook failed
+unit-pgbouncer-k8s-2: 01:39:00 ERROR unit.pgbouncer-k8s/2.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 830, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 436, in main
+    _emit_charm_event(charm, dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 144, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 351, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 853, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 942, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 278, in _on_pgbouncer_pebble_ready
+    container.replan()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/model.py", line 2104, in replan
+    self._pebble.replan_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1782, in replan_services
+    return self._services_action('replan', [], timeout, delay)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1866, in _services_action
+    raise ChangeError(change.err, change)
+ops.pebble.ChangeError: cannot perform the following tasks:
+- Start service "pgbouncer_0" (cannot start service: exited quickly with code 1)
+----- Logs from task 0 -----
+2024-02-10T01:39:00Z INFO Most recent service output:
+    2024-02-10 01:39:00.966 UTC [16] ERROR could not open auth_file /var/lib/pgbouncer/userlist.txt: No such file or directory
+    2024-02-10 01:39:00.969 UTC [16] ERROR TLS setup failed: failed to load certificate file "/var/lib/pgbouncer/cert.pem": (null)
+    2024-02-10 01:39:00.969 UTC [16] FATAL TLS setup failed
+2024-02-10T01:39:00Z ERROR cannot start service: exited quickly with code 1
+-----
+unit-pgbouncer-k8s-2: 01:39:01 ERROR juju.worker.uniter.operation hook "pgbouncer-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-2: 01:39:01 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: hook failed
+unit-pgbouncer-k8s-2: 01:39:02 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:02 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:04 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:06 ERROR unit.pgbouncer-k8s/2.juju-log pgb-peers:0: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:06 ERROR unit.pgbouncer-k8s/2.juju-log pgb-peers:0: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:08 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:08 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:08 ERROR unit.pgbouncer-k8s/2.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 830, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 436, in main
+    _emit_charm_event(charm, dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 144, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 351, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 853, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 942, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 278, in _on_pgbouncer_pebble_ready
+    container.replan()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/model.py", line 2104, in replan
+    self._pebble.replan_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1782, in replan_services
+    return self._services_action('replan', [], timeout, delay)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1866, in _services_action
+    raise ChangeError(change.err, change)
+ops.pebble.ChangeError: cannot perform the following tasks:
+- Start service "pgbouncer_0" (cannot start service: exited quickly with code 1)
+----- Logs from task 0 -----
+2024-02-10T01:39:08Z INFO Most recent service output:
+    2024-02-10 01:39:08.330 UTC [24] ERROR TLS setup failed: failed to load certificate file "/var/lib/pgbouncer/cert.pem": (null)
+    2024-02-10 01:39:08.330 UTC [24] FATAL TLS setup failed
+2024-02-10T01:39:08Z ERROR cannot start service: exited quickly with code 1
+-----
+unit-pgbouncer-k8s-2: 01:39:08 ERROR juju.worker.uniter.operation hook "pgbouncer-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-2: 01:39:08 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: hook failed
+unit-pgbouncer-k8s-2: 01:39:09 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:09 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:11 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:11 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:12 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:12 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:12 ERROR unit.pgbouncer-k8s/2.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 830, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 436, in main
+    _emit_charm_event(charm, dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 144, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 351, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 853, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 942, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 278, in _on_pgbouncer_pebble_ready
+    container.replan()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/model.py", line 2104, in replan
+    self._pebble.replan_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1782, in replan_services
+    return self._services_action('replan', [], timeout, delay)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1866, in _services_action
+    raise ChangeError(change.err, change)
+ops.pebble.ChangeError: cannot perform the following tasks:
+- Start service "pgbouncer_0" (cannot start service: exited quickly with code 1)
+----- Logs from task 0 -----
+2024-02-10T01:39:12Z INFO Most recent service output:
+    2024-02-10 01:39:12.739 UTC [33] ERROR TLS setup failed: failed to load certificate file "/var/lib/pgbouncer/cert.pem": (null)
+    2024-02-10 01:39:12.739 UTC [33] FATAL TLS setup failed
+2024-02-10T01:39:12Z ERROR cannot start service: exited quickly with code 1
+-----
+unit-pgbouncer-k8s-2: 01:39:12 ERROR juju.worker.uniter.operation hook "pgbouncer-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-2: 01:39:12 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: hook failed
+unit-pgbouncer-k8s-2: 01:39:13 ERROR unit.pgbouncer-k8s/2.juju-log pgb-peers:0: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:13 ERROR unit.pgbouncer-k8s/2.juju-log pgb-peers:0: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:13 ERROR unit.pgbouncer-k8s/2.juju-log pgb-peers:0: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:14 ERROR unit.pgbouncer-k8s/2.juju-log database:3: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:15 ERROR unit.pgbouncer-k8s/2.juju-log database:3: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:15 ERROR unit.pgbouncer-k8s/2.juju-log database:3: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:17 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:17 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:17 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:18 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:18 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:19 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:19 ERROR unit.pgbouncer-k8s/2.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 830, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 436, in main
+    _emit_charm_event(charm, dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 144, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 351, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 853, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 942, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 278, in _on_pgbouncer_pebble_ready
+    container.replan()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/model.py", line 2104, in replan
+    self._pebble.replan_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1782, in replan_services
+    return self._services_action('replan', [], timeout, delay)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1866, in _services_action
+    raise ChangeError(change.err, change)
+ops.pebble.ChangeError: cannot perform the following tasks:
+- Start service "pgbouncer_0" (cannot start service: exited quickly with code 1)
+----- Logs from task 0 -----
+2024-02-10T01:39:19Z INFO Most recent service output:
+    2024-02-10 01:39:19.098 UTC [46] ERROR TLS setup failed: failed to load certificate file "/var/lib/pgbouncer/cert.pem": (null)
+    2024-02-10 01:39:19.098 UTC [46] FATAL TLS setup failed
+2024-02-10T01:39:19Z ERROR cannot start service: exited quickly with code 1
+-----
+unit-pgbouncer-k8s-2: 01:39:19 ERROR juju.worker.uniter.operation hook "pgbouncer-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-2: 01:39:19 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: hook failed
+unit-pgbouncer-k8s-2: 01:39:20 ERROR unit.pgbouncer-k8s/2.juju-log upgrade:1: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:20 ERROR unit.pgbouncer-k8s/2.juju-log upgrade:1: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:20 ERROR unit.pgbouncer-k8s/2.juju-log upgrade:1: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:21 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:21 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:21 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:21 ERROR unit.pgbouncer-k8s/2.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 830, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 436, in main
+    _emit_charm_event(charm, dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 144, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 351, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 853, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 942, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 278, in _on_pgbouncer_pebble_ready
+    container.replan()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/model.py", line 2104, in replan
+    self._pebble.replan_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1782, in replan_services
+    return self._services_action('replan', [], timeout, delay)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1866, in _services_action
+    raise ChangeError(change.err, change)
+ops.pebble.ChangeError: cannot perform the following tasks:
+- Start service "pgbouncer_0" (cannot start service: exited quickly with code 1)
+----- Logs from task 0 -----
+2024-02-10T01:39:21Z INFO Most recent service output:
+    2024-02-10 01:39:21.593 UTC [53] ERROR TLS setup failed: failed to load certificate file "/var/lib/pgbouncer/cert.pem": (null)
+    2024-02-10 01:39:21.593 UTC [53] FATAL TLS setup failed
+2024-02-10T01:39:21Z ERROR cannot start service: exited quickly with code 1
+-----
+unit-pgbouncer-k8s-2: 01:39:21 ERROR juju.worker.uniter.operation hook "pgbouncer-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-2: 01:39:21 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: hook failed
+unit-pgbouncer-k8s-2: 01:39:22 ERROR unit.pgbouncer-k8s/2.juju-log database:3: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:22 ERROR unit.pgbouncer-k8s/2.juju-log database:3: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:22 ERROR unit.pgbouncer-k8s/2.juju-log database:3: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:23 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:23 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:23 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:24 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:25 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:25 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:26 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:26 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:26 ERROR unit.pgbouncer-k8s/2.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:27 ERROR unit.pgbouncer-k8s/2.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 830, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 436, in main
+    _emit_charm_event(charm, dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 144, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 351, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 853, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 942, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 278, in _on_pgbouncer_pebble_ready
+    container.replan()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/model.py", line 2104, in replan
+    self._pebble.replan_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1782, in replan_services
+    return self._services_action('replan', [], timeout, delay)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1866, in _services_action
+    raise ChangeError(change.err, change)
+ops.pebble.ChangeError: cannot perform the following tasks:
+- Start service "pgbouncer_0" (cannot start service: exited quickly with code 1)
+----- Logs from task 0 -----
+2024-02-10T01:39:27Z INFO Most recent service output:
+    2024-02-10 01:39:27.050 UTC [66] ERROR TLS setup failed: failed to load certificate file "/var/lib/pgbouncer/cert.pem": (null)
+    2024-02-10 01:39:27.051 UTC [66] FATAL TLS setup failed
+2024-02-10T01:39:27Z ERROR cannot start service: exited quickly with code 1
+-----
+unit-pgbouncer-k8s-2: 01:39:27 ERROR juju.worker.uniter.operation hook "pgbouncer-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-2: 01:39:27 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: hook failed
+unit-pgbouncer-k8s-2: 01:39:28 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:28 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:28 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:29 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:29 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:39:29 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-2: 01:41:43 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: added relation-departing flag to peer databag
+unit-pgbouncer-k8s-2: 01:41:46 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: added relation-departing flag to peer databag
+unit-pgbouncer-k8s-2: 01:41:47 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: added relation-departing flag to peer databag
+unit-pgbouncer-k8s-2: 01:41:51 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing secret cauth was attempted to be removed.
+unit-pgbouncer-k8s-2: 01:41:51 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Can't update secret for relation 0
+unit-pgbouncer-k8s-2: 01:41:51 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing field 'cauth' was attempted to be removed from the databag (relation ID: 0)
+unit-pgbouncer-k8s-2: 01:41:51 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing secret cert was attempted to be removed.
+unit-pgbouncer-k8s-2: 01:41:51 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Can't update secret for relation 0
+unit-pgbouncer-k8s-2: 01:41:51 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing field 'cert' was attempted to be removed from the databag (relation ID: 0)
+unit-pgbouncer-k8s-2: 01:41:51 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing secret chain was attempted to be removed.
+unit-pgbouncer-k8s-2: 01:41:51 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Can't update secret for relation 0
+unit-pgbouncer-k8s-2: 01:41:51 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing field 'chain' was attempted to be removed from the databag (relation ID: 0)
+unit-pgbouncer-k8s-2: 01:41:56 ERROR unit.pgbouncer-k8s/2.juju-log database:3: This operation (update_relation_data()) can only be performed by the leader unit
+unit-pgbouncer-k8s-2: 01:41:57 ERROR unit.pgbouncer-k8s/2.juju-log database:3: This operation (update_relation_data()) can only be performed by the leader unit
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:856 Forgetting main...
