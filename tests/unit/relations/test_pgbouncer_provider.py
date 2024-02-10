@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from ops.testing import Harness
 
@@ -33,6 +33,95 @@ class TestPgbouncerProvider(unittest.TestCase):
         # Define a pgbouncer provider relation
         self.client_rel_id = self.harness.add_relation(CLIENT_RELATION_NAME, "application")
         self.harness.add_relation_unit(self.client_rel_id, "application/0")
+
+    @patch("relations.backend_database.BackendDatabaseRequires.check_backend", return_value=True)
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
+    )
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.postgres_databag",
+        new_callable=PropertyMock,
+        return_value={"endpoints": "test:endpoint"},
+    )
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.auth_user",
+        new_callable=PropertyMock,
+        return_value="test_auth_user",
+    )
+    @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="test_pass")
+    @patch("relations.pgbouncer_provider.PgBouncerProvider.update_read_only_endpoints")
+    @patch("relations.pgbouncer_provider.PgBouncerProvider.get_database", return_value="test-db")
+    @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_credentials")
+    @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_endpoints")
+    @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_version")
+    @patch("charm.PgBouncerK8sCharm.set_relation_databases")
+    @patch("charm.PgBouncerK8sCharm.generate_relation_databases")
+    def test_on_database_requested(
+        self,
+        _gen_rel_dbs,
+        _set_rel_dbs,
+        _dbp_set_version,
+        _dbp_set_endpoints,
+        _dbp_set_credentials,
+        _get_database,
+        _update_read_only_endpoints,
+        _password,
+        _auth_user,
+        _pg_databag,
+        _pg,
+        _check_backend,
+    ):
+        self.harness.set_leader()
+        _gen_rel_dbs.return_value = {}
+
+        event = MagicMock()
+        rel_id = event.relation.id = 1
+        database = event.database = "test-db"
+        event.extra_user_roles = "SUPERUSER"
+        user = f"relation_id_{rel_id}"
+
+        # check we exit immediately if backend doesn't exist.
+        _check_backend.return_value = False
+        self.client_relation._on_database_requested(event)
+        _pg.create_user.assert_not_called()
+
+        _check_backend.return_value = True
+        self.client_relation._on_database_requested(event)
+
+        # Verify we've called everything we should
+        _pg().create_user.assert_called_with(
+            user, _password(), extra_user_roles=event.extra_user_roles
+        )
+        _pg().create_database.assert_called_with(database, user)
+        _dbp_set_credentials.assert_called_with(rel_id, user, _password())
+        _dbp_set_version.assert_called_with(rel_id, _pg().get_postgresql_version())
+        _dbp_set_endpoints.assert_called_with(
+            rel_id, f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}"
+        )
+        _update_read_only_endpoints.assert_called()
+        _set_rel_dbs.assert_called_once_with({1: {"name": "test-db", "legacy": False}})
+
+    @patch("relations.backend_database.BackendDatabaseRequires.check_backend", return_value=True)
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
+    )
+    @patch("charm.PgBouncerK8sCharm.set_relation_databases")
+    @patch("charm.PgBouncerK8sCharm.generate_relation_databases")
+    def test_on_relation_broken(self, _gen_rel_dbs, _set_rel_dbs, _pg, _check_backend):
+        _pg.return_value.get_postgresql_version.return_value = "10"
+        _gen_rel_dbs.return_value = {"1": {"name": "test_db", "legacy": False}}
+        self.harness.set_leader()
+
+        event = MagicMock()
+        rel_id = event.relation.id = 1
+        external_app = self.charm.client_relation.get_external_app(event.relation)
+        event.relation.data = {external_app: {"database": "test_db"}}
+        user = f"relation_id_{rel_id}"
+
+        self.client_relation._on_relation_broken(event)
+        _pg().delete_user.assert_called_with(user)
+
+        _set_rel_dbs.assert_called_once_with({})
 
     @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_read_only_endpoints")
     def test_update_read_only_endpoints(self, _set_read_only_endpoints):
