@@ -132,8 +132,10 @@ class TestDb(unittest.TestCase):
     @patch("relations.db.DbProvides.get_allowed_units")
     @patch("relations.db.DbProvides.get_allowed_subnets")
     @patch("relations.db.DbProvides._get_state")
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_relation_changed(
         self,
+        _render_pgb_config,
         _get_state,
         _allowed_subnets,
         _allowed_units,
@@ -174,6 +176,7 @@ class TestDb(unittest.TestCase):
                 "state": _get_state.return_value,
             },
         )
+        _render_pgb_config.assert_called_once_with(reload_pgbouncer=True)
 
     @patch("relations.db.DbProvides.get_databags", return_value=[{}])
     @patch("relations.db.DbProvides.get_external_app")
