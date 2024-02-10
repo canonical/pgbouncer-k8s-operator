@@ -288,6 +288,11 @@ class PgBouncerK8sCharm(CharmBase):
             - If reloading the pgbouncer pebble service throws a ConnectionError (Implying that
               the pebble service is not yet ready)
         """
+        if not self.is_container_ready:
+            logger.debug("_on_config_changed deferred: container not ready")
+            event.defer()
+            return
+
         old_port = self.peers.app_databag.get("current_port")
         if self.unit.is_leader() and old_port != str(self.config["listen_port"]):
             self.peers.app_databag["current_port"] = str(self.config["listen_port"])
