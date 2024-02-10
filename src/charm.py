@@ -25,7 +25,7 @@ from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
 from ops.model import ActiveStatus, BlockedStatus, WaitingStatus
-from ops.pebble import ConnectionError, Layer, PathError, ServiceStatus
+from ops.pebble import ConnectionError, Layer, ServiceStatus
 
 from constants import (
     APP_SCOPE,
@@ -495,12 +495,6 @@ class PgBouncerK8sCharm(CharmBase):
         unit_id = unit_name.split("/")[1]
         return f"{self.app.name}-{unit_id}.{self.app.name}-endpoints"
 
-    def _normalize_secret_key(self, key: str) -> str:
-        new_key = key.replace("_", "-")
-        new_key = new_key.strip("-")
-
-        return new_key
-
     def _scope_obj(self, scope: Scopes):
         if scope == APP_SCOPE:
             return self.app
@@ -606,32 +600,6 @@ class PgBouncerK8sCharm(CharmBase):
             permissions=perms,
             make_dirs=True,
         )
-
-    def _read_file(self, filepath: str) -> str:
-        """Reads file from pgbouncer container as a string.
-
-        Args:
-            filepath: the filepath to be read
-
-        Returns:
-            A string containing the file located at the given filepath.
-
-        Raises:
-            FileNotFoundError: if there is no file at the given path.
-        """
-        pgb_container = self.unit.get_container(PGB)
-        if not pgb_container.can_connect():
-            inaccessible = f"pgbouncer container not accessible, cannot find {filepath}"
-            logger.error(inaccessible)
-            raise FileNotFoundError(inaccessible)
-
-        try:
-            file_contents = pgb_container.pull(filepath).read()
-        except FileNotFoundError as e:
-            raise e
-        except PathError as e:
-            raise FileNotFoundError(str(e))
-        return file_contents
 
     def delete_file(self, path):
         """Deletes the file at `path`."""
