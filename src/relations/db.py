@@ -304,7 +304,6 @@ class DbProvides(Object):
             change_event.defer()
             return
 
-        self.charm.render_pgb_config(reload_pgbouncer=True)
         if self.charm.unit.is_leader():
             self.update_connection_info(change_event.relation, self.charm.config["listen_port"])
             self.update_databags(
