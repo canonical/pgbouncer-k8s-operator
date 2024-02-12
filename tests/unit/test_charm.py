@@ -4,16 +4,19 @@
 # Learn more about testing at: https://juju.is/docs/sdk/testing
 
 import logging
+import math
 import unittest
 from unittest.mock import PropertyMock, call, patch
 
 import pytest
+from jinja2 import Template
 from ops.model import RelationDataTypeError
 from ops.testing import Harness
 from parameterized import parameterized
 
 from charm import PgBouncerK8sCharm
 from constants import (
+    AUTH_FILE_PATH,
     BACKEND_RELATION_NAME,
     PEER_RELATION_NAME,
     PGB,
@@ -137,6 +140,195 @@ class TestCharm(unittest.TestCase):
         push_tls_files_to_workload.assert_called_once_with(False)
         _update_status.assert_called_once_with()
         _render.assert_called_once_with()
+
+    @patch("ops.model.Container.can_connect", return_value=False)
+    @patch(
+        "charm.BackendDatabaseRequires.auth_user",
+        new_callable=PropertyMock,
+        return_value="AUTH_USER",
+    )
+    @patch("charm.BackendDatabaseRequires.relation", new_callable=PropertyMock, return_value=True)
+    @patch(
+        "charm.BackendDatabaseRequires.stats_user",
+        new_callable=PropertyMock,
+        return_value="STATS_USER",
+    )
+    @patch(
+        "charm.BackendDatabaseRequires.auth_query",
+        new_callable=PropertyMock,
+        return_value="AUTH_QUERY",
+    )
+    @patch(
+        "charm.BackendDatabaseRequires.postgres_databag",
+        new_callable=PropertyMock,
+        return_value={"endpoints": "HOST:PORT", "read-only-endpoints": "HOST2:PORT"},
+    )
+    @patch("charm.PgBouncerK8sCharm.get_relation_databases")
+    @patch("charm.PgBouncerK8sCharm.push_file")
+    @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
+    def test_render_pgb_config(
+        self,
+        _reload_pgbouncer,
+        _push_file,
+        _get_dbs,
+        _postgres_databag,
+        _,
+        __,
+        ___,
+        ____,
+        _can_connect,
+    ):
+        _get_dbs.return_value = {
+            "1": {"name": "first_test", "legacy": True},
+            "2": {"name": "second_test", "legacy": False},
+        }
+
+        # Assert we exit early if _can_connect returns false
+        _can_connect.return_value = False
+        self.charm.render_pgb_config(reload_pgbouncer=False)
+        _reload_pgbouncer.assert_not_called()
+
+        with open("templates/pgb_config.j2") as file:
+            template = Template(file.read())
+        _can_connect.return_value = True
+        self.charm.render_pgb_config(reload_pgbouncer=True)
+        _reload_pgbouncer.assert_called()
+        effective_db_connections = 100 / self.charm._cores
+        default_pool_size = math.ceil(effective_db_connections / 2)
+        min_pool_size = math.ceil(effective_db_connections / 4)
+        reserve_pool_size = math.ceil(effective_db_connections / 4)
+        expected_databases = {
+            "first_test": {
+                "host": "HOST",
+                "dbname": "first_test",
+                "port": "PORT",
+                "auth_user": "AUTH_USER",
+            },
+            "first_test_readonly": {
+                "host": "HOST2",
+                "dbname": "first_test",
+                "port": "PORT",
+                "auth_user": "AUTH_USER",
+            },
+            "first_test_standby": {
+                "host": "HOST2",
+                "dbname": "first_test",
+                "port": "PORT",
+                "auth_user": "AUTH_USER",
+            },
+            "second_test": {
+                "host": "HOST",
+                "dbname": "second_test",
+                "port": "PORT",
+                "auth_user": "AUTH_USER",
+            },
+            "second_test_readonly": {
+                "host": "HOST2",
+                "dbname": "second_test",
+                "port": "PORT",
+                "auth_user": "AUTH_USER",
+            },
+        }
+        for i in range(self.charm._cores):
+            expected_content = template.render(
+                databases=expected_databases,
+                socket_dir=f"/var/lib/pgbouncer/instance_{i}",
+                log_file=f"/var/log/pgbouncer/instance_{i}/pgbouncer.log",
+                pid_file=f"/var/lib/pgbouncer/instance_{i}/pgbouncer.pid",
+                listen_port=6432,
+                pool_mode="session",
+                max_db_connections=100,
+                default_pool_size=default_pool_size,
+                min_pool_size=min_pool_size,
+                reserve_pool_size=reserve_pool_size,
+                stats_user="STATS_USER",
+                auth_query="AUTH_QUERY",
+                auth_file=AUTH_FILE_PATH,
+                enable_tls=False,
+            )
+            _push_file.assert_any_call(
+                f"/var/lib/pgbouncer/instance_{i}/pgbouncer.ini", expected_content, 0o400
+            )
+        _push_file.reset_mock()
+        _reload_pgbouncer.reset_mock()
+
+        # test constant pool sizes with unlimited connections and no ro endpoints
+        with self.harness.hooks_disabled():
+            self.harness.update_config(
+                {
+                    "max_db_connections": 0,
+                }
+            )
+        del expected_databases["first_test_readonly"]
+        del expected_databases["first_test_standby"]
+        del expected_databases["second_test_readonly"]
+
+        del _postgres_databag.return_value["read-only-endpoints"]
+
+        self.charm.render_pgb_config()
+
+        assert not _reload_pgbouncer.called
+        for i in range(self.charm._cores):
+            expected_content = template.render(
+                databases=expected_databases,
+                socket_dir=f"/var/lib/pgbouncer/instance_{i}",
+                log_file=f"/var/log/pgbouncer/instance_{i}/pgbouncer.log",
+                pid_file=f"/var/lib/pgbouncer/instance_{i}/pgbouncer.pid",
+                listen_port=6432,
+                pool_mode="session",
+                max_db_connections=0,
+                default_pool_size=20,
+                min_pool_size=10,
+                reserve_pool_size=10,
+                stats_user="STATS_USER",
+                auth_query="AUTH_QUERY",
+                auth_file=AUTH_FILE_PATH,
+                enable_tls=False,
+            )
+            _push_file.assert_any_call(
+                f"/var/lib/pgbouncer/instance_{i}/pgbouncer.ini", expected_content, 0o400
+            )
+
+    @patch("charm.Peers.app_databag", new_callable=PropertyMock, return_value={})
+    @patch("charm.PgBouncerK8sCharm.get_secret")
+    def test_get_relation_databases_legacy_data(self, _get_secret, _):
+        """Test that legacy data will be parsed if new one is not set."""
+        self.harness.set_leader(False)
+        _get_secret.return_value = """
+        [databases]
+        test_db = host_cfg
+        test_db_standby = host_cfg
+        other_db = other_cfg
+        """
+        result = self.charm.get_relation_databases()
+        assert result == {
+            "1": {"legacy": False, "name": "test_db"},
+            "2": {"legacy": False, "name": "other_db"},
+        }
+        _get_secret.assert_called_once_with("app", "cfg_file")
+
+        # Get empty dict if no config is set
+        _get_secret.return_value = None
+        assert self.charm.get_relation_databases() == {}
+
+        # Get empty dict if exception
+        _get_secret.return_value = 1
+        assert self.charm.get_relation_databases() == {}
+
+        # Get empty dict if no databases
+        _get_secret.return_value = """
+        [other]
+        test_db = host_cfg
+        test_db_standby = host_cfg
+        other_db = other_cfg
+        """
+        assert self.charm.get_relation_databases() == {}
+
+    @patch("charm.PgBouncerK8sCharm.get_relation_databases", return_value={"some": "values"})
+    def test_generate_relation_databases_not_leader(self, _):
+        self.harness.set_leader(False)
+
+        assert self.charm.generate_relation_databases() == {}
 
     @patch("charm.PgBouncerK8sCharm._patch_port")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
