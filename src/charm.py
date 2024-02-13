@@ -33,6 +33,7 @@ from constants import (
     AUTH_FILE_PATH,
     CFG_FILE_DATABAG_KEY,
     CLIENT_RELATION_NAME,
+    CONTAINER_UNAVAILABLE_MESSAGE,
     EXTENSIONS_BLOCKING_MESSAGE,
     METRICS_PORT,
     MONITORING_PASSWORD_KEY,
@@ -457,11 +458,10 @@ class PgBouncerK8sCharm(CharmBase):
 
     def check_pgb_running(self):
         """Checks that pgbouncer pebble service is running, and updates status accordingly."""
-        pgb_container_unavailable = "PgBouncer container currently unavailable"
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
-            self.unit.status = BlockedStatus(pgb_container_unavailable)
-            logger.warning(pgb_container_unavailable)
+            self.unit.status = BlockedStatus(CONTAINER_UNAVAILABLE_MESSAGE)
+            logger.warning(CONTAINER_UNAVAILABLE_MESSAGE)
             return False
 
         pebble_services = pgb_container.get_services()

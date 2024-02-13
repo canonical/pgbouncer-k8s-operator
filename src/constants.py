@@ -28,6 +28,7 @@ AUTH_FILE_DATABAG_KEY = "auth_file"
 CFG_FILE_DATABAG_KEY = "cfg_file"
 
 EXTENSIONS_BLOCKING_MESSAGE = "bad relation request - remote app requested extensions, which are unsupported. Please remove this relation."
+CONTAINER_UNAVAILABLE_MESSAGE = "PgBouncer container currently unavailable"
 
 SECRET_LABEL = "secret"
 SECRET_INTERNAL_LABEL = "internal-secret"

@@ -6,7 +6,7 @@
 import logging
 import math
 import unittest
-from unittest.mock import PropertyMock, call, patch
+from unittest.mock import Mock, PropertyMock, call, patch
 
 import pytest
 from jinja2 import Template
@@ -143,20 +143,11 @@ class TestCharm(unittest.TestCase):
 
     @patch("ops.model.Container.can_connect", return_value=False)
     @patch(
-        "charm.BackendDatabaseRequires.auth_user",
-        new_callable=PropertyMock,
-        return_value="AUTH_USER",
-    )
-    @patch("charm.BackendDatabaseRequires.relation", new_callable=PropertyMock, return_value=True)
-    @patch(
-        "charm.BackendDatabaseRequires.stats_user",
-        new_callable=PropertyMock,
-        return_value="STATS_USER",
+        "relations.backend_database.DatabaseRequires.fetch_relation_field",
+        return_value="BACKNEND_USER",
     )
     @patch(
-        "charm.BackendDatabaseRequires.auth_query",
-        new_callable=PropertyMock,
-        return_value="AUTH_QUERY",
+        "charm.BackendDatabaseRequires.relation", new_callable=PropertyMock, return_value=Mock()
     )
     @patch(
         "charm.BackendDatabaseRequires.postgres_databag",
@@ -172,10 +163,8 @@ class TestCharm(unittest.TestCase):
         _push_file,
         _get_dbs,
         _postgres_databag,
+        _backend_rel,
         _,
-        __,
-        ___,
-        ____,
         _can_connect,
     ):
         _get_dbs.return_value = {
@@ -202,31 +191,31 @@ class TestCharm(unittest.TestCase):
                 "host": "HOST",
                 "dbname": "first_test",
                 "port": "PORT",
-                "auth_user": "AUTH_USER",
+                "auth_user": "pgbouncer_auth_BACKNEND_USER",
             },
             "first_test_readonly": {
                 "host": "HOST2",
                 "dbname": "first_test",
                 "port": "PORT",
-                "auth_user": "AUTH_USER",
+                "auth_user": "pgbouncer_auth_BACKNEND_USER",
             },
             "first_test_standby": {
                 "host": "HOST2",
                 "dbname": "first_test",
                 "port": "PORT",
-                "auth_user": "AUTH_USER",
+                "auth_user": "pgbouncer_auth_BACKNEND_USER",
             },
             "second_test": {
                 "host": "HOST",
                 "dbname": "second_test",
                 "port": "PORT",
-                "auth_user": "AUTH_USER",
+                "auth_user": "pgbouncer_auth_BACKNEND_USER",
             },
             "second_test_readonly": {
                 "host": "HOST2",
                 "dbname": "second_test",
                 "port": "PORT",
-                "auth_user": "AUTH_USER",
+                "auth_user": "pgbouncer_auth_BACKNEND_USER",
             },
         }
         for i in range(self.charm._cores):
@@ -241,8 +230,8 @@ class TestCharm(unittest.TestCase):
                 default_pool_size=default_pool_size,
                 min_pool_size=min_pool_size,
                 reserve_pool_size=reserve_pool_size,
-                stats_user="STATS_USER",
-                auth_query="AUTH_QUERY",
+                stats_user="pgbouncer_stats_pgbouncer_k8s",
+                auth_query="SELECT username, password FROM pgbouncer_auth_BACKNEND_USER.get_auth($1)",
                 auth_file=AUTH_FILE_PATH,
                 enable_tls=False,
             )
@@ -280,14 +269,27 @@ class TestCharm(unittest.TestCase):
                 default_pool_size=20,
                 min_pool_size=10,
                 reserve_pool_size=10,
-                stats_user="STATS_USER",
-                auth_query="AUTH_QUERY",
+                stats_user="pgbouncer_stats_pgbouncer_k8s",
+                auth_query="SELECT username, password FROM pgbouncer_auth_BACKNEND_USER.get_auth($1)",
                 auth_file=AUTH_FILE_PATH,
                 enable_tls=False,
             )
             _push_file.assert_any_call(
                 f"/var/lib/pgbouncer/instance_{i}/pgbouncer.ini", expected_content, 0o400
             )
+
+    @patch("charm.PgBouncerK8sCharm.push_file")
+    @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
+    def test_render_auth_file(self, _reload_pgbouncer, _push_file):
+        self.charm.render_auth_file("test", reload_pgbouncer=False)
+
+        _reload_pgbouncer.assert_not_called()
+        _push_file.assert_called_once_with(AUTH_FILE_PATH, "test", 0o400)
+        _reload_pgbouncer.reset_mock()
+
+        # Test reload
+        self.charm.render_auth_file("test", reload_pgbouncer=True)
+        _reload_pgbouncer.assert_called_once_with()
 
     @patch("charm.Peers.app_databag", new_callable=PropertyMock, return_value={})
     @patch("charm.PgBouncerK8sCharm.get_secret")

@@ -5,6 +5,8 @@ import unittest
 from unittest.mock import MagicMock, PropertyMock, call, patch
 
 from charms.pgbouncer_k8s.v0.pgb import get_hashed_password
+from ops.model import WaitingStatus
+from ops.pebble import ConnectionError
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
@@ -97,6 +99,66 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         _render_cfg_file.assert_called_once_with(reload_pgbouncer=True)
 
     @patch(
+        "charm.PgBouncerK8sCharm.is_container_ready", new_callable=PropertyMock, return_value=True
+    )
+    @patch("charm.PgBouncerK8sCharm.toggle_monitoring_layer")
+    @patch("charm.PgBouncerK8sCharm.render_auth_file")
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
+    @patch("charm.PgBouncerK8sCharm.get_secret")
+    def test_on_database_created_not_leader(
+        self, _get_secret, _render_pgb, _render_auth, _toggle_monitoring, _
+    ):
+        self.harness.set_leader(False)
+
+        # No secret yet
+        _get_secret.return_value = None
+
+        mock_event = MagicMock()
+        mock_event.username = "mock_user"
+        self.backend._on_database_created(mock_event)
+
+        assert not _render_auth.called
+        assert not _render_pgb.called
+        assert not _toggle_monitoring.called
+        _get_secret.assert_called_once_with("app", "auth_file")
+        mock_event.defer.assert_called_once_with()
+
+        _get_secret.return_value = "AUTH"
+        self.backend._on_database_created(mock_event)
+        _render_auth.assert_called_once_with("AUTH")
+        _render_pgb.assert_called_once_with(reload_pgbouncer=True)
+        _toggle_monitoring.assert_called_once_with(True)
+
+    @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
+    def test_on_endpoints_changed(self, _render_pgb, _update_client_conn):
+        self.charm.backend._on_endpoints_changed(MagicMock())
+        _render_pgb.assert_called_once_with(reload_pgbouncer=True)
+        _update_client_conn.assert_called_once_with()
+
+    @patch("charm.PgBouncerK8sCharm.check_pgb_running", return_value=True)
+    @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
+    def test_on_relation_changed(self, _render_pgb, _update_client_conn, _check_pgb):
+        self.charm.backend._on_relation_changed(MagicMock())
+        _render_pgb.assert_called_once_with(reload_pgbouncer=True)
+        _update_client_conn.assert_called_once_with()
+        _render_pgb.reset_mock()
+        _update_client_conn.reset_mock()
+
+        # early exit
+        _check_pgb.return_value = False
+        self.charm.backend._on_relation_changed(MagicMock())
+        assert not _render_pgb.called
+        assert not _update_client_conn.called
+
+        # connerror
+        _check_pgb.side_effect = ConnectionError
+        self.charm.backend._on_relation_changed(MagicMock())
+        assert not _render_pgb.called
+        assert not _update_client_conn.called
+
+    @patch(
         "relations.backend_database.BackendDatabaseRequires.auth_user",
         new_callable=PropertyMock,
         return_value="user",
@@ -154,3 +216,15 @@ class TestBackendDatabaseRelation(unittest.TestCase):
             install_script.replace("auth_user", self.backend.auth_user)
         )
         conn.close.assert_called()
+
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.ready",
+        new_callable=PropertyMock,
+        return_value=True,
+    )
+    def test_check_backend(self, _ready):
+        assert self.charm.backend.check_backend()
+
+        _ready.return_value = False
+        assert not self.charm.backend.check_backend()
+        assert isinstance(self.charm.unit.status, WaitingStatus)
