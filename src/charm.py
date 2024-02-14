@@ -460,7 +460,7 @@ class PgBouncerK8sCharm(CharmBase):
         """Checks that pgbouncer pebble service is running, and updates status accordingly."""
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
-            self.unit.status = BlockedStatus(CONTAINER_UNAVAILABLE_MESSAGE)
+            self.unit.status = WaitingStatus(CONTAINER_UNAVAILABLE_MESSAGE)
             logger.warning(CONTAINER_UNAVAILABLE_MESSAGE)
             return False
 
