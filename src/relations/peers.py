@@ -18,40 +18,7 @@ Example:
 │ application data │ ╭──────────────────────────────────────────────────────────────────────────────────────────────╮ │
 │                  │ │                                                                                              │ │
 │                  │ │  auth_file        "pgbouncer_auth_relation_id_3" "md5aad46d9afbcc8c8248d254d567b577c1"       │ │
-│                  │ │  cfg_file                                                                                    │ │
-│                  │ │                   application_first_database =                                               │ │
-│                  │ │                   host=postgresql-k8s-primary.test-pgbouncer-provider-gnrj.svc.cluster.loc…  │ │
-│                  │ │                   dbname=application_first_database port=5432                                │ │
-│                  │ │                   auth_user=pgbouncer_auth_relation_id_3                                     │ │
-│                  │ │                   application_first_database_readonly =                                      │ │
-│                  │ │                   host=postgresql-k8s-replicas.test-pgbouncer-provider-gnrj.svc.cluster.lo…  │ │
-│                  │ │                   dbname=application_first_database port=5432                                │ │
-│                  │ │                   auth_user=pgbouncer_auth_relation_id_3                                     │ │
-│                  │ │                                                                                              │ │
-│                  │ │                                                                                              │ │
-│                  │ │                   listen_addr = *                                                            │ │
-│                  │ │                   listen_port = 6432                                                         │ │
-│                  │ │                   logfile = /var/lib/postgresql/pgbouncer/pgbouncer.log                      │ │
-│                  │ │                   pidfile = /var/lib/postgresql/pgbouncer/pgbouncer.pid                      │ │
-│                  │ │                   admin_users = relation_id_3                                                │ │
-│                  │ │                   stats_users =                                                              │ │
-│                  │ │                   auth_type = md5                                                            │ │
-│                  │ │                   user = postgres                                                            │ │
-│                  │ │                   max_client_conn = 10000                                                    │ │
-│                  │ │                   ignore_startup_parameters = extra_float_digits                             │ │
-│                  │ │                   server_tls_sslmode = prefer                                                │ │
-│                  │ │                   so_reuseport = 1                                                           │ │
-│                  │ │                   unix_socket_dir = /var/lib/postgresql/pgbouncer                            │ │
-│                  │ │                   pool_mode = session                                                        │ │
-│                  │ │                   max_db_connections = 100                                                   │ │
-│                  │ │                   default_pool_size = 13                                                     │ │
-│                  │ │                   min_pool_size = 7                                                          │ │
-│                  │ │                   reserve_pool_size = 7                                                      │ │
-│                  │ │                   auth_query = SELECT username, password FROM                                │ │
-│                  │ │                   pgbouncer_auth_relation_id_3.get_auth($1)                                  │ │
-│                  │ │                   auth_file = /var/lib/postgresql/pgbouncer/userlist.txt                     │ │
-│                  │ │                                                                                              │ │
-│                  │ │                                                                                              │ │
+│                  │ │  pgb_dbs_config   '{"1": {"name": "db_name", "legacy": false}}'                              │ │
 │                  │ │  leader_hostname  pgbouncer-k8s-0.pgbouncer-k8s-endpoints.test-pgbouncer-provider-gnrj.svc…  │ │
 │                  │ │  relation_id_4    Z4OtFCe6r5HG6mk1XuR6LkwZ                                                   │ │
 │                  │ ╰──────────────────────────────────────────────────────────────────────────────────────────────╯ │
@@ -65,15 +32,12 @@ Example:
 import logging
 from typing import Optional, Set
 
-from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from ops.charm import CharmBase, HookEvent, RelationCreatedEvent
 from ops.framework import Object
 from ops.model import MaintenanceStatus, Relation, Unit
-from ops.pebble import ChangeError, ConnectionError
 
-from constants import APP_SCOPE, AUTH_FILE_DATABAG_KEY, PEER_RELATION_NAME
+from constants import PEER_RELATION_NAME
 
-CFG_FILE_DATABAG_KEY = "cfg_file"
 ADDRESS_KEY = "private-address"
 LEADER_ADDRESS_KEY = "leader_hostname"
 
@@ -98,7 +62,7 @@ class Peers(Object):
         self.charm = charm
 
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_created, self._on_created)
-        self.framework.observe(charm.on[PEER_RELATION_NAME].relation_joined, self._on_changed)
+        self.framework.observe(charm.on[PEER_RELATION_NAME].relation_joined, self._on_joined)
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_changed, self._on_changed)
         self.framework.observe(charm.on.secret_changed, self._on_changed)
         self.framework.observe(charm.on.secret_remove, self._on_changed)
@@ -168,23 +132,11 @@ class Peers(Object):
             - If config is unavailable
         """
         self.unit_databag[ADDRESS_KEY] = self.charm.unit_pod_hostname
-        if not self.charm.unit.is_leader():
-            return
 
-        try:
-            cfg = self.charm.read_pgb_config()
-            self.update_cfg(cfg)
-        except FileNotFoundError:
-            # If there's no config, the charm start hook hasn't fired yet, so defer until it's
-            # available.
-            event.defer()
-            return
-
-        if self.charm.backend.ready:
-            # The backend relation creates the userlist, so only upload userlist to databag if
-            # backend relation is initialised. If not, it'll be added when that relation first
-            # writes it to the container, so no need to add it now.
-            self.update_auth_file(self.charm.read_auth_file())
+    def _on_joined(self, event: HookEvent):
+        self._on_changed(event)
+        if self.charm.unit.is_leader():
+            self.charm.client_relation.update_read_only_endpoints()
 
     def _on_changed(self, event: HookEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem.
@@ -198,36 +150,17 @@ class Peers(Object):
             - If pgbouncer container is unavailable.
         """
         self.unit_databag.update({ADDRESS_KEY: self.charm.unit_pod_hostname})
-        self.charm.update_client_connection_info()
 
         if self.charm.unit.is_leader():
-            try:
-                cfg = self.charm.read_pgb_config()
-            except FileNotFoundError:
-                # If there's no config, the charm start hook hasn't fired yet, so defer until it's
-                # available.
-                event.defer()
-                return
-
             self.update_leader()
+
+        if not self.charm.is_container_ready:
+            logger.debug("_on_peer_changed defer: container unavailable")
+            event.defer()
             return
 
-        if cfg := self.get_cfg():
-            self.charm.render_pgb_config(PgbConfig(cfg))
-
-        if auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
-            self.charm.render_auth_file(auth_file)
-
-        if cfg is not None or auth_file is not None:
-            try:
-                # raises an error if this is fired before on_pebble_ready.
-                self.charm.reload_pgbouncer()
-                self.charm.toggle_monitoring_layer(self.charm.backend.ready)
-            except (ConnectionError, ChangeError):
-                logger.error(
-                    "failed to reload pgbouncer - deferring change_event and waiting for pebble."
-                )
-                event.defer()
+        self.charm.render_pgb_config(reload_pgbouncer=True)
+        self.charm.toggle_monitoring_layer(self.charm.backend.ready)
 
     def _on_departed(self, event):
         self.update_leader()
@@ -236,6 +169,8 @@ class Peers(Object):
             self.charm.unit.status = MaintenanceStatus(
                 "Leader unit removed - waiting for leader_elected event"
             )
+        if self.charm.unit.is_leader():
+            self.charm.client_relation.update_read_only_endpoints()
 
     def _on_leader_elected(self, _):
         self.update_leader()
@@ -245,34 +180,4 @@ class Peers(Object):
         """Updates leader hostname in peer databag to match this unit if it's the leader."""
         if self.charm.unit.is_leader():
             self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
-
-    def update_cfg(self, cfg: PgbConfig) -> None:
-        """Writes cfg to app databag if leader.
-
-        Called every time a unit tries to write config. This creates a peer-relation-changed event,
-        meaning that the follower units will receive config updates when the leader adds them.
-
-        Args:
-            cfg: the config file to be sent to the databag. Will be rendered to a string
-            automatically.
-        """
-        if not self.charm.unit.is_leader() or not self.relation:
-            return
-
-        self.charm.set_secret(APP_SCOPE, CFG_FILE_DATABAG_KEY, cfg.render())
-        logger.debug("updated config file in peer databag")
-
-    def get_cfg(self) -> PgbConfig:
-        """Retrieves the pgbouncer config from the peer databag."""
-        if cfg := self.charm.get_secret(APP_SCOPE, CFG_FILE_DATABAG_KEY):
-            return PgbConfig(cfg)
-        else:
-            return None
-
-    def update_auth_file(self, auth_file: str) -> None:
-        """Writes auth_file to app databag if leader."""
-        if not self.charm.unit.is_leader() or not self.relation:
-            return
-
-        self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, auth_file)
-        logger.debug("updated auth file in peer databag")
+            self.charm.generate_relation_databases()

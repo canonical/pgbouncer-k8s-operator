@@ -9,6 +9,7 @@ from lightkube.resources.apps_v1 import StatefulSet
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
+from constants import PGB
 from tests.unit.helpers import _FakeApiError
 
 
@@ -16,6 +17,10 @@ class TestUpgrade(unittest.TestCase):
     def setUp(self):
         self.harness = Harness(PgBouncerK8sCharm)
         self.addCleanup(self.harness.cleanup)
+        root = self.harness.get_filesystem_root(PGB)
+        (root / "etc" / "logrotate.d").mkdir(parents=True, exist_ok=True)
+        (root / "var" / "lib" / "pgbouncer").mkdir(parents=True, exist_ok=True)
+        (root / "var" / "log" / "pgbouncer").mkdir(parents=True, exist_ok=True)
         self.harness.begin_with_initial_hooks()
         self.charm = self.harness.charm
 

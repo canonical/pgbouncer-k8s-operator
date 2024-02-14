@@ -79,7 +79,6 @@ from ops.model import (
     ModelError,
     Relation,
     Unit,
-    WaitingStatus,
 )
 
 from constants import EXTENSIONS_BLOCKING_MESSAGE
@@ -212,17 +211,8 @@ class DbProvides(Object):
         if not self.charm.unit.is_leader():
             return
 
-        if not self._check_backend():
+        if not self.charm.backend.check_backend():
             # We can't relate an app to the backend database without a backend postgres relation
-            join_event.defer()
-            return
-
-        try:
-            cfg = self.charm.read_pgb_config()
-        except FileNotFoundError:
-            wait_str = "waiting for pgbouncer to start"
-            logger.warning(wait_str)
-            self.charm.unit.status = WaitingStatus(wait_str)
             join_event.defer()
             return
 
@@ -237,15 +227,18 @@ class DbProvides(Object):
             return
 
         database = remote_app_databag.get("database")
-        user = self._generate_username(join_event)
+        user = self._generate_username(join_event.relation)
 
-        if self.charm.unit.is_leader():
-            password = pgb.generate_password()
+        password = pgb.generate_password()
 
         if None in [database, password]:
             # If database isn't available, defer
             join_event.defer()
             return
+
+        dbs = self.charm.generate_relation_databases()
+        dbs[join_event.relation.id] = {"name": database, "legacy": True}
+        self.charm.set_relation_databases(dbs)
 
         self.update_databags(
             join_event.relation,
@@ -277,11 +270,6 @@ class DbProvides(Object):
         # set up auth function
         self.charm.backend.initialise_auth_function([database])
 
-        # Create user in pgbouncer config
-        cfg = self.charm.read_pgb_config()
-        cfg.add_user(user, admin=self.admin)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
-
     def _on_relation_changed(self, change_event: RelationChangedEvent):
         """Handle db-relation-changed event.
 
@@ -292,7 +280,7 @@ class DbProvides(Object):
             - If backend relation isn't available
             - If relation_joined hook hasn't completed
         """
-        if not self._check_backend():
+        if not self.charm.backend.check_backend():
             # We can't relate an app to the backend database without a backend postgres relation
             change_event.defer()
             return
@@ -316,7 +304,7 @@ class DbProvides(Object):
             change_event.defer()
             return
 
-        self.update_postgres_endpoints(change_event.relation, reload_pgbouncer=True)
+        self.charm.render_pgb_config(reload_pgbouncer=True)
         if self.charm.unit.is_leader():
             self.update_connection_info(change_event.relation, self.charm.config["listen_port"])
             self.update_databags(
@@ -370,45 +358,6 @@ class DbProvides(Object):
 
         self.update_databags(relation, connection_updates)
 
-    def update_postgres_endpoints(self, relation: Relation, reload_pgbouncer: bool = False):
-        """Updates postgres replicas."""
-        database = self.get_databags(relation)[0].get("database")
-        if database is None:
-            logger.warning("relation not fully initialised - skipping postgres endpoint update")
-            return
-
-        # In postgres, "endpoints" will only ever have one value. Other databases using the library
-        # can have more, but that's not planned for the postgres charm.
-        postgres_endpoint = self.charm.backend.postgres_databag.get("endpoints")
-
-        cfg = self.charm.read_pgb_config()
-        cfg["databases"][database] = {
-            "host": postgres_endpoint.split(":")[0],
-            "dbname": database,
-            "port": postgres_endpoint.split(":")[1],
-            "auth_user": self.charm.backend.auth_user,
-        }
-
-        # Only one backend endpoint available in legacy relations
-        r_endpoints = self.charm.backend.get_read_only_endpoints()
-        if len(r_endpoints) > 0:
-            read_only_endpoint = next(iter(r_endpoints))
-            cfg["databases"][f"{database}_standby"] = {
-                "host": read_only_endpoint.split(":")[0],
-                "dbname": database,
-                "port": read_only_endpoint.split(":")[1],
-                "auth_user": self.charm.backend.auth_user,
-            }
-        else:
-            cfg["databases"].pop(f"{database}_standby", None)
-
-        if cfg == pgb.PgbConfig(self.charm.read_pgb_config()):
-            # No change in config, so no need to redo anything.
-            return
-
-        # Write config data to charm filesystem
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
-
     def _on_relation_departed(self, departed_event: RelationDepartedEvent):
         """Handle db-relation-departed event.
 
@@ -461,7 +410,7 @@ class DbProvides(Object):
         user = databag.get("user")
         database = databag.get("database")
 
-        if not self._check_backend() or None in [user, database]:
+        if not self.charm.backend.check_backend() or None in [user, database]:
             # this relation was never created, so wait for it to be initialised before removing
             # everything.
             if self._check_extensions(self._get_relation_extensions(broken_event.relation)):
@@ -474,27 +423,9 @@ class DbProvides(Object):
                 self._check_for_blocking_relations(broken_event.relation.id)
             return
 
-        cfg = self.charm.read_pgb_config()
-
-        # check database can be deleted from pgb config, and if so, delete it. Database is kept on
-        # postgres application because we don't want to delete all user data with one command.
-        delete_db = True
-        for relname in ["db", "db-admin"]:
-            for relation in self.model.relations.get(relname, []):
-                if relation.id == broken_event.relation.id:
-                    continue
-                if relation.data[self.charm.unit].get("database") == database:
-                    # There's multiple applications using this database, so don't remove it until
-                    # we can guarantee this is the last one.
-                    delete_db = False
-                    break
-        if delete_db:
-            cfg["databases"].pop(database, None)
-            cfg["databases"].pop(f"{database}_standby", None)
-            self.charm.backend.remove_auth_function([database])
-
-        cfg.remove_user(user)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
+        dbs = self.charm.generate_relation_databases()
+        dbs.pop(str(broken_event.relation.id), None)
+        self.charm.set_relation_databases(dbs)
         if self.charm.unit.is_leader():
             self.charm.backend.postgres.delete_user(user)
 
@@ -509,10 +440,10 @@ class DbProvides(Object):
         for databag in self.get_databags(relation):
             databag.update(updates)
 
-    def _generate_username(self, event):
+    def _generate_username(self, relation):
         """Generates a unique username for this relation."""
         app_name = self.charm.app.name
-        relation_id = event.relation.id
+        relation_id = relation.id
         model_name = self.model.name
         return f"{app_name}_user_{relation_id}_{model_name}".replace("-", "_")
 
@@ -576,17 +507,3 @@ class DbProvides(Object):
         for entry in relation.data.keys():
             if isinstance(entry, Application) and entry != self.charm.app:
                 return entry
-
-    def _check_backend(self) -> bool:
-        """Verifies backend is ready, defers event if not.
-
-        Returns:
-            bool signifying whether backend is ready or not
-        """
-        if not self.charm.backend.ready:
-            # We can't relate an app to the backend database without a backend postgres relation
-            wait_str = "waiting for backend-database relation to connect"
-            logger.warning(wait_str)
-            self.charm.unit.status = WaitingStatus(wait_str)
-            return False
-        return True

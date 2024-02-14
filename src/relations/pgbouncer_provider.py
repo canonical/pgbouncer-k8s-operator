@@ -38,7 +38,6 @@ from charms.data_platform_libs.v0.data_interfaces import (
     DatabaseRequestedEvent,
 )
 from charms.pgbouncer_k8s.v0 import pgb
-from charms.pgbouncer_k8s.v0.pgb import PgbConfig
 from charms.postgresql_k8s.v0.postgresql import (
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
@@ -52,8 +51,6 @@ from ops.model import (
     Application,
     BlockedStatus,
     MaintenanceStatus,
-    Relation,
-    WaitingStatus,
 )
 
 from constants import CLIENT_RELATION_NAME
@@ -108,12 +105,13 @@ class PgBouncerProvider(Object):
         """
         if not self.charm.unit.is_leader():
             return
-        if not self._check_backend():
+
+        if not self.charm.backend.check_backend():
             event.defer()
             return
 
         # Retrieve the database name and extra user roles using the charm library.
-        databases = event.database
+        database = event.database
         extra_user_roles = event.extra_user_roles or ""
         rel_id = event.relation.id
 
@@ -126,11 +124,9 @@ class PgBouncerProvider(Object):
                 user, password, extra_user_roles=extra_user_roles
             )
             logger.debug("creating database")
-            dblist = databases.split(",")
-            for database in dblist:
-                self.charm.backend.postgres.create_database(database, user)
+            self.charm.backend.postgres.create_database(database, user)
             # set up auth function
-            self.charm.backend.initialise_auth_function(dbs=dblist)
+            self.charm.backend.initialise_auth_function(dbs=[database])
         except (
             PostgreSQLCreateDatabaseError,
             PostgreSQLCreateUserError,
@@ -142,17 +138,14 @@ class PgBouncerProvider(Object):
             )
             return
 
-        # Update pgbouncer config
-        cfg = self.charm.read_pgb_config()
-        cfg.add_user(user, admin=True if "SUPERUSER" in extra_user_roles else False)
-        self.update_postgres_endpoints(
-            event.relation, cfg=cfg, render_cfg=True, reload_pgbouncer=True
-        )
+        dbs = self.charm.generate_relation_databases()
+        dbs[event.relation.id] = {"name": database, "legacy": False}
+        self.charm.set_relation_databases(dbs)
 
         # Share the credentials and updated connection info with the client application.
         self.database_provides.set_credentials(rel_id, user, password)
         # Set the database name
-        self.database_provides.set_database(rel_id, databases)
+        self.database_provides.set_database(rel_id, database)
         self.update_connection_info(event.relation)
 
     def _on_relation_departed(self, event: RelationDepartedEvent) -> None:
@@ -173,7 +166,7 @@ class PgBouncerProvider(Object):
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
         """Remove the user created for this relation, and revoke connection permissions."""
         self.update_connection_info(event.relation)
-        if not self._check_backend() or not self.charm.unit.is_leader():
+        if not self.charm.backend.check_backend() or not self.charm.unit.is_leader():
             return
 
         if self._unit_departing(event.relation):
@@ -181,16 +174,13 @@ class PgBouncerProvider(Object):
             self.charm.peers.unit_databag.pop(self._depart_flag(event.relation), None)
             return
 
-        cfg = self.charm.read_pgb_config()
-        database = self.get_database(event.relation)
-        cfg["databases"].pop(database, None)
-        cfg["databases"].pop(f"{database}_readonly", None)
-        user = f"relation_id_{event.relation.id}"
-        cfg.remove_user(user)
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
+        dbs = self.charm.generate_relation_databases()
+        dbs.pop(str(event.relation.id), None)
+        self.charm.set_relation_databases(dbs)
 
         # Delete the user.
         try:
+            user = f"relation_id_{event.relation.id}"
             self.charm.backend.postgres.delete_user(user)
         except PostgreSQLDeleteUserError as e:
             logger.exception(e)
@@ -202,6 +192,8 @@ class PgBouncerProvider(Object):
     def update_connection_info(self, relation):
         """Updates client-facing relation information."""
         # Set the read/write endpoint.
+        if not self.charm.unit.is_leader():
+            return
         self.charm.unit.status = MaintenanceStatus(
             f"Updating {self.relation_name} relation connection information"
         )
@@ -211,63 +203,12 @@ class PgBouncerProvider(Object):
         self.update_read_only_endpoints()
 
         # Set the database version.
-        if self._check_backend():
+        if self.charm.backend.check_backend():
             self.database_provides.set_version(
                 relation.id, self.charm.backend.postgres.get_postgresql_version()
             )
 
         self.charm.unit.status = ActiveStatus()
-
-    def update_postgres_endpoints(
-        self,
-        relation: Relation,
-        cfg: PgbConfig = None,
-        render_cfg: bool = True,
-        reload_pgbouncer: bool = False,
-    ):
-        """Updates postgres replicas.
-
-        TODO rename
-        """
-        database = self.get_database(relation)
-        if database is None:
-            logger.warning("relation not fully initialised - skipping postgres endpoint update")
-            return
-
-        if not cfg:
-            cfg = self.charm.read_pgb_config()
-            render_cfg = True
-
-        # In postgres, "endpoints" will only ever have one value. Other databases using the library
-        # can have more, but that's not planned for the postgres charm.
-        postgres_endpoint = self.charm.backend.postgres_databag.get("endpoints")
-        cfg["databases"][database] = {
-            "host": postgres_endpoint.split(":")[0],
-            "dbname": database,
-            "port": postgres_endpoint.split(":")[1],
-            "auth_user": self.charm.backend.auth_user,
-        }
-
-        read_only_endpoints = self.charm.backend.get_read_only_endpoints()
-        if len(read_only_endpoints) > 0:
-            # remove ports from endpoints, and convert to comma-separated list.
-            # NOTE: comma-separated readonly hosts are only valid in pgbouncer v1.17. This will
-            # enable load balancing once the snap is implemented.
-            for ep in read_only_endpoints:
-                break
-            r_hosts = ",".join([host.split(":")[0] for host in read_only_endpoints])
-            cfg["databases"][f"{database}_readonly"] = {
-                "host": r_hosts,
-                "dbname": database,
-                "port": ep.split(":")[1],
-                "auth_user": self.charm.backend.auth_user,
-            }
-        else:
-            cfg["databases"].pop(f"{database}_readonly", None)
-
-        # Write config data to charm filesystem
-        if render_cfg:
-            self.charm.render_pgb_config(cfg, reload_pgbouncer=reload_pgbouncer)
 
     def update_read_only_endpoints(self, event: DatabaseRequestedEvent = None) -> None:
         """Set the read-only endpoint only if there are replicas."""
@@ -301,17 +242,3 @@ class PgBouncerProvider(Object):
         for entry in relation.data.keys():
             if isinstance(entry, Application) and entry != self.charm.app:
                 return entry
-
-    def _check_backend(self) -> bool:
-        """Verifies backend is ready and updates status.
-
-        Returns:
-            bool signifying whether backend is ready or not
-        """
-        if not self.charm.backend.ready:
-            # We can't relate an app to the backend database without a backend postgres relation
-            wait_str = "waiting for backend-database relation to connect"
-            logger.warning(wait_str)
-            self.charm.unit.status = WaitingStatus(wait_str)
-            return False
-        return True

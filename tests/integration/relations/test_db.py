@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.group(1)
+@pytest.mark.abort_on_fail
 async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
@@ -151,11 +152,11 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
             ops_test, [finos_user], [another_finos_user], pgb_user, pgb_password
         )
 
-        cfg = await get_cfg(ops_test, f"{PGB}/0")
-        logger.info(cfg)
-        assert another_finos_user not in cfg["pgbouncer"]["admin_users"]
-        assert "waltz" in cfg["databases"].keys()
-        assert "waltz_standby" in cfg["databases"].keys()
+        for unit in ops_test.model.applications[PGB].units:
+            cfg = await get_cfg(ops_test, unit.name)
+            logger.info(cfg)
+            assert "waltz" in cfg["databases"].keys()
+            assert "waltz_standby" in cfg["databases"].keys()
 
         # Remove the first deployment of Finos Waltz.
         await ops_test.model.remove_application(FINOS_WALTZ, block_until_done=True)
@@ -164,11 +165,11 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
 
         await check_database_users_existence(ops_test, [], [finos_user], pgb_user, pgb_password)
 
-        cfg = await get_cfg(ops_test, f"{PGB}/0")
-        logger.info(cfg)
-        assert finos_user not in cfg["pgbouncer"]["admin_users"]
-        assert "waltz" not in cfg["databases"].keys()
-        assert "waltz_standby" not in cfg["databases"].keys()
+        for unit in ops_test.model.applications[PGB].units:
+            cfg = await get_cfg(ops_test, unit.name)
+            logger.info(cfg)
+            assert "waltz" not in cfg["databases"].keys()
+            assert "waltz_standby" not in cfg["databases"].keys()
 
 
 @pytest.mark.group(1)

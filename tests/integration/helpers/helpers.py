@@ -3,12 +3,12 @@
 # See LICENSE file for licensing details.
 
 import json
+from configparser import ConfigParser
 from multiprocessing import ProcessError
 from pathlib import Path
 from typing import Dict, Optional
 
 import yaml
-from charms.pgbouncer_k8s.v0 import pgb
 from juju.unit import Unit
 from pytest_operator.plugin import OpsTest
 from tenacity import (
@@ -19,7 +19,7 @@ from tenacity import (
     wait_fixed,
 )
 
-from constants import AUTH_FILE_PATH, INI_PATH
+from constants import AUTH_FILE_PATH, PGB_DIR
 
 CHARM_SERIES = "jammy"
 CLIENT_APP_NAME = "postgresql-test-app"
@@ -112,10 +112,23 @@ async def get_backend_user_pass(ops_test, backend_relation):
     return (pgb_user, pgb_password)
 
 
-async def get_cfg(ops_test: OpsTest, unit_name: str) -> pgb.PgbConfig:
+async def get_cfg(ops_test: OpsTest, unit_name: str) -> dict:
     """Gets pgbouncer config from pgbouncer container."""
-    cat = await cat_file_from_unit(ops_test, INI_PATH, unit_name)
-    return pgb.PgbConfig(cat)
+    parser = ConfigParser()
+    parser.optionxform = str
+    parser.read_string(
+        await cat_file_from_unit(ops_test, f"{PGB_DIR}/instance_0/pgbouncer.ini", unit_name)
+    )
+
+    cfg = dict(parser)
+    # Convert Section objects to dictionaries, so they can hold dictionaries themselves.
+    for section, data in cfg.items():
+        cfg[section] = dict(data)
+
+    # ConfigParser object creates a DEFAULT section of an .ini file, which we don't need.
+    del cfg["DEFAULT"]
+
+    return cfg
 
 
 async def get_userlist(ops_test: OpsTest, unit_name) -> str:

@@ -31,6 +31,7 @@ PG = "postgresql-k8s"
 
 
 @pytest.mark.group(1)
+@pytest.mark.abort_on_fail
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
     # Build, deploy, and relate charms.
     resources = {

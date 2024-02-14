@@ -4,19 +4,20 @@
 # Learn more about testing at: https://juju.is/docs/sdk/testing
 
 import logging
+import math
 import unittest
-from unittest.mock import PropertyMock, call, patch
+from unittest.mock import Mock, PropertyMock, call, patch
 
 import pytest
-from charms.pgbouncer_k8s.v0.pgb import DEFAULT_CONFIG, PgbConfig
-from ops.model import RelationDataTypeError, WaitingStatus
+from jinja2 import Template
+from ops.model import RelationDataTypeError
 from ops.testing import Harness
 from parameterized import parameterized
 
 from charm import PgBouncerK8sCharm
 from constants import (
+    AUTH_FILE_PATH,
     BACKEND_RELATION_NAME,
-    INI_PATH,
     PEER_RELATION_NAME,
     PGB,
     SECRET_INTERNAL_LABEL,
@@ -34,9 +35,15 @@ class TestCharm(unittest.TestCase):
 
         self.harness = Harness(PgBouncerK8sCharm)
         self.addCleanup(self.harness.cleanup)
+        root = self.harness.get_filesystem_root(PGB)
+        (root / "etc" / "logrotate.d").mkdir(parents=True, exist_ok=True)
+        (root / "var" / "lib" / "pgbouncer").mkdir(parents=True, exist_ok=True)
+        (root / "var" / "log" / "pgbouncer").mkdir(parents=True, exist_ok=True)
+        self.harness.handle_exec(
+            PGB, ["pgbouncer", "--version"], result="PGB 1.16.1\nOther things"
+        )
         self.harness.begin_with_initial_hooks()
         self.charm = self.harness.charm
-        self.harness.model.unit.get_container(PGB).make_dir("/etc/logrotate.d", make_parents=True)
 
         self.rel_id = self.harness.model.relations[PEER_RELATION_NAME][0].id
 
@@ -45,40 +52,27 @@ class TestCharm(unittest.TestCase):
         self._caplog = caplog
 
     @patch("charm.PgBouncerK8sCharm._patch_port")
-    @patch("charm.PgBouncerK8sCharm.read_pgb_config")
-    @patch("charm.PgBouncerK8sCharm.push_file")
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
-    @patch("ops.model.Container.make_dir")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     def test_on_config_changed(
         self,
         _check_pgb_running,
-        _mkdir,
         _reload,
+        _render,
         _update_connection_info,
-        _push_file,
-        _read_pgb_config,
         _,
     ):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
-        _read_pgb_config.side_effect = lambda: PgbConfig(DEFAULT_CONFIG)
         self.harness.set_leader(True)
         container = self.harness.model.unit.get_container(PGB)
         self.charm.on.pgbouncer_pebble_ready.emit(container)
+        _reload.reset_mock()
 
         mock_cores = 1
         self.charm._cores = mock_cores
         max_db_connections = 535
-
-        # create default config object and modify it as we expect in the hook.
-        test_config = PgbConfig(DEFAULT_CONFIG)
-        test_config["pgbouncer"]["pool_mode"] = "transaction"
-        test_config.set_max_db_connection_derivatives(
-            max_db_connections=max_db_connections,
-            pgb_instances=mock_cores,
-        )
-        test_config["pgbouncer"]["listen_port"] = 6464
 
         self.harness.update_config(
             {
@@ -88,22 +82,18 @@ class TestCharm(unittest.TestCase):
             }
         )
         _reload.assert_called_once_with()
+        _reload.assert_called_once_with()
         _update_connection_info.assert_called_with(6464)
         _check_pgb_running.assert_called_once_with()
-        _push_file.assert_called_with(
-            "/var/lib/pgbouncer/pgbouncer.ini", test_config.render(), 0o400
-        )
 
-    @patch("ops.model.Container.can_connect", return_value=False)
+    @patch(
+        "charm.PgBouncerK8sCharm.is_container_ready", new_callable=PropertyMock, return_value=False
+    )
     @patch("ops.charm.ConfigChangedEvent.defer")
     def test_on_config_changed_container_cant_connect(self, can_connect, defer):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         self.harness.update_config()
-        self.assertIsInstance(
-            self.harness.model.unit.status,
-            WaitingStatus,
-        )
         defer.assert_called()
 
     def test_pgbouncer_layer(self):
@@ -112,14 +102,10 @@ class TestCharm(unittest.TestCase):
 
     @patch("charm.PgBouncerK8sCharm._patch_port")
     @patch("charm.PgBouncerK8sCharm.update_status")
-    @patch("ops.model.Container.exec")
-    @patch("ops.model.Container.make_dir")
-    def test_on_pgbouncer_pebble_ready(self, _mkdir, _exec, _update_status, _):
-        _exec.return_value.wait_output.return_value = ("PGB 1.16.1\nOther things", "")
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
+    def test_on_pgbouncer_pebble_ready(self, _render, _update_status, _):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
-        initial_plan = self.harness.get_container_pebble_plan(PGB)
-        self.assertEqual(initial_plan.to_yaml(), "{}\n")
 
         container = self.harness.model.unit.get_container(PGB)
         self.charm.on.pgbouncer_pebble_ready.emit(container)
@@ -129,17 +115,16 @@ class TestCharm(unittest.TestCase):
             )
             self.assertTrue(container_service.is_running())
         _update_status.assert_called_once_with()
+        _render.assert_called_once_with()
 
     @patch("charm.PgBouncerK8sCharm._patch_port")
     @patch("charm.PgBouncerK8sCharm.update_status")
-    @patch("ops.model.Container.exec")
     @patch("charm.PgBouncerK8sCharm.push_tls_files_to_workload")
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PostgreSQLTLS.get_tls_files")
-    @patch("ops.model.Container.make_dir")
     def test_on_pgbouncer_pebble_ready_ensure_tls_files(
-        self, _mkdir, get_tls_files, push_tls_files_to_workload, _exec, _update_status, _
+        self, get_tls_files, _render, push_tls_files_to_workload, _update_status, _
     ):
-        _exec.return_value.wait_output.return_value = ("", "")
         get_tls_files.return_value = ("key", "ca", "cert")
 
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
@@ -147,8 +132,6 @@ class TestCharm(unittest.TestCase):
         self.harness.set_leader(True)
         # emit on start to ensure config file render
         self.charm.on.start.emit()
-        initial_plan = self.harness.get_container_pebble_plan(PGB)
-        self.assertEqual(initial_plan.to_yaml(), "{}\n")
 
         container = self.harness.model.unit.get_container(PGB)
         self.charm.on.pgbouncer_pebble_ready.emit(container)
@@ -156,38 +139,204 @@ class TestCharm(unittest.TestCase):
         get_tls_files.assert_called_once_with()
         push_tls_files_to_workload.assert_called_once_with(False)
         _update_status.assert_called_once_with()
+        _render.assert_called_once_with()
 
     @patch("ops.model.Container.can_connect", return_value=False)
+    @patch(
+        "relations.backend_database.DatabaseRequires.fetch_relation_field",
+        return_value="BACKNEND_USER",
+    )
+    @patch(
+        "charm.BackendDatabaseRequires.relation", new_callable=PropertyMock, return_value=Mock()
+    )
+    @patch(
+        "charm.BackendDatabaseRequires.postgres_databag",
+        new_callable=PropertyMock,
+        return_value={"endpoints": "HOST:PORT", "read-only-endpoints": "HOST2:PORT"},
+    )
+    @patch("charm.PgBouncerK8sCharm.get_relation_databases")
+    @patch("charm.PgBouncerK8sCharm.push_file")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
-    def test_render_pgb_config(self, reload_pgbouncer, _can_connect):
-        cfg = PgbConfig(DEFAULT_CONFIG)
+    def test_render_pgb_config(
+        self,
+        _reload_pgbouncer,
+        _push_file,
+        _get_dbs,
+        _postgres_databag,
+        _backend_rel,
+        _,
+        _can_connect,
+    ):
+        _get_dbs.return_value = {
+            "1": {"name": "first_test", "legacy": True},
+            "2": {"name": "second_test", "legacy": False},
+        }
 
         # Assert we exit early if _can_connect returns false
         _can_connect.return_value = False
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=False)
-        self.assertIsInstance(self.charm.unit.status, WaitingStatus)
-        reload_pgbouncer.assert_not_called()
+        self.charm.render_pgb_config(reload_pgbouncer=False)
+        _reload_pgbouncer.assert_not_called()
 
+        with open("templates/pgb_config.j2") as file:
+            template = Template(file.read())
         _can_connect.return_value = True
-        self.charm.render_pgb_config(cfg, reload_pgbouncer=True)
-        reload_pgbouncer.assert_called()
+        self.charm.render_pgb_config(reload_pgbouncer=True)
+        _reload_pgbouncer.assert_called()
+        effective_db_connections = 100 / self.charm._cores
+        default_pool_size = math.ceil(effective_db_connections / 2)
+        min_pool_size = math.ceil(effective_db_connections / 4)
+        reserve_pool_size = math.ceil(effective_db_connections / 4)
+        expected_databases = {
+            "first_test": {
+                "host": "HOST",
+                "dbname": "first_test",
+                "port": "PORT",
+                "auth_user": "pgbouncer_auth_BACKNEND_USER",
+            },
+            "first_test_readonly": {
+                "host": "HOST2",
+                "dbname": "first_test",
+                "port": "PORT",
+                "auth_user": "pgbouncer_auth_BACKNEND_USER",
+            },
+            "first_test_standby": {
+                "host": "HOST2",
+                "dbname": "first_test",
+                "port": "PORT",
+                "auth_user": "pgbouncer_auth_BACKNEND_USER",
+            },
+            "second_test": {
+                "host": "HOST",
+                "dbname": "second_test",
+                "port": "PORT",
+                "auth_user": "pgbouncer_auth_BACKNEND_USER",
+            },
+            "second_test_readonly": {
+                "host": "HOST2",
+                "dbname": "second_test",
+                "port": "PORT",
+                "auth_user": "pgbouncer_auth_BACKNEND_USER",
+            },
+        }
+        for i in range(self.charm._cores):
+            expected_content = template.render(
+                databases=expected_databases,
+                socket_dir=f"/var/lib/pgbouncer/instance_{i}",
+                log_file=f"/var/log/pgbouncer/instance_{i}/pgbouncer.log",
+                pid_file=f"/var/lib/pgbouncer/instance_{i}/pgbouncer.pid",
+                listen_port=6432,
+                pool_mode="session",
+                max_db_connections=100,
+                default_pool_size=default_pool_size,
+                min_pool_size=min_pool_size,
+                reserve_pool_size=reserve_pool_size,
+                stats_user="pgbouncer_stats_pgbouncer_k8s",
+                auth_query="SELECT username, password FROM pgbouncer_auth_BACKNEND_USER.get_auth($1)",
+                auth_file=AUTH_FILE_PATH,
+                enable_tls=False,
+            )
+            _push_file.assert_any_call(
+                f"/var/lib/pgbouncer/instance_{i}/pgbouncer.ini", expected_content, 0o400
+            )
+        _push_file.reset_mock()
+        _reload_pgbouncer.reset_mock()
 
-        pgb_container = self.harness.model.unit.get_container(PGB)
-        ini = pgb_container.pull(INI_PATH).read()
-        self.assertEqual(cfg.render(), ini)
+        # test constant pool sizes with unlimited connections and no ro endpoints
+        with self.harness.hooks_disabled():
+            self.harness.update_config(
+                {
+                    "max_db_connections": 0,
+                }
+            )
+        del expected_databases["first_test_readonly"]
+        del expected_databases["first_test_standby"]
+        del expected_databases["second_test_readonly"]
 
-    def test_read_pgb_config(self):
-        test_cfg = PgbConfig(DEFAULT_CONFIG)
-        self.charm.render_pgb_config(test_cfg)
-        read_cfg = self.charm.read_pgb_config()
-        self.assertEqual(PgbConfig(read_cfg).render(), test_cfg.render())
+        del _postgres_databag.return_value["read-only-endpoints"]
+
+        self.charm.render_pgb_config()
+
+        assert not _reload_pgbouncer.called
+        for i in range(self.charm._cores):
+            expected_content = template.render(
+                databases=expected_databases,
+                socket_dir=f"/var/lib/pgbouncer/instance_{i}",
+                log_file=f"/var/log/pgbouncer/instance_{i}/pgbouncer.log",
+                pid_file=f"/var/lib/pgbouncer/instance_{i}/pgbouncer.pid",
+                listen_port=6432,
+                pool_mode="session",
+                max_db_connections=0,
+                default_pool_size=20,
+                min_pool_size=10,
+                reserve_pool_size=10,
+                stats_user="pgbouncer_stats_pgbouncer_k8s",
+                auth_query="SELECT username, password FROM pgbouncer_auth_BACKNEND_USER.get_auth($1)",
+                auth_file=AUTH_FILE_PATH,
+                enable_tls=False,
+            )
+            _push_file.assert_any_call(
+                f"/var/lib/pgbouncer/instance_{i}/pgbouncer.ini", expected_content, 0o400
+            )
+
+    @patch("charm.PgBouncerK8sCharm.push_file")
+    @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
+    def test_render_auth_file(self, _reload_pgbouncer, _push_file):
+        self.charm.render_auth_file("test", reload_pgbouncer=False)
+
+        _reload_pgbouncer.assert_not_called()
+        _push_file.assert_called_once_with(AUTH_FILE_PATH, "test", 0o400)
+        _reload_pgbouncer.reset_mock()
+
+        # Test reload
+        self.charm.render_auth_file("test", reload_pgbouncer=True)
+        _reload_pgbouncer.assert_called_once_with()
+
+    @patch("charm.Peers.app_databag", new_callable=PropertyMock, return_value={})
+    @patch("charm.PgBouncerK8sCharm.get_secret")
+    def test_get_relation_databases_legacy_data(self, _get_secret, _):
+        """Test that legacy data will be parsed if new one is not set."""
+        self.harness.set_leader(False)
+        _get_secret.return_value = """
+        [databases]
+        test_db = host_cfg
+        test_db_standby = host_cfg
+        other_db = other_cfg
+        """
+        result = self.charm.get_relation_databases()
+        assert result == {
+            "1": {"legacy": False, "name": "test_db"},
+            "2": {"legacy": False, "name": "other_db"},
+        }
+        _get_secret.assert_called_once_with("app", "cfg_file")
+
+        # Get empty dict if no config is set
+        _get_secret.return_value = None
+        assert self.charm.get_relation_databases() == {}
+
+        # Get empty dict if exception
+        _get_secret.return_value = 1
+        assert self.charm.get_relation_databases() == {}
+
+        # Get empty dict if no databases
+        _get_secret.return_value = """
+        [other]
+        test_db = host_cfg
+        test_db_standby = host_cfg
+        other_db = other_cfg
+        """
+        assert self.charm.get_relation_databases() == {}
+
+    @patch("charm.PgBouncerK8sCharm.get_relation_databases", return_value={"some": "values"})
+    def test_generate_relation_databases_not_leader(self, _):
+        self.harness.set_leader(False)
+
+        assert self.charm.generate_relation_databases() == {}
 
     @patch("charm.PgBouncerK8sCharm._patch_port")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
-    @patch("ops.model.Container.exec")
-    @patch("ops.model.Container.make_dir")
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("ops.model.Container.restart")
-    def test_reload_pgbouncer(self, _restart, _mkdir, _exec, _check_pgb_running, _):
+    def test_reload_pgbouncer(self, _restart, _check_pgb_running, _, __):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         # necessary hooks before we can check reloads
@@ -199,61 +348,6 @@ class TestCharm(unittest.TestCase):
         _check_pgb_running.assert_called_once_with()
         calls = [call(service["name"]) for service in self.charm._services]
         _restart.assert_has_calls(calls)
-
-    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
-    @patch("charm.PgBouncerK8sCharm.read_pgb_config")
-    @patch("charm.PostgreSQLTLS.get_tls_files")
-    def test_update_config_enable_tls(self, get_tls_files, read_pgb_config, render_pgb_config):
-        get_tls_files.return_value = ("key", "ca", "cert")
-        read_pgb_config.return_value = {"pgbouncer": {}}
-
-        self.charm.update_config()
-
-        get_tls_files.assert_called_once_with()
-        read_pgb_config.assert_called_once_with()
-        render_pgb_config.assert_called_once_with(read_pgb_config.return_value, True)
-        self.assertEqual(
-            read_pgb_config.return_value["pgbouncer"],
-            {
-                "client_tls_ca_file": "/var/lib/pgbouncer/ca.pem",
-                "client_tls_cert_file": "/var/lib/pgbouncer/cert.pem",
-                "client_tls_key_file": "/var/lib/pgbouncer/key.pem",
-                "client_tls_sslmode": "prefer",
-            },
-        )
-
-    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
-    @patch("charm.PgBouncerK8sCharm.read_pgb_config")
-    @patch("charm.PostgreSQLTLS.get_tls_files")
-    def test_update_config_disable_tls(self, get_tls_files, read_pgb_config, render_pgb_config):
-        get_tls_files.return_value = (None, None, None)
-        read_pgb_config.return_value = {
-            "pgbouncer": {
-                "client_tls_ca_file": "/var/lib/postgresql/pgbouncer/ca.pem",
-                "client_tls_cert_file": "/var/lib/postgresql/pgbouncer/cert.pem",
-                "client_tls_key_file": "/var/lib/postgresql/pgbouncer/key.pem",
-                "client_tls_sslmode": "prefer",
-            }
-        }
-
-        self.charm.update_config()
-
-        get_tls_files.assert_called_once_with()
-        read_pgb_config.assert_called_once_with()
-        render_pgb_config.assert_called_once_with(read_pgb_config.return_value, True)
-        self.assertEqual(read_pgb_config.return_value["pgbouncer"], {})
-
-    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
-    @patch("charm.PgBouncerK8sCharm.read_pgb_config")
-    @patch("charm.PostgreSQLTLS.get_tls_files")
-    def test_update_config_no_config(self, get_tls_files, read_pgb_config, render_pgb_config):
-        read_pgb_config.side_effect = FileNotFoundError
-
-        self.charm.update_config()
-
-        read_pgb_config.assert_called_once_with()
-        get_tls_files.assert_not_called()
-        render_pgb_config.assert_not_called()
 
     @patch("charm.PgBouncerK8sCharm.push_file")
     @patch("charm.PgBouncerK8sCharm.update_config")
