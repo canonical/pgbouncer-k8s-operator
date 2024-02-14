@@ -1103,18 +1103,21 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "ops"
-version = "2.9.0"
+version = "2.10.0"
 description = "The Python library behind great charms"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "ops-2.9.0-py3-none-any.whl", hash = "sha256:1d443e4d45e0c2443b8334d37a177287f22a12ee0cb02a30cf7c3159316cb643"},
-    {file = "ops-2.9.0.tar.gz", hash = "sha256:d3c541659eded56f42f9c18270408cc6313895968f1360b3f1de75c99cc99ada"},
+    {file = "ops-2.10.0-py3-none-any.whl", hash = "sha256:25ecac7054e53b500d1ea6cccf47de4ed69d39de4eaf9a2bc05d49a12f8651bf"},
+    {file = "ops-2.10.0.tar.gz", hash = "sha256:7b0bf23c7ae20891d3fd7943830d75f1b38e7cafb216d5b727771d9c2f69d654"},
 ]
 
 [package.dependencies]
 PyYAML = "==6.*"
 websocket-client = "==1.*"
+
+[package.extras]
+docs = ["furo", "lxd-sphinx-extensions", "sphinx (==6.2.1)", "sphinx-copybutton", "sphinx-design", "sphinx-tabs"]
 
 [[package]]
 name = "packaging"
@@ -1258,13 +1261,13 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "poetry-core"
-version = "1.8.1"
+version = "1.9.0"
 description = "Poetry PEP 517 Build Backend"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "poetry_core-1.8.1-py3-none-any.whl", hash = "sha256:194832b24f3283e01c5402eae71a6aae850ecdfe53f50a979c76bf7aa5010ffa"},
-    {file = "poetry_core-1.8.1.tar.gz", hash = "sha256:67a76c671da2a70e55047cddda83566035b701f7e463b32a2abfeac6e2a16376"},
+    {file = "poetry_core-1.9.0-py3-none-any.whl", hash = "sha256:4e0c9c6ad8cf89956f03b308736d84ea6ddb44089d16f2adc94050108ec1f5a1"},
+    {file = "poetry_core-1.9.0.tar.gz", hash = "sha256:fa7a4001eae8aa572ee84f35feb510b321bd652e5cf9293249d62853e1f935a2"},
 ]
 
 [[package]]
