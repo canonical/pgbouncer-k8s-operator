@@ -944,13 +944,13 @@ adal = ["adal (>=1.0.2)"]
 
 [[package]]
 name = "lightkube"
-version = "0.15.1"
+version = "0.15.2"
 description = "Lightweight kubernetes client library"
 optional = false
 python-versions = "*"
 files = [
-    {file = "lightkube-0.15.1-py3-none-any.whl", hash = "sha256:c681abf7e51cecbb488d2c150d279ecdc313bf223ebb2fecbc86918567e436de"},
-    {file = "lightkube-0.15.1.tar.gz", hash = "sha256:dffa6dc69ccb5aefdcc19bf8ca3af051b01187239e3baa5a812dbda24fc0dff4"},
+    {file = "lightkube-0.15.2-py3-none-any.whl", hash = "sha256:54c509f71d56f4977f70c2bc1fdf0c79e9898b55cec4f3cbc6051f8d9961a75b"},
+    {file = "lightkube-0.15.2.tar.gz", hash = "sha256:1297a3c6ebe873debf73cd584e288534a1f2fd643bbf8285dfbd76550c5076b0"},
 ]
 
 [package.dependencies]
@@ -2292,4 +2292,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "ae24b31da12ee30712a2f256bf295eb61698b9705a4c7b6786d48694dcd4cf20"
+content-hash = "2a3f54390b07bba8c0fec9351b6cb04ba958a9f96b7322e94033184ba9fd2277"
