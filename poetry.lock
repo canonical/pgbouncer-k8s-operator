@@ -1100,21 +1100,18 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "ops"
-version = "2.10.0"
+version = "2.9.0"
 description = "The Python library behind great charms"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "ops-2.10.0-py3-none-any.whl", hash = "sha256:25ecac7054e53b500d1ea6cccf47de4ed69d39de4eaf9a2bc05d49a12f8651bf"},
-    {file = "ops-2.10.0.tar.gz", hash = "sha256:7b0bf23c7ae20891d3fd7943830d75f1b38e7cafb216d5b727771d9c2f69d654"},
+    {file = "ops-2.9.0-py3-none-any.whl", hash = "sha256:1d443e4d45e0c2443b8334d37a177287f22a12ee0cb02a30cf7c3159316cb643"},
+    {file = "ops-2.9.0.tar.gz", hash = "sha256:d3c541659eded56f42f9c18270408cc6313895968f1360b3f1de75c99cc99ada"},
 ]
 
 [package.dependencies]
 PyYAML = "==6.*"
 websocket-client = "==1.*"
-
-[package.extras]
-docs = ["furo", "lxd-sphinx-extensions", "sphinx (==6.2.1)", "sphinx-copybutton", "sphinx-design", "sphinx-tabs"]
 
 [[package]]
 name = "packaging"
@@ -2292,4 +2289,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "ae24b31da12ee30712a2f256bf295eb61698b9705a4c7b6786d48694dcd4cf20"
+content-hash = "0a580ecd1da2544fa0890f5f2e5809343a772198b61106d1fbdf2494d76f0c70"
