@@ -1,0 +1,18 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:675 Connecting to existing model microk8s-localhost:test on unspecified cloud
+[32mINFO    [0m juju.model:model.py:2097 Deploying local:jammy/pgbouncer-k8s-0
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  pgbouncer-k8s/0 [allocating] waiting: installing agent
+  pgbouncer-k8s/1 [allocating] waiting: installing agent
+  pgbouncer-k8s/2 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [executing] unknown: 
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [idle] blocked: waiting for backend database relation to initialise
