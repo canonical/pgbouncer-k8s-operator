@@ -53,7 +53,7 @@ codespell = "^2.2.6"
 optional = true
 
 [tool.poetry.group.unit.dependencies]
-coverage = {extras = ["toml"], version = "^7.4.1"}
+coverage = {extras = ["toml"], version = "^7.4.2"}
 pytest = "^8.0.1"
 pytest-asyncio = "*"
 jinja2 = "^3.1.3"
