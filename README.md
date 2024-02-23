@@ -1,4 +1,7 @@
-# PgBouncer Kubernetes Operator
+# Charmed PgBouncer Kubernetes Operator
+[![Charmhub](https://charmhub.io/pgbouncer-k8s/badge.svg)](https://charmhub.io/pgbouncer-k8s)
+[![Release](https://github.com/canonical/pgbouncer-k8s-operator/actions/workflows/release.yaml/badge.svg)](https://github.com/canonical/pgbouncer-k8s-operator/actions/workflows/release.yaml)
+[![Tests](https://github.com/canonical/pgbouncer-k8s-operator/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/canonical/pgbouncer-k8s-operator/actions/workflows/ci.yaml)
 
 ## Description
 
