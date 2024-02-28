@@ -1678,13 +1678,13 @@ subdirectory = "python/pytest_plugins/github_secrets"
 
 [[package]]
 name = "pytest-operator"
-version = "0.33.0"
+version = "0.34.0"
 description = "Fixtures for Operators"
 optional = false
 python-versions = "*"
 files = [
-    {file = "pytest-operator-0.33.0.tar.gz", hash = "sha256:97d5c1890c3a012edde7c5bb1e8659aa9c9b9a0c4b4293af1a319885100d0696"},
-    {file = "pytest_operator-0.33.0-py3-none-any.whl", hash = "sha256:b1f7bc19155a204b86c1957d56fba5e667a1782b63689ef6c9e411e83af1c018"},
+    {file = "pytest-operator-0.34.0.tar.gz", hash = "sha256:b2d85c666436fae41e8e8f914e12c07362c473caa0f325c58e1270b00fd4fca4"},
+    {file = "pytest_operator-0.34.0-py3-none-any.whl", hash = "sha256:a3534ef376c5931beb04859359f18a4477001e14ed664459fb148cfafaffb943"},
 ]
 
 [package.dependencies]
@@ -2292,4 +2292,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "b667775811cf7247beef141891d80b9ca41c47aec45b93587dc7356a3bdb2cb5"
+content-hash = "6932f91dca5d6732db2d0f8e3c3e559fc2f1ba9ecf1cd551b1ebee9ac162f5f2"
