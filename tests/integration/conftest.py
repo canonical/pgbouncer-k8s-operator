@@ -15,7 +15,7 @@ async def pgb_charm(ops_test: OpsTest):
     return await ops_test.build_charm(".", bases_index=0)
 
 
-@pytest.fixture()
+@pytest.fixture
 async def continuous_writes(ops_test: OpsTest) -> None:
     """Cleans up continuous writes after a test run."""
     yield
