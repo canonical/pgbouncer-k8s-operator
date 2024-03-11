@@ -354,7 +354,7 @@ async def test_an_application_can_request_multiple_databases(ops_test: OpsTest):
 @pytest.mark.group(1)
 async def test_legacy_relation_compatibility(ops_test: OpsTest):
     finos = "finos-waltz-k8s"
-    await ops_test.model.deploy(finos, application_name=finos, channel="edge"),
+    (await ops_test.model.deploy(finos, application_name=finos, channel="edge"),)
     finos_relation = await ops_test.model.add_relation(f"{PGB}:db", f"{finos}:db")
     wait_for_relation_joined_between(ops_test, PGB, finos)
     async with ops_test.fast_forward():
@@ -388,7 +388,7 @@ async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_ch
         series=CHARM_SERIES,
     )
     async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(apps=[pgb_secondary], status="blocked"),
+        (await ops_test.model.wait_for_idle(apps=[pgb_secondary], status="blocked"),)
 
     await ops_test.model.add_relation(f"{pgb_secondary}:{BACKEND_RELATION_NAME}", f"{PG}:database")
     wait_for_relation_joined_between(ops_test, PG, pgb_secondary)

@@ -305,9 +305,9 @@ class BackendDatabaseRequires(Object):
 
         if event.departing_unit == self.charm.unit:
             # This should only occur when the relation is being removed, not on scale-down
-            self.charm.peers.unit_databag.update(
-                {f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing": "true"}
-            )
+            self.charm.peers.unit_databag.update({
+                f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing": "true"
+            })
             logger.warning("added relation-departing flag to peer databag")
             return
 

@@ -4,7 +4,6 @@
 
 """Charmed PgBouncer connection pooler."""
 
-
 import json
 import logging
 import math
@@ -352,13 +351,11 @@ class PgBouncerK8sCharm(CharmBase):
                 "startup": "enabled",
                 "override": "replace",
             }
-        return Layer(
-            {
-                "summary": "pgbouncer layer",
-                "description": "pebble config layer for pgbouncer",
-                "services": pebble_services,
-            }
-        )
+        return Layer({
+            "summary": "pgbouncer layer",
+            "description": "pebble config layer for pgbouncer",
+            "services": pebble_services,
+        })
 
     def _on_update_status(self, _) -> None:
         """Update Status hook.
@@ -445,9 +442,9 @@ class PgBouncerK8sCharm(CharmBase):
 
     def toggle_monitoring_layer(self, enabled: bool) -> None:
         """Starts or stops the monitoring service."""
-        pebble_layer = Layer(
-            {"services": {self._metrics_service: self._generate_monitoring_service(enabled)}}
-        )
+        pebble_layer = Layer({
+            "services": {self._metrics_service: self._generate_monitoring_service(enabled)}
+        })
         pgb_container = self.unit.get_container(PGB)
         pgb_container.add_layer(PGB, pebble_layer, combine=True)
         if enabled:
