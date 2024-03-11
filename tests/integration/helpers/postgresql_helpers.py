@@ -3,10 +3,11 @@
 # See LICENSE file for licensing details.
 import itertools
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import psycopg2
 import yaml
+from juju.unit import Unit
 from pytest_operator.plugin import OpsTest
 
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
@@ -165,3 +166,26 @@ async def run_command_on_unit(ops_test: OpsTest, unit_name: str, command: str) -
             "Expected command %s to succeed instead it failed: %s", command, return_code
         )
     return stdout
+
+
+def get_unit_by_index(app: str, units: list, index: int) -> Optional[Unit]:
+    """Get unit by index.
+
+    Args:
+        app: Name of the application
+        units: List of units
+        index: index of the unit to get
+    """
+    for unit in units:
+        if unit.name == f"{app}/{index}":
+            return unit
+
+
+async def get_leader_unit(ops_test: OpsTest, app: str) -> Optional[Unit]:
+    leader_unit = None
+    for unit in ops_test.model.applications[app].units:
+        if await unit.is_leader_from_status():
+            leader_unit = unit
+            break
+
+    return leader_unit
