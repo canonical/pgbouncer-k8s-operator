@@ -2,28 +2,28 @@
 
 [[package]]
 name = "allure-pytest"
-version = "2.13.2"
+version = "2.13.3"
 description = "Allure pytest integration"
 optional = false
 python-versions = "*"
 files = [
-    {file = "allure-pytest-2.13.2.tar.gz", hash = "sha256:22243159e8ec81ce2b5254b4013802198821b1b42f118f69d4a289396607c7b3"},
-    {file = "allure_pytest-2.13.2-py3-none-any.whl", hash = "sha256:17de9dbee7f61c8e66a5b5e818b00e419dbcea44cb55c24319401ba813220690"},
+    {file = "allure-pytest-2.13.3.tar.gz", hash = "sha256:59cae25239907b3b57f72bd66476d670ce73a6fd3c339f80ed3fac78b4aa32a5"},
+    {file = "allure_pytest-2.13.3-py3-none-any.whl", hash = "sha256:48dead8667587f10d75ff94d89be9c1f948f605f266e1376e436f4b47aba2440"},
 ]
 
 [package.dependencies]
-allure-python-commons = "2.13.2"
+allure-python-commons = "2.13.3"
 pytest = ">=4.5.0"
 
 [[package]]
 name = "allure-python-commons"
-version = "2.13.2"
-description = "Common module for integrate allure with python-based frameworks"
+version = "2.13.3"
+description = "('Contains the API for end users as well as helper functions and classes to build Allure adapters for Python test frameworks',)"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "allure-python-commons-2.13.2.tar.gz", hash = "sha256:8a03681330231b1deadd86b97ff68841c6591320114ae638570f1ed60d7a2033"},
-    {file = "allure_python_commons-2.13.2-py3-none-any.whl", hash = "sha256:2bb3646ec3fbf5b36d178a5e735002bc130ae9f9ba80f080af97d368ba375051"},
+    {file = "allure-python-commons-2.13.3.tar.gz", hash = "sha256:2a22c6071bd3700bb380bf5288d8a81697ba3e8e4918836aa4cc4b4b17a99a7e"},
+    {file = "allure_python_commons-2.13.3-py3-none-any.whl", hash = "sha256:ee890a6ad6b820819ec11e702bb9fb64dd855de5e57925a2601ac66de65ef5f1"},
 ]
 
 [package.dependencies]
@@ -1536,13 +1536,13 @@ pytz = "*"
 
 [[package]]
 name = "pytest"
-version = "8.0.2"
+version = "8.1.1"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.0.2-py3-none-any.whl", hash = "sha256:edfaaef32ce5172d5466b5127b42e0d6d35ebbe4453f0e3505d96afd93f6b096"},
-    {file = "pytest-8.0.2.tar.gz", hash = "sha256:d4051d623a2e0b7e51960ba963193b09ce6daeb9759a451844a21e4ddedfc1bd"},
+    {file = "pytest-8.1.1-py3-none-any.whl", hash = "sha256:2a8386cfc11fa9d2c50ee7b2a57e7d898ef90470a7a34c4b949ff59662bb78b7"},
+    {file = "pytest-8.1.1.tar.gz", hash = "sha256:ac978141a75948948817d360297b7aae0fcb9d6ff6bc9ec6d514b85d5a65c044"},
 ]
 
 [package.dependencies]
@@ -1550,11 +1550,11 @@ colorama = {version = "*", markers = "sys_platform == \"win32\""}
 exceptiongroup = {version = ">=1.0.0rc8", markers = "python_version < \"3.11\""}
 iniconfig = "*"
 packaging = "*"
-pluggy = ">=1.3.0,<2.0"
-tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
+pluggy = ">=1.4,<2.0"
+tomli = {version = ">=1", markers = "python_version < \"3.11\""}
 
 [package.extras]
-testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
+testing = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
 name = "pytest-asyncio"
@@ -2206,4 +2206,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "f1bcecf5dd50de983185c3f781c68758f43570b04a6b4f5e17d14b65692008bc"
+content-hash = "8dcd00f91d4cf087a8eb8778d3a595a14a85cdde15f46067457b08440a66425e"
