@@ -370,9 +370,9 @@ class DbProvides(Object):
         # Neither peer relation data nor stored state are good solutions,
         # just a temporary solution.
         if departed_event.departing_unit == self.charm.unit:
-            self.charm.peers.unit_databag.update(
-                {self._depart_flag(departed_event.relation): "True"}
-            )
+            self.charm.peers.unit_databag.update({
+                self._depart_flag(departed_event.relation): "True"
+            })
             # Just run the rest of the logic for departing of remote units.
             return
 
@@ -493,13 +493,11 @@ class DbProvides(Object):
     def get_allowed_units(self, relation: Relation) -> str:
         """Gets the external units from this relation that can be allowed into the network."""
         return ",".join(
-            sorted(
-                [
-                    unit.name
-                    for unit in relation.data
-                    if isinstance(unit, Unit) and unit.app != self.charm.app
-                ]
-            )
+            sorted([
+                unit.name
+                for unit in relation.data
+                if isinstance(unit, Unit) and unit.app != self.charm.app
+            ])
         )
 
     def get_external_app(self, relation):

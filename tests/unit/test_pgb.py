@@ -15,9 +15,10 @@ class TestPgb(TestCase):
         )
 
     def test_parse_dict_to_kv_string(self):
-        assert "test=val another=other" == pgb.parse_dict_to_kv_string(
-            {"test": "val", "another": "other"}
-        )
+        assert "test=val another=other" == pgb.parse_dict_to_kv_string({
+            "test": "val",
+            "another": "other",
+        })
 
     def test_generate_password(self):
         pw = pgb.generate_password()

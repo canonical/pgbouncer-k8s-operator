@@ -74,13 +74,11 @@ class TestCharm(unittest.TestCase):
         self.charm._cores = mock_cores
         max_db_connections = 535
 
-        self.harness.update_config(
-            {
-                "pool_mode": "transaction",
-                "max_db_connections": max_db_connections,
-                "listen_port": 6464,
-            }
-        )
+        self.harness.update_config({
+            "pool_mode": "transaction",
+            "max_db_connections": max_db_connections,
+            "listen_port": 6464,
+        })
         _reload.assert_called_once_with()
         _reload.assert_called_once_with()
         _update_connection_info.assert_called_with(6464)
@@ -243,11 +241,9 @@ class TestCharm(unittest.TestCase):
 
         # test constant pool sizes with unlimited connections and no ro endpoints
         with self.harness.hooks_disabled():
-            self.harness.update_config(
-                {
-                    "max_db_connections": 0,
-                }
-            )
+            self.harness.update_config({
+                "max_db_connections": 0,
+            })
         del expected_databases["first_test_readonly"]
         del expected_databases["first_test_standby"]
         del expected_databases["second_test_readonly"]

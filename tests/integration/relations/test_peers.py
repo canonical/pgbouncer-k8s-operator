@@ -39,9 +39,11 @@ async def test_deploy_at_scale(ops_test, pgb_charm):
             series=CHARM_SERIES,
             trust=True,
         )
-        await ops_test.model.wait_for_idle(
-            apps=[PGB], status="blocked", timeout=1000, wait_for_exact_units=3
-        ),
+        (
+            await ops_test.model.wait_for_idle(
+                apps=[PGB], status="blocked", timeout=1000, wait_for_exact_units=3
+            ),
+        )
 
 
 @pytest.mark.group(1)

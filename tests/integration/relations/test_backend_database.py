@@ -74,7 +74,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
 
         relation = await ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database")
         wait_for_relation_joined_between(ops_test, PG, PGB)
-        await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),
+        (await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),)
 
         cfg = await get_cfg(ops_test, f"{PGB}/0")
         logging.info(cfg)
