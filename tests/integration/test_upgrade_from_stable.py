@@ -53,8 +53,7 @@ async def test_deploy_stable(ops_test: OpsTest, pgb_charm) -> None:
             PGB,
             application_name=PGB,
             num_units=3,
-            # TODO switch to stable once it works on 3.1.7
-            channel="1/beta",
+            channel="1/stable",
             trust=True,
         ),
         ops_test.model.deploy(
