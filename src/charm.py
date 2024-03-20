@@ -374,15 +374,15 @@ class PgBouncerK8sCharm(CharmBase):
 
     def update_status(self):
         """Health check to update pgbouncer status based on charm state."""
+        if self.unit.status.message == EXTENSIONS_BLOCKING_MESSAGE:
+            return
+
         if self.backend.postgres is None:
             self.unit.status = BlockedStatus("waiting for backend database relation to initialise")
             return
 
         if not self.backend.ready:
             self.unit.status = BlockedStatus("backend database relation not ready")
-            return
-
-        if self.unit.status.message == EXTENSIONS_BLOCKING_MESSAGE:
             return
 
         try:

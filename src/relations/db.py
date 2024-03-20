@@ -72,6 +72,7 @@ from ops.charm import (
 )
 from ops.framework import Object
 from ops.model import (
+    ActiveStatus,
     Application,
     BlockedStatus,
     MaintenanceStatus,
@@ -192,7 +193,7 @@ class DbProvides(Object):
                     for data in relation.data.values():
                         if not self._check_extensions(self._get_relation_extensions(relation)):
                             return
-            self.charm.update_status()
+            self.charm.unit.status = ActiveStatus()
 
     def _on_relation_joined(self, join_event: RelationJoinedEvent):
         """Handle db-relation-joined event.
