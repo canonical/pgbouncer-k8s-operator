@@ -72,7 +72,6 @@ from ops.charm import (
 )
 from ops.framework import Object
 from ops.model import (
-    ActiveStatus,
     Application,
     BlockedStatus,
     MaintenanceStatus,
@@ -193,7 +192,7 @@ class DbProvides(Object):
                     for data in relation.data.values():
                         if not self._check_extensions(self._get_relation_extensions(relation)):
                             return
-            self.charm.unit.status = ActiveStatus()
+            self.charm.update_status()
 
     def _on_relation_joined(self, join_event: RelationJoinedEvent):
         """Handle db-relation-joined event.
@@ -259,7 +258,7 @@ class DbProvides(Object):
             self.charm.backend.postgres.create_database(database, user)
 
             created_msg = f"database and user for {self.relation_name} relation created"
-            self.charm.unit.status = ActiveStatus()
+            self.charm.update_status()
             logger.info(created_msg)
         except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
             err_msg = f"failed to create database or user for {self.relation_name}"
@@ -323,6 +322,9 @@ class DbProvides(Object):
 
     def update_connection_info(self, relation: Relation, port: str):
         """Updates databag connection information."""
+        if not port:
+            port = self.charm.config["listen_port"]
+
         databag = self.get_databags(relation)[0]
         database = databag.get("database")
         user = databag.get("user")

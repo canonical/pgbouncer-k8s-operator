@@ -46,7 +46,6 @@ from charms.postgresql_k8s.v0.postgresql import (
 from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
 from ops.model import (
-    ActiveStatus,
     Application,
     BlockedStatus,
     MaintenanceStatus,
@@ -207,7 +206,7 @@ class PgBouncerProvider(Object):
                 relation.id, self.charm.backend.postgres.get_postgresql_version()
             )
 
-        self.charm.unit.status = ActiveStatus()
+        self.charm.update_status()
 
     def update_read_only_endpoints(self, event: DatabaseRequestedEvent = None) -> None:
         """Set the read-only endpoint only if there are replicas."""
