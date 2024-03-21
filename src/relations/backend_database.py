@@ -299,7 +299,8 @@ class BackendDatabaseRequires(Object):
         the postgres relation-broken hook removes the user needed to remove authentication for the
         users we create.
         """
-        self.charm.render_pgb_config(reload_pgbouncer=True)
+        if self.charm.peers.relation:
+            self.charm.render_pgb_config(reload_pgbouncer=True)
         self.charm.update_client_connection_info()
 
         if event.departing_unit == self.charm.unit:
@@ -342,11 +343,11 @@ class BackendDatabaseRequires(Object):
         Removes all traces of this relation from pgbouncer config.
         """
         depart_flag = f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing"
-        self.charm.toggle_monitoring_layer(False)
         if self.charm.peers.unit_databag.get(depart_flag, False):
             logging.info("exiting relation-broken hook - nothing to do")
             return
 
+        self.charm.toggle_monitoring_layer(False)
         try:
             self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
         except PathError:

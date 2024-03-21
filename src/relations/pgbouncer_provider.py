@@ -137,7 +137,7 @@ class PgBouncerProvider(Object):
             return
 
         dbs = self.charm.generate_relation_databases()
-        dbs[event.relation.id] = {"name": database, "legacy": False}
+        dbs[str(event.relation.id)] = {"name": database, "legacy": False}
         self.charm.set_relation_databases(dbs)
 
         # Share the credentials and updated connection info with the client application.
@@ -192,6 +192,7 @@ class PgBouncerProvider(Object):
         # Set the read/write endpoint.
         if not self.charm.unit.is_leader():
             return
+        initial_status = self.charm.unit.status
         self.charm.unit.status = MaintenanceStatus(
             f"Updating {self.relation_name} relation connection information"
         )
@@ -205,6 +206,7 @@ class PgBouncerProvider(Object):
             self.database_provides.set_version(
                 relation.id, self.charm.backend.postgres.get_postgresql_version()
             )
+        self.charm.unit.status = initial_status
 
         self.charm.update_status()
 

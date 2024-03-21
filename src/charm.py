@@ -457,7 +457,8 @@ class PgBouncerK8sCharm(CharmBase):
         """Checks that pgbouncer pebble service is running, and updates status accordingly."""
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
-            self.unit.status = WaitingStatus(CONTAINER_UNAVAILABLE_MESSAGE)
+            if self.unit.status.message != EXTENSIONS_BLOCKING_MESSAGE:
+                self.unit.status = WaitingStatus(CONTAINER_UNAVAILABLE_MESSAGE)
             logger.warning(CONTAINER_UNAVAILABLE_MESSAGE)
             return False
 
@@ -474,7 +475,8 @@ class PgBouncerK8sCharm(CharmBase):
             pgb_service_status = pgb_container.get_services().get(service).current
             if pgb_service_status != ServiceStatus.ACTIVE:
                 pgb_not_running = f"PgBouncer service {service} not running: service status = {pgb_service_status}"
-                self.unit.status = BlockedStatus(pgb_not_running)
+                if self.unit.status.message != EXTENSIONS_BLOCKING_MESSAGE:
+                    self.unit.status = BlockedStatus(pgb_not_running)
                 logger.warning(pgb_not_running)
                 return False
 
@@ -644,14 +646,12 @@ class PgBouncerK8sCharm(CharmBase):
         """Generates a mapping between relation and database and sets it in the app databag."""
         if not self.unit.is_leader():
             return {}
-        if dbs := self.get_relation_databases():
-            return dbs
 
         databases = {}
         for relation in self.model.relations.get("db", []):
             database = self.legacy_db_relation.get_databags(relation)[0].get("database")
             if database:
-                databases[relation.id] = {
+                databases[str(relation.id)] = {
                     "name": database,
                     "legacy": True,
                 }
@@ -659,7 +659,7 @@ class PgBouncerK8sCharm(CharmBase):
         for relation in self.model.relations.get("db-admin", []):
             database = self.legacy_db_admin_relation.get_databags(relation)[0].get("database")
             if database:
-                databases[relation.id] = {
+                databases[str(relation.id)] = {
                     "name": database,
                     "legacy": True,
                 }
@@ -669,7 +669,7 @@ class PgBouncerK8sCharm(CharmBase):
         ).items():
             database = data.get("database")
             if database:
-                databases[rel_id] = {
+                databases[str(rel_id)] = {
                     "name": database,
                     "legacy": False,
                 }
