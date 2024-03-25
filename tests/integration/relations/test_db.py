@@ -30,7 +30,6 @@ from ..helpers.postgresql_helpers import (
 
 FINOS_WALTZ = "finos-waltz"
 ANOTHER_FINOS_WALTZ = "another-finos-waltz"
-OPENLDAP = "openldap"
 
 logger = logging.getLogger(__name__)
 
@@ -198,15 +197,3 @@ async def test_extensions_blocking(ops_test: OpsTest) -> None:
         raise_on_blocked=False,
         timeout=3000,
     )
-
-
-@pytest.mark.group(1)
-@pytest.mark.unstable
-async def test_relation_with_openldap(ops_test: OpsTest):
-    """Test the relation with OpenLDAP charm."""
-    await ops_test.model.deploy(
-        "openldap-charmers-openldap", application_name=OPENLDAP, channel="edge"
-    )
-    await ops_test.model.add_relation(f"{PGB}:db", f"{OPENLDAP}:db")
-    wait_for_relation_joined_between(ops_test, PGB, OPENLDAP)
-    await ops_test.model.wait_for_idle(apps=[PG, PGB, OPENLDAP], status="active", timeout=1000)

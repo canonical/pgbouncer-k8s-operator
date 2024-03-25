@@ -237,7 +237,7 @@ class DbProvides(Object):
             return
 
         dbs = self.charm.generate_relation_databases()
-        dbs[join_event.relation.id] = {"name": database, "legacy": True}
+        dbs[str(join_event.relation.id)] = {"name": database, "legacy": True}
         self.charm.set_relation_databases(dbs)
 
         self.update_databags(
@@ -252,6 +252,7 @@ class DbProvides(Object):
         # Create user and database in backend postgresql database
         try:
             init_msg = f"initialising database and user for {self.relation_name} relation"
+            initial_status = self.charm.unit.status
             self.charm.unit.status = MaintenanceStatus(init_msg)
             logger.info(init_msg)
 
@@ -259,7 +260,8 @@ class DbProvides(Object):
             self.charm.backend.postgres.create_database(database, user)
 
             created_msg = f"database and user for {self.relation_name} relation created"
-            self.charm.unit.status = ActiveStatus()
+            self.charm.unit.status = initial_status
+            self.charm.update_status()
             logger.info(created_msg)
         except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
             err_msg = f"failed to create database or user for {self.relation_name}"
@@ -323,6 +325,9 @@ class DbProvides(Object):
 
     def update_connection_info(self, relation: Relation, port: str):
         """Updates databag connection information."""
+        if not port:
+            port = self.charm.config["listen_port"]
+
         databag = self.get_databags(relation)[0]
         database = databag.get("database")
         user = databag.get("user")
