@@ -1,0 +1,25 @@
+[32mINFO    [0m integration.relations.test_db:test_db.py:178 Deploying test app
+[32mINFO    [0m juju.model:model.py:2097 Deploying ch:amd64/jammy/postgresql-test-app-50
+[33mWARNING [0m juju.model:model.py:1563 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m integration.relations.test_db:test_db.py:182 Wait for PGB to block due to extensions
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] blocked: bad relation request - remote app requested extensions, which are unsupported. Please remove this relation.
+[32mINFO    [0m integration.relations.test_db:test_db.py:190 Rerelate with extensions enabled
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+[33mWARNING [0m juju.model:model.py:1563 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [idle] active: 
+  postgresql-test-app/0 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  pgbouncer-k8s/2 [idle] active: 
+  postgresql-test-app/0 [idle] active:
