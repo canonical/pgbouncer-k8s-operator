@@ -11,7 +11,7 @@
       "matchPackageNames": ["python"],
       "allowedVersions": "<3.11"
     },
-        {
+    {
       "matchDepNames": ["Juju 2"],
       "matchPackageNames": ["juju/juju"],
       "allowedVersions": "<3.0.0",
