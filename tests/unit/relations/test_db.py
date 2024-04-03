@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import Mock, PropertyMock, patch
 
 from charms.pgbouncer_k8s.v0.pgb import parse_dict_to_kv_string
+from ops.model import Unit
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
@@ -279,3 +280,21 @@ class TestDb(unittest.TestCase):
 
         _delete_user.assert_called_once_with(username)
         _set_rel_dbs.assert_called_once_with({})
+
+    def test_get_allowed_subnets(self):
+        rel = self.charm.model.get_relation("db", self.db_rel_id)
+        for key in rel.data.keys():
+            if isinstance(key, Unit):
+                rel.data[key]["egress-subnets"] = "10.0.0.10,10.0.0.11"
+
+        assert "10.0.0.10,10.0.0.11" == self.charm.legacy_db_relation.get_allowed_subnets(rel)
+
+    def test_get_allowed_units(self):
+        rel = self.charm.model.get_relation("db", self.db_rel_id)
+
+        assert "client_app/0" == self.charm.legacy_db_relation.get_allowed_units(rel)
+
+    def test_get_external_app(self):
+        rel = self.charm.model.get_relation("db", self.db_rel_id)
+
+        assert "client_app" == self.charm.legacy_db_relation.get_external_app(rel).name
