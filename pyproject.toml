@@ -21,7 +21,7 @@ cosl = "^0.0.10"
 poetry-core = "^1.9.0"
 lightkube = "^0.15.2"
 lightkube-models = "^1.29.0.6"
-pydantic = "^1.10.14"
+pydantic = "^1.10.15"
 psycopg2 = "^2.9.9"
 psycopg = {extras = ["c"], version = "^3.1.18"}
 
