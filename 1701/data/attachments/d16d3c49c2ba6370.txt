@@ -1,0 +1,41 @@
+[32mINFO    [0m juju.model:model.py:2098 Deploying ch:amd64/focal/openldap-charmers-openldap-7
+[33mWARNING [0m juju.model:model.py:1564 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: Primary
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+  openldap/0 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+  openldap/0 [executing] waiting: Waiting for database relation
+[32mINFO    [0m pytest_operator.plugin:plugin.py:834 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.7    unsupported  01:42:06Z
+
+App                  Version                     Status   Scale  Charm                       Channel        Rev  Address         Exposed  Message
+openldap             res:openldap-image@78364e2  waiting      1  openldap-charmers-openldap  stable           7  10.152.183.202  no       
+pgbouncer-k8s        1.21.0                      active       3  pgbouncer-k8s                                0  10.152.183.90   no       
+postgresql-k8s       14.11                       active       3  postgresql-k8s              14/edge        232  10.152.183.65   no       
+postgresql-test-app                              active       1  postgresql-test-app         latest/stable   50  10.152.183.25   no       
+
+Unit                    Workload  Agent  Address    Ports    Message
+openldap/0*             error     idle   10.1.7.85  389/TCP  OCI image pull error: failed to pull and unpack image "registry.jujucharms.com/openldap-charmers/openldap/openldap-im...
+pgbouncer-k8s/0*        active    idle   10.1.7.73           
+pgbouncer-k8s/1         active    idle   10.1.7.75           
+pgbouncer-k8s/2         active    idle   10.1.7.74           
+postgresql-k8s/0        active    idle   10.1.7.79           
+postgresql-k8s/1        active    idle   10.1.7.80           
+postgresql-k8s/2*       active    idle   10.1.7.81           Primary
+postgresql-test-app/0*  active    idle   10.1.7.83           
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:840 Juju error logs:
+
+unit-pgbouncer-k8s-0: 01:39:51 ERROR unit.pgbouncer-k8s/0.juju-log db:9: ERROR - `extensions` (pg_trgm:public, unaccent:public) cannot be requested through relations - Please enable extensions through `juju config` and add the relation again.
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:904 Forgetting main...
