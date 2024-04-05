@@ -13,7 +13,7 @@ repository = "https://github.com/canonical/pgbouncer-k8s-operator"
 
 [tool.poetry.dependencies]
 python = "^3.8.10"
-ops = "^2.11.0"
+ops = "^2.12.0"
 cryptography = "^42.0.5"
 jsonschema = "^4.21.1"
 tenacity = "^8.2.3"
@@ -21,7 +21,7 @@ cosl = "^0.0.10"
 poetry-core = "^1.9.0"
 lightkube = "^0.15.2"
 lightkube-models = "^1.29.0.6"
-pydantic = "^1.10.14"
+pydantic = "^1.10.15"
 psycopg2 = "^2.9.9"
 psycopg = {extras = ["c"], version = "^3.1.18"}
 
@@ -40,7 +40,7 @@ cosl = "*"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.3.3"
+ruff = "^0.3.5"
 
 [tool.poetry.group.lint]
 optional = true
@@ -64,14 +64,15 @@ optional = true
 [tool.poetry.group.integration.dependencies]
 lightkube = "*"
 pytest = "^8.1.1"
-pytest-github-secrets = {git = "https://github.com/canonical/data-platform-workflows", tag = "v13.0.0", subdirectory = "python/pytest_plugins/github_secrets"}
+pytest-github-secrets = {git = "https://github.com/canonical/data-platform-workflows", tag = "v13.1.0", subdirectory = "python/pytest_plugins/github_secrets"}
 pytest-operator = "^0.34.0"
-pytest-operator-cache = {git = "https://github.com/canonical/data-platform-workflows", tag = "v13.0.0", subdirectory = "python/pytest_plugins/pytest_operator_cache"}
-pytest-operator-groups = {git = "https://github.com/canonical/data-platform-workflows", tag = "v13.0.0", subdirectory = "python/pytest_plugins/pytest_operator_groups"}
-juju = "^3.2.0.1"
+pytest-operator-cache = {git = "https://github.com/canonical/data-platform-workflows", tag = "v13.1.0", subdirectory = "python/pytest_plugins/pytest_operator_cache"}
+pytest-operator-groups = {git = "https://github.com/canonical/data-platform-workflows", tag = "v13.1.0", subdirectory = "python/pytest_plugins/pytest_operator_groups"}
+# renovate caret doesn't work: https://github.com/renovatebot/renovate/issues/26940
+juju = "<=3.4.0.0"
 tenacity = "*"
 psycopg2-binary = "^2.9.9"
-allure-pytest = "^2.13.3"
+allure-pytest = "^2.13.5"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -83,6 +84,9 @@ branch = true
 
 [tool.coverage.report]
 show_missing = true
+exclude_lines = [
+    "logger\\.debug"
+]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
