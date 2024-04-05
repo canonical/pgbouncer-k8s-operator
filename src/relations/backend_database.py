@@ -50,7 +50,6 @@ from charms.postgresql_k8s.v0.postgresql import PostgreSQL
 from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
 from ops.model import (
-    ActiveStatus,
     Application,
     BlockedStatus,
     MaintenanceStatus,
@@ -232,7 +231,7 @@ class BackendDatabaseRequires(Object):
             self.charm.render_auth_file(auth_file)
             self.charm.render_pgb_config(reload_pgbouncer=True)
             self.charm.toggle_monitoring_layer(True)
-            self.charm.unit.status = ActiveStatus()
+            self.charm.update_status()
             return
 
         logger.info("initialising pgbouncer backend relation")
@@ -274,7 +273,7 @@ class BackendDatabaseRequires(Object):
         self.charm.render_pgb_config(reload_pgbouncer=True)
         self.charm.toggle_monitoring_layer(True)
 
-        self.charm.unit.status = ActiveStatus("backend-database relation initialised.")
+        self.charm.update_status()
 
     def _on_endpoints_changed(self, _):
         self.charm.render_pgb_config(reload_pgbouncer=True)
@@ -300,7 +299,8 @@ class BackendDatabaseRequires(Object):
         the postgres relation-broken hook removes the user needed to remove authentication for the
         users we create.
         """
-        self.charm.render_pgb_config(reload_pgbouncer=True)
+        if self.charm.peers.relation:
+            self.charm.render_pgb_config(reload_pgbouncer=True)
         self.charm.update_client_connection_info()
 
         if event.departing_unit == self.charm.unit:
@@ -335,7 +335,6 @@ class BackendDatabaseRequires(Object):
             return
 
         self.postgres.delete_user(self.auth_user)
-        self.charm.peers.remove_user(self.auth_user)
         logger.info("pgbouncer auth user removed")
 
     def _on_relation_broken(self, event: RelationBrokenEvent):
@@ -344,11 +343,11 @@ class BackendDatabaseRequires(Object):
         Removes all traces of this relation from pgbouncer config.
         """
         depart_flag = f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing"
-        self.charm.toggle_monitoring_layer(False)
         if self.charm.peers.unit_databag.get(depart_flag, False):
             logging.info("exiting relation-broken hook - nothing to do")
             return
 
+        self.charm.toggle_monitoring_layer(False)
         try:
             self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
         except PathError:
