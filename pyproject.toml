@@ -40,7 +40,7 @@ cosl = "*"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.3.6"
+ruff = "^0.3.7"
 
 [tool.poetry.group.lint]
 optional = true
