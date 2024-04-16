@@ -136,7 +136,7 @@ class Peers(Object):
     def _on_joined(self, event: HookEvent):
         self._on_changed(event)
         if self.charm.unit.is_leader():
-            self.charm.client_relation.update_read_only_endpoints()
+            self.charm.client_relation.update_endpoints()
 
     def _on_changed(self, event: HookEvent):
         """If the current unit is a follower, write updated config and auth files to filesystem.
@@ -170,7 +170,7 @@ class Peers(Object):
                 "Leader unit removed - waiting for leader_elected event"
             )
         if self.charm.unit.is_leader():
-            self.charm.client_relation.update_read_only_endpoints()
+            self.charm.client_relation.update_endpoints()
 
     def _on_leader_elected(self, _):
         self.update_leader()

@@ -51,7 +51,7 @@ class TestCharm(unittest.TestCase):
     def use_caplog(self, caplog):
         self._caplog = caplog
 
-    @patch("charm.PgBouncerK8sCharm._patch_port")
+    @patch("charm.PgBouncerK8sCharm.patch_port")
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
@@ -98,7 +98,7 @@ class TestCharm(unittest.TestCase):
         layer = self.charm._pgbouncer_layer()
         assert len(layer.services) == self.charm._cores + 2
 
-    @patch("charm.PgBouncerK8sCharm._patch_port")
+    @patch("charm.PgBouncerK8sCharm.patch_port")
     @patch("charm.PgBouncerK8sCharm.update_status")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_pgbouncer_pebble_ready(self, _render, _update_status, _):
@@ -115,7 +115,7 @@ class TestCharm(unittest.TestCase):
         _update_status.assert_called_once_with()
         _render.assert_called_once_with()
 
-    @patch("charm.PgBouncerK8sCharm._patch_port")
+    @patch("charm.PgBouncerK8sCharm.patch_port")
     @patch("charm.PgBouncerK8sCharm.update_status")
     @patch("charm.PgBouncerK8sCharm.push_tls_files_to_workload")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
@@ -328,7 +328,7 @@ class TestCharm(unittest.TestCase):
 
         assert self.charm.generate_relation_databases() == {}
 
-    @patch("charm.PgBouncerK8sCharm._patch_port")
+    @patch("charm.PgBouncerK8sCharm.patch_port")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("ops.model.Container.restart")
