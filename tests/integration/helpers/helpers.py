@@ -69,6 +69,28 @@ async def get_unit_info(ops_test: OpsTest, unit_name: str) -> Dict:
     return json.loads(get_databag[1])[unit_name]
 
 
+async def get_endpoint_info(ops_test: OpsTest, unit_name: str, endpoint: str) -> str:
+    """Gets the endpoint information from the given unit.
+
+    Args:
+        ops_test: ops_test testing instance
+        unit_name: name of the unit
+        endpoint: name of the endpoint
+
+    Returns:
+        A str containing endpoint information available to juju
+    """
+    get_databag = await ops_test.juju(
+        "show-unit",
+        unit_name,
+        "--format=json",
+    )
+    relation_info = json.loads(get_databag[1])[unit_name]["relation-info"]
+    return list(filter(lambda x: x["endpoint"] == endpoint, relation_info))[0]["application-data"][
+        "endpoints"
+    ]
+
+
 async def get_app_relation_databag(ops_test: OpsTest, unit_name: str, relation_id: int) -> Dict:
     """Gets the app relation databag from the given relation.
 

@@ -10,7 +10,7 @@ import math
 import os
 import socket
 from configparser import ConfigParser
-from typing import Dict, Literal, Optional, Union, get_args
+from typing import Any, Dict, Literal, Optional, Tuple, Union, get_args
 
 import lightkube
 from charms.data_platform_libs.v0.data_interfaces import DataPeer, DataPeerUnit
@@ -69,6 +69,7 @@ class PgBouncerK8sCharm(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
 
+        self._namespace = self.model.name
         self.peer_relation_app = DataPeer(
             self,
             relation_name=PEER_RELATION_NAME,
@@ -137,11 +138,89 @@ class PgBouncerK8sCharm(CharmBase):
             substrate="k8s",
         )
 
+    @property
+    def _node_name(self) -> str:
+        """Return the node name for this unit's pod ip."""
+        pod = lightkube.Client().get(
+            lightkube.resources.core_v1.Pod,
+            name=self.unit.name.replace("/", "-"),
+            namespace=self._namespace,
+        )
+        return pod.spec.nodeName
+
+    @property
+    def _node_ip(self) -> Optional[str]:
+        """Return node IP."""
+        node = lightkube.Client().get(
+            lightkube.resources.core_v1.Node,
+            name=self._node_name,
+            namespace=self._namespace,
+        )
+        # [
+        #    NodeAddress(address='192.168.0.228', type='InternalIP'),
+        #    NodeAddress(address='example.com', type='Hostname')
+        # ]
+        # Remember that OpenStack, for example, will return an internal hostname, which is not
+        # accessible from the outside. Give preference to ExternalIP, then InternalIP first
+        # Separated, as we want to give preference to ExternalIP, InternalIP and then Hostname
+        for typ in ["ExternalIP", "InternalIP", "Hostname"]:
+            for a in node.status.addresses:
+                if a.type == typ:
+                    return a.address
+
+    def _node_port(self, port_type: str) -> int:
+        """Return node port."""
+        service = lightkube.Client().get(
+            lightkube.resources.core_v1.Service, self.app.name, namespace=self._namespace
+        )
+        if not service or not service.spec.type == "NodePort":
+            return -1
+        # svc.spec.ports
+        # [ServicePort(port=6432, appProtocol=None, name=None, nodePort=31438, protocol='TCP', targetPort=6432)]
+        # Keeping this distinction, so we have similarity with mysql-router-k8s
+        if port_type == "rw":
+            port = self.config["listen_port"]
+        elif port_type == "ro":
+            port = self.config["listen_port"]
+        else:
+            raise ValueError(f"Invalid {port_type=}")
+        logger.debug(f"Looking for NodePort for {port_type} in {service.spec.ports}")
+        for svc_port in service.spec.ports:
+            if svc_port.port == port:
+                return svc_port.nodePort
+        raise Exception(f"NodePort not found for {port_type}")
+
+    def get_all_k8s_node_hostnames_and_ips(
+        self,
+    ) -> Tuple[list[str], list[str]]:
+        """Return all node hostnames and IPs registered in k8s."""
+        node = lightkube.Client().get(
+            lightkube.resources.core_v1.Node,
+            name=self._node_name,
+            namespace=self._namespace,
+        )
+        hostnames = []
+        ips = []
+        for a in node.status.addresses:
+            if a.type in ["ExternalIP", "InternalIP"]:
+                ips.append(a.address)
+            elif a.type == "Hostname":
+                hostnames.append(a.address)
+        return hostnames, ips
+
+    @property
+    def get_node_ports(self) -> Dict[str, Any]:
+        """Returns the service's nodes IPs and ports for both rw and ro types."""
+        return {
+            "rw": f"{self._node_ip}:{self._node_port('rw')}",
+            "ro": f"{self._node_ip}:{self._node_port('ro')}",
+        }
+
     # =======================
     #  Charm Lifecycle Hooks
     # =======================
 
-    def _patch_port(self) -> None:
+    def patch_port(self, use_node_port: bool = False) -> None:
         """Patch Juju-created k8s service.
 
         The k8s service will be tied to pod-0 so that the service is auto cleaned by
@@ -175,6 +254,7 @@ class PgBouncerK8sCharm(CharmBase):
                             targetPort=self.config["listen_port"],
                         )
                     ],
+                    type=("NodePort" if use_node_port else "ClusterIP"),
                     selector={"app.kubernetes.io/name": self.app.name},
                 ),
             )
@@ -268,10 +348,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.unit.set_workload_version(self.version)
 
         self.peers.unit_databag["container_initialised"] = "True"
-        if JujuVersion.from_environ().supports_open_port_on_k8s:
-            self.unit.open_port("tcp", self.config["listen_port"])
-        else:
-            self._patch_port()
+        self.patch_port()
 
     @property
     def is_container_ready(self) -> bool:
@@ -299,13 +376,7 @@ class PgBouncerK8sCharm(CharmBase):
             # This emits relation-changed events to every client relation, so only do it when
             # necessary
             self.update_client_connection_info(self.config["listen_port"])
-
-            if JujuVersion.from_environ().supports_open_port_on_k8s:
-                if old_port:
-                    self.unit.close_port("tcp", int(old_port))
-                self.unit.open_port("tcp", self.config["listen_port"])
-            else:
-                self._patch_port()
+            self.patch_port()
 
         self.render_pgb_config()
         try:
