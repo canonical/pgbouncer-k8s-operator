@@ -153,7 +153,7 @@ class PgBouncerProvider(Object):
             return
 
         dbs = self.charm.generate_relation_databases()
-        dbs[event.relation.id] = {"name": database, "legacy": False}
+        dbs[str(event.relation.id)] = {"name": database, "legacy": False}
         self.charm.set_relation_databases(dbs)
 
         # Share the credentials and updated connection info with the client application.
