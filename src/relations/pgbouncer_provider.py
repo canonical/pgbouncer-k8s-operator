@@ -181,9 +181,6 @@ class PgBouncerProvider(Object):
         if event.departing_unit == self.charm.unit:
             self.charm.peers.unit_databag.update({self._depart_flag(event.relation): "true"})
 
-        # Check if we need to close the node port
-        self.charm.patch_port(self.external_connectivity(event))
-
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
         """Remove the user created for this relation, and revoke connection permissions."""
         self.update_connection_info(event.relation)
