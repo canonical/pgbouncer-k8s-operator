@@ -90,7 +90,11 @@ class PgBouncerProvider(Object):
         """Whether any of the relations are marked as external."""
         # New list to avoid modifying the original
         relations = list(self.model.relations[self.relation_name])
-        if event and type(event) in [RelationBrokenEvent, RelationDepartedEvent]:
+        if (
+            event
+            and type(event) in [RelationBrokenEvent, RelationDepartedEvent]
+            and event.relation in relations
+        ):
             # Disregard of what has been requested by the client, this relation is being removed
             relations.remove(event.relation)
 
@@ -230,7 +234,8 @@ class PgBouncerProvider(Object):
         nodeports = self.charm.get_node_ports
         internal_port = self.charm.config["listen_port"]
         internal_hostnames = sorted(set(self.charm.peers.units_hostnames))
-        internal_hostnames.remove(self.charm.peers.leader_hostname)
+        if self.charm.peers.leader_hostname in internal_hostnames:
+            internal_hostnames.remove(self.charm.peers.leader_hostname)
         internal_rw = f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}"
 
         relations = [relation] if relation else self.model.relations[self.relation_name]
