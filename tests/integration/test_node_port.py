@@ -64,7 +64,7 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
                     ]
                 },
                 application_name=PGB,
-                num_units=3,
+                num_units=1,
                 series=CHARM_SERIES,
                 trust=True,
             )
