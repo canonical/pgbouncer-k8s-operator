@@ -10,6 +10,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
+from . import markers
 from .helpers.ha_helpers import (
     start_continuous_writes,
     stop_continuous_writes,
@@ -140,6 +141,7 @@ async def test_node_port_and_clusterip_setup(ops_test: OpsTest):
 
 @pytest.mark.group(1)
 @pytest.mark.abort_on_fail
+@markers.juju_secrets
 async def test_data_integrator(ops_test: OpsTest):
     """Test the connection."""
     endpoint = "postgresql"
