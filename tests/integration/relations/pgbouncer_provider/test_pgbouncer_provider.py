@@ -281,7 +281,7 @@ async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
 
 @pytest.mark.group(1)
 async def test_each_relation_has_unique_credentials(ops_test: OpsTest):
-    """Test that two different applications connect to the database with different credentials."""
+    """TEST Test that two different applications connect to the database with different credentials."""
     all_app_names = [SECONDARY_CLIENT_APP_NAME] + APP_NAMES
 
     # Deploy secondary application.
