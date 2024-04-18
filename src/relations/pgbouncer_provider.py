@@ -48,7 +48,6 @@ from ops.framework import Object
 from ops.model import (
     Application,
     BlockedStatus,
-    MaintenanceStatus,
 )
 
 from constants import CLIENT_RELATION_NAME
@@ -85,6 +84,27 @@ class PgBouncerProvider(Object):
         )
         self.framework.observe(
             charm.on[self.relation_name].relation_broken, self._on_relation_broken
+        )
+
+    def external_connectivity(self, event=None) -> bool:
+        """Whether any of the relations are marked as external."""
+        # New list to avoid modifying the original
+        relations = list(self.model.relations[self.relation_name])
+        if (
+            event
+            and type(event) in [RelationBrokenEvent, RelationDepartedEvent]
+            and event.relation in relations
+        ):
+            # Disregard of what has been requested by the client, this relation is being removed
+            relations.remove(event.relation)
+
+        # Now, we will return true if any of the relations are marked as external OR if the event
+        # itself is requesting for an external_node_connectivity.
+        # Not all events received have external-node-connectivity
+        external_conn = getattr(event, "external_node_connectivity", lambda: False)()
+        return (event and external_conn) or any(
+            relation.data[relation.app].get("external-node-connectivity", "false") == "true"
+            for relation in relations
         )
 
     def _depart_flag(self, relation):
@@ -186,47 +206,49 @@ class PgBouncerProvider(Object):
                 f"Failed to delete user during {self.relation_name} relation broken event"
             )
             raise
+        # Check if we need to close the node port
+        self.charm.patch_port(self.external_connectivity(event))
 
     def update_connection_info(self, relation):
         """Updates client-facing relation information."""
-        # Set the read/write endpoint.
         if not self.charm.unit.is_leader():
             return
-        initial_status = self.charm.unit.status
-        self.charm.unit.status = MaintenanceStatus(
-            f"Updating {self.relation_name} relation connection information"
-        )
-        endpoint = f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}"
-        self.database_provides.set_endpoints(relation.id, endpoint)
 
-        self.update_read_only_endpoints()
+        if relation.data[relation.app].get("external-node-connectivity", "false") == "true":
+            # Make sure we have a node port exposed
+            self.charm.patch_port(True)
+
+        self.update_endpoints(relation)
 
         # Set the database version.
         if self.charm.backend.check_backend():
             self.database_provides.set_version(
                 relation.id, self.charm.backend.postgres.get_postgresql_version()
             )
-        self.charm.unit.status = initial_status
 
-        self.charm.update_status()
+    def update_endpoints(self, relation=None) -> None:
+        """Set the endpoints for the relation."""
+        nodeports = self.charm.get_node_ports
+        internal_port = self.charm.config["listen_port"]
+        internal_hostnames = sorted(set(self.charm.peers.units_hostnames))
+        if self.charm.peers.leader_hostname in internal_hostnames:
+            internal_hostnames.remove(self.charm.peers.leader_hostname)
+        internal_rw = f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}"
 
-    def update_read_only_endpoints(self, event: DatabaseRequestedEvent = None) -> None:
-        """Set the read-only endpoint only if there are replicas."""
-        if not self.charm.unit.is_leader():
-            return
+        relations = [relation] if relation else self.model.relations[self.relation_name]
 
-        # Get the current relation or all the relations if this is triggered by another type of
-        # event.
-        relations = [event.relation] if event else self.model.relations[self.relation_name]
-
-        port = self.charm.config["listen_port"]
-        hostnames = set(self.charm.peers.units_hostnames)
-        hostnames.discard(self.charm.peers.leader_hostname)
+        # Set the endpoints for each relation.
         for relation in relations:
-            self.database_provides.set_read_only_endpoints(
-                relation.id,
-                ",".join([f"{host}:{port}" for host in hostnames]),
-            )
+            # Read-write endpoint
+            if relation.data[relation.app].get("external-node-connectivity", "false") == "true":
+                self.database_provides.set_endpoints(relation.id, nodeports["rw"])
+                self.database_provides.set_read_only_endpoints(relation.id, nodeports["ro"])
+            else:
+                self.database_provides.set_endpoints(relation.id, internal_rw)
+                self.database_provides.set_read_only_endpoints(
+                    relation.id,
+                    ",".join([f"{host}:{internal_port}" for host in internal_hostnames]),
+                )
 
     def get_database(self, relation):
         """Gets database name from relation."""

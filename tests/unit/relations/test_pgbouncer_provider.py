@@ -49,22 +49,30 @@ class TestPgbouncerProvider(unittest.TestCase):
         return_value="test_auth_user",
     )
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="test_pass")
-    @patch("relations.pgbouncer_provider.PgBouncerProvider.update_read_only_endpoints")
+    @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_read_only_endpoints")
+    @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_endpoints")
     @patch("relations.pgbouncer_provider.PgBouncerProvider.get_database", return_value="test-db")
     @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_credentials")
-    @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_endpoints")
     @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_version")
+    @patch(
+        "charm.PgBouncerK8sCharm.get_node_ports",
+        return_value={
+            "rw": "rw:5432",
+            "ro": "ro:5432",
+        },
+    )
     @patch("charm.PgBouncerK8sCharm.set_relation_databases")
     @patch("charm.PgBouncerK8sCharm.generate_relation_databases")
     def test_on_database_requested(
         self,
         _gen_rel_dbs,
         _set_rel_dbs,
+        _get_node_ports,
         _dbp_set_version,
-        _dbp_set_endpoints,
         _dbp_set_credentials,
         _get_database,
-        _update_read_only_endpoints,
+        _dbp_set_endpoints,
+        _set_read_only_endpoints,
         _password,
         _auth_user,
         _pg_databag,
@@ -98,7 +106,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         _dbp_set_endpoints.assert_called_with(
             rel_id, f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}"
         )
-        _update_read_only_endpoints.assert_called()
+        _set_read_only_endpoints.assert_called()
         _set_rel_dbs.assert_called_once_with({"1": {"name": "test-db", "legacy": False}})
 
     @patch("relations.backend_database.BackendDatabaseRequires.check_backend", return_value=True)
@@ -107,7 +115,8 @@ class TestPgbouncerProvider(unittest.TestCase):
     )
     @patch("charm.PgBouncerK8sCharm.set_relation_databases")
     @patch("charm.PgBouncerK8sCharm.generate_relation_databases")
-    def test_on_relation_broken(self, _gen_rel_dbs, _set_rel_dbs, _pg, _check_backend):
+    @patch("charm.lightkube")
+    def test_on_relation_broken(self, _lightkube, _gen_rel_dbs, _set_rel_dbs, _pg, _check_backend):
         _pg.return_value.get_postgresql_version.return_value = "10"
         _gen_rel_dbs.return_value = {"1": {"name": "test_db", "legacy": False}}
         self.harness.set_leader()
@@ -115,6 +124,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         event = MagicMock()
         rel_id = event.relation.id = 1
         external_app = self.charm.client_relation.get_external_app(event.relation)
+        event.relation.app = external_app
         event.relation.data = {external_app: {"database": "test_db"}}
         user = f"relation_id_{rel_id}"
 
@@ -122,10 +132,3 @@ class TestPgbouncerProvider(unittest.TestCase):
         _pg().delete_user.assert_called_with(user)
 
         _set_rel_dbs.assert_called_once_with({})
-
-    @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_read_only_endpoints")
-    def test_update_read_only_endpoints(self, _set_read_only_endpoints):
-        self.harness.set_leader()
-        event = MagicMock()
-        self.client_relation.update_read_only_endpoints(event)
-        _set_read_only_endpoints.assert_called()
