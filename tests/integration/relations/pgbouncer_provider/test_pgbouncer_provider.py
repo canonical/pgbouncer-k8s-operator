@@ -537,7 +537,6 @@ async def test_connection_is_possible_after_pod_deletion(ops_test: OpsTest) -> N
     connection_string = await build_connection_string(
         ops_test, DATA_INTEGRATOR_APP_NAME, relation_name="postgresql", database="test-database"
     )
-    connection_string += " port=6432"
     connection = None
     try:
         connection = psycopg2.connect(connection_string)
