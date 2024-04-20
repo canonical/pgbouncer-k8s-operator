@@ -348,7 +348,6 @@ class PgBouncerK8sCharm(CharmBase):
         self.unit.set_workload_version(self.version)
 
         self.peers.unit_databag["container_initialised"] = "True"
-        self.patch_port()
 
     @property
     def is_container_ready(self) -> bool:

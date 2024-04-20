@@ -498,8 +498,8 @@ async def test_indico_datatabase(ops_test: OpsTest) -> None:
             application_name="indico",
             num_units=1,
         )
-        await ops_test.model.deploy("redis-k8s", channel="stable", application_name="redis-broker")
-        await ops_test.model.deploy("redis-k8s", channel="stable", application_name="redis-cache")
+        await ops_test.model.deploy("redis-k8s", channel="latest/edge", application_name="redis-broker")
+        await ops_test.model.deploy("redis-k8s", channel="latest/edge", application_name="redis-cache")
         await asyncio.gather(
             ops_test.model.relate("redis-broker", "indico:redis-broker"),
             ops_test.model.relate("redis-cache", "indico:redis-cache"),
@@ -532,6 +532,8 @@ async def test_connection_is_possible_after_pod_deletion(ops_test: OpsTest) -> N
     unit = ops_test.model.applications[PGB].units[0]
     await delete_pod(ops_test, unit.name)
     await ops_test.model.wait_for_idle(status="active", idle_period=3)
+
+    await asyncio.sleep(20)
 
     # Test the connection.
     connection_string = await build_connection_string(
