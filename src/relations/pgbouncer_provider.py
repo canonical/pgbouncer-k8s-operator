@@ -98,12 +98,10 @@ class PgBouncerProvider(Object):
             # Disregard of what has been requested by the client, this relation is being removed
             relations.remove(event.relation)
 
-        # Now, we will return true if any of the relations are marked as external OR if the event
-        # itself is requesting for an external_node_connectivity.
-        # Not all events received have external-node-connectivity
-        external_conn = getattr(event, "external_node_connectivity", lambda: False)()
-        return (event and external_conn) or any(
-            relation.data[relation.app].get("external-node-connectivity", "false") == "true"
+        # Now, we will return true if any of the relations are marked as external
+        return any(
+            relation.data.get(relation.app, {}).get("external-node-connectivity", "false")
+            == "true"
             for relation in relations
         )
 
@@ -164,6 +162,8 @@ class PgBouncerProvider(Object):
         self.database_provides.set_credentials(rel_id, user, password)
         # Set the database name
         self.database_provides.set_database(rel_id, database)
+
+        self.charm.patch_port(self.external_connectivity(event))
         self.update_connection_info(event.relation)
 
     def _on_relation_departed(self, event: RelationDepartedEvent) -> None:
@@ -214,10 +214,6 @@ class PgBouncerProvider(Object):
         if not self.charm.unit.is_leader():
             return
 
-        if relation.data[relation.app].get("external-node-connectivity", "false") == "true":
-            # Make sure we have a node port exposed
-            self.charm.patch_port(True)
-
         self.update_endpoints(relation)
 
         # Set the database version.
@@ -239,6 +235,10 @@ class PgBouncerProvider(Object):
 
         # Set the endpoints for each relation.
         for relation in relations:
+            if not relation or not relation.data or not relation.data.get(relation.app):
+                # This is a relation that is going away and finds itself in a broken state
+                # proceed to the next relation
+                continue
             # Read-write endpoint
             if relation.data[relation.app].get("external-node-connectivity", "false") == "true":
                 self.database_provides.set_endpoints(relation.id, nodeports["rw"])

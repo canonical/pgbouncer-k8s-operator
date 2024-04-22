@@ -34,6 +34,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         self.client_rel_id = self.harness.add_relation(CLIENT_RELATION_NAME, "application")
         self.harness.add_relation_unit(self.client_rel_id, "application/0")
 
+    @patch("charm.lightkube")
     @patch("relations.backend_database.BackendDatabaseRequires.check_backend", return_value=True)
     @patch(
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
@@ -78,6 +79,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         _pg_databag,
         _pg,
         _check_backend,
+        _,
     ):
         self.harness.set_leader()
         _gen_rel_dbs.return_value = {}
