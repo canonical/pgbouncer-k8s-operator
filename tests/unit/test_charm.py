@@ -3,7 +3,6 @@
 #
 # Learn more about testing at: https://juju.is/docs/sdk/testing
 
-import logging
 import math
 import unittest
 from unittest.mock import Mock, PropertyMock, call, patch
@@ -538,7 +537,9 @@ class TestCharm(unittest.TestCase):
 
         # Reset new secret
         self.harness.charm.set_secret(scope, password_key, "blablabla")
-        assert self.harness.charm.model.get_secret(label=f"{PEER_RELATION_NAME}.pgbouncer-k8s.{scope}")
+        assert self.harness.charm.model.get_secret(
+            label=f"{PEER_RELATION_NAME}.pgbouncer-k8s.{scope}"
+        )
         assert self.harness.charm.get_secret(scope, password_key) == "blablabla"
         assert password_key not in self.harness.get_relation_data(
             self.rel_id, getattr(self.charm, scope).name
@@ -571,7 +572,9 @@ class TestCharm(unittest.TestCase):
         self.harness.charm.set_secret(scope, password_key, "blablabla")
         with self.harness.hooks_disabled():
             self.harness.set_leader(is_leader)
-        assert self.harness.charm.model.get_secret(label=f"{PEER_RELATION_NAME}.pgbouncer-k8s.{scope}")
+        assert self.harness.charm.model.get_secret(
+            label=f"{PEER_RELATION_NAME}.pgbouncer-k8s.{scope}"
+        )
         assert self.harness.charm.get_secret(scope, password_key) == "blablabla"
         assert SECRET_INTERNAL_LABEL not in self.harness.get_relation_data(
             self.rel_id, getattr(self.charm, scope).name
