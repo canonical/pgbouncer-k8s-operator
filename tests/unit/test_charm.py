@@ -46,10 +46,6 @@ class TestCharm(unittest.TestCase):
 
         self.rel_id = self.harness.model.relations[PEER_RELATION_NAME][0].id
 
-    @pytest.fixture
-    def use_caplog(self, caplog):
-        self._caplog = caplog
-
     @pytest.fixture()
     def with_juju_secrets(self, monkeypatch):
         monkeypatch.setattr("ops.JujuVersion.has_secrets", True)
