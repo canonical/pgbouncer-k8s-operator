@@ -473,27 +473,9 @@ class TestCharm(unittest.TestCase):
                 in self._caplog.text
             )
 
-
-@patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
-class TestCharmSecrets(unittest.TestCase):
-    # Needed to have it applied on the charm __init__ function, where _translate_field_to_secret_key() is called
-    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
-    def setUp(self, _):
-        self.harness = Harness(PgBouncerK8sCharm)
-        self.addCleanup(self.harness.cleanup)
-        self.harness.begin()
-
-        self.charm = self.harness.charm
-        self.unit = self.harness.charm.unit
-
-        self.rel_id = self.harness.add_relation(PEER_RELATION_NAME, self.charm.app.name)
-
-    @pytest.fixture
-    def use_caplog(self, caplog):
-        self._caplog = caplog
-
     @parameterized.expand([("app", "monitoring-password"), ("unit", "csr")])
-    def test_get_secret_secrets(self, _, scope, field):
+    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
+    def test_get_secret_secrets(self, scope, field, _):
         with self.harness.hooks_disabled():
             self.harness.set_leader()
 
@@ -502,7 +484,8 @@ class TestCharmSecrets(unittest.TestCase):
         assert self.charm.get_secret(scope, field) == "test"
 
     @parameterized.expand([("app", True), ("unit", True), ("unit", False)])
-    def test_set_reset_new_secret(self, _, scope, is_leader):
+    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
+    def test_set_reset_new_secret(self, scope, is_leader, _):
         """NOTE: currently ops.testing seems to allow for non-leader to set secrets too!"""
         # App has to be leader, unit can be eithe
         with self.harness.hooks_disabled():
@@ -521,7 +504,8 @@ class TestCharmSecrets(unittest.TestCase):
         assert self.harness.charm.get_secret(scope, "new-secret2") == "blablabla"
 
     @parameterized.expand([("app", True), ("unit", True), ("unit", False)])
-    def test_invalid_secret(self, _, scope, is_leader):
+    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
+    def test_invalid_secret(self, scope, is_leader, _):
         # App has to be leader, unit can be either
         with self.harness.hooks_disabled():
             self.harness.set_leader(is_leader)
@@ -533,6 +517,7 @@ class TestCharmSecrets(unittest.TestCase):
         assert self.harness.charm.get_secret(scope, "somekey") is None
 
     @pytest.mark.usefixtures("use_caplog")
+    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
     def test_delete_existing_password_secrets(self, _):
         """NOTE: currently ops.testing seems to allow for non-leader to remove secrets too!"""
         with self.harness.hooks_disabled():
@@ -573,7 +558,7 @@ class TestCharmSecrets(unittest.TestCase):
 
     @parameterized.expand([("app", True), ("unit", True), ("unit", False)])
     @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
-    def test_migration_from_databag(self, scope, is_leader, _, __):
+    def test_migration_from_databag(self, scope, is_leader, _):
         """Check if we're moving on to use secrets when live upgrade from databag to Secrets usage."""
         # App has to be leader, unit can be either
         with self.harness.hooks_disabled():
@@ -596,7 +581,7 @@ class TestCharmSecrets(unittest.TestCase):
 
     @parameterized.expand([("app", True), ("unit", True), ("unit", False)])
     @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
-    def test_migration_from_single_secret(self, scope, is_leader, _, __):
+    def test_migration_from_single_secret(self, scope, is_leader, _):
         """Check if we're moving on to use secrets when live upgrade from databag to Secrets usage."""
         # App has to be leader, unit can be either
         with self.harness.hooks_disabled():
