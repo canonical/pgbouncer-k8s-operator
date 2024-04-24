@@ -13,7 +13,7 @@ from configparser import ConfigParser
 from typing import Any, Dict, Literal, Optional, Tuple, Union, get_args
 
 import lightkube
-from charms.data_platform_libs.v0.data_interfaces import DataPeer, DataPeerUnit
+from charms.data_platform_libs.v0.data_interfaces import DataPeerData, DataPeerUnitData
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
@@ -70,27 +70,15 @@ class PgBouncerK8sCharm(CharmBase):
         super().__init__(*args)
 
         self._namespace = self.model.name
-        self.peer_relation_app = DataPeer(
-            self,
+        self.peer_relation_app = DataPeerData(
+            self.model,
             relation_name=PEER_RELATION_NAME,
-            additional_secret_fields=[
-                self._translate_field_to_secret_key(AUTH_FILE_DATABAG_KEY),
-                self._translate_field_to_secret_key(CFG_FILE_DATABAG_KEY),
-                self._translate_field_to_secret_key(MONITORING_PASSWORD_KEY),
-            ],
             secret_field_name=SECRET_INTERNAL_LABEL,
             deleted_label=SECRET_DELETED_LABEL,
         )
-        self.peer_relation_unit = DataPeerUnit(
-            self,
+        self.peer_relation_unit = DataPeerUnitData(
+            self.model,
             relation_name=PEER_RELATION_NAME,
-            additional_secret_fields=[
-                "key",
-                "csr",
-                "cauth",
-                "cert",
-                "chain",
-            ],
             secret_field_name=SECRET_INTERNAL_LABEL,
             deleted_label=SECRET_DELETED_LABEL,
         )
@@ -570,7 +558,7 @@ class PgBouncerK8sCharm(CharmBase):
         if scope == UNIT_SCOPE:
             return self.unit
 
-    def peer_relation_data(self, scope: Scopes) -> DataPeer:
+    def peer_relation_data(self, scope: Scopes) -> DataPeerData:
         """Returns the peer relation data per scope."""
         if scope == APP_SCOPE:
             return self.peer_relation_app
@@ -592,7 +580,13 @@ class PgBouncerK8sCharm(CharmBase):
 
         peers = self.model.get_relation(PEER_RELATION_NAME)
         secret_key = self._translate_field_to_secret_key(key)
-        return self.peer_relation_data(scope).fetch_my_relation_field(peers.id, secret_key)
+        # Old translation in databag is to be taken
+        if key != secret_key and (
+            result := self.peer_relation_data(scope).fetch_my_relation_field(peers.id, key)
+        ):
+            return result
+
+        return self.peer_relation_data(scope).get_secret(peers.id, secret_key)
 
     def set_secret(self, scope: Scopes, key: str, value: Optional[str]) -> Optional[str]:
         """Set secret from the secret storage."""
@@ -604,7 +598,12 @@ class PgBouncerK8sCharm(CharmBase):
 
         peers = self.model.get_relation(PEER_RELATION_NAME)
         secret_key = self._translate_field_to_secret_key(key)
-        self.peer_relation_data(scope).update_relation_data(peers.id, {secret_key: value})
+        # Old translation in databag is to be deleted
+        if key != secret_key and self.peer_relation_data(scope).fetch_my_relation_field(
+            peers.id, key
+        ):
+            self.peer_relation_data(scope).delete_relation_data(peers.id, [key])
+        self.peer_relation_data(scope).set_secret(peers.id, secret_key, value)
 
     def remove_secret(self, scope: Scopes, key: str) -> None:
         """Removing a secret."""
