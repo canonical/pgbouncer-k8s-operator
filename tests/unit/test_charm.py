@@ -445,7 +445,7 @@ class TestCharm(unittest.TestCase):
     @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
     def test_set_reset_new_secret(self, scope, is_leader, _):
         """NOTE: currently ops.testing seems to allow for non-leader to set secrets too!"""
-        # App has to be leader, unit can be eithe
+        # App has to be leader, unit can be either
         with self.harness.hooks_disabled():
             self.harness.set_leader(is_leader)
 
