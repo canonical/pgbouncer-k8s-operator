@@ -404,6 +404,16 @@ class TestCharm(unittest.TestCase):
         )
         assert self.charm.get_secret("unit", "password") == "test-password"
 
+    @parameterized.expand([("app", "monitoring-password"), ("unit", "csr")])
+    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
+    def test_get_secret_secrets(self, scope, field, _):
+        with self.harness.hooks_disabled():
+            self.harness.set_leader()
+
+        assert self.charm.get_secret(scope, field) is None
+        self.charm.set_secret(scope, field, "test")
+        assert self.charm.get_secret(scope, field) == "test"
+
     def test_set_secret(self):
         with self.harness.hooks_disabled():
             self.harness.set_leader()
@@ -430,6 +440,39 @@ class TestCharm(unittest.TestCase):
 
         with self.assertRaises(RuntimeError):
             self.charm.set_secret("test", "password", "test")
+
+    @parameterized.expand([("app", True), ("unit", True), ("unit", False)])
+    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
+    def test_set_reset_new_secret(self, scope, is_leader, _):
+        """NOTE: currently ops.testing seems to allow for non-leader to set secrets too!"""
+        # App has to be leader, unit can be eithe
+        with self.harness.hooks_disabled():
+            self.harness.set_leader(is_leader)
+
+        # Getting current password
+        self.harness.charm.set_secret(scope, "new-secret", "bla")
+        assert self.harness.charm.get_secret(scope, "new-secret") == "bla"
+
+        # Reset new secret
+        self.harness.charm.set_secret(scope, "new-secret", "blablabla")
+        assert self.harness.charm.get_secret(scope, "new-secret") == "blablabla"
+
+        # Set another new secret
+        self.harness.charm.set_secret(scope, "new-secret2", "blablabla")
+        assert self.harness.charm.get_secret(scope, "new-secret2") == "blablabla"
+
+    @parameterized.expand([("app", True), ("unit", True), ("unit", False)])
+    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
+    def test_invalid_secret(self, scope, is_leader, _):
+        # App has to be leader, unit can be either
+        with self.harness.hooks_disabled():
+            self.harness.set_leader(is_leader)
+
+        with self.assertRaises((RelationDataTypeError, TypeError)):
+            self.harness.charm.set_secret(scope, "somekey", 1)
+
+        self.harness.charm.set_secret(scope, "somekey", "")
+        assert self.harness.charm.get_secret(scope, "somekey") is None
 
     @pytest.mark.usefixtures("use_caplog")
     def test_delete_password(self):
@@ -472,49 +515,6 @@ class TestCharm(unittest.TestCase):
                 "Non-existing field 'non-existing-secret' was attempted to be removed"
                 in self._caplog.text
             )
-
-    @parameterized.expand([("app", "monitoring-password"), ("unit", "csr")])
-    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
-    def test_get_secret_secrets(self, scope, field, _):
-        with self.harness.hooks_disabled():
-            self.harness.set_leader()
-
-        assert self.charm.get_secret(scope, field) is None
-        self.charm.set_secret(scope, field, "test")
-        assert self.charm.get_secret(scope, field) == "test"
-
-    @parameterized.expand([("app", True), ("unit", True), ("unit", False)])
-    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
-    def test_set_reset_new_secret(self, scope, is_leader, _):
-        """NOTE: currently ops.testing seems to allow for non-leader to set secrets too!"""
-        # App has to be leader, unit can be eithe
-        with self.harness.hooks_disabled():
-            self.harness.set_leader(is_leader)
-
-        # Getting current password
-        self.harness.charm.set_secret(scope, "new-secret", "bla")
-        assert self.harness.charm.get_secret(scope, "new-secret") == "bla"
-
-        # Reset new secret
-        self.harness.charm.set_secret(scope, "new-secret", "blablabla")
-        assert self.harness.charm.get_secret(scope, "new-secret") == "blablabla"
-
-        # Set another new secret
-        self.harness.charm.set_secret(scope, "new-secret2", "blablabla")
-        assert self.harness.charm.get_secret(scope, "new-secret2") == "blablabla"
-
-    @parameterized.expand([("app", True), ("unit", True), ("unit", False)])
-    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
-    def test_invalid_secret(self, scope, is_leader, _):
-        # App has to be leader, unit can be either
-        with self.harness.hooks_disabled():
-            self.harness.set_leader(is_leader)
-
-        with self.assertRaises((RelationDataTypeError, TypeError)):
-            self.harness.charm.set_secret(scope, "somekey", 1)
-
-        self.harness.charm.set_secret(scope, "somekey", "")
-        assert self.harness.charm.get_secret(scope, "somekey") is None
 
     @pytest.mark.usefixtures("use_caplog")
     @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
