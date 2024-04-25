@@ -580,7 +580,6 @@ class PgBouncerK8sCharm(CharmBase):
         peers = self.model.get_relation(PEER_RELATION_NAME)
         if not peers:
             return None
-        
         secret_key = self._translate_field_to_secret_key(key)
         # Old translation in databag is to be taken
         if key != secret_key and (
