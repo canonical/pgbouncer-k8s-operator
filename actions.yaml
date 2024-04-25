@@ -1,0 +1,15 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+set-tls-private-key:
+  description: Set the private key, which will be used for certificate signing requests (CSR). Run for each unit separately.
+  params:
+    private-key:
+      type: string
+      description: The content of private key for communications with clients. Content will be auto-generated if this option is not specified.
+
+pre-upgrade-check:
+  description: Run necessary pre-upgrade checks before executing a charm upgrade.
+
+resume-upgrade:
+  description: Resume a rolling upgrade after asserting successful upgrade of a new revision.

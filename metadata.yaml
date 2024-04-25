@@ -1,0 +1,69 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: pgbouncer-k8s
+display-name: PgBouncer K8s
+summary: Charmed K8s operator for PgBouncer
+description: |
+  Lightweight connection pooler for PostgreSQL.
+
+  This charm supports PgBouncer in Kubernetes environments.
+docs: https://discourse.charmhub.io/t/pgbouncer-k8s-documentation/12132
+source: https://github.com/canonical/pgbouncer-k8s-operator
+issues: https://github.com/canonical/pgbouncer-k8s-operator/issues
+website:
+  - https://ubuntu.com/data/postgresql
+  - https://charmhub.io/pgbouncer-k8s
+  - https://github.com/canonical/pgbouncer-k8s-operator
+  - https://chat.charmhub.io/charmhub/channels/data-platform
+  - https://www.pgbouncer.org/
+maintainers:
+  - Canonical Data Platform <data-platform@lists.launchpad.net>
+
+containers:
+  pgbouncer:
+    resource: pgbouncer-image
+
+resources:
+  pgbouncer-image:
+    type: oci-image
+    description: OCI image for pgbouncer
+    upstream-source: ghcr.io/canonical/charmed-postgresql@sha256:b7db85555240c4e6f2df51badba69d9d8255c6d1e41b37ccb3dd0efcaef59030
+
+provides:
+  database:
+    interface: postgresql_client
+    optional: true
+  # Legacy relations - these will be deprecated in a future release
+  db:
+    interface: pgsql
+    optional: true
+  db-admin:
+    interface: pgsql
+    optional: true
+  metrics-endpoint:
+    interface: prometheus_scrape
+    optional: true
+  grafana-dashboard:
+    interface: grafana_dashboard
+    optional: true
+
+requires:
+  backend-database:
+    interface: postgresql_client
+    optional: false
+    limit: 1
+  certificates:
+    interface: tls-certificates
+    optional: true
+    limit: 1
+  logging:
+    interface: loki_push_api
+    limit: 1
+    optional: true
+
+peers:
+  pgb-peers:
+    interface: pgb_peers
+  upgrade:
+    interface: upgrade
