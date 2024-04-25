@@ -478,8 +478,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.check_pgb_running()
 
     def _generate_monitoring_service(self, enabled: bool = True) -> Dict[str, str]:
-        if enabled:
-            stats_password = self.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)
+        if enabled and (stats_password := self.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)):
             command = (
                 f'pgbouncer_exporter --web.listen-address=:{METRICS_PORT} --pgBouncer.connectionString="'
                 f'postgres://{self.backend.stats_user}:{stats_password}@localhost:{self.config["listen_port"]}/pgbouncer?sslmode=disable"'
