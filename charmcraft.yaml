@@ -1,0 +1,39 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+type: charm
+bases:
+  - name: ubuntu
+    channel: "22.04"
+    architectures: [amd64]
+  - name: ubuntu
+    channel: "22.04"
+    architectures: [arm64]
+
+parts:
+  charm:
+    override-pull: |
+      craftctl default
+      if [[ ! -f requirements.txt ]]
+      then
+          echo 'ERROR: Use "tox run -e build-dev" instead of calling "charmcraft pack" directly' >&2
+          exit 1
+      fi
+    charm-strict-dependencies: true
+    build-packages:
+      - libffi-dev
+      - libssl-dev
+      - rustc
+      - cargo
+      - pkg-config
+      - libpq-dev
+  libpq:
+    build-packages:
+      - libpq-dev
+    plugin: dump
+    source: /usr/lib/
+    source-type: local
+    prime:
+      - lib/
+    organize:
+      "*-linux-gnu/libpq.so*": lib/
