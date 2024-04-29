@@ -214,6 +214,45 @@ class BackendDatabaseRequires(Object):
 
         return True
 
+    def collect_databases(self) -> List[str]:
+        """Collects the names of all client dbs to inject or remove the auth_query."""
+        databases = [self.database.database, PG]
+        for relation in self.charm.model.relations.get("db", []):
+            database = self.charm.legacy_db_relation.get_databags(relation)[0].get("database")
+            if database and relation.units:
+                try:
+                    con = self.postgres._connect_to_database(database)
+                    con.close()
+                    databases.append(database)
+                except psycopg2.OperationalError:
+                    logger.debug("database %s not yet created", database)
+
+        for relation in self.charm.model.relations.get("db-admin", []):
+            database = self.charm.legacy_db_admin_relation.get_databags(relation)[0].get(
+                "database"
+            )
+            if database and relation.units:
+                try:
+                    con = self.postgres._connect_to_database(database)
+                    con.close()
+                    databases.append(database)
+                except psycopg2.OperationalError:
+                    logger.debug("database %s not yet created", database)
+
+        for _, data in self.charm.client_relation.database_provides.fetch_relation_data(
+            fields=["database"]
+        ).items():
+            database = data.get("database")
+            if database:
+                try:
+                    con = self.postgres._connect_to_database(database)
+                    con.close()
+                    databases.append(database)
+                except psycopg2.OperationalError:
+                    logger.debug("database %s not yet created", database)
+
+        return databases
+
     def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
         """Handle backend-database-database-created event.
 
@@ -258,7 +297,7 @@ class BackendDatabaseRequires(Object):
         # create authentication user on postgres database, so we can authenticate other users
         # later on
         self.postgres.create_user(self.auth_user, hashed_password, admin=True)
-        self.initialise_auth_function([self.database.database, PG])
+        self.initialise_auth_function(self.collect_databases())
 
         # Add the monitoring user.
         if not (monitoring_password := self.charm.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)):
@@ -325,7 +364,7 @@ class BackendDatabaseRequires(Object):
             # TODO de-authorise all databases
             logger.info("removing auth user")
             # Remove auth function before broken-hook, while we can still connect to postgres.
-            self.remove_auth_function([PGB, PG])
+            self.remove_auth_function(self.collect_databases())
         except psycopg2.Error:
             remove_auth_fail_msg = (
                 "failed to remove auth user when disconnecting from postgres application."
