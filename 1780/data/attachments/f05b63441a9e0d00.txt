@@ -1,0 +1,50 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:862 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.8    unsupported  01:51:49Z
+
+App                       Version  Status   Scale  Charm                     Channel        Rev  Address         Exposed  Message
+data-integrator                    waiting      1  data-integrator           latest/edge     27  10.152.183.105  no       installing agent
+pgbouncer-k8s             1.21.0   waiting      1  pgbouncer-k8s                              0  10.152.183.93   no       installing agent
+postgresql-k8s            14.11    active       3  postgresql-k8s            14/edge        247  10.152.183.132  no       
+postgresql-test-app                active       1  postgresql-test-app       edge           119  10.152.183.198  no       
+self-signed-certificates           active       1  self-signed-certificates  latest/stable   72  10.152.183.39   no       
+
+Unit                         Workload  Agent      Address     Ports  Message
+data-integrator/0*           blocked   idle       10.1.7.201         Please relate the data-integrator with the desired product
+pgbouncer-k8s/0*             blocked   idle       10.1.7.200         waiting for backend database relation to initialise
+postgresql-k8s/0             active    idle       10.1.7.207         
+postgresql-k8s/1             active    executing  10.1.7.208         
+postgresql-k8s/2*            active    idle       10.1.7.209         Primary
+postgresql-test-app/0*       active    idle       10.1.7.202         
+self-signed-certificates/0*  active    idle       10.1.7.203         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:868 Juju error logs:
+
+unit-postgresql-k8s-2: 01:36:25 ERROR unit.postgresql-k8s/2.juju-log database:9: Failed to create user: connection to server at "postgresql-k8s-primary.test.svc.cluster.local" (10.152.183.18), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+unit-postgresql-k8s-2: 01:36:25 ERROR unit.postgresql-k8s/2.juju-log database:9: None
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 208, in create_user
+    valid_privileges, valid_roles = self.list_valid_privileges_and_roles()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 467, in list_valid_privileges_and_roles
+    with self._connect_to_database() as connection, connection.cursor() as cursor:
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 128, in _connect_to_database
+    connection = psycopg2.connect(
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/venv/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "postgresql-k8s-primary.test.svc.cluster.local" (10.152.183.18), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/src/relations/postgresql_provider.py", line 89, in _on_database_requested
+    self.charm.postgresql.create_user(user, password, extra_user_roles=extra_user_roles)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 246, in create_user
+    raise PostgreSQLCreateUserError()
+charms.postgresql_k8s.v0.postgresql.PostgreSQLCreateUserError: None
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:947 Forgetting model main...
