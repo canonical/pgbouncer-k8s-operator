@@ -140,8 +140,11 @@ class PgBouncerProvider(Object):
                 user, password, extra_user_roles=extra_user_roles
             )
             logger.debug("creating database")
-            self.charm.backend.postgres.create_database(database, user)
+            self.charm.backend.postgres.create_database(
+                database, user, client_relations=self.charm.client_relations
+            )
             # set up auth function
+            self.charm.backend.remove_auth_function(dbs=[database])
             self.charm.backend.initialise_auth_function(dbs=[database])
         except (
             PostgreSQLCreateDatabaseError,
@@ -192,10 +195,12 @@ class PgBouncerProvider(Object):
             self.charm.peers.unit_databag.pop(self._depart_flag(event.relation), None)
             return
 
-        dbs = self.charm.generate_relation_databases()
-        dbs.pop(str(event.relation.id), None)
+        dbs = self.charm.get_relation_databases()
+        database = dbs.pop(str(event.relation.id), {}).get("name")
         self.charm.set_relation_databases(dbs)
 
+        if database:
+            self.charm.backend.remove_auth_function(dbs=[database])
         # Delete the user.
         try:
             user = f"relation_id_{event.relation.id}"

@@ -2,7 +2,7 @@
 # See LICENSE file for licensing details.
 
 import unittest
-from unittest.mock import Mock, PropertyMock, patch
+from unittest.mock import Mock, PropertyMock, patch, sentinel
 
 from charms.pgbouncer_k8s.v0.pgb import parse_dict_to_kv_string
 from ops.model import Unit
@@ -60,6 +60,11 @@ class TestDb(unittest.TestCase):
         assert self.charm.legacy_db_admin_relation.relation_name == "db-admin"
         assert self.charm.legacy_db_admin_relation.admin is True
 
+    @patch(
+        "charm.PgBouncerK8sCharm.client_relations",
+        new_callable=PropertyMock,
+        return_value=sentinel.client_rels,
+    )
     @patch("relations.backend_database.BackendDatabaseRequires.check_backend", return_value=True)
     @patch(
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
@@ -68,6 +73,7 @@ class TestDb(unittest.TestCase):
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_user")
     @patch("charms.postgresql_k8s.v0.postgresql.PostgreSQL.create_database")
+    @patch("relations.backend_database.BackendDatabaseRequires.remove_auth_function")
     @patch("relations.backend_database.BackendDatabaseRequires.initialise_auth_function")
     @patch("charm.PgBouncerK8sCharm.set_relation_databases")
     @patch("charm.PgBouncerK8sCharm.generate_relation_databases")
@@ -76,12 +82,14 @@ class TestDb(unittest.TestCase):
         _gen_rel_dbs,
         _set_rel_dbs,
         _init_auth,
+        _remove_auth,
         _create_database,
         _create_user,
         _postgres,
         _gen_pw,
         _backend_pg,
         _check_backend,
+        _,
     ):
         self.harness.set_leader(True)
 
@@ -109,7 +117,7 @@ class TestDb(unittest.TestCase):
         _set_rel_dbs.assert_called_once_with({"1": {"name": "test_db", "legacy": True}})
 
         _create_user.assert_called_with(user, password, admin=True)
-        _create_database.assert_called_with(database, user)
+        _create_database.assert_called_with(database, user, client_relations=sentinel.client_rels)
         _init_auth.assert_called_with([database])
 
         for dbag in [relation_data[self.charm.unit], relation_data[self.charm.app]]:
