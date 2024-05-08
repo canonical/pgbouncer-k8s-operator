@@ -1,0 +1,62 @@
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s (waiting for exactly 3 units, current : 1)
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  postgresql-k8s/0 [idle] waiting: Awaiting restart operation
+  postgresql-k8s/1 [idle] waiting: Awaiting restart operation
+  postgresql-k8s/2 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  postgresql-k8s/0 [idle] waiting: Awaiting restart operation
+  postgresql-k8s/1 [idle] waiting: Awaiting restart operation
+  postgresql-k8s/2 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  postgresql-k8s/0 [idle] waiting: Awaiting restart operation
+  postgresql-k8s/1 [idle] waiting: Awaiting restart operation
+  postgresql-k8s/2 [executing] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:862 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.8    unsupported  01:38:32Z
+
+App                       Version  Status   Scale  Charm                     Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   active       3  pgbouncer-k8s                              0  10.152.183.174  no       
+postgresql-k8s            14.11    waiting      3  postgresql-k8s            14/edge        247  10.152.183.245  no       installing agent
+self-signed-certificates           active       1  self-signed-certificates  latest/stable   72  10.152.183.226  no       
+
+Unit                         Workload  Agent  Address      Ports  Message
+pgbouncer-k8s/0*             active    idle   10.1.136.8          
+pgbouncer-k8s/1              active    idle   10.1.136.16         
+pgbouncer-k8s/2              active    idle   10.1.136.17         
+postgresql-k8s/0             waiting   idle   10.1.136.12         Awaiting restart operation
+postgresql-k8s/1             waiting   idle   10.1.136.14         Awaiting restart operation
+postgresql-k8s/2*            error     idle   10.1.136.13         hook failed: "certificates-relation-changed"
+self-signed-certificates/0*  active    idle   10.1.136.15         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:868 Juju error logs:
+
+unit-postgresql-k8s-2: 01:33:17 ERROR juju.worker.uniter.context cannot apply changes: creating secrets: Regular expression is invalid: nothing to repeat
+unit-postgresql-k8s-2: 01:33:17 ERROR juju.worker.uniter.operation hook "certificates-relation-changed" (via hook dispatching script: dispatch) failed: creating secrets: Regular expression is invalid: nothing to repeat
+unit-postgresql-k8s-2: 01:34:54 ERROR juju.worker.uniter.context cannot apply changes: creating secrets: Regular expression is invalid: nothing to repeat
+unit-postgresql-k8s-2: 01:34:54 ERROR juju.worker.uniter.operation hook "certificates-relation-changed" (via hook dispatching script: dispatch) failed: creating secrets: Regular expression is invalid: nothing to repeat
+unit-postgresql-k8s-2: 01:36:39 ERROR juju.worker.uniter.context cannot apply changes: creating secrets: Regular expression is invalid: nothing to repeat
+unit-postgresql-k8s-2: 01:36:39 ERROR juju.worker.uniter.operation hook "certificates-relation-changed" (via hook dispatching script: dispatch) failed: creating secrets: Regular expression is invalid: nothing to repeat
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:947 Forgetting model main...
