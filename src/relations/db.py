@@ -435,7 +435,8 @@ class DbProvides(Object):
         self.charm.set_relation_databases(dbs)
         if self.charm.unit.is_leader():
             self.charm.backend.postgres.delete_user(user)
-            if database:
+            delete_db = database not in dbs.values()
+            if database and delete_db:
                 self.charm.backend.remove_auth_function(dbs=[database])
 
         self._check_for_blocking_relations(broken_event.relation.id)

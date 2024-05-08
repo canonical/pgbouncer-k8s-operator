@@ -199,7 +199,8 @@ class PgBouncerProvider(Object):
         database = dbs.pop(str(event.relation.id), {}).get("name")
         self.charm.set_relation_databases(dbs)
 
-        if database:
+        delete_db = database not in dbs.values()
+        if database and delete_db:
             self.charm.backend.remove_auth_function(dbs=[database])
         # Delete the user.
         try:
