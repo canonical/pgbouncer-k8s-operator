@@ -1,0 +1,53 @@
+"Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
+"passed","Sat May 11 01:55:47 UTC 2024","Sat May 11 01:56:57 UTC 2024","70306","tests.integration","test_tls","","","","test_add_tls","Rejoins the TLS relation and check through the test app the it is on.
+
+    Args:
+        ops_test: The ops test framework
+    "
+"passed","Sat May 11 01:32:29 UTC 2024","Sat May 11 01:38:23 UTC 2024","354860","tests.integration","test_upgrade_from_stable","","","","test_deploy_stable","Simple test to ensure that the PostgreSQL and application charms get deployed."
+"passed","Sat May 11 01:40:11 UTC 2024","Sat May 11 01:56:31 UTC 2024","980532","tests.integration","test_node_port","","","","test_node_port_and_clusterip_setup","Test the nodeport."
+"passed","Sat May 11 01:45:32 UTC 2024","Sat May 11 01:49:10 UTC 2024","218054","tests.integration.relations","test_backend_database","","","","test_pgbouncer_stable_when_deleting_postgres",""
+"passed","Sat May 11 01:39:24 UTC 2024","Sat May 11 01:45:32 UTC 2024","367764","tests.integration.relations","test_backend_database","","","","test_tls_encrypted_connection_to_postgres",""
+"passed","Sat May 11 01:34:19 UTC 2024","Sat May 11 01:41:31 UTC 2024","432053","tests.integration.relations","test_peers","","","","test_scaled_relations","Test that the pgbouncer and postgres charms can relate to one another."
+"passed","Sat May 11 01:32:20 UTC 2024","Sat May 11 01:39:24 UTC 2024","424016","tests.integration.relations","test_backend_database","","","","test_relate_pgbouncer_to_postgres","Test that the pgbouncer and postgres charms can relate to one another."
+"passed","Sat May 11 01:32:15 UTC 2024","Sat May 11 01:39:46 UTC 2024","451520","tests.integration","test_tls","","","","test_build_and_deploy","Build and deploy pgbouncer charm."
+"passed","Sat May 11 01:39:46 UTC 2024","Sat May 11 01:53:56 UTC 2024","849885","tests.integration","test_tls","","","","test_scale_up_pgb","Scale up PGB while TLS is enabled.
+
+    Args:
+        ops_test: The ops test framework
+    "
+"passed","Sat May 11 01:41:31 UTC 2024","Sat May 11 01:43:07 UTC 2024","96570","tests.integration.relations","test_peers","","","","test_scaling","Test data is replicated to new units after a scale up."
+"passed","Sat May 11 01:32:21 UTC 2024","Sat May 11 01:43:06 UTC 2024","644416","tests.integration.relations","test_db","","","","test_create_db_legacy_relation","Test that the pgbouncer and postgres charms can relate to one another."
+"passed","Sat May 11 01:43:06 UTC 2024","Sat May 11 01:44:39 UTC 2024","92828","tests.integration.relations","test_db","","","","test_extensions_blocking","Test the relation blocks with extensions."
+"passed","Sat May 11 01:33:41 UTC 2024","Sat May 11 01:33:46 UTC 2024","5106","tests.integration","test_charm","","","","test_logrotate","Verify that logs will be rotated."
+"passed","Sat May 11 01:56:57 UTC 2024","Sat May 11 01:59:58 UTC 2024","180476","tests.integration","test_tls","","","","test_mattermost_db","Deploy Mattermost to test the 'db' relation.
+
+    Mattermost needs TLS enabled on PgBouncer to correctly connect to it.
+
+    Args:
+        ops_test: The ops test framework
+    "
+"passed","Sat May 11 01:55:11 UTC 2024","Sat May 11 01:55:47 UTC 2024","36176","tests.integration","test_tls","","","","test_remove_tls","Removes the TLS relation and check through the test app the it is off.
+
+    Args:
+        ops_test: The ops test framework
+    "
+"passed","Sat May 11 01:38:22 UTC 2024","Sat May 11 01:42:23 UTC 2024","241234","tests.integration","test_upgrade","","","","test_upgrade_from_edge",""
+"passed","Sat May 11 01:32:30 UTC 2024","Sat May 11 01:34:19 UTC 2024","108813","tests.integration.relations","test_peers","","","","test_deploy_at_scale",""
+"passed","Sat May 11 01:38:26 UTC 2024","Sat May 11 01:42:44 UTC 2024","258217","tests.integration","test_upgrade_from_stable","","","","test_upgrade_from_stable",""
+"passed","Sat May 11 01:38:23 UTC 2024","Sat May 11 01:38:26 UTC 2024","2149","tests.integration","test_upgrade_from_stable","","","","test_pre_upgrade_check","Test that the pre-upgrade-check action runs successfully."
+"passed","Sat May 11 01:53:56 UTC 2024","Sat May 11 01:55:11 UTC 2024","74185","tests.integration","test_tls","","","","test_scale_down_pgb","Scale down PGB while TLS is enabled.
+
+    Args:
+        ops_test: The ops test framework
+    "
+"passed","Sat May 11 01:32:09 UTC 2024","Sat May 11 01:33:13 UTC 2024","63222","tests.integration","test_charm","","","","test_build_and_deploy","Build and deploy pgbouncer charm."
+"passed","Sat May 11 01:32:37 UTC 2024","Sat May 11 01:40:11 UTC 2024","453531","tests.integration","test_node_port","","","","test_build_and_deploy","Test the deployment of the charm."
+"passed","Sat May 11 01:33:13 UTC 2024","Sat May 11 01:33:40 UTC 2024","27533","tests.integration","test_charm","","","","test_config_updates","Test updating charm config updates pgbouncer config & relation data."
+"passed","Sat May 11 01:33:40 UTC 2024","Sat May 11 01:33:41 UTC 2024","517","tests.integration","test_charm","","","","test_multiple_pebble_services","Test we have the correct pebble services."
+"passed","Sat May 11 01:42:24 UTC 2024","Sat May 11 01:46:40 UTC 2024","256555","tests.integration","test_upgrade","","","","test_fail_and_rollback",""
+"passed","Sat May 11 01:32:21 UTC 2024","Sat May 11 01:38:19 UTC 2024","358438","tests.integration","test_upgrade","","","","test_deploy_latest","Simple test to ensure that the PostgreSQL and application charms get deployed."
+"passed","Sat May 11 01:32:52 UTC 2024","Sat May 11 01:43:32 UTC 2024","639258","tests.integration.relations","test_db_admin","","","","test_create_db_admin_legacy_relation",""
+"passed","Sat May 11 01:43:07 UTC 2024","Sat May 11 01:44:27 UTC 2024","80007","tests.integration.relations","test_peers","","","","test_exit_relations","Test that we can exit relations with multiple units without breaking anything."
+"passed","Sat May 11 01:56:31 UTC 2024","Sat May 11 01:56:31 UTC 2024","338","tests.integration","test_node_port","","","","test_data_integrator","Test the connection."
+"passed","Sat May 11 01:38:19 UTC 2024","Sat May 11 01:38:22 UTC 2024","2149","tests.integration","test_upgrade","","","","test_pre_upgrade_check","Test that the pre-upgrade-check action runs successfully."
