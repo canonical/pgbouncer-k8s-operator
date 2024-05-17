@@ -10,7 +10,7 @@ import math
 import os
 import socket
 from configparser import ConfigParser
-from typing import Any, Dict, Literal, Optional, Tuple, Union, get_args
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union, get_args
 
 import lightkube
 from charms.data_platform_libs.v0.data_interfaces import DataPeerData, DataPeerUnitData
@@ -23,7 +23,7 @@ from ops import JujuVersion
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
 from ops.framework import StoredState
 from ops.main import main
-from ops.model import ActiveStatus, BlockedStatus, WaitingStatus
+from ops.model import ActiveStatus, BlockedStatus, Relation, WaitingStatus
 from ops.pebble import ConnectionError, Layer, ServiceStatus
 
 from constants import (
@@ -892,6 +892,15 @@ class PgBouncerK8sCharm(CharmBase):
     def _has_blocked_status(self) -> bool:
         """Returns whether the unit is in a blocked state."""
         return isinstance(self.unit.status, BlockedStatus)
+
+    @property
+    def client_relations(self) -> List[Relation]:
+        """Return the list of established client relations."""
+        relations = []
+        for relation_name in ["database", "db", "db-admin"]:
+            for relation in self.model.relations.get(relation_name, []):
+                relations.append(relation)
+        return relations
 
 
 if __name__ == "__main__":

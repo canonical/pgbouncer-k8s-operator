@@ -257,8 +257,9 @@ class DbProvides(Object):
             logger.info(init_msg)
 
             self.charm.backend.postgres.create_user(user, password, admin=self.admin)
-            self.charm.backend.postgres.create_database(database, user)
-
+            self.charm.backend.postgres.create_database(
+                database, user, client_relations=self.charm.client_relations
+            )
             created_msg = f"database and user for {self.relation_name} relation created"
             self.charm.unit.status = initial_status
             self.charm.update_status()
@@ -270,6 +271,7 @@ class DbProvides(Object):
             return
 
         # set up auth function
+        self.charm.backend.remove_auth_function(dbs=[database])
         self.charm.backend.initialise_auth_function([database])
 
     def _on_relation_changed(self, change_event: RelationChangedEvent):
@@ -428,11 +430,14 @@ class DbProvides(Object):
                 self._check_for_blocking_relations(broken_event.relation.id)
             return
 
-        dbs = self.charm.generate_relation_databases()
-        dbs.pop(str(broken_event.relation.id), None)
+        dbs = self.charm.get_relation_databases()
+        database = dbs.pop(str(broken_event.relation.id), {}).get("name")
         self.charm.set_relation_databases(dbs)
         if self.charm.unit.is_leader():
             self.charm.backend.postgres.delete_user(user)
+            delete_db = database not in [db["name"] for db in dbs.values()]
+            if database and delete_db:
+                self.charm.backend.remove_auth_function(dbs=[database])
 
         self._check_for_blocking_relations(broken_event.relation.id)
 
