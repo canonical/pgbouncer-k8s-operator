@@ -6,13 +6,20 @@ import pytest
 from pytest_operator.plugin import OpsTest
 from tenacity import Retrying, stop_after_delay, wait_fixed
 
+from . import architecture
 from .helpers.helpers import CLIENT_APP_NAME
 
 
 @pytest.fixture(scope="module")
 async def pgb_charm(ops_test: OpsTest):
     """Build the pgbouncer charm."""
-    return await ops_test.build_charm(".", bases_index=0)
+    if architecture.architecture == "amd64":
+        index = 0
+    elif architecture.architecture == "arm64":
+        index = 1
+    else:
+        raise ValueError(architecture.architecture)
+    return await ops_test.build_charm(".", bases_index=index)
 
 
 @pytest.fixture
