@@ -42,3 +42,6 @@ SECRET_KEY_OVERRIDES = {
     "monitoring_password": "monitoring-password",
     "auth_file": "auth-file",
 }
+
+TRACING_RELATION_NAME = "tracing"
+TRACING_PROTOCOL = "otlp_http"

@@ -18,6 +18,8 @@ from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
+from charms.tempo_k8s.v1.charm_tracing import trace_charm
+from charms.tempo_k8s.v2.tracing import TracingEndpointRequirer
 from jinja2 import Template
 from ops import JujuVersion
 from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
@@ -48,6 +50,8 @@ from constants import (
     TLS_CA_FILE,
     TLS_CERT_FILE,
     TLS_KEY_FILE,
+    TRACING_PROTOCOL,
+    TRACING_RELATION_NAME,
     UNIT_SCOPE,
 )
 from relations.backend_database import BackendDatabaseRequires
@@ -61,6 +65,19 @@ logger = logging.getLogger(__name__)
 Scopes = Literal[APP_SCOPE, UNIT_SCOPE]
 
 
+@trace_charm(
+    tracing_endpoint="tracing_endpoint",
+    extra_types=(
+        BackendDatabaseRequires,
+        DbProvides,
+        GrafanaDashboardProvider,
+        LogProxyConsumer,
+        MetricsEndpointProvider,
+        Peers,
+        PgBouncerProvider,
+        PgbouncerUpgrade,
+    ),
+)
 class PgBouncerK8sCharm(CharmBase):
     """A class implementing charmed PgBouncer."""
 
@@ -125,6 +142,15 @@ class PgBouncerK8sCharm(CharmBase):
             relation_name="upgrade",
             substrate="k8s",
         )
+        self.tracing = TracingEndpointRequirer(
+            self, relation_name=TRACING_RELATION_NAME, protocols=[TRACING_PROTOCOL]
+        )
+
+    @property
+    def tracing_endpoint(self) -> Optional[str]:
+        """Otlp http endpoint for charm instrumentation."""
+        if self.tracing.is_ready():
+            return self.tracing.get_endpoint(TRACING_PROTOCOL)
 
     @property
     def _node_name(self) -> str:
