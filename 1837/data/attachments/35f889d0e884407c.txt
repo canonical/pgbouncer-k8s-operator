@@ -1,0 +1,68 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:862 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.8    unsupported  01:37:49Z
+
+App                       Version  Status   Scale  Charm                     Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   waiting      2  pgbouncer-k8s                              0  10.152.183.250  no       installing agent
+postgresql-k8s            14.11    waiting      3  postgresql-k8s            14/edge        270  10.152.183.128  no       installing agent
+postgresql-test-app                active       1  postgresql-test-app       edge           142  10.152.183.67   no       
+self-signed-certificates           active       1  self-signed-certificates  latest/stable   72  10.152.183.54   no       
+
+Unit                         Workload  Agent      Address      Ports  Message
+pgbouncer-k8s/0              error     idle       10.1.65.200         hook failed: "pgb-peers-relation-changed"
+pgbouncer-k8s/1*             active    executing  10.1.65.201         
+postgresql-k8s/0             unknown   idle       10.1.65.208         
+postgresql-k8s/1*            active    idle       10.1.65.207         Primary
+postgresql-k8s/2             unknown   idle       10.1.65.209         
+postgresql-test-app/0*       active    idle       10.1.65.202         
+self-signed-certificates/0*  active    idle       10.1.65.206         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:868 Juju error logs:
+
+unit-pgbouncer-k8s-0: 01:37:48 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:0: Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/./src/charm.py", line 907, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/ops/main.py", line 548, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/ops/main.py", line 527, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/ops/main.py", line 516, in _emit
+    _emit_charm_event(self.charm, self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/ops/main.py", line 147, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/ops/framework.py", line 348, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/ops/framework.py", line 860, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/ops/framework.py", line 950, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/src/relations/peers.py", line 163, in _on_changed
+    self.charm.toggle_monitoring_layer(self.charm.backend.ready)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/./src/charm.py", line 508, in toggle_monitoring_layer
+    pgb_container.replan()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/ops/model.py", line 2211, in replan
+    self._pebble.replan_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/ops/pebble.py", line 1993, in replan_services
+    return self._services_action('replan', [], timeout, delay)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/ops/pebble.py", line 2090, in _services_action
+    raise ChangeError(change.err, change)
+ops.pebble.ChangeError: cannot perform the following tasks:
+- Start service "metrics_server" (cannot start service: exited quickly with code 1)
+----- Logs from task 0 -----
+2024-06-06T01:37:47Z INFO Service "pgbouncer_0" already started.
+----- Logs from task 1 -----
+2024-06-06T01:37:47Z INFO Service "pgbouncer_1" already started.
+----- Logs from task 2 -----
+2024-06-06T01:37:47Z INFO Service "pgbouncer_2" already started.
+----- Logs from task 3 -----
+2024-06-06T01:37:47Z INFO Service "pgbouncer_3" already started.
+----- Logs from task 5 -----
+2024-06-06T01:37:48Z INFO Most recent service output:
+    ts=2024-06-06T01:37:48.662Z caller=collector.go:138 level=error msg="error setting up DB connection" err="error pinging pgbouncer: pq: password authentication failed"
+2024-06-06T01:37:48Z ERROR cannot start service: exited quickly with code 1
+-----
+unit-pgbouncer-k8s-0: 01:37:48 ERROR juju.worker.uniter.operation hook "pgb-peers-relation-changed" (via hook dispatching script: dispatch) failed: exit status 1
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:947 Forgetting model main...
