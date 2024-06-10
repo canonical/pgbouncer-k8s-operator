@@ -65,7 +65,6 @@ class Peers(Object):
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_joined, self._on_joined)
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_changed, self._on_changed)
         self.framework.observe(charm.on.secret_changed, self._on_changed)
-        self.framework.observe(charm.on.secret_remove, self._on_changed)
         self.framework.observe(charm.on[PEER_RELATION_NAME].relation_departed, self._on_departed)
         self.framework.observe(charm.on.leader_elected, self._on_leader_elected)
 
