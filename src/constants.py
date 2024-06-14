@@ -37,6 +37,7 @@ SECRET_DELETED_LABEL = "None"
 APP_SCOPE = "app"
 UNIT_SCOPE = "unit"
 
+# TEST
 SECRET_KEY_OVERRIDES = {
     "ca": "cauth",
     "monitoring_password": "monitoring-password",
