@@ -968,13 +968,13 @@ adal = ["adal (>=1.0.2)"]
 
 [[package]]
 name = "lightkube"
-version = "0.15.2"
+version = "0.15.3"
 description = "Lightweight kubernetes client library"
 optional = false
 python-versions = "*"
 files = [
-    {file = "lightkube-0.15.2-py3-none-any.whl", hash = "sha256:54c509f71d56f4977f70c2bc1fdf0c79e9898b55cec4f3cbc6051f8d9961a75b"},
-    {file = "lightkube-0.15.2.tar.gz", hash = "sha256:1297a3c6ebe873debf73cd584e288534a1f2fd643bbf8285dfbd76550c5076b0"},
+    {file = "lightkube-0.15.3-py3-none-any.whl", hash = "sha256:0f1c5e3b80f727df161965eff9cd6bc029c47e5a8569ab3e1acc429fd8c73db1"},
+    {file = "lightkube-0.15.3.tar.gz", hash = "sha256:235b66409b67e06ce26bd5c7ae27e105bb6016ce0962d144e272a31155545e27"},
 ]
 
 [package.dependencies]
@@ -2155,13 +2155,13 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "tenacity"
-version = "8.3.0"
+version = "8.4.1"
 description = "Retry code until it succeeds"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "tenacity-8.3.0-py3-none-any.whl", hash = "sha256:3649f6443dbc0d9b01b9d8020a9c4ec7a1ff5f6f3c6c8a036ef371f573fe9185"},
-    {file = "tenacity-8.3.0.tar.gz", hash = "sha256:953d4e6ad24357bceffbc9707bc74349aca9d245f68eb65419cf0c249a1949a2"},
+    {file = "tenacity-8.4.1-py3-none-any.whl", hash = "sha256:28522e692eda3e1b8f5e99c51464efcc0b9fc86933da92415168bc1c4e2308fa"},
+    {file = "tenacity-8.4.1.tar.gz", hash = "sha256:54b1412b878ddf7e1f1577cd49527bad8cdef32421bd599beac0c6c3f10582fd"},
 ]
 
 [package.extras]
@@ -2244,13 +2244,13 @@ files = [
 
 [[package]]
 name = "urllib3"
-version = "2.2.1"
+version = "2.2.2"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "urllib3-2.2.1-py3-none-any.whl", hash = "sha256:450b20ec296a467077128bff42b73080516e71b56ff59a60a02bef2232c4fa9d"},
-    {file = "urllib3-2.2.1.tar.gz", hash = "sha256:d0570876c61ab9e520d776c38acbbb5b05a776d3f9ff98a5c8fd5162a444cf19"},
+    {file = "urllib3-2.2.2-py3-none-any.whl", hash = "sha256:a448b2f64d686155468037e1ace9f2d2199776e17f0a46610480d311f73e3472"},
+    {file = "urllib3-2.2.2.tar.gz", hash = "sha256:dd505485549a7a552833da5e6063639d0d177c04f23bc3864e41e5dc5f612168"},
 ]
 
 [package.extras]
@@ -2464,4 +2464,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "d57bfb8094d778a3400a35e5cdfb69ea7de30d4fae272ceeb63614270a9ab722"
+content-hash = "feb80a6d80e5a8027c16ed8c9f2825668b3168efb85a89d1f56fc2cc67c1db8c"
