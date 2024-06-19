@@ -293,13 +293,9 @@ class BackendDatabaseRequires(Object):
             return
 
         plaintext_password = pgb.generate_password()
-        monitoring_password = pgb.generate_password()
         try:
             with self.postgres._connect_to_database() as conn:
                 hashed_password = pgb.get_hashed_password(self.auth_user, plaintext_password, conn)
-                hashed_monitoring_password = pgb.get_hashed_password(
-                    self.stats_user, monitoring_password, conn
-                )
             conn.close()
         except psycopg2.Error:
             event.defer()
@@ -312,9 +308,12 @@ class BackendDatabaseRequires(Object):
 
         # Add the monitoring user.
         if not (monitoring_password := self.charm.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)):
+            monitoring_password = pgb.generate_password()
             self.charm.set_secret(APP_SCOPE, MONITORING_PASSWORD_KEY, monitoring_password)
 
-        auth_file = f'"{self.auth_user}" "{hashed_password}"\n"{self.stats_user}" "{hashed_monitoring_password}"'
+        auth_file = (
+            f'"{self.auth_user}" "{hashed_password}"\n"{self.stats_user}" "{monitoring_password}"'
+        )
         self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, auth_file)
         self.charm.render_auth_file(auth_file)
 
