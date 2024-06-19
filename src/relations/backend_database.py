@@ -293,7 +293,14 @@ class BackendDatabaseRequires(Object):
             return
 
         plaintext_password = pgb.generate_password()
-        hashed_password = pgb.get_hashed_password(self.auth_user, plaintext_password)
+        try:
+            with self.postgres._connect_to_database() as conn:
+                hashed_password = pgb.get_hashed_password(self.auth_user, plaintext_password, conn)
+            conn.close()
+        except psycopg2.Error:
+            event.defer()
+            logger.error("deferring database-created hook - cannot hash password")
+            return
         # create authentication user on postgres database, so we can authenticate other users
         # later on
         self.postgres.create_user(self.auth_user, hashed_password, admin=True)
