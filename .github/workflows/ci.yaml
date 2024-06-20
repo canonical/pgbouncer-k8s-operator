@@ -53,10 +53,10 @@ jobs:
       fail-fast: false
       matrix:
         juju:
-          - agent: 2.9.49  # renovate: latest juju 2
+          - agent: 2.9.49  # renovate: juju-agent-pin-minor
             libjuju: ==2.9.49.0  # renovate: latest libjuju 2
             allure: false
-          - agent: 3.1.8  # renovate: latest juju 3
+          - agent: 3.1.8  # renovate: juju-agent-pin-minor
             allure: true
     name: Integration test charm | ${{ matrix.juju.agent }}
     needs:
@@ -67,7 +67,7 @@ jobs:
     with:
       artifact-prefix: ${{ needs.build.outputs.artifact-prefix }}
       cloud: microk8s
-      microk8s-snap-channel: 1.29-strict/stable  # renovate: latest microk8s
+      microk8s-snap-channel: 1.29-strict/stable  # renovate: latest strict microk8s
       juju-agent-version: ${{ matrix.juju.agent }}
       libjuju-version-constraint: ${{ matrix.juju.libjuju }}
       _beta_allure_report: ${{ matrix.juju.allure }}

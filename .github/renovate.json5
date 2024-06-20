@@ -7,23 +7,6 @@
     {
       "matchPackageNames": ["pydantic"],
       "allowedVersions": "<2.0.0"
-    }, {
-      "matchPackageNames": ["python"],
-      "allowedVersions": "<3.11"
-    },
-    {
-      "matchDepNames": ["Juju 2"],
-      "matchPackageNames": ["juju/juju"],
-      "allowedVersions": "<3.0.0",
-      "extractVersion": "^v(?<version>.*)$",
-      "groupName": "Juju 2"
-    },
-    {
-      "matchDepNames": ["Juju 3"],
-      "matchPackageNames": ["juju/juju"],
-      "allowedVersions": "<3.2.0",
-      "extractVersion": "^v(?<version>.*)$",
-      "groupName": "Juju 3"
     },
     {
       "matchDepNames": ["libjuju 2"],
@@ -33,39 +16,9 @@
       "versioning": "loose",
       "allowedVersions": "<3",
       "groupName": "Juju 2"
-    },
-    {
-      "matchDepNames": ["Microk8s"],
-      "matchPackageNames": ["canonical/microk8s"],
-      "extractVersion": "^v(?<version>.*)$",
-      "groupName": "Microk8s"
     }
   ],
   "regexManagers": [
-    {
-      "customType": "regex",
-      "fileMatch": ["^(workflow-templates|\\.github/workflows)/[^/]+\\.ya?ml$"],
-      "matchStrings": [
-        "(- agent: )(?<currentValue>.*?) +# renovate: latest juju 2"
-      ],
-      "depNameTemplate": "Juju 2",
-      "packageNameTemplate": "juju/juju",
-      "datasourceTemplate": "github-releases",
-      "versioningTemplate": "loose",
-      "extractVersionTemplate": "Juju release"
-    },
-    {
-      "customType": "regex",
-      "fileMatch": ["^(workflow-templates|\\.github/workflows)/[^/]+\\.ya?ml$"],
-      "matchStrings": [
-        "(- agent: )(?<currentValue>.*?) +# renovate: latest juju 3"
-      ],
-      "depNameTemplate": "Juju 3",
-      "packageNameTemplate": "juju/juju",
-      "datasourceTemplate": "github-releases",
-      "versioningTemplate": "loose",
-      "extractVersionTemplate": "Juju release"
-    },
     {
       "customType": "regex",
       "fileMatch": ["^(workflow-templates|\\.github/workflows)/[^/]+\\.ya?ml$"],
@@ -76,18 +29,6 @@
       "packageNameTemplate": "juju",
       "datasourceTemplate": "pypi",
       "versioningTemplate": "loose"
-    },
-    {
-      "customType": "regex",
-      "fileMatch": ["^(workflow-templates|\\.github/workflows)/[^/]+\\.ya?ml$"],
-      "matchStrings": [
-        "microk8s-snap-channel: (?<currentValue>.*?)-strict/stable +# renovate: latest microk8s"
-      ],
-      "depNameTemplate": "Microk8s",
-      "packageNameTemplate": "canonical/microk8s",
-      "datasourceTemplate": "github-releases",
-      "versioningTemplate": "loose",
-      "extractVersionTemplate": "Microk8s release"
     }
   ]
 }
