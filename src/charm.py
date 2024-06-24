@@ -208,11 +208,16 @@ class PgBouncerK8sCharm(CharmBase):
         self,
     ) -> Tuple[list[str], list[str]]:
         """Return all node hostnames and IPs registered in k8s."""
-        node = lightkube.Client().get(
-            lightkube.resources.core_v1.Node,
-            name=self._node_name,
-            namespace=self._namespace,
-        )
+        try:
+            node = lightkube.Client().get(
+                lightkube.resources.core_v1.Node,
+                name=self._node_name,
+                namespace=self._namespace,
+            )
+        except lightkube.ApiError as e:
+            if e.status.code == 403:
+                self.on_deployed_without_trust()
+                return
         hostnames = []
         ips = []
         for a in node.status.addresses:
@@ -282,7 +287,10 @@ class PgBouncerK8sCharm(CharmBase):
                 patch_type=lightkube.types.PatchType.MERGE,
             )
             logger.debug("Patched k8s service")
-        except lightkube.ApiError:
+        except lightkube.ApiError as e:
+            if e.status.code == 403:
+                self.on_deployed_without_trust()
+                return
             logger.exception("Failed to patch k8s service")
             raise
 
@@ -923,6 +931,12 @@ class PgBouncerK8sCharm(CharmBase):
             for relation in self.model.relations.get(relation_name, []):
                 relations.append(relation)
         return relations
+
+    def on_deployed_without_trust(self) -> None:
+        """Blocks the application and returns a specific error message for deployments made without --trust."""
+        self.unit.status = BlockedStatus(
+            f"Insufficient permissions, try: `juju trust {self.app.name} --scope=cluster`"
+        )
 
 
 if __name__ == "__main__":
