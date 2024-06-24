@@ -11,11 +11,13 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from .helpers.helpers import CHARM_SERIES, get_leader_unit
+from .helpers.helpers import CHARM_SERIES, get_leader_unit, wait_for_relation_joined_between
 
 logger = logging.getLogger(__name__)
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 PGB = METADATA["name"]
+PG = "postgresql-k8s"
+RELATION = "backend-database"
 MAX_RETRIES = 20
 UNTRUST_ERROR_MESSAGE = f"Insufficient permissions, try: `juju trust {PGB} --scope=cluster`"
 
@@ -91,21 +93,29 @@ async def test_deploy_without_trust(ops_test: OpsTest, pgb_charm):
         "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
     async with ops_test.fast_forward():
-        await ops_test.model.deploy(
-            pgb_charm,
-            resources=resources,
-            application_name=PGB,
-            series=CHARM_SERIES,
-            trust=False,
+        await asyncio.gather(
+            ops_test.model.deploy(
+                pgb_charm,
+                resources=resources,
+                application_name=PGB,
+                series=CHARM_SERIES,
+                trust=True,
+            ),
+            # Edge 5 is the new postgres charm
+            ops_test.model.deploy(
+                PG, channel="14/edge", trust=True, num_units=3, config={"profile": "testing"}
+            ),
         )
-        await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)
+        await asyncio.gather(
+            ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000),
+            ops_test.model.wait_for_idle(
+                apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
+            ),
+        )
 
-    await ops_test.model.block_until(
-        lambda: any(
-            unit.workload_status == "blocked" for unit in ops_test.model.applications[PGB].units
-        ),
-        timeout=1000,
-    )
+        await ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database")
+        wait_for_relation_joined_between(ops_test, PG, PGB)
+        await ops_test.model.wait_for_idle(apps=[PGB, PG], status="blocked", timeout=1000)
 
     leader_unit = await get_leader_unit(ops_test, PGB)
     assert leader_unit.workload_status == "blocked"
