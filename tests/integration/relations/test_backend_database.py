@@ -166,6 +166,8 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
 
 
 @pytest.mark.group(1)
+@markers.amd64_only  # finos-waltz-k8s charm not available for arm64
+# (and this test depends on previous test with finos-waltz-k8s charm)
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
         await scale_application(ops_test, PGB, 3)
