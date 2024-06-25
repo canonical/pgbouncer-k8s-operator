@@ -9,6 +9,7 @@ from pytest_operator.plugin import OpsTest
 
 from constants import EXTENSIONS_BLOCKING_MESSAGE
 
+from .. import markers
 from ..helpers.helpers import (
     CHARM_SERIES,
     CLIENT_APP_NAME,
@@ -35,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.group(1)
+@markers.amd64_only  # finos-waltz-k8s charm not available for arm64
 @pytest.mark.abort_on_fail
 async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -172,6 +174,8 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
 
 
 @pytest.mark.group(1)
+@markers.amd64_only  # finos-waltz-k8s charm not available for arm64
+# (and this test depends on previous test with finos-waltz-k8s charm)
 async def test_extensions_blocking(ops_test: OpsTest) -> None:
     """Test the relation blocks with extensions."""
     logger.info("Deploying test app")
