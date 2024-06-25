@@ -8,7 +8,7 @@ import pytest
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
-from .. import architecture
+from .. import architecture, markers
 from ..helpers.helpers import (
     CHARM_SERIES,
     PGB,
@@ -119,6 +119,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
 
 
 @pytest.mark.group(1)
+@markers.amd64_only  # finos-waltz-k8s charm not available for arm64
 async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
         # Relate PgBouncer to PostgreSQL.
