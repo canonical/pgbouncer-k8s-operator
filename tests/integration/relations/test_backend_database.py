@@ -8,6 +8,7 @@ import pytest
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
+from .. import architecture
 from ..helpers.helpers import (
     CHARM_SERIES,
     PGB,
@@ -31,13 +32,19 @@ from ..juju_ import juju_major_version
 logger = logging.getLogger(__name__)
 
 if juju_major_version < 3:
-    TLS_CERTIFICATES_APP_NAME = "tls-certificates-operator"
-    TLS_CHANNEL = "legacy/stable"
-    TLS_CONFIG = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
+    tls_certificates_app_name = "tls-certificates-operator"
+    if architecture.architecture == "arm64":
+        tls_channel = "legacy/edge"
+    else:
+        tls_channel = "legacy/stable"
+    tls_config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
 else:
-    TLS_CERTIFICATES_APP_NAME = "self-signed-certificates"
-    TLS_CHANNEL = "latest/stable"
-    TLS_CONFIG = {"ca-common-name": "Test CA"}
+    tls_certificates_app_name = "self-signed-certificates"
+    if architecture.architecture == "arm64":
+        tls_channel = "latest/edge"
+    else:
+        tls_channel = "latest/stable"
+    tls_config = {"ca-common-name": "Test CA"}
 FINOS_WALTZ = "finos-waltz"
 PG = "postgresql-k8s"
 RELATION = "backend-database"
@@ -122,14 +129,14 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
 
         # Deploy TLS Certificates operator.
         await ops_test.model.deploy(
-            TLS_CERTIFICATES_APP_NAME, config=TLS_CONFIG, channel=TLS_CHANNEL
+            tls_certificates_app_name, config=tls_config, channel=tls_channel
         )
         await ops_test.model.wait_for_idle(
-            apps=[TLS_CERTIFICATES_APP_NAME], status="active", timeout=1000
+            apps=[tls_certificates_app_name], status="active", timeout=1000
         )
 
         # Relate it to the PostgreSQL to enable TLS.
-        await ops_test.model.relate(PG, TLS_CERTIFICATES_APP_NAME)
+        await ops_test.model.relate(PG, tls_certificates_app_name)
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
 
         await ops_test.model.applications[PG].set_config({"logging_log_connections": "True"})
