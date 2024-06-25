@@ -4,6 +4,7 @@
 import pytest as pytest
 from pytest_operator.plugin import OpsTest
 
+from . import architecture
 from .helpers.helpers import (
     CHARM_SERIES,
     CLIENT_APP_NAME,
@@ -19,13 +20,19 @@ from .juju_ import juju_major_version
 
 MATTERMOST_APP_NAME = "mattermost-k8s"
 if juju_major_version < 3:
-    TLS_CERTIFICATES_APP_NAME = "tls-certificates-operator"
-    TLS_CHANNEL = "legacy/stable"
-    TLS_CONFIG = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
+    tls_certificates_app_name = "tls-certificates-operator"
+    if architecture.architecture == "arm64":
+        tls_channel = "legacy/edge"
+    else:
+        tls_channel = "legacy/stable"
+    tls_config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
 else:
-    TLS_CERTIFICATES_APP_NAME = "self-signed-certificates"
-    TLS_CHANNEL = "latest/stable"
-    TLS_CONFIG = {"ca-common-name": "Test CA"}
+    tls_certificates_app_name = "self-signed-certificates"
+    if architecture.architecture == "arm64":
+        tls_channel = "latest/edge"
+    else:
+        tls_channel = "latest/stable"
+    tls_config = {"ca-common-name": "Test CA"}
 APPLICATION_UNITS = 2
 DATABASE_UNITS = 3
 
@@ -89,15 +96,15 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
         )
         await ops_test.model.relate(PGB, POSTGRESQL_APP_NAME)
 
-    if not await app_name(ops_test, TLS_CERTIFICATES_APP_NAME):
+    if not await app_name(ops_test, tls_certificates_app_name):
         wait_for_apps = True
         # Deploy TLS Certificates operator.
         await ops_test.model.deploy(
-            TLS_CERTIFICATES_APP_NAME, config=TLS_CONFIG, channel=TLS_CHANNEL
+            tls_certificates_app_name, config=tls_config, channel=tls_channel
         )
         # Relate it to the PgBouncer to enable TLS.
-        await ops_test.model.relate(PGB, TLS_CERTIFICATES_APP_NAME)
-        await ops_test.model.relate(TLS_CERTIFICATES_APP_NAME, POSTGRESQL_APP_NAME)
+        await ops_test.model.relate(PGB, tls_certificates_app_name)
+        await ops_test.model.relate(tls_certificates_app_name, POSTGRESQL_APP_NAME)
 
     if wait_for_apps:
         async with ops_test.fast_forward():
@@ -144,7 +151,7 @@ async def test_remove_tls(ops_test: OpsTest) -> None:
         ops_test: The ops test framework
     """
     await ops_test.model.applications[PGB].remove_relation(
-        f"{PGB}:certificates", f"{TLS_CERTIFICATES_APP_NAME}:certificates"
+        f"{PGB}:certificates", f"{tls_certificates_app_name}:certificates"
     )
     await ops_test.model.wait_for_idle(status="active", timeout=1000)
     assert await check_tls(ops_test, client_relation.id, False)
@@ -157,7 +164,7 @@ async def test_add_tls(ops_test: OpsTest) -> None:
     Args:
         ops_test: The ops test framework
     """
-    await ops_test.model.relate(PGB, TLS_CERTIFICATES_APP_NAME)
+    await ops_test.model.relate(PGB, tls_certificates_app_name)
     await ops_test.model.wait_for_idle(status="active", timeout=1000)
     assert await check_tls(ops_test, client_relation.id, True)
 
