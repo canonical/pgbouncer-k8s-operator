@@ -382,6 +382,8 @@ class TestCharm(unittest.TestCase):
     @patch("lightkube.core.client.GenericSyncClient")
     def test_raise_untrusted_error(self, _, __, _deployed_without_trust):
         self.harness.set_leader(True)
+
+        # call the methods that try to access K8s resources
         self.charm._node_name
         self.charm._node_ip
         self.charm._node_port("port")
