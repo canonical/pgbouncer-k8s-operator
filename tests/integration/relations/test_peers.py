@@ -7,6 +7,7 @@ import logging
 import pytest
 from pytest_operator.plugin import OpsTest
 
+from .. import markers
 from ..helpers.helpers import (
     CHARM_SERIES,
     PG,
@@ -47,6 +48,7 @@ async def test_deploy_at_scale(ops_test, pgb_charm):
 
 
 @pytest.mark.group(1)
+@markers.amd64_only  # finos-waltz-k8s charm not available for arm64
 @pytest.mark.abort_on_fail
 async def test_scaled_relations(ops_test: OpsTest):
     """Test that the pgbouncer and postgres charms can relate to one another."""
@@ -89,6 +91,7 @@ async def test_scaled_relations(ops_test: OpsTest):
 
 
 @pytest.mark.group(1)
+@markers.amd64_only  # finos-waltz-k8s charm not available for arm64
 async def test_scaling(ops_test: OpsTest):
     """Test data is replicated to new units after a scale up."""
     # Ensure the initial number of units in the application.
@@ -113,6 +116,7 @@ async def test_scaling(ops_test: OpsTest):
 
 
 @pytest.mark.group(1)
+@markers.amd64_only  # finos-waltz-k8s charm not available for arm64
 async def test_exit_relations(ops_test: OpsTest):
     """Test that we can exit relations with multiple units without breaking anything."""
     async with ops_test.fast_forward():

@@ -10,7 +10,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from . import markers
+from . import architecture, markers
 from .helpers.ha_helpers import (
     start_continuous_writes,
     stop_continuous_writes,
@@ -36,13 +36,19 @@ MODEL_CONFIG = {"logging-config": "<root>=INFO;unit=DEBUG"}
 
 
 if juju_major_version < 3:
-    TLS_CERTIFICATES_APP_NAME = "tls-certificates-operator"
-    TLS_CHANNEL = "legacy/stable"
-    TLS_CONFIG = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
+    tls_certificates_app_name = "tls-certificates-operator"
+    if architecture.architecture == "arm64":
+        tls_channel = "legacy/edge"
+    else:
+        tls_channel = "legacy/stable"
+    tls_config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
 else:
-    TLS_CERTIFICATES_APP_NAME = "self-signed-certificates"
-    TLS_CHANNEL = "latest/stable"
-    TLS_CONFIG = {"ca-common-name": "Test CA"}
+    tls_certificates_app_name = "self-signed-certificates"
+    if architecture.architecture == "arm64":
+        tls_channel = "latest/edge"
+    else:
+        tls_channel = "latest/stable"
+    tls_config = {"ca-common-name": "Test CA"}
 DATABASE_UNITS = 3
 
 
@@ -106,15 +112,15 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
         )
         await ops_test.model.relate(PGB, POSTGRESQL_APP_NAME)
 
-    if not await app_name(ops_test, TLS_CERTIFICATES_APP_NAME):
+    if not await app_name(ops_test, tls_certificates_app_name):
         wait_for_apps = True
         # Deploy TLS Certificates operator.
         await ops_test.model.deploy(
-            TLS_CERTIFICATES_APP_NAME, config=TLS_CONFIG, channel=TLS_CHANNEL
+            tls_certificates_app_name, config=tls_config, channel=tls_channel
         )
         # Relate it to the PgBouncer to enable TLS.
-        await ops_test.model.relate(PGB, TLS_CERTIFICATES_APP_NAME)
-        await ops_test.model.relate(TLS_CERTIFICATES_APP_NAME, POSTGRESQL_APP_NAME)
+        await ops_test.model.relate(PGB, tls_certificates_app_name)
+        await ops_test.model.relate(tls_certificates_app_name, POSTGRESQL_APP_NAME)
 
     if wait_for_apps:
         await ops_test.model.wait_for_idle(status="active", timeout=1200)

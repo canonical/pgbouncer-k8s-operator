@@ -9,6 +9,7 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
+from .. import markers
 from ..helpers.helpers import (
     CHARM_SERIES,
     get_backend_user_pass,
@@ -31,6 +32,7 @@ PG = "postgresql-k8s"
 
 
 @pytest.mark.group(1)
+@markers.amd64_only  # redis-k8s charm not available for arm64
 @pytest.mark.abort_on_fail
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
     # Build, deploy, and relate charms.

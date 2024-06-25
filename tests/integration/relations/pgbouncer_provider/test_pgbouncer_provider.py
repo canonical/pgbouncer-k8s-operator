@@ -11,6 +11,7 @@ from pytest_operator.plugin import OpsTest
 
 from constants import BACKEND_RELATION_NAME, PEER_RELATION_NAME
 
+from ... import markers
 from ...helpers.helpers import (
     CHARM_SERIES,
     PG,
@@ -352,6 +353,7 @@ async def test_an_application_can_request_multiple_databases(ops_test: OpsTest):
 
 
 @pytest.mark.group(1)
+@markers.amd64_only  # finos-waltz-k8s charm not available for arm64
 async def test_legacy_relation_compatibility(ops_test: OpsTest):
     finos = "finos-waltz-k8s"
     (await ops_test.model.deploy(finos, application_name=finos, channel="edge"),)
@@ -489,6 +491,7 @@ async def test_relation_with_data_integrator(ops_test: OpsTest):
 
 
 @pytest.mark.group(1)
+@markers.amd64_only  # indico charm not available for arm64
 async def test_indico_datatabase(ops_test: OpsTest) -> None:
     """Tests deploying and relating to the Indico charm."""
     async with ops_test.fast_forward(fast_interval="30s"):
