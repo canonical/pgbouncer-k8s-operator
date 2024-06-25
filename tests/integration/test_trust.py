@@ -11,7 +11,11 @@ import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from .helpers.helpers import CHARM_SERIES, get_leader_unit, wait_for_relation_joined_between
+from .helpers.helpers import (
+    CHARM_SERIES,
+    CLIENT_APP_NAME,
+    get_leader_unit,
+)
 
 logger = logging.getLogger(__name__)
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
@@ -34,7 +38,7 @@ async def test_enable_rbac(ops_test: OpsTest):
         "enable",
         "rbac",
         stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
+        stderr=None,
     )
     await enable_rbac_call.communicate()
 
@@ -51,7 +55,7 @@ async def test_enable_rbac(ops_test: OpsTest):
             "-A",
             "--as=system:serviceaccount:default:no-permissions",
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
+            stderr=None,
         )
         stdout, _ = await rbac_check.communicate()
         if stdout:
@@ -84,38 +88,38 @@ async def test_model_connectivity(ops_test: OpsTest):
 
 @pytest.mark.group(1)
 @pytest.mark.abort_on_fail
-async def test_deploy_without_trust(ops_test: OpsTest, pgb_charm):
-    """Build and deploy the charm with trust set to false.
-
-    Assert on the unit status being blocked due to lack of trust.
-    """
-    resources = {
-        "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
-    }
+async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
+    """Test the deployment of the charm."""
     async with ops_test.fast_forward():
-        await asyncio.gather(
-            ops_test.model.deploy(
-                pgb_charm,
-                resources=resources,
-                application_name=PGB,
-                series=CHARM_SERIES,
-                trust=True,
-            ),
-            # Edge 5 is the new postgres charm
-            ops_test.model.deploy(
-                PG, channel="14/edge", trust=True, num_units=3, config={"profile": "testing"}
-            ),
+        # Build and deploy applications
+        await ops_test.model.deploy(
+            pgb_charm,
+            resources={
+                "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"]
+            },
+            application_name=PGB,
+            num_units=1,
+            series=CHARM_SERIES,
+            trust=False,
         )
-        await asyncio.gather(
-            ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000),
-            ops_test.model.wait_for_idle(
-                apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
-            ),
+        await ops_test.model.deploy(
+            CLIENT_APP_NAME,
+            application_name=CLIENT_APP_NAME,
+            series=CHARM_SERIES,
+            channel="edge",
         )
+        await ops_test.model.deploy(
+            PG,
+            channel="14/edge",
+            trust=True,
+            num_units=1,
+            config={"profile": "testing"},
+        )
+        await ops_test.model.relate(PGB, PG)
+        await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1200)
 
-        await ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database")
-        wait_for_relation_joined_between(ops_test, PG, PGB)
-        await ops_test.model.wait_for_idle(apps=[PGB, PG], status="blocked", timeout=1000)
+        await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:first-database")
+        await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1200)
 
     leader_unit = await get_leader_unit(ops_test, PGB)
     assert leader_unit.workload_status == "blocked"
@@ -129,5 +133,5 @@ async def test_trust_blocked_deployment(ops_test: OpsTest):
     Assert on the application status recovering to active.
     """
     await ops_test.juju("trust", PGB, "--scope=cluster")
-
-    await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)
+    async with ops_test.fast_forward():
+        await ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000)

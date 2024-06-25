@@ -155,21 +155,31 @@ class PgBouncerK8sCharm(CharmBase):
     @property
     def _node_name(self) -> str:
         """Return the node name for this unit's pod ip."""
-        pod = lightkube.Client().get(
-            lightkube.resources.core_v1.Pod,
-            name=self.unit.name.replace("/", "-"),
-            namespace=self._namespace,
-        )
+        try:
+            pod = lightkube.Client().get(
+                lightkube.resources.core_v1.Pod,
+                name=self.unit.name.replace("/", "-"),
+                namespace=self._namespace,
+            )
+        except lightkube.ApiError as e:
+            if e.status.code == 403:
+                self.on_deployed_without_trust()
+                return
         return pod.spec.nodeName
 
     @property
     def _node_ip(self) -> Optional[str]:
         """Return node IP."""
-        node = lightkube.Client().get(
-            lightkube.resources.core_v1.Node,
-            name=self._node_name,
-            namespace=self._namespace,
-        )
+        try:
+            node = lightkube.Client().get(
+                lightkube.resources.core_v1.Node,
+                name=self._node_name,
+                namespace=self._namespace,
+            )
+        except lightkube.ApiError as e:
+            if e.status.code == 403:
+                self.on_deployed_without_trust()
+                return
         # [
         #    NodeAddress(address='192.168.0.228', type='InternalIP'),
         #    NodeAddress(address='example.com', type='Hostname')
@@ -184,9 +194,14 @@ class PgBouncerK8sCharm(CharmBase):
 
     def _node_port(self, port_type: str) -> int:
         """Return node port."""
-        service = lightkube.Client().get(
-            lightkube.resources.core_v1.Service, self.app.name, namespace=self._namespace
-        )
+        try:
+            service = lightkube.Client().get(
+                lightkube.resources.core_v1.Service, self.app.name, namespace=self._namespace
+            )
+        except lightkube.ApiError as e:
+            if e.status.code == 403:
+                self.on_deployed_without_trust()
+                return
         if not service or not service.spec.type == "NodePort":
             return -1
         # svc.spec.ports
