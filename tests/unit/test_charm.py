@@ -10,6 +10,7 @@ from unittest.mock import Mock, PropertyMock, call, patch
 
 import pytest
 from jinja2 import Template
+from ops import BlockedStatus
 from ops.model import RelationDataTypeError
 from ops.testing import Harness
 from parameterized import parameterized
@@ -22,6 +23,8 @@ from constants import (
     PGB,
     SECRET_INTERNAL_LABEL,
 )
+
+from .helpers import _FakeApiError
 
 
 class TestCharm(unittest.TestCase):
@@ -373,6 +376,22 @@ class TestCharm(unittest.TestCase):
         get_tls_files.assert_called_once_with()
         update_config.assert_not_called()
         push_file.assert_not_called()
+
+    @patch("charm.PgBouncerK8sCharm.on_deployed_without_trust")
+    @patch("lightkube.Client.get", side_effect=_FakeApiError(403))
+    def test_raise_untrusted_error(self, _, _deployed_without_trust):
+        self.harness.set_leader(True)
+        self.charm._node_name
+        self.charm._node_ip
+        self.charm._node_port("port")
+        self.charm.patch_port()
+        self.charm.get_all_k8s_node_hostnames_and_ips()
+
+        self.assertIsInstance(self.harness.charm.unit.status, BlockedStatus)
+        # 7 total calls:
+        #   5 (1 per method)
+        #   2 extra _node_name calls from inside _node_ip and get_all_k8s_node_hostnames_and_ips
+        assert _deployed_without_trust.call_count == 7
 
     #
     # Secrets
