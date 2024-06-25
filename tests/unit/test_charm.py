@@ -379,7 +379,8 @@ class TestCharm(unittest.TestCase):
 
     @patch("charm.PgBouncerK8sCharm.on_deployed_without_trust")
     @patch("lightkube.Client.get", side_effect=_FakeApiError(403))
-    def test_raise_untrusted_error(self, _, _deployed_without_trust):
+    @patch("lightkube.core.client.GenericSyncClient")
+    def test_raise_untrusted_error(self, _, __, _deployed_without_trust):
         self.harness.set_leader(True)
         self.charm._node_name
         self.charm._node_ip
