@@ -820,7 +820,7 @@ class PgBouncerK8sCharm(CharmBase):
             if "admin" in roles or "superuser" in roles or "createdb" in roles:
                 add_wildcard = True
         if add_wildcard:
-            databases["*"] = {"name": "*", "auth_dbname": database}
+            databases["*"] = {"name": "*", "auth_dbname": database, "legacy": False}
         self.set_relation_databases(databases)
         return databases
 
