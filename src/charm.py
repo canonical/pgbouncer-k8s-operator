@@ -13,6 +13,7 @@ from configparser import ConfigParser
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union, get_args
 
 import lightkube
+import psycopg2
 from charms.data_platform_libs.v0.data_interfaces import DataPeerData, DataPeerUnitData
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
@@ -112,7 +113,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.legacy_db_admin_relation = DbProvides(self, admin=True)
         self.tls = PostgreSQLTLS(self, PEER_RELATION_NAME, [self.unit_pod_hostname])
 
-        self._cores = os.cpu_count()
+        self._cores = max(min(os.cpu_count(), 4), 2)
         self._services = [
             {
                 "name": f"{PGB}_{service_id}",
@@ -431,7 +432,7 @@ class PgBouncerK8sCharm(CharmBase):
                 "user": PG_USER,
                 "group": PG_GROUP,
                 # -R flag reuses sockets on restart
-                "command": f"pgbouncer -R {service['ini_path']}",
+                "command": f"pgbouncer {service['ini_path']}",
                 "startup": "enabled",
                 "override": "replace",
             }
@@ -440,6 +441,45 @@ class PgBouncerK8sCharm(CharmBase):
             "description": "pebble config layer for pgbouncer",
             "services": pebble_services,
         })
+
+    def _get_readonly_dbs(self, databases: Dict) -> Dict[str, str]:
+        readonly_dbs = {}
+        if self.backend.relation and "*" in databases:
+            read_only_endpoints = self.backend.get_read_only_endpoints()
+            r_hosts = ",".join([r_host.split(":")[0] for r_host in read_only_endpoints])
+            if r_hosts:
+                for r_host in read_only_endpoints:
+                    r_port = r_host.split(":")[1]
+                    break
+
+                backend_databases = json.loads(self.peers.app_databag.get("readonly_dbs", "[]"))
+                for name in backend_databases:
+                    readonly_dbs[f"{name}_readonly"] = {
+                        "host": r_hosts,
+                        "dbname": name,
+                        "port": r_port,
+                        "auth_dbname": databases["*"]["auth_dbname"],
+                        "auth_user": self.backend.auth_user,
+                    }
+        return readonly_dbs
+
+    def _collect_readonly_dbs(self) -> None:
+        if self.unit.is_leader() and self.backend.postgres:
+            existing_dbs = [db["name"] for db in self.get_relation_databases().values()]
+            existing_dbs += ["postgres", "pgbouncer"]
+            try:
+                with self.backend.postgres._connect_to_database(
+                    PGB
+                ) as conn, conn.cursor() as cursor:
+                    cursor.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")
+                    results = cursor.fetchall()
+                conn.close()
+            except psycopg2.Error:
+                logger.warning("PostgreSQL connection failed")
+                return
+            readonly_dbs = [db[0] for db in results if db and db[0] not in existing_dbs]
+            readonly_dbs.sort()
+            self.peers.app_databag["readonly_dbs"] = json.dumps(readonly_dbs)
 
     def _on_update_status(self, _) -> None:
         """Update Status hook.
@@ -450,6 +490,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.update_status()
 
         self.peers.update_leader()
+        self._collect_readonly_dbs()
 
         # Update relation connection information. This is necessary because we don't receive any
         # information when the leader is removed, but we still need to have up-to-date connection
@@ -740,6 +781,7 @@ class PgBouncerK8sCharm(CharmBase):
             return {}
 
         databases = {}
+        add_wildcard = False
         for relation in self.model.relations.get("db", []):
             database = self.legacy_db_relation.get_databags(relation)[0].get("database")
             if database:
@@ -755,16 +797,22 @@ class PgBouncerK8sCharm(CharmBase):
                     "name": database,
                     "legacy": True,
                 }
+                add_wildcard = True
 
         for rel_id, data in self.client_relation.database_provides.fetch_relation_data(
-            fields=["database"]
+            fields=["database", "extra-user-roles"]
         ).items():
             database = data.get("database")
+            roles = data.get("extra-user-roles", "").lower().split(",")
             if database:
                 databases[str(rel_id)] = {
                     "name": database,
                     "legacy": False,
                 }
+            if "admin" in roles or "superuser" in roles or "createdb" in roles:
+                add_wildcard = True
+        if add_wildcard:
+            databases["*"] = {"name": "*", "auth_dbname": database}
         self.set_relation_databases(databases)
         return databases
 
@@ -790,6 +838,8 @@ class PgBouncerK8sCharm(CharmBase):
 
         for database in databases.values():
             name = database["name"]
+            if name == "*":
+                continue
             pgb_dbs[name] = {
                 "host": host,
                 "dbname": name,
@@ -805,6 +855,13 @@ class PgBouncerK8sCharm(CharmBase):
                 }
                 if database["legacy"]:
                     pgb_dbs[f"{name}_standby"] = pgb_dbs[f"{name}_readonly"]
+        if "*" in databases:
+            pgb_dbs["*"] = {
+                "host": host,
+                "port": port,
+                "auth_user": self.backend.auth_user,
+                "auth_dbname": databases["*"]["auth_dbname"],
+            }
         return pgb_dbs
 
     def render_pgb_config(self, reload_pgbouncer: bool = False) -> None:
@@ -834,16 +891,21 @@ class PgBouncerK8sCharm(CharmBase):
             default_pool_size = math.ceil(effective_db_connections / 2)
             min_pool_size = math.ceil(effective_db_connections / 4)
             reserve_pool_size = math.ceil(effective_db_connections / 4)
+        service_ids = [service["id"] for service in self._services]
         with open("templates/pgb_config.j2", "r") as file:
             template = Template(file.read())
             databases = self._get_relation_config()
+            readonly_dbs = self._get_readonly_dbs(databases)
             enable_tls = all(self.tls.get_tls_files())
             for service in self._services:
                 self.push_file(
                     service["ini_path"],
                     template.render(
                         databases=databases,
+                        readonly_databases=readonly_dbs,
+                        peer_id=service["id"],
                         socket_dir=service["dir"],
+                        peers=service_ids,
                         log_file=f"{service['log_dir']}/pgbouncer.log",
                         pid_file=f"{service['dir']}/pgbouncer.pid",
                         listen_port=self.config["listen_port"],

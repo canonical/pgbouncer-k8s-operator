@@ -219,6 +219,9 @@ class TestCharm(unittest.TestCase):
         for i in range(self.charm._cores):
             expected_content = template.render(
                 databases=expected_databases,
+                readonly_databases={},
+                peer_id=i,
+                peers=range(self.charm._cores),
                 socket_dir=f"/var/lib/pgbouncer/instance_{i}",
                 log_file=f"/var/log/pgbouncer/instance_{i}/pgbouncer.log",
                 pid_file=f"/var/lib/pgbouncer/instance_{i}/pgbouncer.pid",
@@ -247,6 +250,13 @@ class TestCharm(unittest.TestCase):
         del expected_databases["first_test_readonly"]
         del expected_databases["first_test_standby"]
         del expected_databases["second_test_readonly"]
+        expected_databases["*"] = {
+            "host": "HOST",
+            "port": "PORT",
+            "auth_dbname": "first_test",
+            "auth_user": "pgbouncer_auth_BACKNEND_USER",
+        }
+        _get_dbs.return_value["*"] = {"name": "*", "auth_dbname": "first_test"}
 
         del _postgres_databag.return_value["read-only-endpoints"]
 
@@ -256,6 +266,9 @@ class TestCharm(unittest.TestCase):
         for i in range(self.charm._cores):
             expected_content = template.render(
                 databases=expected_databases,
+                readonly_databases={},
+                peer_id=i,
+                peers=range(self.charm._cores),
                 socket_dir=f"/var/lib/pgbouncer/instance_{i}",
                 log_file=f"/var/log/pgbouncer/instance_{i}/pgbouncer.log",
                 pid_file=f"/var/lib/pgbouncer/instance_{i}/pgbouncer.pid",

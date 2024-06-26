@@ -159,6 +159,9 @@ class PgBouncerProvider(Object):
 
         dbs = self.charm.generate_relation_databases()
         dbs[str(event.relation.id)] = {"name": database, "legacy": False}
+        roles = extra_user_roles.lower().split(",")
+        if "admin" in roles or "superuser" in roles:
+            dbs["*"] = {"name": "*", "auth_dbname": database}
         self.charm.set_relation_databases(dbs)
 
         # Share the credentials and updated connection info with the client application.
