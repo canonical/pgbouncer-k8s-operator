@@ -10,6 +10,7 @@ import math
 import os
 import socket
 from configparser import ConfigParser
+from signal import SIGHUP
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union, get_args
 
 import lightkube
@@ -385,8 +386,8 @@ class PgBouncerK8sCharm(CharmBase):
             return
 
         old_port = self.peers.app_databag.get("current_port")
-        if self.unit.is_leader() and old_port != str(self.config["listen_port"]):
-            self.peers.app_databag["current_port"] = str(self.config["listen_port"])
+        port_changed = old_port != str(self.config["listen_port"])
+        if self.unit.is_leader() and port_changed:
             # This emits relation-changed events to every client relation, so only do it when
             # necessary
             self.update_client_connection_info(self.config["listen_port"])
@@ -395,9 +396,13 @@ class PgBouncerK8sCharm(CharmBase):
         self.render_pgb_config()
         try:
             if self.check_pgb_running():
-                self.reload_pgbouncer()
+                self.reload_pgbouncer(restart=port_changed)
         except ConnectionError:
             event.defer()
+
+        if self.unit.is_leader() and port_changed:
+            # Only update the config once the services have been restarted
+            self.peers.app_databag["current_port"] = str(self.config["listen_port"])
 
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
@@ -523,7 +528,7 @@ class PgBouncerK8sCharm(CharmBase):
         if auth_file := self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
             self.render_auth_file(auth_file)
 
-    def reload_pgbouncer(self) -> None:
+    def reload_pgbouncer(self, restart: bool = False) -> None:
         """Reloads pgbouncer application.
 
         Pgbouncer will not apply configuration changes without reloading, so this must be called
@@ -540,7 +545,10 @@ class PgBouncerK8sCharm(CharmBase):
             if service["name"] not in pebble_services.keys():
                 # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
                 raise ConnectionError
-            pgb_container.restart(service["name"])
+            if restart and pebble_services[service["name"]].current != ServiceStatus.ACTIVE:
+                pgb_container.restart(service["name"])
+            else:
+                pgb_container.send_signal(SIGHUP, service["name"])
 
         self.check_pgb_running()
 
@@ -864,7 +872,7 @@ class PgBouncerK8sCharm(CharmBase):
             }
         return pgb_dbs
 
-    def render_pgb_config(self, reload_pgbouncer: bool = False) -> None:
+    def render_pgb_config(self, reload_pgbouncer=False, restart=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
         Every time the config is rendered, `peers.update_cfg` is called. This updates the config in
@@ -879,6 +887,7 @@ class PgBouncerK8sCharm(CharmBase):
                 in the container. When config files are updated, pgbouncer must be restarted for
                 the changes to take effect. However, these config updates can be done in batches,
                 minimising the amount of necessary restarts.
+            restart: Whether to restart the service when reloading.
         """
         perm = 0o400
         max_db_connections = self.config["max_db_connections"]
@@ -927,7 +936,7 @@ class PgBouncerK8sCharm(CharmBase):
         logger.info("pushed new pgbouncer.ini config files to pgbouncer container")
 
         if reload_pgbouncer:
-            self.reload_pgbouncer()
+            self.reload_pgbouncer(restart)
 
     def render_auth_file(self, auth_file: str, reload_pgbouncer=False):
         """Renders the given auth_file to the correct location."""

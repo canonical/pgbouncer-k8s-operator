@@ -6,6 +6,7 @@
 import logging
 import math
 import unittest
+from signal import SIGHUP
 from unittest.mock import Mock, PropertyMock, call, patch
 
 import pytest
@@ -79,8 +80,7 @@ class TestCharm(unittest.TestCase):
             "max_db_connections": max_db_connections,
             "listen_port": 6464,
         })
-        _reload.assert_called_once_with()
-        _reload.assert_called_once_with()
+        _reload.assert_called_once_with(restart=True)
         _update_connection_info.assert_called_with(6464)
         _check_pgb_running.assert_called_once_with()
 
@@ -344,8 +344,8 @@ class TestCharm(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.patch_port")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
-    @patch("ops.model.Container.restart")
-    def test_reload_pgbouncer(self, _restart, _check_pgb_running, _, __):
+    @patch("ops.model.Container.send_signal")
+    def test_reload_pgbouncer(self, _send_signal, _check_pgb_running, _, __):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         # necessary hooks before we can check reloads
@@ -355,8 +355,8 @@ class TestCharm(unittest.TestCase):
 
         self.charm.reload_pgbouncer()
         _check_pgb_running.assert_called_once_with()
-        calls = [call(service["name"]) for service in self.charm._services]
-        _restart.assert_has_calls(calls)
+        calls = [call(SIGHUP, service["name"]) for service in self.charm._services]
+        _send_signal.assert_has_calls(calls)
 
     @patch("charm.PgBouncerK8sCharm.push_file")
     @patch("charm.PgBouncerK8sCharm.update_config")
