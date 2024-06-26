@@ -35,6 +35,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         self.harness.add_relation_unit(self.client_rel_id, "application/0")
 
     @patch("charm.lightkube")
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch(
         "charm.PgBouncerK8sCharm.client_relations",
         new_callable=PropertyMock,
@@ -85,6 +86,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         _pg,
         _check_backend,
         _,
+        _render_pgb_config,
         __,
     ):
         self.harness.set_leader()
@@ -121,6 +123,7 @@ class TestPgbouncerProvider(unittest.TestCase):
             "1": {"name": "test-db", "legacy": False},
             "*": {"name": "*", "auth_dbname": "test-db"},
         })
+        _render_pgb_config.assert_called_once_with(reload_pgbouncer=True)
 
     @patch("relations.backend_database.BackendDatabaseRequires.check_backend", return_value=True)
     @patch(
