@@ -12,6 +12,7 @@ from unittest.mock import Mock, PropertyMock, call, patch
 import psycopg2
 import pytest
 from jinja2 import Template
+from ops import BlockedStatus
 from ops.model import RelationDataTypeError
 from ops.testing import Harness
 from parameterized import parameterized
@@ -24,6 +25,8 @@ from constants import (
     PGB,
     SECRET_INTERNAL_LABEL,
 )
+
+from .helpers import _FakeApiError
 
 
 class TestCharm(unittest.TestCase):
@@ -456,6 +459,25 @@ class TestCharm(unittest.TestCase):
         self.charm._collect_readonly_dbs()
 
         assert self.charm.peers.app_databag["readonly_dbs"] == '["includeddb"]'
+
+    @patch("charm.PgBouncerK8sCharm.on_deployed_without_trust")
+    @patch("lightkube.Client.get", side_effect=_FakeApiError(403))
+    @patch("lightkube.core.client.GenericSyncClient")
+    def test_raise_untrusted_error(self, _, __, _deployed_without_trust):
+        self.harness.set_leader(True)
+
+        # call the methods that try to access K8s resources
+        self.charm._node_name
+        self.charm._node_ip
+        self.charm._node_port("port")
+        self.charm.patch_port()
+        self.charm.get_all_k8s_node_hostnames_and_ips()
+
+        self.assertIsInstance(self.harness.charm.unit.status, BlockedStatus)
+        # 7 total calls:
+        #   5 (1 per method)
+        #   2 extra _node_name calls from inside _node_ip and get_all_k8s_node_hostnames_and_ips
+        assert _deployed_without_trust.call_count == 7
 
     #
     # Secrets
