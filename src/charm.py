@@ -864,7 +864,6 @@ class PgBouncerK8sCharm(CharmBase):
         sorted_rhosts = [r_host.split(":")[0] for r_host in read_only_endpoints]
         sorted_rhosts.sort()
         r_hosts = ",".join(sorted_rhosts)
-        r_hosts = ",".join([r_host.split(":")[0] for r_host in read_only_endpoints])
         if r_hosts:
             for r_host in read_only_endpoints:
                 r_port = r_host.split(":")[1]
