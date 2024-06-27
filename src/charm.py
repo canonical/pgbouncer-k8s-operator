@@ -419,6 +419,8 @@ class PgBouncerK8sCharm(CharmBase):
         self.render_pgb_config()
         try:
             if self.check_pgb_running():
+                if port_changed:
+                    self.toggle_monitoring_layer(False)
                 self.reload_pgbouncer(restart=port_changed)
                 if port_changed:
                     self.toggle_monitoring_layer(self.backend.ready)

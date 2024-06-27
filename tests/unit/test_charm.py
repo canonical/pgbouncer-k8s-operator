@@ -95,7 +95,9 @@ class TestCharm(unittest.TestCase):
         _reload.assert_called_once_with(restart=True)
         _update_connection_info.assert_called_with(6464)
         _check_pgb_running.assert_called_once_with()
-        _toggle_monitoring_layer.assert_called_once_with(sentinel.ready)
+        assert _toggle_monitoring_layer.call_count == 2
+        _toggle_monitoring_layer.assert_any_call(False)
+        _toggle_monitoring_layer.assert_any_call(sentinel.ready)
 
     @patch(
         "charm.PgBouncerK8sCharm.is_container_ready", new_callable=PropertyMock, return_value=False
