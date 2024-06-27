@@ -419,11 +419,7 @@ class PgBouncerK8sCharm(CharmBase):
         self.render_pgb_config()
         try:
             if self.check_pgb_running():
-                if port_changed:
-                    self.toggle_monitoring_layer(False)
                 self.reload_pgbouncer(restart=port_changed)
-                if port_changed:
-                    self.toggle_monitoring_layer(self.backend.ready)
         except ConnectionError:
             event.defer()
 
@@ -574,7 +570,7 @@ class PgBouncerK8sCharm(CharmBase):
             if service["name"] not in pebble_services.keys():
                 # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
                 raise ConnectionError
-            if restart and pebble_services[service["name"]].current != ServiceStatus.ACTIVE:
+            if restart or pebble_services[service["name"]].current != ServiceStatus.ACTIVE:
                 pgb_container.restart(service["name"])
             else:
                 pgb_container.send_signal(SIGHUP, service["name"])
