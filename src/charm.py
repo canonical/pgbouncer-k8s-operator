@@ -420,6 +420,8 @@ class PgBouncerK8sCharm(CharmBase):
         try:
             if self.check_pgb_running():
                 self.reload_pgbouncer(restart=port_changed)
+                if port_changed:
+                    self.toggle_monitoring_layer(self.backend.ready)
         except ConnectionError:
             event.defer()
 

@@ -7,7 +7,7 @@ import logging
 import math
 import unittest
 from signal import SIGHUP
-from unittest.mock import Mock, PropertyMock, call, patch
+from unittest.mock import Mock, PropertyMock, call, patch, sentinel
 
 import psycopg2
 import pytest
@@ -57,6 +57,12 @@ class TestCharm(unittest.TestCase):
         self._caplog = caplog
 
     @patch("charm.PgBouncerK8sCharm.patch_port")
+    @patch(
+        "charm.BackendDatabaseRequires.ready",
+        new_callable=PropertyMock,
+        return_value=sentinel.ready,
+    )
+    @patch("charm.PgBouncerK8sCharm.toggle_monitoring_layer")
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
@@ -67,7 +73,9 @@ class TestCharm(unittest.TestCase):
         _reload,
         _render,
         _update_connection_info,
+        _toggle_monitoring_layer,
         _,
+        __,
     ):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
@@ -87,6 +95,7 @@ class TestCharm(unittest.TestCase):
         _reload.assert_called_once_with(restart=True)
         _update_connection_info.assert_called_with(6464)
         _check_pgb_running.assert_called_once_with()
+        _toggle_monitoring_layer.assert_called_once_with(sentinel.ready)
 
     @patch(
         "charm.PgBouncerK8sCharm.is_container_ready", new_callable=PropertyMock, return_value=False
