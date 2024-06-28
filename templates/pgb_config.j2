@@ -1,9 +1,18 @@
 [databases]
-{% for name, database in databases.items() %}
-{{ name }} = host={{ database.host }} dbname={{ database.dbname }} port={{ database.port }} auth_user={{ database.auth_user }}
+{% for name, database in databases.items() -%}
+{{ name }} = host={{ database.host }} {% if database.dbname %}dbname={{ database.dbname }}{% else %}auth_dbname={{ database.auth_dbname }}{% endif %} port={{ database.port }} auth_user={{ database.auth_user }}
+{% endfor %}
+{% for name, database in readonly_databases.items() -%}
+{{ name }} = host={{ database.host }} dbname={{ database.dbname }} auth_dbname={{ database.auth_dbname }} port={{ database.port }} auth_user={{ database.auth_user }}
+{% endfor %}
+
+[peers]
+{% for peer in peers -%}
+{{ peer + 1 }} = host={{ base_socket_dir }}{{ peer }} port={{ listen_port }}
 {% endfor %}
 
 [pgbouncer]
+peer_id = {{ peer_id + 1 }}
 listen_addr = *
 listen_port = {{ listen_port }}
 logfile = {{ log_file }}

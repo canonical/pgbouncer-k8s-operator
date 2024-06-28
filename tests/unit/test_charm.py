@@ -6,8 +6,10 @@
 import logging
 import math
 import unittest
+from signal import SIGHUP
 from unittest.mock import Mock, PropertyMock, call, patch
 
+import psycopg2
 import pytest
 from jinja2 import Template
 from ops import BlockedStatus
@@ -82,8 +84,7 @@ class TestCharm(unittest.TestCase):
             "max_db_connections": max_db_connections,
             "listen_port": 6464,
         })
-        _reload.assert_called_once_with()
-        _reload.assert_called_once_with()
+        _reload.assert_called_once_with(restart=True)
         _update_connection_info.assert_called_with(6464)
         _check_pgb_running.assert_called_once_with()
 
@@ -222,6 +223,9 @@ class TestCharm(unittest.TestCase):
         for i in range(self.charm._cores):
             expected_content = template.render(
                 databases=expected_databases,
+                readonly_databases={},
+                peer_id=i,
+                peers=range(self.charm._cores),
                 socket_dir=f"/var/lib/pgbouncer/instance_{i}",
                 log_file=f"/var/log/pgbouncer/instance_{i}/pgbouncer.log",
                 pid_file=f"/var/lib/pgbouncer/instance_{i}/pgbouncer.pid",
@@ -250,6 +254,13 @@ class TestCharm(unittest.TestCase):
         del expected_databases["first_test_readonly"]
         del expected_databases["first_test_standby"]
         del expected_databases["second_test_readonly"]
+        expected_databases["*"] = {
+            "host": "HOST",
+            "port": "PORT",
+            "auth_dbname": "first_test",
+            "auth_user": "pgbouncer_auth_BACKNEND_USER",
+        }
+        _get_dbs.return_value["*"] = {"name": "*", "auth_dbname": "first_test"}
 
         del _postgres_databag.return_value["read-only-endpoints"]
 
@@ -259,6 +270,9 @@ class TestCharm(unittest.TestCase):
         for i in range(self.charm._cores):
             expected_content = template.render(
                 databases=expected_databases,
+                readonly_databases={},
+                peer_id=i,
+                peers=range(self.charm._cores),
                 socket_dir=f"/var/lib/pgbouncer/instance_{i}",
                 log_file=f"/var/log/pgbouncer/instance_{i}/pgbouncer.log",
                 pid_file=f"/var/lib/pgbouncer/instance_{i}/pgbouncer.pid",
@@ -334,8 +348,8 @@ class TestCharm(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.patch_port")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
-    @patch("ops.model.Container.restart")
-    def test_reload_pgbouncer(self, _restart, _check_pgb_running, _, __):
+    @patch("ops.model.Container.send_signal")
+    def test_reload_pgbouncer(self, _send_signal, _check_pgb_running, _, __):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         # necessary hooks before we can check reloads
@@ -345,8 +359,8 @@ class TestCharm(unittest.TestCase):
 
         self.charm.reload_pgbouncer()
         _check_pgb_running.assert_called_once_with()
-        calls = [call(service["name"]) for service in self.charm._services]
-        _restart.assert_has_calls(calls)
+        calls = [call(SIGHUP, service["name"]) for service in self.charm._services]
+        _send_signal.assert_has_calls(calls)
 
     @patch("charm.PgBouncerK8sCharm.push_file")
     @patch("charm.PgBouncerK8sCharm.update_config")
@@ -376,6 +390,75 @@ class TestCharm(unittest.TestCase):
         get_tls_files.assert_called_once_with()
         update_config.assert_not_called()
         push_file.assert_not_called()
+
+    @patch(
+        "charm.BackendDatabaseRequires.auth_user",
+        new_callable=PropertyMock,
+        return_value="auth_user",
+    )
+    @patch(
+        "charm.BackendDatabaseRequires.postgres_databag",
+        new_callable=PropertyMock,
+        return_value={},
+    )
+    @patch(
+        "charm.BackendDatabaseRequires.relation", new_callable=PropertyMock, return_value=Mock()
+    )
+    def test_get_readonly_dbs(self, _backend_rel, _postgres_databag, _):
+        with self.harness.hooks_disabled():
+            self.harness.update_relation_data(
+                self.rel_id, self.charm.app.name, {"readonly_dbs": '["includedb"]'}
+            )
+
+        # Returns empty if no wildcard
+        assert self.charm._get_readonly_dbs({}) == {}
+
+        # Returns empty if no readonly backends
+        assert self.charm._get_readonly_dbs({"*": {"name": "*", "auth_dbname": "authdb"}}) == {}
+
+        _postgres_databag.return_value = {
+            "endpoints": "HOST:PORT",
+            "read-only-endpoints": "HOST2:PORT,HOST3:PORT",
+        }
+        assert self.charm._get_readonly_dbs({"*": {"name": "*", "auth_dbname": "authdb"}}) == {
+            "includedb_readonly": {
+                "auth_dbname": "authdb",
+                "auth_user": "auth_user",
+                "dbname": "includedb",
+                "host": "HOST2,HOST3",
+                "port": "PORT",
+            }
+        }
+
+    @patch("charm.BackendDatabaseRequires.postgres")
+    @patch(
+        "charm.PgBouncerK8sCharm.get_relation_databases",
+        return_value={"1": {"name": "excludeddb"}},
+    )
+    def test_collect_readonly_dbs(self, _get_relation_databases, _postgres):
+        _postgres._connect_to_database().__enter__().cursor().__enter__().fetchall.return_value = (
+            ("includeddb",),
+            ("excludeddb",),
+        )
+
+        # don't collect if not leader
+        self.charm._collect_readonly_dbs()
+        assert "readonly_dbs" not in self.charm.peers.app_databag
+
+        with self.harness.hooks_disabled():
+            self.harness.set_leader()
+
+        self.charm._collect_readonly_dbs()
+
+        assert self.charm.peers.app_databag["readonly_dbs"] == '["includeddb"]'
+
+        # don't fail if no connection
+        _postgres._connect_to_database().__enter__().cursor().__enter__().fetchall.return_value = ()
+        _postgres._connect_to_database().__enter__.side_effect = psycopg2.Error
+
+        self.charm._collect_readonly_dbs()
+
+        assert self.charm.peers.app_databag["readonly_dbs"] == '["includeddb"]'
 
     @patch("charm.PgBouncerK8sCharm.on_deployed_without_trust")
     @patch("lightkube.Client.get", side_effect=_FakeApiError(403))
