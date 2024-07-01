@@ -23,7 +23,7 @@ lightkube = "^0.15.3"
 lightkube-models = "^1.29.0.6"
 pydantic = "^1.10.17"
 psycopg2 = "^2.9.9"
-psycopg = {extras = ["c"], version = "^3.1.19"}
+psycopg = {extras = ["c"], version = "^3.2.1"}
 
 [tool.poetry.group.charm-libs.dependencies]
 # data_platform_libs/v0/data_interfaces.py
