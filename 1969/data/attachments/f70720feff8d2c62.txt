@@ -1,0 +1,3 @@
+[32mINFO    [0m juju.model:model.py:2097 Deploying local:jammy/pgbouncer-k8s-0
+[32mINFO    [0m juju.model:model.py:2097 Deploying ch:amd64/jammy/postgresql-test-app-172
+[32mINFO    [0m juju.model:model.py:2097 Deploying ch:amd64/jammy/postgresql-k8s-304
