@@ -21,6 +21,7 @@ parts:
       fi
     override-build: |
       rustup default stable
+      craftctl default
     charm-strict-dependencies: true
     build-snaps:
       - rustup/latest/stable
