@@ -1,0 +1,63 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:862 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.4.4    unsupported  01:57:27Z
+
+App                       Version  Status  Scale  Charm                     Channel        Rev  Address         Exposed  Message
+data-integrator                    active      1  data-integrator           latest/edge     36  10.152.183.243  no       
+pgbouncer-k8s             1.21.0   active      1  pgbouncer-k8s                              0  10.152.183.232  no       
+postgresql-k8s            14.11    active      3  postgresql-k8s            14/edge        309  10.152.183.53   no       
+postgresql-test-app                active      1  postgresql-test-app       latest/edge    174  10.152.183.138  no       received database credentials of the first database
+self-signed-certificates           active      1  self-signed-certificates  latest/stable  155  10.152.183.107  no       
+
+Unit                         Workload  Agent  Address       Ports  Message
+data-integrator/0*           active    idle   10.1.152.137         
+pgbouncer-k8s/0*             active    idle   10.1.152.136         
+postgresql-k8s/0*            active    idle   10.1.152.145         Primary
+postgresql-k8s/1             active    idle   10.1.152.144         
+postgresql-k8s/2             active    idle   10.1.152.143         
+postgresql-test-app/0*       active    idle   10.1.152.138         received database credentials of the first database
+self-signed-certificates/0*  active    idle   10.1.152.142         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:868 Juju error logs:
+
+unit-postgresql-k8s-2: 01:49:39 ERROR unit.postgresql-k8s/2.juju-log certificates:11: failed to change plugins: 
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 310, in enable_disable_extensions
+    with self._connect_to_database() as connection, connection.cursor() as cursor:
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/lib/charms/tempo_k8s/v1/charm_tracing.py", line 647, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 132, in _connect_to_database
+    for attempt in Retrying(stop=stop_after_attempt(10), wait=wait_fixed(3), reraise=True):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/venv/tenacity/__init__.py", line 443, in __iter__
+    do = self.iter(retry_state=retry_state)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/venv/tenacity/__init__.py", line 376, in iter
+    result = action(retry_state)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/venv/tenacity/__init__.py", line 418, in exc_check
+    raise retry_exc.reraise()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/venv/tenacity/__init__.py", line 185, in reraise
+    raise self.last_attempt.result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/usr/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 134, in _connect_to_database
+    connection = psycopg2.connect(
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/venv/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "postgresql-k8s-primary.test.svc.cluster.local" (10.152.183.168), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/./src/charm.py", line 639, in enable_disable_extensions
+    self.postgresql.enable_disable_extensions(extensions, database)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/lib/charms/tempo_k8s/v1/charm_tracing.py", line 647, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-postgresql-k8s-2/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 334, in enable_disable_extensions
+    raise PostgreSQLEnableDisableExtensionError()
+charms.postgresql_k8s.v0.postgresql.PostgreSQLEnableDisableExtensionError
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:947 Forgetting model main...
