@@ -1,0 +1,21 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:862 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.4.4    unsupported  01:48:59Z
+
+App                  Version  Status   Scale  Charm                Channel      Rev  Address         Exposed  Message
+pgbouncer-k8s        1.21.0   waiting      2  pgbouncer-k8s                       0  10.152.183.224  no       installing agent
+postgresql-k8s       14.11    waiting      2  postgresql-k8s       14/edge      309  10.152.183.248  no       installing agent
+postgresql-test-app           active       1  postgresql-test-app  latest/edge  174  10.152.183.70   no       
+
+Unit                    Workload  Agent      Address       Ports  Message
+pgbouncer-k8s/0         blocked   idle       10.1.184.139         waiting for backend database relation to initialise
+pgbouncer-k8s/1*        blocked   idle       10.1.184.140         waiting for backend database relation to initialise
+postgresql-k8s/0*       waiting   executing  10.1.184.141         (start) awaiting for primary endpoint to be ready
+postgresql-k8s/1        unknown   idle       10.1.184.142         
+postgresql-test-app/0*  active    idle       10.1.184.136         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:868 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:947 Forgetting model main...
