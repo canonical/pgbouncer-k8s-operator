@@ -87,7 +87,9 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, pgb_cha
     await ops_test.model.add_relation(f"{PGB}:{BACKEND_RELATION_NAME}", f"{PG}:database")
 
     async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", raise_on_blocked=False)
+        await ops_test.model.wait_for_idle(
+            apps=[PGB, PG], status="active", raise_on_blocked=False, timeout=1200
+        )
 
     # Relate the charms and wait for them exchanging some connection data.
     global client_relation
