@@ -88,9 +88,7 @@ class PgbouncerUpgrade(DataUpgrade):
             event.defer()
             return
 
-        if self.peer_relation.data[self.charm.unit].get("state") != "upgrading" or (
-            self.charm.unit.is_leader() and self.charm.unit.name.split["/"][1] == "0"
-        ):
+        if self.state not in ["upgrading", "recovery"]:
             return
 
         if self.charm.unit.is_leader():

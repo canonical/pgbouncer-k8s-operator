@@ -13,7 +13,10 @@ from .helpers.helpers import (
     PG,
     PGB,
 )
-from .helpers.postgresql_helpers import get_leader_unit
+from .helpers.postgresql_helpers import (
+    get_leader_unit,
+    get_unit_by_index,
+)
 from .relations.pgbouncer_provider.helpers import (
     check_exposed_connection,
     fetch_action_get_credentials,
@@ -98,6 +101,19 @@ async def test_upgrade_from_stable(ops_test: OpsTest, pgb_charm):
         in {unit.workload_status for unit in application.units},
         timeout=TIMEOUT,
     )
+
+    logger.info("Wait for upgrade to complete on first upgrading unit")
+    # highest ordinal unit always the first to upgrade
+    unit = get_unit_by_index(PGB, application.units, 2)
+
+    async with ops_test.fast_forward("60s"):
+        await ops_test.model.block_until(lambda: unit.workload_status == "active", timeout=TIMEOUT)
+        await ops_test.model.wait_for_idle(apps=[PGB], idle_period=30, timeout=TIMEOUT)
+
+    logger.info("Resume upgrade")
+    leader_unit = await get_leader_unit(ops_test, PGB)
+    action = await leader_unit.run_action("resume-upgrade")
+    await action.wait()
 
     logger.info("Wait for upgrade to complete")
     async with ops_test.fast_forward("60s"):
