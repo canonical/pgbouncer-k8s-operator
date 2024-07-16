@@ -5,12 +5,11 @@
 import logging
 from pathlib import Path
 
-import psycopg2
 import pytest
 import yaml
 from pytest_operator.plugin import OpsTest
 
-from . import architecture, markers
+from . import architecture
 from .helpers.ha_helpers import (
     start_continuous_writes,
     stop_continuous_writes,
@@ -23,10 +22,12 @@ from .helpers.helpers import (
     POSTGRESQL_APP_NAME,
     app_name,
     get_endpoint_info,
-    get_juju_secret,
-    get_unit_info,
 )
 from .juju_ import juju_major_version
+from .relations.pgbouncer_provider.helpers import (
+    check_exposed_connection,
+    fetch_action_get_credentials,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -147,23 +148,9 @@ async def test_node_port_and_clusterip_setup(ops_test: OpsTest):
 
 @pytest.mark.group(1)
 @pytest.mark.abort_on_fail
-@markers.juju_secrets
 async def test_data_integrator(ops_test: OpsTest):
     """Test the connection."""
-    endpoint = "postgresql"
-    info = (await get_unit_info(ops_test, f"{DATA_INTEGRATOR}/0"))["relation-info"]
-    info = list(filter(lambda x: x["endpoint"] == endpoint, info))[0]["application-data"]
-    userpass = await get_juju_secret(ops_test, info["secret-user"])
-    host, nodeport = info["endpoints"].split(":")
-
-    connection_string = (
-        f"dbname='{info['database']}' user='{userpass['username']}'"
-        f" host='{host}' port='{nodeport}' "
-        f"password='{userpass['password']}' connect_timeout=10"
+    credentials = await fetch_action_get_credentials(
+        ops_test.model.applications[DATA_INTEGRATOR].units[0]
     )
-
-    with psycopg2.connect(connection_string) as connection, connection.cursor() as cursor:
-        cursor.execute("select * from information_schema.tables;")
-        results = cursor.fetchone()
-        assert info["database"] in results
-    connection.close()
+    check_exposed_connection(credentials, True)
