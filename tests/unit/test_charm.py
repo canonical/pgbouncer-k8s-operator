@@ -470,14 +470,13 @@ class TestCharm(unittest.TestCase):
         self.charm._node_name
         self.charm._node_ip
         self.charm._node_port("port")
-        self.charm.patch_port()
         self.charm.get_all_k8s_node_hostnames_and_ips()
 
         self.assertIsInstance(self.harness.charm.unit.status, BlockedStatus)
-        # 7 total calls:
-        #   5 (1 per method)
+        # 6 total calls:
+        #   4 (1 per method)
         #   2 extra _node_name calls from inside _node_ip and get_all_k8s_node_hostnames_and_ips
-        assert _deployed_without_trust.call_count == 7
+        assert _deployed_without_trust.call_count == 6
 
     #
     # Secrets

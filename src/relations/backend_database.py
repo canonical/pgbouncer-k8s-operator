@@ -383,7 +383,9 @@ class BackendDatabaseRequires(Object):
         Removes all traces of this relation from pgbouncer config.
         """
         depart_flag = f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing"
-        if self.charm.peers.unit_databag.get(depart_flag, False):
+        if not self.charm.peers.unit_databag or self.charm.peers.unit_databag.get(
+            depart_flag, False
+        ):
             logging.info("exiting relation-broken hook - nothing to do")
             return
 
