@@ -104,7 +104,7 @@ async def test_upgrade_from_stable(ops_test: OpsTest, pgb_charm):
 
     logger.info("Wait for upgrade to complete on first upgrading unit")
     # highest ordinal unit always the first to upgrade
-    unit = get_unit_by_index(PGB, application.units, 2)
+    unit = get_unit_by_index(PGB, application.units, 1)
 
     async with ops_test.fast_forward("60s"):
         await ops_test.model.block_until(lambda: unit.workload_status == "active", timeout=TIMEOUT)
@@ -125,5 +125,6 @@ async def test_upgrade_from_stable(ops_test: OpsTest, pgb_charm):
         ops_test.model.applications[DATA_INTEGRATOR_APP_NAME].units[0]
     )
     check_exposed_connection(credentials, False)
+
     # TODO Enable when we habe persistent service
     # assert credentials["postgresql"]["endpoints"] == initial_credentials["postgresql"]["endpoints"]
