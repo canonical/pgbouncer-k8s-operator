@@ -20,6 +20,8 @@ from ops.pebble import ConnectionError
 from pydantic import BaseModel
 from typing_extensions import override
 
+from constants import CLIENT_RELATION_NAME
+
 DEFAULT_MESSAGE = "Pre-upgrade check failed and cannot safely upgrade"
 
 logger = logging.getLogger(__name__)
@@ -88,6 +90,11 @@ class PgbouncerUpgrade(DataUpgrade):
 
         if self.peer_relation.data[self.charm.unit].get("state") != "upgrading":
             return
+
+        if self.charm.unit.is_leader():
+            self.charm.patch_port(self.charm.client_relation.external_connectivity())
+            for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
+                self.charm.client_relation.update_connection_info(relation)
 
         try:
             self._cluster_checks()
