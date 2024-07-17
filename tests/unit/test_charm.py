@@ -495,6 +495,7 @@ class TestCharm(unittest.TestCase):
                 name="pgbouncer-k8s-nodeport",
                 namespace=self.charm._namespace,
                 ownerReferences=_client.return_value.get.return_value.metadata.ownerReferences,
+                labels={"app.kubernetes.io/name": "pgbouncer-k8s"},
             ),
             spec=lightkube.models.core_v1.ServiceSpec(
                 selector={"app.kubernetes.io/name": self.charm.app.name},

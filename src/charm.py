@@ -278,6 +278,9 @@ class PgBouncerK8sCharm(CharmBase):
                     name=service_name,
                     namespace=self._namespace,
                     ownerReferences=pod0.metadata.ownerReferences,
+                    labels={
+                        "app.kubernetes.io/name": self.app.name,
+                    },
                 ),
                 spec=lightkube.models.core_v1.ServiceSpec(
                     selector={"app.kubernetes.io/name": self.app.name},
