@@ -303,7 +303,7 @@ class PgBouncerK8sCharm(CharmBase):
                     self.on_deployed_without_trust()
                     return
                 if e.status.code == 409:
-                    logger.warning("Kubernetes service already exists")
+                    logger.info("Nodeport service already exists")
                     return
                 logger.exception("Failed to create k8s service")
                 raise
@@ -318,6 +318,7 @@ class PgBouncerK8sCharm(CharmBase):
                     self.on_deployed_without_trust()
                     return
                 if e.status.code == 404:
+                    logger.info("No nodeport service to clean up")
                     return
                 logger.exception("Failed to delete k8s service")
                 raise

@@ -520,6 +520,58 @@ class TestCharm(unittest.TestCase):
             namespace=self.charm.model.name,
         )
 
+    @patch("charm.logger.info")
+    @patch("charm.PgBouncerK8sCharm.on_deployed_without_trust")
+    @patch("lightkube.Client")
+    def test_patch_port_create_errors(self, _client, _on_deployed_without_trust, _logger_info):
+        self.harness.set_leader(True)
+
+        # No permissions
+        _client.return_value.create.side_effect = _FakeApiError(403)
+
+        self.charm.patch_port(True)
+
+        _on_deployed_without_trust.assert_called_once_with()
+        _on_deployed_without_trust.reset_mock()
+
+        # Svc already exists
+        _client.return_value.create.side_effect = _FakeApiError(409)
+
+        self.charm.patch_port(True)
+
+        _logger_info.assert_called_once_with("Nodeport service already exists")
+
+        # General error
+        _client.return_value.create.side_effect = _FakeApiError(500)
+        with self.assertRaises(_FakeApiError):
+            self.charm.patch_port(True)
+
+    @patch("charm.logger.info")
+    @patch("charm.PgBouncerK8sCharm.on_deployed_without_trust")
+    @patch("lightkube.Client")
+    def test_patch_port_delete_errors(self, _client, _on_deployed_without_trust, _logger_info):
+        self.harness.set_leader(True)
+
+        # No permissions
+        _client.return_value.delete.side_effect = _FakeApiError(403)
+
+        self.charm.patch_port(False)
+
+        _on_deployed_without_trust.assert_called_once_with()
+        _on_deployed_without_trust.reset_mock()
+
+        # Svc already exists
+        _client.return_value.delete.side_effect = _FakeApiError(404)
+
+        self.charm.patch_port(False)
+
+        _logger_info.assert_called_once_with("No nodeport service to clean up")
+
+        # General error
+        _client.return_value.delete.side_effect = _FakeApiError(500)
+        with self.assertRaises(_FakeApiError):
+            self.charm.patch_port(False)
+
     #
     # Secrets
     #

@@ -64,11 +64,18 @@ class TestUpgrade(unittest.TestCase):
 
         _set_partition.assert_called_once_with(2)
 
+    @patch("charm.PgBouncerProvider.external_connectivity", return_value=True)
+    @patch("charm.PgBouncerK8sCharm.patch_port")
     @patch("charm.PgbouncerUpgrade.set_unit_completed")
     @patch("charm.PgbouncerUpgrade._cluster_checks")
     @patch("charm.PgbouncerUpgrade.peer_relation", new_callable=PropertyMock, return_value=None)
     def test_on_pgbouncer_pebble_ready(
-        self, _peer_relation: Mock, _cluster_checks: Mock, _set_unit_completed: Mock
+        self,
+        _peer_relation: Mock,
+        _cluster_checks: Mock,
+        _set_unit_completed: Mock,
+        _patch_port: Mock,
+        _,
     ):
         event = Mock()
 
@@ -101,6 +108,14 @@ class TestUpgrade(unittest.TestCase):
         self.charm.upgrade._on_pgbouncer_pebble_ready(event)
 
         event.defer.assert_called_once_with()
+
+        # Will try to repatch the nodeport service
+        self.harness.set_leader(True)
+        _cluster_checks.side_effect = None
+
+        self.charm.upgrade._on_pgbouncer_pebble_ready(event)
+
+        _patch_port.assert_called_once_with(True)
 
     @patch("charm.PgBouncerK8sCharm.check_pgb_running", return_value=True)
     @patch("charm.PgBouncerK8sCharm.update_config")
