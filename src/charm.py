@@ -196,16 +196,17 @@ class PgBouncerK8sCharm(CharmBase):
 
     def _node_port(self, port_type: str) -> int:
         """Return node port."""
+        service_name = f"{self.app.name}-nodeport"
         try:
             service = lightkube.Client().get(
-                lightkube.resources.core_v1.Service, self.app.name, namespace=self._namespace
+                lightkube.resources.core_v1.Service, service_name, namespace=self._namespace
             )
         except lightkube.ApiError as e:
             if e.status.code == 403:
                 self.on_deployed_without_trust()
                 return
-        if not service or not service.spec.type == "NodePort":
-            return -1
+            if e.status.code == 404:
+                return -1
         # svc.spec.ports
         # [ServicePort(port=6432, appProtocol=None, name=None, nodePort=31438, protocol='TCP', targetPort=6432)]
         # Keeping this distinction, so we have similarity with mysql-router-k8s
@@ -257,32 +258,32 @@ class PgBouncerK8sCharm(CharmBase):
     # =======================
 
     def patch_port(self, use_node_port: bool = False) -> None:
-        """Patch Juju-created k8s service.
-
-        The k8s service will be tied to pod-0 so that the service is auto cleaned by
-        k8s when the last pod is scaled down.
-        """
+        """Create or delete a nodeport service for external node connectivity."""
         if not self.unit.is_leader():
             return
 
-        try:
-            logger.debug("Patching k8s service")
-            client = lightkube.Client()
+        client = lightkube.Client()
+        service_name = f"{self.app.name}-nodeport"
+        if use_node_port:
+            logger.debug("Creating nodeport service")
             pod0 = client.get(
                 res=lightkube.resources.core_v1.Pod,
                 name=self.app.name + "-0",
-                namespace=self.model.name,
+                namespace=self._namespace,
             )
             service = lightkube.resources.core_v1.Service(
+                apiVersion="v1",
+                kind="Service",
                 metadata=lightkube.models.meta_v1.ObjectMeta(
-                    name=self.app.name,
-                    namespace=self.model.name,
+                    name=service_name,
+                    namespace=self._namespace,
                     ownerReferences=pod0.metadata.ownerReferences,
                     labels={
                         "app.kubernetes.io/name": self.app.name,
                     },
                 ),
                 spec=lightkube.models.core_v1.ServiceSpec(
+                    selector={"app.kubernetes.io/name": self.app.name},
                     ports=[
                         lightkube.models.core_v1.ServicePort(
                             name="pgbouncer",
@@ -290,26 +291,37 @@ class PgBouncerK8sCharm(CharmBase):
                             targetPort=self.config["listen_port"],
                         )
                     ],
-                    type=("NodePort" if use_node_port else "ClusterIP"),
-                    selector={"app.kubernetes.io/name": self.app.name},
+                    type="NodePort",
                 ),
             )
-            client.patch(
-                res=lightkube.resources.core_v1.Service,
-                obj=service,
-                name=service.metadata.name,
-                namespace=service.metadata.namespace,
-                force=True,
-                field_manager=self.app.name,
-                patch_type=lightkube.types.PatchType.MERGE,
-            )
-            logger.debug("Patched k8s service")
-        except lightkube.ApiError as e:
-            if e.status.code == 403:
-                self.on_deployed_without_trust()
-                return
-            logger.exception("Failed to patch k8s service")
-            raise
+
+            try:
+                client.create(service)
+                logger.info(f"Kubernetes service {service_name} created")
+            except lightkube.ApiError as e:
+                if e.status.code == 403:
+                    self.on_deployed_without_trust()
+                    return
+                if e.status.code == 409:
+                    logger.info("Nodeport service already exists")
+                    return
+                logger.exception("Failed to create k8s service")
+                raise
+        else:
+            logger.debug("Deleting nodeport service")
+            try:
+                client.delete(
+                    lightkube.resources.core_v1.Service, service_name, namespace=self.model.name
+                )
+            except lightkube.ApiError as e:
+                if e.status.code == 403:
+                    self.on_deployed_without_trust()
+                    return
+                if e.status.code == 404:
+                    logger.info("No nodeport service to clean up")
+                    return
+                logger.exception("Failed to delete k8s service")
+                raise
 
     @property
     def version(self) -> str:

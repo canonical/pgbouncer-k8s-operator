@@ -4,9 +4,12 @@
 import asyncio
 import json
 import logging
-from typing import Optional
+from typing import Dict, Optional
+from uuid import uuid4
 
+import psycopg2
 import yaml
+from juju.unit import Unit
 from lightkube import AsyncClient
 from lightkube.resources.core_v1 import Pod
 from pytest_operator.plugin import OpsTest
@@ -249,3 +252,43 @@ async def delete_pod(ops_test: OpsTest, unit_name: str) -> None:
     model = ops_test.model.info
     client = AsyncClient(namespace=model.name)
     await client.delete(Pod, name=unit_name.replace("/", "-"))
+
+
+async def fetch_action_get_credentials(unit: Unit) -> Dict:
+    """Helper to run an action to fetch connection info.
+
+    Args:
+        unit: The juju unit on which to run the get_credentials action for credentials
+    Returns:
+        A dictionary with the username, password and access info for the service
+    """
+    action = await unit.run_action(action_name="get-credentials")
+    result = await action.wait()
+    return result.results
+
+
+def check_exposed_connection(credentials, tls):
+    table_name = "expose_test"
+    smoke_val = str(uuid4())
+
+    host, port = credentials["postgresql"]["endpoints"].split(":")
+    user = credentials["postgresql"]["username"]
+    password = credentials["postgresql"]["password"]
+    database = credentials["postgresql"]["database"]
+    if tls:
+        sslmode = "require"
+    else:
+        sslmode = "disable"
+    connstr = f"dbname='{database}' user='{user}' host='{host}' port='{port}' password='{password}' connect_timeout=1 sslmode={sslmode}"
+    connection = psycopg2.connect(connstr)
+    connection.autocommit = True
+    smoke_query = (
+        f"DROP TABLE IF EXISTS {table_name};"
+        f"CREATE TABLE {table_name}(data TEXT);"
+        f"INSERT INTO {table_name}(data) VALUES('{smoke_val}');"
+        f"SELECT data FROM {table_name} WHERE data = '{smoke_val}';"
+    )
+    cursor = connection.cursor()
+    cursor.execute(smoke_query)
+
+    assert smoke_val == cursor.fetchone()[0]

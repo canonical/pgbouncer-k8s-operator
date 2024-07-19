@@ -344,10 +344,11 @@ class BackendDatabaseRequires(Object):
 
         if event.departing_unit == self.charm.unit:
             # This should only occur when the relation is being removed, not on scale-down
-            self.charm.peers.unit_databag.update({
-                f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing": "true"
-            })
-            logger.warning("added relation-departing flag to peer databag")
+            if self.charm.peers.unit_databag:
+                self.charm.peers.unit_databag.update({
+                    f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing": "true"
+                })
+                logger.warning("added relation-departing flag to peer databag")
             return
 
         if not self.charm.unit.is_leader() or event.departing_unit.app != self.charm.app:
@@ -382,7 +383,9 @@ class BackendDatabaseRequires(Object):
         Removes all traces of this relation from pgbouncer config.
         """
         depart_flag = f"{BACKEND_RELATION_NAME}_{event.relation.id}_departing"
-        if self.charm.peers.unit_databag.get(depart_flag, False):
+        if not self.charm.peers.unit_databag or self.charm.peers.unit_databag.get(
+            depart_flag, False
+        ):
             logging.info("exiting relation-broken hook - nothing to do")
             return
 
