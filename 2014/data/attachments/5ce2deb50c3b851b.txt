@@ -1,0 +1,25 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:862 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.4.4    unsupported  01:42:48Z
+
+App                       Version  Status  Scale  Charm                     Channel        Rev  Address         Exposed  Message
+data-integrator                    active      1  data-integrator           latest/edge     36  10.152.183.209  no       
+pgbouncer-k8s             1.21.0   active      1  pgbouncer-k8s                              0  10.152.183.109  no       
+postgresql-k8s            14.12    active      3  postgresql-k8s            14/edge        323  10.152.183.78   no       
+postgresql-test-app                active      1  postgresql-test-app       latest/edge    182  10.152.183.30   no       received database credentials of the first database
+self-signed-certificates           active      1  self-signed-certificates  latest/stable  155  10.152.183.86   no       
+
+Unit                         Workload  Agent  Address       Ports  Message
+data-integrator/0*           active    idle   10.1.128.137         
+pgbouncer-k8s/0*             active    idle   10.1.128.136         
+postgresql-k8s/0             active    idle   10.1.128.143         
+postgresql-k8s/1             active    idle   10.1.128.144         
+postgresql-k8s/2*            active    idle   10.1.128.145         Primary
+postgresql-test-app/0*       active    idle   10.1.128.138         received database credentials of the first database
+self-signed-certificates/0*  active    idle   10.1.128.139         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:868 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:947 Forgetting model main...
