@@ -1,0 +1,36 @@
+[32mINFO    [0m juju.model:model.py:2098 Deploying local:jammy/pgbouncer-k8s-1
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  pgbouncer-k8s-secondary/0 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  pgbouncer-k8s-secondary/0 [executing] maintenance: installing charm software
+[33mWARNING [0m juju.model:model.py:1564 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-test-app/0 [idle] active: received database credentials of the second database
+  postgresql-k8s/0 [executing] active: 
+  postgresql-k8s/1 [executing] active: Primary
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s-secondary/0 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  pgbouncer-k8s-secondary/0 [idle] active: 
+[33mWARNING [0m juju.model:model.py:1564 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-test-app/0 [idle] active: received database credentials of the second database
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  secondary-application/0 [executing] active: received database credentials of the first database
+  finos-waltz-k8s/0 [idle] active: 
+  pgbouncer-k8s-secondary/0 [idle] active: 
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m root:helpers.py:123 running query: 
+ DROP TABLE IF EXISTS check_multiple_pgb_connected_to_one_postgres;CREATE TABLE check_multiple_pgb_connected_to_one_postgres(data TEXT);INSERT INTO check_multiple_pgb_connected_to_one_postgres(data) VALUES('some data');SELECT data FROM check_multiple_pgb_connected_to_one_postgres;
+[32mINFO    [0m root:helpers.py:124 {'dbname': 'secondary_application_second_database', 'query': "DROP TABLE IF EXISTS check_multiple_pgb_connected_to_one_postgres;CREATE TABLE check_multiple_pgb_connected_to_one_postgres(data TEXT);INSERT INTO check_multiple_pgb_connected_to_one_postgres(data) VALUES('some data');SELECT data FROM check_multiple_pgb_connected_to_one_postgres;", 'relation-id': 15, 'relation-name': 'second-database', 'readonly': False}
+[32mINFO    [0m root:helpers.py:127 query results: {'results': '[["some data"]]', 'return-code': 0}
+[32mINFO    [0m root:helpers.py:123 running query: 
+ DROP TABLE IF EXISTS smoke_test;CREATE TABLE smoke_test(data TEXT);INSERT INTO smoke_test(data) VALUES('some data');SELECT data FROM smoke_test;
+[32mINFO    [0m root:helpers.py:124 {'dbname': 'postgresql_test_app_first_database', 'query': "DROP TABLE IF EXISTS smoke_test;CREATE TABLE smoke_test(data TEXT);INSERT INTO smoke_test(data) VALUES('some data');SELECT data FROM smoke_test;", 'relation-id': 7, 'relation-name': 'first-database', 'readonly': False}
+[32mINFO    [0m root:helpers.py:127 query results: {'results': '[["some data"]]', 'return-code': 0}
