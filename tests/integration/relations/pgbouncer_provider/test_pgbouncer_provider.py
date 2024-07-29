@@ -49,8 +49,8 @@ APP_NAMES = [CLIENT_APP_NAME, PG, PGB]
 FIRST_DATABASE_RELATION_NAME = "database"
 SECOND_DATABASE_RELATION_NAME = "second-database"
 
-APPLICATION_FIRST_DBNAME = "postgresql_test_app_first_database"
-SECONDARY_APPLICATION_FIRST_DBNAME = "secondary_application_first_database"
+APPLICATION_FIRST_DBNAME = "postgresql_test_app_database"
+SECONDARY_APPLICATION_FIRST_DBNAME = "secondary_application_database"
 SECONDARY_APPLICATION_SECOND_DBNAME = "secondary_application_second_database"
 
 
