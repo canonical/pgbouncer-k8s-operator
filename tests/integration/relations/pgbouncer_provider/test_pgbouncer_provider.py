@@ -300,7 +300,7 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest):
 
     # Relate the new application with the database
     # and wait for them exchanging some connection data.
-    secondary_relation = await ops_test.model.add_relation(
+    await ops_test.model.add_relation(
         f"{SECONDARY_CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB
     )
     wait_for_relation_joined_between(ops_test, PGB, SECONDARY_CLIENT_APP_NAME)
@@ -316,7 +316,6 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest):
     await check_new_relation(
         ops_test,
         unit_name=ops_test.model.applications[SECONDARY_CLIENT_APP_NAME].units[0].name,
-        relation_id=secondary_relation.id,
         dbname=SECONDARY_APPLICATION_FIRST_DBNAME,
         table_name="check_multiple_apps_connected_to_one_cluster",
         relation_name=FIRST_DATABASE_RELATION_NAME,
@@ -400,7 +399,7 @@ async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_ch
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(apps=APP_NAMES + [pgb_secondary])
 
-    secondary_relation = await ops_test.model.add_relation(
+    await ops_test.model.add_relation(
         f"{SECONDARY_CLIENT_APP_NAME}:{SECOND_DATABASE_RELATION_NAME}", pgb_secondary
     )
     async with ops_test.fast_forward():
@@ -410,7 +409,6 @@ async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_ch
     await check_new_relation(
         ops_test,
         unit_name=ops_test.model.applications[SECONDARY_CLIENT_APP_NAME].units[0].name,
-        relation_id=secondary_relation.id,
         dbname=SECONDARY_APPLICATION_SECOND_DBNAME,
         table_name="check_multiple_pgb_connected_to_one_postgres",
         relation_name=SECOND_DATABASE_RELATION_NAME,
