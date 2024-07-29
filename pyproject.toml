@@ -2,14 +2,7 @@
 # See LICENSE file for licensing details.
 
 [tool.poetry]
-name = "pgbouncer-k8s"
-version = "0.0.1-dev.0"
-description = ""
-authors = []
-license = "Apache-2.0"
-readme = "README.md"
-homepage = "https://charmhub.io/pgbouncer-k8s"
-repository = "https://github.com/canonical/pgbouncer-k8s-operator"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.8.10"
