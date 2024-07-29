@@ -118,10 +118,10 @@ async def start_continuous_writes(ops_test: OpsTest, app: str) -> None:
         for relation in ops_test.model.applications[app].relations
         if not relation.is_peer
         and f"{relation.requires.application_name}:{relation.requires.name}"
-        == f"{CLIENT_APP_NAME}:first-database"
+        == f"{CLIENT_APP_NAME}:database"
     ]
     if not relations:
-        await ops_test.model.relate(app, f"{CLIENT_APP_NAME}:first-database")
+        await ops_test.model.relate(app, f"{CLIENT_APP_NAME}:database")
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
     else:
         action = (

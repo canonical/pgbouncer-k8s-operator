@@ -99,7 +99,7 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
                 series=CHARM_SERIES,
                 channel="edge",
             )
-    await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:first-database")
+    await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:database")
 
     if not await app_name(ops_test, POSTGRESQL_APP_NAME):
         wait_for_apps = True
@@ -140,7 +140,7 @@ async def test_node_port_and_clusterip_setup(ops_test: OpsTest):
             endpoint = await get_endpoint_info(ops_test, f"{app}/0", "postgresql")
             assert "svc.cluster.local" not in endpoint
         else:
-            endpoint = await get_endpoint_info(ops_test, f"{app}/0", "first-database")
+            endpoint = await get_endpoint_info(ops_test, f"{app}/0", "database")
             assert "svc.cluster.local" in endpoint
 
     await stop_continuous_writes(ops_test)

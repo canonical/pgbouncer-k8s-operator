@@ -35,7 +35,7 @@ TIMEOUT = 600
 PGB_RESOURCES = {
     "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"]
 }
-FIRST_DATABASE_RELATION_NAME = "first-database"
+FIRST_DATABASE_RELATION_NAME = "database"
 
 
 @pytest.mark.group(1)

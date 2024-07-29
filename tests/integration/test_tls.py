@@ -68,21 +68,7 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
                 series=CHARM_SERIES,
                 channel="edge",
             )
-    # remove preexisting relation if any so that we can know the rel id
-    relations = [
-        relation
-        for relation in ops_test.model.applications[PGB].relations
-        if not relation.is_peer
-        and f"{relation.requires.application_name}:{relation.requires.name}"
-        == f"{CLIENT_APP_NAME}:first-database"
-    ]
-    if relations:
-        await ops_test.model.applications[PGB].remove_relation(
-            f"{PGB}:database", f"{CLIENT_APP_NAME}:first-database"
-        )
-        await ops_test.model.wait_for_idle(status="active", timeout=1000)
-    global client_relation
-    client_relation = await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:first-database")
+    await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:database")
 
     if not await app_name(ops_test, POSTGRESQL_APP_NAME):
         wait_for_apps = True
@@ -154,7 +140,7 @@ async def test_remove_tls(ops_test: OpsTest) -> None:
         f"{PGB}:certificates", f"{tls_certificates_app_name}:certificates"
     )
     await ops_test.model.wait_for_idle(status="active", timeout=1000)
-    assert await check_tls(ops_test, client_relation.id, False)
+    assert await check_tls(ops_test, False)
 
 
 @pytest.mark.group(1)
@@ -166,7 +152,7 @@ async def test_add_tls(ops_test: OpsTest) -> None:
     """
     await ops_test.model.relate(PGB, tls_certificates_app_name)
     await ops_test.model.wait_for_idle(status="active", timeout=1000)
-    assert await check_tls(ops_test, client_relation.id, True)
+    assert await check_tls(ops_test, True)
 
 
 @pytest.mark.group(1)
