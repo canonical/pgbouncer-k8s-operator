@@ -106,7 +106,6 @@ async def run_sql_on_application_charm(
     unit_name: str,
     query: str,
     dbname: str,
-    relation_id,
     relation_name,
     readonly: bool = False,
     timeout=30,
@@ -116,7 +115,6 @@ async def run_sql_on_application_charm(
     params = {
         "dbname": dbname,
         "query": query,
-        "relation-id": relation_id,
         "relation-name": relation_name,
         "readonly": readonly,
     }
