@@ -132,8 +132,7 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
 async def test_node_port_and_clusterip_setup(ops_test: OpsTest):
     """Test the nodeport."""
     # Test the writes to the database using the client app
-    psql_app = ops_test.model.applications.get(POSTGRESQL_APP_NAME)
-    await start_continuous_writes(ops_test, psql_app.name)
+    await start_continuous_writes(ops_test, PGB)
 
     for app in [DATA_INTEGRATOR, CLIENT_APP_NAME]:
         if app == DATA_INTEGRATOR:

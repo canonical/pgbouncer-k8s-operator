@@ -220,7 +220,7 @@ async def build_connection_string(
 
 
 async def check_new_relation(
-    ops_test: OpsTest, unit_name, relation_name, relation_id, dbname, table_name="smoke_test"
+    ops_test: OpsTest, unit_name, relation_name, dbname, table_name="smoke_test"
 ):
     """Smoke test to check relation is online.
 
@@ -240,7 +240,6 @@ async def check_new_relation(
         query=query,
         dbname=dbname,
         relation_name=relation_name,
-        relation_id=relation_id,
     )
     assert (
         test_data in json.loads(run_query["results"])[0]
