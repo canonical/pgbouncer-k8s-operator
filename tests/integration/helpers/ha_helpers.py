@@ -96,7 +96,7 @@ async def count_writes(
             ip = service.status.podIP
 
             connection_string = (
-                f"dbname='{CLIENT_APP_NAME.replace('-', '_')}_first_database' user='operator'"
+                f"dbname='{CLIENT_APP_NAME.replace('-', '_')}_database' user='operator'"
                 f" host='{ip}' password='{password}' connect_timeout=10"
             )
 
@@ -109,7 +109,9 @@ async def count_writes(
     return count, maximum
 
 
-async def start_continuous_writes(ops_test: OpsTest, app: str) -> None:
+async def start_continuous_writes(
+    ops_test: OpsTest, app: str, test_app: str = CLIENT_APP_NAME
+) -> None:
     """Start continuous writes to PostgreSQL."""
     # Start the process by relating the application to the database or
     # by calling the action if the relation already exists.
@@ -118,14 +120,14 @@ async def start_continuous_writes(ops_test: OpsTest, app: str) -> None:
         for relation in ops_test.model.applications[app].relations
         if not relation.is_peer
         and f"{relation.requires.application_name}:{relation.requires.name}"
-        == f"{CLIENT_APP_NAME}:first-database"
+        == f"{test_app}:database"
     ]
     if not relations:
-        await ops_test.model.relate(app, f"{CLIENT_APP_NAME}:first-database")
+        await ops_test.model.relate(app, f"{test_app}:database")
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
     else:
         action = (
-            await ops_test.model.applications[CLIENT_APP_NAME]
+            await ops_test.model.applications[test_app]
             .units[0]
             .run_action("start-continuous-writes")
         )
@@ -133,7 +135,7 @@ async def start_continuous_writes(ops_test: OpsTest, app: str) -> None:
     for attempt in Retrying(stop=stop_after_delay(60 * 5), wait=wait_fixed(3), reraise=True):
         with attempt:
             action = (
-                await ops_test.model.applications[CLIENT_APP_NAME]
+                await ops_test.model.applications[test_app]
                 .units[0]
                 .run_action("start-continuous-writes")
             )
@@ -141,10 +143,8 @@ async def start_continuous_writes(ops_test: OpsTest, app: str) -> None:
             assert action.results["result"] == "True", "Unable to create continuous_writes table"
 
 
-async def stop_continuous_writes(ops_test: OpsTest) -> int:
+async def stop_continuous_writes(ops_test: OpsTest, test_app: str = CLIENT_APP_NAME) -> int:
     """Stops continuous writes to PostgreSQL and returns the last written value."""
-    action = await ops_test.model.units.get(f"{CLIENT_APP_NAME}/0").run_action(
-        "stop-continuous-writes"
-    )
+    action = await ops_test.model.units.get(f"{test_app}/0").run_action("stop-continuous-writes")
     action = await action.wait()
     return int(action.results["writes"])

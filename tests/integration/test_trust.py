@@ -118,7 +118,7 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
         await ops_test.model.relate(PGB, PG)
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1200)
 
-        await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:first-database")
+        await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:database")
         await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1200)
 
     leader_unit = await get_leader_unit(ops_test, PGB)

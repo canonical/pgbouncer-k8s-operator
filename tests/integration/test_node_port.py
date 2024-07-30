@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 DATA_INTEGRATOR = "data-integrator"
 MODEL_CONFIG = {"logging-config": "<root>=INFO;unit=DEBUG"}
+SECOND_CLIENT_APP_NAME = f"{CLIENT_APP_NAME}2"
 
 
 if juju_major_version < 3:
@@ -99,7 +100,7 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
                 series=CHARM_SERIES,
                 channel="edge",
             )
-    await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:first-database")
+    await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:database")
 
     if not await app_name(ops_test, POSTGRESQL_APP_NAME):
         wait_for_apps = True
@@ -112,6 +113,17 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
             config={"profile": "testing"},
         )
         await ops_test.model.relate(PGB, POSTGRESQL_APP_NAME)
+
+    if not await app_name(ops_test, SECOND_CLIENT_APP_NAME):
+        wait_for_apps = True
+        async with ops_test.fast_forward():
+            await ops_test.model.deploy(
+                CLIENT_APP_NAME,
+                application_name=SECOND_CLIENT_APP_NAME,
+                series=CHARM_SERIES,
+                channel="edge",
+            )
+    await ops_test.model.relate(POSTGRESQL_APP_NAME, f"{SECOND_CLIENT_APP_NAME}:database")
 
     if not await app_name(ops_test, tls_certificates_app_name):
         wait_for_apps = True
@@ -133,17 +145,17 @@ async def test_node_port_and_clusterip_setup(ops_test: OpsTest):
     """Test the nodeport."""
     # Test the writes to the database using the client app
     psql_app = ops_test.model.applications.get(POSTGRESQL_APP_NAME)
-    await start_continuous_writes(ops_test, psql_app.name)
+    await start_continuous_writes(ops_test, psql_app.name, test_app=SECOND_CLIENT_APP_NAME)
 
     for app in [DATA_INTEGRATOR, CLIENT_APP_NAME]:
         if app == DATA_INTEGRATOR:
             endpoint = await get_endpoint_info(ops_test, f"{app}/0", "postgresql")
             assert "svc.cluster.local" not in endpoint
         else:
-            endpoint = await get_endpoint_info(ops_test, f"{app}/0", "first-database")
+            endpoint = await get_endpoint_info(ops_test, f"{app}/0", "database")
             assert "svc.cluster.local" in endpoint
 
-    await stop_continuous_writes(ops_test)
+    await stop_continuous_writes(ops_test, test_app=SECOND_CLIENT_APP_NAME)
 
 
 @pytest.mark.group(1)

@@ -106,7 +106,6 @@ async def run_sql_on_application_charm(
     unit_name: str,
     query: str,
     dbname: str,
-    relation_id,
     relation_name,
     readonly: bool = False,
     timeout=30,
@@ -116,7 +115,6 @@ async def run_sql_on_application_charm(
     params = {
         "dbname": dbname,
         "query": query,
-        "relation-id": relation_id,
         "relation-name": relation_name,
         "readonly": readonly,
     }
@@ -220,7 +218,7 @@ async def build_connection_string(
 
 
 async def check_new_relation(
-    ops_test: OpsTest, unit_name, relation_name, relation_id, dbname, table_name="smoke_test"
+    ops_test: OpsTest, unit_name, relation_name, dbname, table_name="smoke_test"
 ):
     """Smoke test to check relation is online.
 
@@ -240,7 +238,6 @@ async def check_new_relation(
         query=query,
         dbname=dbname,
         relation_name=relation_name,
-        relation_id=relation_id,
     )
     assert (
         test_data in json.loads(run_query["results"])[0]

@@ -329,12 +329,11 @@ async def app_name(ops_test: OpsTest, application_name: str = "pgbouncer") -> Op
     return None
 
 
-async def check_tls(ops_test: OpsTest, relation_id: int, enabled: bool) -> bool:
+async def check_tls(ops_test: OpsTest, enabled: bool) -> bool:
     """Returns whether TLS is enabled on a related PgBouncer cluster.
 
     Args:
         ops_test: The ops test framework instance.
-        relation_id: The id of the relation.
         enabled: check if TLS is enabled/disabled.
 
     Returns:
@@ -343,9 +342,8 @@ async def check_tls(ops_test: OpsTest, relation_id: int, enabled: bool) -> bool:
     cleint_name = await app_name(ops_test, CLIENT_APP_NAME)
     unit = ops_test.model.applications[cleint_name].units[0]
     params = {
-        "dbname": f"{CLIENT_APP_NAME.replace('-', '_')}_first_database",
-        "relation-id": relation_id,
-        "relation-name": "first-database",
+        "dbname": f"{CLIENT_APP_NAME.replace('-', '_')}_database",
+        "relation-name": "database",
         "readonly": False,
     }
     try:
