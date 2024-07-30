@@ -155,7 +155,7 @@ async def test_node_port_and_clusterip_setup(ops_test: OpsTest):
             endpoint = await get_endpoint_info(ops_test, f"{app}/0", "database")
             assert "svc.cluster.local" in endpoint
 
-    await stop_continuous_writes(ops_test)
+    await stop_continuous_writes(ops_test, test_app=SECOND_CLIENT_APP_NAME)
 
 
 @pytest.mark.group(1)

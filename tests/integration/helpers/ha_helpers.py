@@ -143,10 +143,8 @@ async def start_continuous_writes(
             assert action.results["result"] == "True", "Unable to create continuous_writes table"
 
 
-async def stop_continuous_writes(ops_test: OpsTest) -> int:
+async def stop_continuous_writes(ops_test: OpsTest, test_app: str = CLIENT_APP_NAME) -> int:
     """Stops continuous writes to PostgreSQL and returns the last written value."""
-    action = await ops_test.model.units.get(f"{CLIENT_APP_NAME}/0").run_action(
-        "stop-continuous-writes"
-    )
+    action = await ops_test.model.units.get(f"{test_app}/0").run_action("stop-continuous-writes")
     action = await action.wait()
     return int(action.results["writes"])
