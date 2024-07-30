@@ -109,7 +109,9 @@ async def count_writes(
     return count, maximum
 
 
-async def start_continuous_writes(ops_test: OpsTest, app: str) -> None:
+async def start_continuous_writes(
+    ops_test: OpsTest, app: str, test_app: str = CLIENT_APP_NAME
+) -> None:
     """Start continuous writes to PostgreSQL."""
     # Start the process by relating the application to the database or
     # by calling the action if the relation already exists.
@@ -118,14 +120,14 @@ async def start_continuous_writes(ops_test: OpsTest, app: str) -> None:
         for relation in ops_test.model.applications[app].relations
         if not relation.is_peer
         and f"{relation.requires.application_name}:{relation.requires.name}"
-        == f"{CLIENT_APP_NAME}:database"
+        == f"{test_app}:database"
     ]
     if not relations:
-        await ops_test.model.relate(app, f"{CLIENT_APP_NAME}:database")
+        await ops_test.model.relate(app, f"{test_app}:database")
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
     else:
         action = (
-            await ops_test.model.applications[CLIENT_APP_NAME]
+            await ops_test.model.applications[test_app]
             .units[0]
             .run_action("start-continuous-writes")
         )
@@ -133,7 +135,7 @@ async def start_continuous_writes(ops_test: OpsTest, app: str) -> None:
     for attempt in Retrying(stop=stop_after_delay(60 * 5), wait=wait_fixed(3), reraise=True):
         with attempt:
             action = (
-                await ops_test.model.applications[CLIENT_APP_NAME]
+                await ops_test.model.applications[test_app]
                 .units[0]
                 .run_action("start-continuous-writes")
             )
