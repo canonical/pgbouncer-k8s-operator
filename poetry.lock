@@ -425,13 +425,13 @@ files = [
 
 [[package]]
 name = "cosl"
-version = "0.0.17"
+version = "0.0.19"
 description = "Utils for COS Lite charms"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "cosl-0.0.17-py3-none-any.whl", hash = "sha256:88d43c49134906e7e19ce254cff136a5f394f2a89dff7b2fb6e49146d0c31cd0"},
-    {file = "cosl-0.0.17.tar.gz", hash = "sha256:2c0e7dd5b354c4d9f4dd39f2a3a082af3fc972fa6b8d3ff58c236f184c082d17"},
+    {file = "cosl-0.0.19-py3-none-any.whl", hash = "sha256:60e2ddfa732a8e0a5243811e6479957fd1f551ed8eda6d76fea2d8084f72c386"},
+    {file = "cosl-0.0.19.tar.gz", hash = "sha256:686ae4daab0215c2ed81013527a2d4b17b3ea3278f2cf07ca2396145f06aa737"},
 ]
 
 [package.dependencies]
@@ -2472,4 +2472,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "46873de629c49056b8983b3e5a9e5775b51b3eaec03557feea0f373770f7726d"
+content-hash = "6c9cfc60c0b63040e0da2a33c63d54e0dd84db4c5f5ca5a2ad2ef8cdcccf1ae8"
