@@ -1,0 +1,27 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:862 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.4.5    unsupported  01:49:08Z
+
+App                       Version  Status  Scale  Charm                     Channel        Rev  Address         Exposed  Message
+data-integrator                    active      1  data-integrator           latest/edge     41  10.152.183.223  no       
+pgbouncer-k8s             1.21.0   active      1  pgbouncer-k8s                              0  10.152.183.103  no       
+postgresql-k8s            14.12    active      3  postgresql-k8s            14/edge        349  10.152.183.126  no       
+postgresql-test-app                active      1  postgresql-test-app       latest/edge    206  10.152.183.24   no       received database credentials of the first database
+postgresql-test-app2               active      1  postgresql-test-app       latest/edge    206  10.152.183.227  no       received database credentials of the first database
+self-signed-certificates           active      1  self-signed-certificates  latest/stable  155  10.152.183.190  no       
+
+Unit                         Workload  Agent  Address       Ports  Message
+data-integrator/0*           active    idle   10.1.219.137         
+pgbouncer-k8s/0*             active    idle   10.1.219.136         
+postgresql-k8s/0*            active    idle   10.1.219.143         Primary
+postgresql-k8s/1             active    idle   10.1.219.145         
+postgresql-k8s/2             active    idle   10.1.219.144         
+postgresql-test-app2/0*      active    idle   10.1.219.142         received database credentials of the first database
+postgresql-test-app/0*       active    idle   10.1.219.138         received database credentials of the first database
+self-signed-certificates/0*  active    idle   10.1.219.146         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:868 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:947 Forgetting model main...
