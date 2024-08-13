@@ -440,13 +440,13 @@ files = [
 
 [[package]]
 name = "cosl"
-version = "0.0.19"
+version = "0.0.20"
 description = "Utils for COS Lite charms"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "cosl-0.0.19-py3-none-any.whl", hash = "sha256:60e2ddfa732a8e0a5243811e6479957fd1f551ed8eda6d76fea2d8084f72c386"},
-    {file = "cosl-0.0.19.tar.gz", hash = "sha256:686ae4daab0215c2ed81013527a2d4b17b3ea3278f2cf07ca2396145f06aa737"},
+    {file = "cosl-0.0.20-py3-none-any.whl", hash = "sha256:3175d8a03dec7d34d4d40723c6d5499aa74c2da57790d9419cb434930267500a"},
+    {file = "cosl-0.0.20.tar.gz", hash = "sha256:48b1de3476d24ce0eece4fb3f26a296e0c302d3f13aa53c967cdb5f61f75be12"},
 ]
 
 [package.dependencies]
@@ -1293,13 +1293,13 @@ dev = ["jinja2"]
 
 [[package]]
 name = "paramiko"
-version = "3.4.0"
+version = "3.4.1"
 description = "SSH2 protocol library"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "paramiko-3.4.0-py3-none-any.whl", hash = "sha256:43f0b51115a896f9c00f59618023484cb3a14b98bbceab43394a39c6739b7ee7"},
-    {file = "paramiko-3.4.0.tar.gz", hash = "sha256:aac08f26a31dc4dffd92821527d1682d99d52f9ef6851968114a8728f3c274d3"},
+    {file = "paramiko-3.4.1-py3-none-any.whl", hash = "sha256:8e49fd2f82f84acf7ffd57c64311aa2b30e575370dc23bdb375b10262f7eac32"},
+    {file = "paramiko-3.4.1.tar.gz", hash = "sha256:8b15302870af7f6652f2e038975c1d2973f06046cb5d7d65355668b3ecbece0c"},
 ]
 
 [package.dependencies]
@@ -2493,13 +2493,13 @@ files = [
 
 [[package]]
 name = "zipp"
-version = "3.19.2"
+version = "3.20.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "zipp-3.19.2-py3-none-any.whl", hash = "sha256:f091755f667055f2d02b32c53771a7a6c8b47e1fdbc4b72a8b9072b3eef8015c"},
-    {file = "zipp-3.19.2.tar.gz", hash = "sha256:bf1dcf6450f873a13e952a29504887c89e6de7506209e5b1bcc3460135d4de19"},
+    {file = "zipp-3.20.0-py3-none-any.whl", hash = "sha256:58da6168be89f0be59beb194da1250516fdaa062ccebd30127ac65d30045e10d"},
+    {file = "zipp-3.20.0.tar.gz", hash = "sha256:0145e43d89664cfe1a2e533adc75adafed82fe2da404b4bbb6b026c0157bdb31"},
 ]
 
 [package.extras]
@@ -2509,4 +2509,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "a0c11b4b522b13a933f9a881d5e30deeeec0de72eb887e2087bc1108df0366b9"
+content-hash = "341d5223b92a43eafac9bf7243474a784943a7d58a89acfb45dd59b10b0f8d80"
