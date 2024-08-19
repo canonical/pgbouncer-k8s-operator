@@ -11,9 +11,8 @@ jobs:
   sync-docs:
     name: Sync docs from Discourse
     uses: canonical/data-platform-workflows/.github/workflows/sync_docs.yaml@v20.0.0
-    secrets:
-      discourse-api-user: ${{ secrets.DISCOURSE_API_USERNAME }}
-      discourse-api-key: ${{ secrets.DISCOURSE_API_KEY }}
+    with:
+      reviewers: a-velasco,izmalk
     permissions:
       contents: write  # Needed to push branch & tag
       pull-requests: write  # Needed to create PR
