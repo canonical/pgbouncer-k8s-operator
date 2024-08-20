@@ -268,15 +268,19 @@ def check_exposed_connection(credentials, tls):
     table_name = "expose_test"
     smoke_val = str(uuid4())
 
-    host, port = credentials["postgresql"]["endpoints"].split(":")
-    user = credentials["postgresql"]["username"]
-    password = credentials["postgresql"]["password"]
-    database = credentials["postgresql"]["database"]
     if tls:
         sslmode = "require"
     else:
         sslmode = "disable"
-    connstr = f"dbname='{database}' user='{user}' host='{host}' port='{port}' password='{password}' connect_timeout=1 sslmode={sslmode}"
+    if "uris" in credentials["postgresql"]:
+        uri = credentials["postgresql"]["uris"]
+        connstr = f"{uri}?connect_timeout=1&sslmode={sslmode}"
+    else:
+        host, port = credentials["postgresql"]["endpoints"].split(":")
+        user = credentials["postgresql"]["username"]
+        password = credentials["postgresql"]["password"]
+        database = credentials["postgresql"]["database"]
+        connstr = f"dbname='{database}' user='{user}' host='{host}' port='{port}' password='{password}' connect_timeout=1 sslmode={sslmode}"
     connection = psycopg2.connect(connstr)
     connection.autocommit = True
     smoke_query = (

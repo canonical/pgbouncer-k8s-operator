@@ -250,15 +250,26 @@ class PgBouncerProvider(Object):
                 # This is a relation that is going away and finds itself in a broken state
                 # proceed to the next relation
                 continue
+            user = f"relation_id_{relation.id}"
+            database = self.database_provides.fetch_relation_field(relation.id, "database")
+            password = self.database_provides.fetch_my_relation_field(relation.id, "password")
             # Read-write endpoint
             if relation.data[relation.app].get("external-node-connectivity", "false") == "true":
                 self.database_provides.set_endpoints(relation.id, nodeports["rw"])
                 self.database_provides.set_read_only_endpoints(relation.id, nodeports["ro"])
+                self.database_provides.set_uris(
+                    relation.id,
+                    f"postgresql://{user}:{password}@{nodeports['rw']}/{database}",
+                )
             else:
                 self.database_provides.set_endpoints(relation.id, internal_rw)
                 self.database_provides.set_read_only_endpoints(
                     relation.id,
                     ",".join([f"{host}:{internal_port}" for host in internal_hostnames]),
+                )
+                self.database_provides.set_uris(
+                    relation.id,
+                    f"postgresql://{user}:{password}@{internal_rw}/{database}",
                 )
 
     def get_database(self, relation):
