@@ -4,25 +4,12 @@ This is part of the [PgBouncer K8s Tutorial](/t/12251). Please refer to this pag
 
 In this section, you will deploy PgBouncer together with a PostgreSQL server from [Charmed PostgreSQL K8s](https://charmhub.io/postgresql-k8s). 
 
-[note]
-**Note**: All commands are written for `juju >= v.3.0`
-
-If you are using an earlier version, be aware that:
-
- - `juju run` replaces `juju run-action --wait` in `juju v.2.9` 
- - `juju integrate` replaces `juju relate` and `juju add-relation` in `juju v.2.9`
-
-For more information, check the [Juju 3.0 Release Notes](https://juju.is/docs/juju/roadmap#heading--juju-3-0-0---22-oct-2022).
-[/note]
-
 ## Deploy Charmed PostgreSQL K8s + PgBouncer K8s
 
 To deploy Charmed PostgreSQL K8s + PgBouncer K8s, all you need to do is run the following commands:
 
 ```shell
 juju deploy pgbouncer-k8s --channel 1/stable --trust
-```
-```shell
 juju deploy postgresql-k8s --trust
 ```
 [note]
@@ -94,9 +81,6 @@ To retrieve these values, please run data-integrator action `get-credentials`:
 ```shell
 juju run data-integrator/leader get-credentials
 ```
-[note type="caution"]
-For versions of juju before v3.0, use `juju run-action` instead of `juju run`.
-[/note]
 
 Running the command above should output:
 ```yaml
@@ -121,7 +105,7 @@ To access the PostgreSQL database via PgBouncer, use the port 6432 and your host
 ```shell
 psql -h 10.152.183.84 -p 6432 -U relation_id_7 -W -d test123
 ```
-Inside MySQL, list DBs available on the host with  `show databases`:
+Inside PostgreSQL, list DBs available on the host with  `show databases`:
 ```shell
 Password for user relation_id_7:  VYm6tg2KkFOBj8mP3IW9O821
 psql (14.9 (Ubuntu 14.9-0ubuntu0.22.04.1))

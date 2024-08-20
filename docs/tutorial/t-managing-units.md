@@ -4,7 +4,7 @@ This is part of the [PgBouncer K8s Tutorial](/t/12251). Please refer to this pag
 
 ## Adding and Removing units
 
-Please check the explanation of scaling Charmed PostgreSQL K8s operator [here](https://charmhub.io/postgresql-k8s/docs/t-managing-units).
+Please check the explanation of scaling Charmed PostgreSQL K8s operator [here](https://charmhub.io/postgresql-k8s/docs/t-scale).
 
 ### Add more PgBouncer instances
 
