@@ -24,42 +24,56 @@ This PgBouncer K8s charm is an official distribution of PgBouncer. It’s an ope
 |  [Tutorials](/t/12251)</br>  Get started - a hands-on introduction to using PgBouncer operator for new users </br> |  [How-to guides](/t/12257) </br> Step-by-step guides covering key operations and common tasks |
 | [Reference](/t/12261) </br> Technical information - specifications, APIs, architecture | [Explanation](/t/12265) </br> Concepts - discussion and clarification of key topics  |
 
-# Contents
+# Navigation
 
-1. [Tutorial](tutorial)
-  1. [1. Introduction](tutorial/t-overview.md)
-  1. [2. Set up the environment](tutorial/t-setup-environment.md)
-  1. [3. Deploy PgBouncer](tutorial/t-deploy-charm.md)
-  1. [4. Manage units](tutorial/t-managing-units.md)
-  1. [5. Enable security](tutorial/t-enable-security.md)
-  1. [6. Clean up environment](tutorial/t-cleanup-environment.md)
-1. [How To](how-to)
-  1. [Setup](how-to/h-setup)
-    1. [Deploy on MicroK8s](how-to/h-setup/h-deploy-microk8s.md)
-    1. [Manage units](how-to/h-setup/h-manage-units.md)
-    1. [Enable encryption](how-to/h-setup/h-enable-encryption.md)
-    1. [Manage applications](how-to/h-setup/h-manage-app.md)
-  1. [Upgrade](how-to/h-upgrade)
-    1. [Intro](how-to/h-upgrade/h-upgrade-intro.md)
-    1. [Major upgrade](how-to/h-upgrade/h-upgrade-major.md)
-    1. [Major rollback](how-to/h-upgrade/h-rollback-major.md)
-    1. [Minor upgrade](how-to/h-upgrade/h-upgrade-minor.md)
-    1. [Minor rollback](how-to/h-upgrade/h-rollback-minor.md)
-  1. [Monitoring](how-to/h-monitoring)
-    1. [Monitor (COS)](how-to/h-monitoring/h-enable-monitoring.md)
-    1. [Tracing (COS)](how-to/h-monitoring/h-enable-tracing.md)
-1. [Reference](reference)
-  1. [Release Notes](reference/r-releases-group)
-    1. [All releases](reference/r-releases-group/r-releases.md)
-    1. [Revision 144/145](reference/r-releases-group/r-releases-rev144.md)
-    1. [Revision 103](reference/r-releases-group/r-releases-rev103.md)
-    1. [Revision 81](reference/r-releases-group/r-releases-rev81.md)
-    1. [Revision 76](reference/r-releases-group/r-releases-rev76.md)
-  1. [Requirements](reference/r-requirements.md)
-  1. [Contributing](https://github.com/canonical/pgbouncer-k8s-operator/blob/main/CONTRIBUTING.md)
-  1. [Testing](reference/r-testing.md)
-  1. [Contacts](reference/r-contacts.md)
-1. [Explanation](explanation)
-  1. [Interfaces/endpoints](explanation/e-interfaces.md)
-  1. [Statuses](explanation/e-statuses.md)
-  1. [Juju](explanation/e-juju-details.md)
+[details=Navigation]
+
+| Level | Path | Navlink |
+|---------|---------|-------------|
+| 1 | tutorial | [Tutorial]() |
+| 2 | t-overview | [1. Introduction](/t/12251) |
+| 2 | t-setup-environment | [2. Set up the environment](/t/12252) |
+| 2 | t-deploy-charm | [3. Deploy PgBouncer](/t/12253) |
+| 2 | t-managing-units | [4. Manage units](/t/12254) |
+| 2 | t-enable-security | [5. Enable security](/t/12255) |
+| 2 | t-cleanup-environment | [6. Clean up environment](/t/12256) |
+| 1 | how-to | [How To]() |
+| 2 | h-setup | [Setup]() |
+| 3 | h-deploy-microk8s | [Deploy on MicroK8s](/t/12257) |
+| 3 | h-manage-units | [Manage units](/t/12258) |
+| 3 | h-enable-encryption | [Enable encryption](/t/12259) |
+| 3 | h-manage-app | [Manage applications](/t/12260) |
+| 2 | h-upgrade | [Upgrade]() |
+| 3 | h-upgrade-intro | [Intro](/t/12267) |
+| 3 | h-upgrade-major | [Major upgrade](/t/12268) |
+| 3 | h-rollback-major | [Major rollback](/t/12269) |
+| 3 | h-upgrade-minor | [Minor upgrade](/t/12270) |
+| 3 | h-rollback-minor | [Minor rollback](/t/12271) |
+| 2 | h-monitoring | [Monitoring]() |
+| 3 | h-enable-monitoring | [Monitor (COS)](/t/12279) |
+| 3 | h-enable-tracing | [Tracing (COS)](/t/14789) |
+| 1 | reference | [Reference]() |
+| 2 | r-releases-group | [Release Notes]() |
+| 3 | r-releases | [All releases](/t/12261) |
+| 3 | r-releases-rev228 | [Revision 228/229](/t/15090) |
+| 3 | r-releases-rev144 | [Revision 144/145](/t/14070) |
+| 3 | r-releases-rev103 | [Revision 103](/t/13297) |
+| 3 | r-releases-rev81 | [Revision 81](/t/12751) |
+| 3 | r-releases-rev76 | [Revision 76](/t/12262) |
+| 2 | r-requirements | [Requirements](/t/12263) |
+| 2 | r-contributing | [Contributing](https://github.com/canonical/pgbouncer-k8s-operator/blob/main/CONTRIBUTING.md) |
+| 2 | r-testing | [Testing](/t/12272) |
+| 2 | r-contacts | [Contacts](/t/12264) |
+| 1 | explanation | [Explanation]() |
+| 2 | e-interfaces | [Interfaces/endpoints](/t/12265) |
+| 2 | e-statuses | [Statuses](/t/12266) |
+| 2 | e-juju-details | [Juju](/t/12274) |
+
+[/details]
+
+# Redirects
+
+[details=Mapping table]
+| Path | Location |
+| ---- | -------- |
+[/details]

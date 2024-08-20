@@ -7,7 +7,8 @@ Here you will find release notes for the main revisions of this charm that are a
 
 |  Channel | amd64 | arm64 |
 |----------:|:-----:|:-----:|
-| `1/stable` | [144](/t/14070) | [145](/t/14070) |
+| `1/stable` | [229](/t/15090) | [228](/t/15090) |
+|                     | [144](/t/14070) | [145](/t/14070) |
 |                     | [103](/t/13297) | - |
 |                     | [81](/t/12751) | - |
 |                     | [76](/t/12262) | - |
