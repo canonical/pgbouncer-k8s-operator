@@ -763,13 +763,13 @@ parser = ["pyhcl (>=0.4.4,<0.5.0)"]
 
 [[package]]
 name = "idna"
-version = "3.7"
+version = "3.8"
 description = "Internationalized Domain Names in Applications (IDNA)"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.6"
 files = [
-    {file = "idna-3.7-py3-none-any.whl", hash = "sha256:82fee1fc78add43492d3a1898bfa6d8a904cc97d8427f683ed8e798d07761aa0"},
-    {file = "idna-3.7.tar.gz", hash = "sha256:028ff3aadf0609c1fd278d8ea3089299412a7a8b9bd005dd08b9f8285bcb5cfc"},
+    {file = "idna-3.8-py3-none-any.whl", hash = "sha256:050b4e5baadcd44d760cedbd2b8e639f2ff89bbc7a5730fcc662954303377aac"},
+    {file = "idna-3.8.tar.gz", hash = "sha256:d838c2c0ed6fced7693d5e8ab8e734d5f8fda53a039c0164afb0b82e771e3603"},
 ]
 
 [[package]]
@@ -1004,19 +1004,22 @@ adal = ["adal (>=1.0.2)"]
 
 [[package]]
 name = "lightkube"
-version = "0.15.3"
+version = "0.15.4"
 description = "Lightweight kubernetes client library"
 optional = false
 python-versions = "*"
 files = [
-    {file = "lightkube-0.15.3-py3-none-any.whl", hash = "sha256:0f1c5e3b80f727df161965eff9cd6bc029c47e5a8569ab3e1acc429fd8c73db1"},
-    {file = "lightkube-0.15.3.tar.gz", hash = "sha256:235b66409b67e06ce26bd5c7ae27e105bb6016ce0962d144e272a31155545e27"},
+    {file = "lightkube-0.15.4-py3-none-any.whl", hash = "sha256:7dde49694f2933b757ee6dfee0e028a56d7a13f47476bf54a21ec7cee343b09b"},
+    {file = "lightkube-0.15.4.tar.gz", hash = "sha256:fe7939f8da5b68d80809243c9abf601fca2e5425228bb02c2ad23ed3e56401a8"},
 ]
 
 [package.dependencies]
 httpx = ">=0.24.0"
 lightkube-models = ">=1.15.12.0"
 PyYAML = "*"
+
+[package.extras]
+dev = ["pytest", "pytest-asyncio (<0.17.0)", "respx"]
 
 [[package]]
 name = "lightkube-models"
@@ -2528,4 +2531,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "075d5e99949f038ea207ef18d2ac059719dd8db14bf08100743cceb6a9d3fa7c"
+content-hash = "5392be2fd77a6dbaa68de07650a52059e2db4ac8a0a3f490c92c492edb00cf99"
