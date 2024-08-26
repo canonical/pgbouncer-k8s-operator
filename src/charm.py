@@ -426,7 +426,7 @@ class PgBouncerK8sCharm(CharmBase):
             # This emits relation-changed events to every client relation, so only do it when
             # necessary
             self.update_client_connection_info(self.config["listen_port"])
-            self.patch_port()
+            self.patch_port(self.client_relation.external_connectivity())
 
         self.render_pgb_config()
         try:
