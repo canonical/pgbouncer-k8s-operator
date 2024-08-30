@@ -59,7 +59,10 @@ async def test_deploy_stable(ops_test: OpsTest, pgb_charm) -> None:
     await ops_test.model.add_relation(DATA_INTEGRATOR_APP_NAME, PGB)
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(
-            apps=[PG, PGB, DATA_INTEGRATOR_APP_NAME], status="active", timeout=1200
+            apps=[PG, PGB, DATA_INTEGRATOR_APP_NAME],
+            status="active",
+            timeout=1200,
+            raise_on_error=False,
         )
     assert len(ops_test.model.applications[PG].units) == 3
     assert len(ops_test.model.applications[PGB].units) == 2

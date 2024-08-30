@@ -318,7 +318,9 @@ class DbProvides(Object):
                 {
                     "allowed-subnets": self.get_allowed_subnets(change_event.relation),
                     "allowed-units": self.get_allowed_units(change_event.relation),
-                    "version": self.charm.backend.postgres.get_postgresql_version(),
+                    "version": self.charm.backend.postgres.get_postgresql_version(
+                        current_host=False
+                    ),
                     "host": self.charm.unit_pod_hostname,
                     "user": user,
                     "password": password,
