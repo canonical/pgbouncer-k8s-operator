@@ -514,6 +514,6 @@ class DbProvides(Object):
 
     def get_external_app(self, relation):
         """Gets external application, as an Application object."""
-        for entry in relation.data.keys():
+        for entry in relation.data:
             if isinstance(entry, Application) and entry != self.charm.app:
                 return entry

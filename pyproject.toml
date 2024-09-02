@@ -109,7 +109,7 @@ line-length = 99
 
 [tool.ruff.lint]
 explicit-preview-rules = true
-select = ["A", "E", "W", "F", "C", "N", "D", "I001", "CPY001"]
+select = ["A", "E", "W", "F", "C", "N", "D", "I001", "CPY001", "SIM"]
 extend-ignore = [
     "D203",
     "D204",
@@ -134,6 +134,7 @@ ignore = ["E501", "D107"]
 # Check for properly formatted copyright header in each file
 author = "Canonical Ltd."
 notice-rgx = "Copyright\\s\\d{4}([-,]\\d{4})*\\s+"
+min-file-size = 1
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10

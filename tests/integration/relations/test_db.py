@@ -156,8 +156,8 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
         for unit in ops_test.model.applications[PGB].units:
             cfg = await get_cfg(ops_test, unit.name)
             logger.info(cfg)
-            assert "waltz" in cfg["databases"].keys()
-            assert "waltz_standby" in cfg["databases"].keys()
+            assert "waltz" in cfg["databases"]
+            assert "waltz_standby" in cfg["databases"]
 
         # Remove the first deployment of Finos Waltz.
         await ops_test.model.remove_application(FINOS_WALTZ, block_until_done=True)
@@ -169,8 +169,8 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
         for unit in ops_test.model.applications[PGB].units:
             cfg = await get_cfg(ops_test, unit.name)
             logger.info(cfg)
-            assert "waltz" not in cfg["databases"].keys()
-            assert "waltz_standby" not in cfg["databases"].keys()
+            assert "waltz" not in cfg["databases"]
+            assert "waltz_standby" not in cfg["databases"]
 
 
 @pytest.mark.group(1)

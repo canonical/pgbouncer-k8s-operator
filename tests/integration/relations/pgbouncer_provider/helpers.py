@@ -268,10 +268,7 @@ def check_exposed_connection(credentials, tls):
     table_name = "expose_test"
     smoke_val = str(uuid4())
 
-    if tls:
-        sslmode = "require"
-    else:
-        sslmode = "disable"
+    sslmode = "require" if tls else "disable"
     if "uris" in credentials["postgresql"]:
         uri = credentials["postgresql"]["uris"]
         connstr = f"{uri}?connect_timeout=1&sslmode={sslmode}"

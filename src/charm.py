@@ -210,9 +210,7 @@ class PgBouncerK8sCharm(CharmBase):
         # svc.spec.ports
         # [ServicePort(port=6432, appProtocol=None, name=None, nodePort=31438, protocol='TCP', targetPort=6432)]
         # Keeping this distinction, so we have similarity with mysql-router-k8s
-        if port_type == "rw":
-            port = self.config["listen_port"]
-        elif port_type == "ro":
+        if port_type == "rw" or port_type == "ro":
             port = self.config["listen_port"]
         else:
             raise ValueError(f"Invalid {port_type=}")
@@ -579,7 +577,7 @@ class PgBouncerK8sCharm(CharmBase):
         pgb_container = self.unit.get_container(PGB)
         pebble_services = pgb_container.get_services()
         for service in self._services:
-            if service["name"] not in pebble_services.keys():
+            if service["name"] not in pebble_services:
                 # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
                 raise ConnectionError
             if restart or pebble_services[service["name"]].current != ServiceStatus.ACTIVE:
@@ -638,7 +636,7 @@ class PgBouncerK8sCharm(CharmBase):
             services.append(self._metrics_service)
 
         for service in services:
-            if service not in pebble_services.keys():
+            if service not in pebble_services:
                 # pebble_ready event hasn't fired so pgbouncer layer has not been added to pebble
                 raise ConnectionError
             pgb_service_status = pgb_container.get_services().get(service).current
@@ -799,25 +797,26 @@ class PgBouncerK8sCharm(CharmBase):
         if "pgb_dbs_config" in self.peers.app_databag:
             return json.loads(self.peers.app_databag["pgb_dbs_config"])
         # Nothing set in the config peer data trying to regenerate based on old data in case of update.
-        elif not self.unit.is_leader():
-            if cfg := self.get_secret(APP_SCOPE, CFG_FILE_DATABAG_KEY):
-                try:
-                    parser = ConfigParser()
-                    parser.optionxform = str
-                    parser.read_string(cfg)
-                    old_cfg = dict(parser)
-                    if databases := old_cfg.get("databases"):
-                        databases.pop("DEFAULT", None)
-                        result = {}
-                        i = 1
-                        for database in dict(databases):
-                            if database.endswith("_standby") or database.endswith("_readonly"):
-                                continue
-                            result[str(i)] = {"name": database, "legacy": False}
-                            i += 1
-                        return result
-                except Exception:
-                    logger.exception("Unable to parse legacy config format")
+        elif not self.unit.is_leader() and (
+            cfg := self.get_secret(APP_SCOPE, CFG_FILE_DATABAG_KEY)
+        ):
+            try:
+                parser = ConfigParser()
+                parser.optionxform = str
+                parser.read_string(cfg)
+                old_cfg = dict(parser)
+                if databases := old_cfg.get("databases"):
+                    databases.pop("DEFAULT", None)
+                    result = {}
+                    i = 1
+                    for database in dict(databases):
+                        if database.endswith("_standby") or database.endswith("_readonly"):
+                            continue
+                        result[str(i)] = {"name": database, "legacy": False}
+                        i += 1
+                    return result
+            except Exception:
+                logger.exception("Unable to parse legacy config format")
         return {}
 
     def generate_relation_databases(self) -> Dict[str, Dict[str, Union[str, bool]]]:

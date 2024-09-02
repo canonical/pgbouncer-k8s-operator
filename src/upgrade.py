@@ -139,8 +139,5 @@ class PgbouncerUpgrade(DataUpgrade):
             )
             logger.debug(f"Kubernetes StatefulSet partition set to {partition}")
         except ApiError as e:
-            if e.status.code == 403:
-                cause = "`juju trust` needed"
-            else:
-                cause = str(e)
+            cause = "`juju trust` needed" if e.status.code == 403 else str(e)
             raise KubernetesClientError("Kubernetes StatefulSet patch failed", cause)
