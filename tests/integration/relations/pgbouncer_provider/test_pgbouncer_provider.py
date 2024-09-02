@@ -287,7 +287,7 @@ async def test_read_only_endpoint_in_scaled_up_cluster(ops_test: OpsTest):
 @pytest.mark.group(1)
 async def test_each_relation_has_unique_credentials(ops_test: OpsTest):
     """Test that two different applications connect to the database with different credentials."""
-    all_app_names = [SECONDARY_CLIENT_APP_NAME] + APP_NAMES
+    all_app_names = [*SECONDARY_CLIENT_APP_NAME, APP_NAMES]
 
     # Deploy secondary application.
     await ops_test.model.deploy(
@@ -397,7 +397,7 @@ async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_ch
     wait_for_relation_joined_between(ops_test, PG, pgb_secondary)
 
     async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(apps=APP_NAMES + [pgb_secondary])
+        await ops_test.model.wait_for_idle(apps=[*APP_NAMES, pgb_secondary])
 
     await ops_test.model.add_relation(
         f"{SECONDARY_CLIENT_APP_NAME}:{SECOND_DATABASE_RELATION_NAME}", pgb_secondary

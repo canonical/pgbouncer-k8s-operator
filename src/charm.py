@@ -359,7 +359,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         self.render_pgb_config()
         # Render the logrotate config
-        with open("templates/logrotate.j2", "r") as file:
+        with open("templates/logrotate.j2") as file:
             template = Template(file.read())
         container.push(
             "/etc/logrotate.d/pgbouncer",
@@ -939,7 +939,7 @@ class PgBouncerK8sCharm(CharmBase):
             min_pool_size = math.ceil(effective_db_connections / 4)
             reserve_pool_size = math.ceil(effective_db_connections / 4)
         service_ids = [service["id"] for service in self._services]
-        with open("templates/pgb_config.j2", "r") as file:
+        with open("templates/pgb_config.j2") as file:
             template = Template(file.read())
             databases = self._get_relation_config()
             readonly_dbs = self._get_readonly_dbs(databases)

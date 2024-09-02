@@ -97,7 +97,7 @@ pythonpath = [
 # Formatting tools configuration
 [tool.black]
 line-length = 99
-target-version = ["py38"]
+target-version = ["py310"]
 
 # Linting tools configuration
 [tool.ruff]
@@ -109,7 +109,7 @@ line-length = 99
 
 [tool.ruff.lint]
 explicit-preview-rules = true
-select = ["A", "E", "W", "F", "C", "N", "D", "I001", "CPY001", "SIM"]
+select = ["A", "E", "W", "F", "C", "N", "D", "I001", "CPY", "RUF", "SIM", "UP"]
 extend-ignore = [
     "D203",
     "D204",

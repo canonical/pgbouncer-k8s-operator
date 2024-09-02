@@ -86,7 +86,7 @@ async def get_endpoint_info(ops_test: OpsTest, unit_name: str, endpoint: str) ->
         "--format=json",
     )
     relation_info = json.loads(get_databag[1])[unit_name]["relation-info"]
-    return list(filter(lambda x: x["endpoint"] == endpoint, relation_info))[0]["application-data"][
+    return next(filter(lambda x: x["endpoint"] == endpoint, relation_info))["application-data"][
         "endpoints"
     ]
 

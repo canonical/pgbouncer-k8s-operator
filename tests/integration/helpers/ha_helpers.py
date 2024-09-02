@@ -1,6 +1,6 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import psycopg2
 import requests
@@ -16,7 +16,7 @@ from tenacity import (
 from .helpers import CLIENT_APP_NAME
 
 
-async def get_password(ops_test: OpsTest, app: str, down_unit: str = None) -> str:
+async def get_password(ops_test: OpsTest, app: str, down_unit: Optional[str] = None) -> str:
     """Use the charm action to retrieve the password from provided application.
 
     Returns:
@@ -57,7 +57,7 @@ async def check_writes(ops_test) -> int:
     return total_expected_writes
 
 
-async def are_writes_increasing(ops_test, down_unit: str = None) -> None:
+async def are_writes_increasing(ops_test, down_unit: Optional[str] = None) -> None:
     """Verify new writes are continuing by counting the number of writes."""
     writes, _ = await count_writes(ops_test, down_unit=down_unit)
     for member, count in writes.items():
@@ -70,7 +70,7 @@ async def are_writes_increasing(ops_test, down_unit: str = None) -> None:
 
 
 async def count_writes(
-    ops_test: OpsTest, down_unit: str = None
+    ops_test: OpsTest, down_unit: Optional[str] = None
 ) -> Tuple[Dict[str, int], Dict[str, int]]:
     """Count the number of writes in the database."""
     app = "postgresql-k8s"
