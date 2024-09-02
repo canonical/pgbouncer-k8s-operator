@@ -190,9 +190,8 @@ class DbProvides(Object):
                 for relation in self.charm.model.relations.get(relname, []):
                     if relation.id == relation_id:
                         continue
-                    for data in relation.data.values():
-                        if not self._check_extensions(self._get_relation_extensions(relation)):
-                            return
+                    if not self._check_extensions(self._get_relation_extensions(relation)):
+                        return
             self.charm.unit.status = ActiveStatus()
 
     def _on_relation_joined(self, join_event: RelationJoinedEvent):
