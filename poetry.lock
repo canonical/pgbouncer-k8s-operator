@@ -223,13 +223,13 @@ files = [
 
 [[package]]
 name = "certifi"
-version = "2024.7.4"
+version = "2024.8.30"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "certifi-2024.7.4-py3-none-any.whl", hash = "sha256:c198e21b1289c2ab85ee4e67bb4b4ef3ead0892059901a8d5b622f24a1101e90"},
-    {file = "certifi-2024.7.4.tar.gz", hash = "sha256:5a1e7645bc0ec61a09e26c36f6106dd4cf40c6db3a1fb6352b0244e7fb057c7b"},
+    {file = "certifi-2024.8.30-py3-none-any.whl", hash = "sha256:922820b53db7a7257ffbda3f597266d435245903d80737e34f8a45ff3e3230d8"},
+    {file = "certifi-2024.8.30.tar.gz", hash = "sha256:bec941d2aa8195e248a60b31ff9f0558284cf01a52591ceda73ea9afffd69fd9"},
 ]
 
 [[package]]
@@ -440,16 +440,17 @@ files = [
 
 [[package]]
 name = "cosl"
-version = "0.0.24"
+version = "0.0.26"
 description = "Utils for COS Lite charms"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "cosl-0.0.24-py3-none-any.whl", hash = "sha256:684cb675c28124379e1508b6967d517d8442e60e9dcbadbf6b798e61e59c1aa0"},
-    {file = "cosl-0.0.24.tar.gz", hash = "sha256:7744095a747382bff640ecb03ac0b3015bf01a407e133cb326d1954ff3dc7199"},
+    {file = "cosl-0.0.26-py3-none-any.whl", hash = "sha256:8f43e0eb79837173bdd841a036a6b84f6451c4797c59944cfde887aec0cd6add"},
+    {file = "cosl-0.0.26.tar.gz", hash = "sha256:6e23d4364514853ec8073d535e06af89ba80f8da0130f50f08e82b80269cc0e1"},
 ]
 
 [package.dependencies]
+lightkube = ">=v0.15.4"
 ops = "*"
 pydantic = "*"
 pyyaml = "*"
@@ -2536,4 +2537,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "7e115bd6cccdaa2327ced1fdb73781d9dd8b0bb803a390f2919534794350a72f"
+content-hash = "caf2f054502fc063e788f37aa3cfd90cef18dbacdf321ad5efa8d93b7b0b5576"
