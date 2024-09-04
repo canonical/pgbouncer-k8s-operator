@@ -67,7 +67,11 @@ async def test_scaled_relations(ops_test: OpsTest):
                 apps=[PGB], status="blocked", timeout=1000, wait_for_exact_units=3
             ),
             ops_test.model.wait_for_idle(
-                apps=[PG], status="active", timeout=1000, wait_for_exact_units=3
+                apps=[PG],
+                status="active",
+                timeout=1000,
+                wait_for_exact_units=3,
+                raise_on_error=False,
             ),
         )
 

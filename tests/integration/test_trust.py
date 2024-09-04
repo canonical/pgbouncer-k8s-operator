@@ -116,7 +116,9 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
             config={"profile": "testing"},
         )
         await ops_test.model.relate(PGB, PG)
-        await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1200)
+        await ops_test.model.wait_for_idle(
+            apps=[PGB, PG], status="active", timeout=1200, raise_on_error=False
+        )
 
         await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:database")
         await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1200)

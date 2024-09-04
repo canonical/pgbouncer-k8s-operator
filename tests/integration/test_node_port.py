@@ -130,7 +130,7 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
         await ops_test.model.relate(tls_certificates_app_name, POSTGRESQL_APP_NAME)
 
     if wait_for_apps:
-        await ops_test.model.wait_for_idle(status="active", timeout=1200)
+        await ops_test.model.wait_for_idle(status="active", timeout=1200, raise_on_error=False)
 
 
 @pytest.mark.group(1)

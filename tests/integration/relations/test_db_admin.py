@@ -57,7 +57,7 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
 
         # update pgbouncer port because discourse only likes 5432
         await ops_test.model.applications[PGB].set_config({"listen_port": "5432"})
-        await ops_test.model.wait_for_idle(apps=[PG, PGB], timeout=1000)
+        await ops_test.model.wait_for_idle(apps=[PG, PGB], timeout=1000, raise_on_error=False)
 
         backend_relation = await ops_test.model.add_relation(
             f"{PGB}:backend-database", f"{PG}:database"

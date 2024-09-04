@@ -171,7 +171,7 @@ class PgBouncerProvider(Object):
         # Set the database name
         self.database_provides.set_database(rel_id, database)
 
-        self.charm.patch_port(self.external_connectivity(event))
+        self.charm.patch_port(self.external_connectivity())
         self.update_connection_info(event.relation)
 
     def _on_relation_departed(self, event: RelationDepartedEvent) -> None:
@@ -230,7 +230,7 @@ class PgBouncerProvider(Object):
         # Set the database version.
         if self.charm.backend.check_backend():
             self.database_provides.set_version(
-                relation.id, self.charm.backend.postgres.get_postgresql_version()
+                relation.id, self.charm.backend.postgres.get_postgresql_version(current_host=False)
             )
 
     def update_endpoints(self, relation=None) -> None:
