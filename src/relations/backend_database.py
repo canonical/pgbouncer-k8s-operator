@@ -169,7 +169,8 @@ class BackendDatabaseRequires(Object):
         """Generate auth query."""
         if not self.relation:
             return ""
-        return f"SELECT username, password FROM {self.auth_user}.get_auth($1)"
+        # auth user is internally generated
+        return f"SELECT username, password FROM {self.auth_user}.get_auth($1)"  # noqa: S608
 
     @property
     def postgres_databag(self) -> Dict:

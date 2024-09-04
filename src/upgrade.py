@@ -50,7 +50,7 @@ class PgbouncerUpgrade(DataUpgrade):
 
         self.framework.observe(self.charm.on.upgrade_relation_changed, self._on_upgrade_changed)
         self.framework.observe(
-            getattr(self.charm.on, "pgbouncer_pebble_ready"), self._on_pgbouncer_pebble_ready
+            self.charm.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready
         )
 
     def _cluster_checks(self) -> None:
@@ -60,8 +60,10 @@ class PgbouncerUpgrade(DataUpgrade):
                 raise ClusterNotReadyError(
                     DEFAULT_MESSAGE, "Not all pgbouncer services are up yet."
                 )
-        except ConnectionError:
-            raise ClusterNotReadyError(DEFAULT_MESSAGE, "Not all pgbouncer services are missing.")
+        except ConnectionError as e:
+            raise ClusterNotReadyError(
+                DEFAULT_MESSAGE, "Not all pgbouncer services are missing."
+            ) from e
 
         if self.charm.backend.postgres and not self.charm.backend.ready:
             raise ClusterNotReadyError(DEFAULT_MESSAGE, "Backend relation is still initialising.")
@@ -80,7 +82,7 @@ class PgbouncerUpgrade(DataUpgrade):
         try:
             self._set_rolling_update_partition(self.charm.app.planned_units() - 1)
         except KubernetesClientError as e:
-            raise ClusterNotReadyError(e.message, e.cause)
+            raise ClusterNotReadyError(e.message, e.cause) from e
 
     def _on_pgbouncer_pebble_ready(self, event: WorkloadEvent) -> None:
         if not self.peer_relation:
@@ -140,4 +142,4 @@ class PgbouncerUpgrade(DataUpgrade):
             logger.debug(f"Kubernetes StatefulSet partition set to {partition}")
         except ApiError as e:
             cause = "`juju trust` needed" if e.status.code == 403 else str(e)
-            raise KubernetesClientError("Kubernetes StatefulSet patch failed", cause)
+            raise KubernetesClientError("Kubernetes StatefulSet patch failed", cause) from e

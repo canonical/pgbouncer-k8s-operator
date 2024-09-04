@@ -468,8 +468,8 @@ class TestCharm(unittest.TestCase):
         self.harness.set_leader(True)
 
         # call the methods that try to access K8s resources
-        self.charm._node_name
-        self.charm._node_ip
+        _ = self.charm._node_name
+        _ = self.charm._node_ip
         self.charm._node_port("port")
         self.charm.get_all_k8s_node_hostnames_and_ips()
 

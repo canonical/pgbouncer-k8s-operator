@@ -109,7 +109,7 @@ line-length = 99
 
 [tool.ruff.lint]
 explicit-preview-rules = true
-select = ["A", "E", "W", "F", "C", "N", "D", "I001", "CPY", "RUF", "SIM", "UP"]
+select = ["A", "E", "W", "F", "C", "N", "D", "I001", "B", "CPY", "RUF", "S", "SIM", "UP", "TCH"]
 extend-ignore = [
     "D203",
     "D204",
@@ -128,7 +128,13 @@ extend-ignore = [
 ignore = ["E501", "D107"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D100", "D101", "D102", "D103", "D104"]
+"tests/*" = [
+    "D100", "D101", "D102", "D103", "D104",
+    # Asserts
+    "B011",
+    # Disable security checks for tests
+    "S",
+]
 
 [tool.ruff.lint.flake8-copyright]
 # Check for properly formatted copyright header in each file
