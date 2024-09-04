@@ -440,13 +440,13 @@ files = [
 
 [[package]]
 name = "cosl"
-version = "0.0.26"
+version = "0.0.27"
 description = "Utils for COS Lite charms"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "cosl-0.0.26-py3-none-any.whl", hash = "sha256:8f43e0eb79837173bdd841a036a6b84f6451c4797c59944cfde887aec0cd6add"},
-    {file = "cosl-0.0.26.tar.gz", hash = "sha256:6e23d4364514853ec8073d535e06af89ba80f8da0130f50f08e82b80269cc0e1"},
+    {file = "cosl-0.0.27-py3-none-any.whl", hash = "sha256:43c189f8f183e00eb1b6046b41c0cb22e95a21e694b36731452a951af5935177"},
+    {file = "cosl-0.0.27.tar.gz", hash = "sha256:23d834be597e4d49a062f0b309a592df204fc6d7885f467f702fb38eb926f990"},
 ]
 
 [package.dependencies]
@@ -637,13 +637,13 @@ test = ["pytest (>=6)"]
 
 [[package]]
 name = "executing"
-version = "2.0.1"
+version = "2.1.0"
 description = "Get the currently executing AST node of a frame, and other information"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.8"
 files = [
-    {file = "executing-2.0.1-py2.py3-none-any.whl", hash = "sha256:eac49ca94516ccc753f9fb5ce82603156e590b27525a8bc32cce8ae302eb61bc"},
-    {file = "executing-2.0.1.tar.gz", hash = "sha256:35afe2ce3affba8ee97f2d69927fa823b08b472b7b994e36a52a964b93d16147"},
+    {file = "executing-2.1.0-py2.py3-none-any.whl", hash = "sha256:8d63781349375b5ebccc3142f4b30350c0cd9c79f921cde38be2be4637e98eaf"},
+    {file = "executing-2.1.0.tar.gz", hash = "sha256:8ea27ddd260da8150fa5a708269c4a10e76161e2496ec3e587da9e3c0fe4b9ab"},
 ]
 
 [package.extras]
@@ -2537,4 +2537,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "caf2f054502fc063e788f37aa3cfd90cef18dbacdf321ad5efa8d93b7b0b5576"
+content-hash = "a97d7df462b3bb67f5a41601590b0805c2018cda7981f4c24cd6f19203487b43"
