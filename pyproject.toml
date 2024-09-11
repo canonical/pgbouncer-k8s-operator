@@ -10,7 +10,7 @@ ops = "^2.16.1"
 cryptography = "^43.0.1"
 jsonschema = "^4.23.0"
 tenacity = "^9.0.0"
-cosl = "^0.0.31"
+cosl = "^0.0.32"
 poetry-core = "^1.9.0"
 lightkube = "^0.15.4"
 lightkube-models = "^1.29.0.6"
@@ -49,7 +49,7 @@ optional = true
 
 [tool.poetry.group.unit.dependencies]
 coverage = {extras = ["toml"], version = "^7.6.1"}
-pytest = "^8.3.2"
+pytest = "^8.3.3"
 pytest-asyncio = "*"
 parameterized = "^0.9.0"
 
@@ -58,7 +58,7 @@ optional = true
 
 [tool.poetry.group.integration.dependencies]
 lightkube = "*"
-pytest = "^8.3.2"
+pytest = "^8.3.3"
 pytest-github-secrets = {git = "https://github.com/canonical/data-platform-workflows", tag = "v21.0.1", subdirectory = "python/pytest_plugins/github_secrets"}
 pytest-operator = "^0.36.0"
 pytest-operator-cache = {git = "https://github.com/canonical/data-platform-workflows", tag = "v21.0.1", subdirectory = "python/pytest_plugins/pytest_operator_cache"}
