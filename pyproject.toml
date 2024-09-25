@@ -60,7 +60,7 @@ optional = true
 lightkube = "*"
 pytest = "^8.3.3"
 pytest-github-secrets = {git = "https://github.com/canonical/data-platform-workflows", tag = "v21.0.1", subdirectory = "python/pytest_plugins/github_secrets"}
-pytest-operator = "^0.36.0"
+pytest-operator = "^0.37.0"
 pytest-operator-cache = {git = "https://github.com/canonical/data-platform-workflows", tag = "v21.0.1", subdirectory = "python/pytest_plugins/pytest_operator_cache"}
 pytest-operator-groups = {git = "https://github.com/canonical/data-platform-workflows", tag = "v21.0.1", subdirectory = "python/pytest_plugins/pytest_operator_groups"}
 allure-pytest-collection-report = {git = "https://github.com/canonical/data-platform-workflows", tag = "v21.0.1", subdirectory = "python/pytest_plugins/allure_pytest_collection_report"}
