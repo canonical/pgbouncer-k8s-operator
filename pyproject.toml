@@ -6,17 +6,17 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.8.10"
-ops = "^2.16.1"
+ops = "^2.17.0"
 cryptography = "^43.0.1"
 jsonschema = "^4.23.0"
 tenacity = "^9.0.0"
-cosl = "^0.0.34"
+cosl = "^0.0.36"
 poetry-core = "^1.9.0"
 lightkube = "^0.15.4"
 lightkube-models = "^1.29.0.6"
 pydantic = "^1.10.18"
 psycopg2 = "^2.9.9"
-psycopg = {extras = ["c"], version = "^3.2.2"}
+psycopg = {extras = ["c"], version = "^3.2.3"}
 jinja2 = "^3.1.4"
 
 [tool.poetry.group.charm-libs.dependencies]
@@ -36,7 +36,7 @@ opentelemetry-exporter-otlp-proto-http = "1.21.0"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.6.7"
+ruff = "^0.6.8"
 
 [tool.poetry.group.lint]
 optional = true
