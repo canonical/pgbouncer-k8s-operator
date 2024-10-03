@@ -440,13 +440,13 @@ files = [
 
 [[package]]
 name = "cosl"
-version = "0.0.36"
+version = "0.0.38"
 description = "Utils for COS Lite charms"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "cosl-0.0.36-py3-none-any.whl", hash = "sha256:14798e01827a93d830fe4e4254e5f8838a4a7e0c83f861c94c06754c198c2a1d"},
-    {file = "cosl-0.0.36.tar.gz", hash = "sha256:4c986b0fce7d905609ba89a557791b00d8a4708c46f805d3a6c3cc593f47fae6"},
+    {file = "cosl-0.0.38-py3-none-any.whl", hash = "sha256:089e559422fc66cdcfa1c282d62a6d60399afd0dbb63660da92ebc6959c911e1"},
+    {file = "cosl-0.0.38.tar.gz", hash = "sha256:598b42e24f3cf3e1ac8af07fd54cc9ac3e36e798b2c061d3efc56951bd7ada44"},
 ]
 
 [package.dependencies]
@@ -623,12 +623,13 @@ dev = ["PyTest", "PyTest-Cov", "bump2version (<1)", "sphinx (<2)", "tox"]
 
 [[package]]
 name = "durationpy"
-version = "0.8"
+version = "0.9"
 description = "Module for converting between datetime.timedelta and Go's Duration strings."
 optional = false
 python-versions = "*"
 files = [
-    {file = "durationpy-0.8.tar.gz", hash = "sha256:e90941562e260bdb0e2244cd9eee9be5b3aa0efc0557fca754f36d18fe080f9d"},
+    {file = "durationpy-0.9-py3-none-any.whl", hash = "sha256:e65359a7af5cedad07fb77a2dd3f390f8eb0b74cb845589fa6c057086834dd38"},
+    {file = "durationpy-0.9.tar.gz", hash = "sha256:fd3feb0a69a0057d582ef643c355c40d2fa1c942191f914d12203b1a01ac722a"},
 ]
 
 [[package]]
@@ -2240,13 +2241,13 @@ test = ["pytest", "tornado (>=4.5)", "typeguard"]
 
 [[package]]
 name = "tomli"
-version = "2.0.1"
+version = "2.0.2"
 description = "A lil' TOML parser"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
-    {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
+    {file = "tomli-2.0.2-py3-none-any.whl", hash = "sha256:2ebe24485c53d303f690b0ec092806a085f07af5a5aa1464f3931eec36caaa38"},
+    {file = "tomli-2.0.2.tar.gz", hash = "sha256:d46d457a85337051c36524bc5349dd91b1877838e2979ac5ced3e710ed8a60ed"},
 ]
 
 [[package]]
@@ -2552,4 +2553,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.10"
-content-hash = "5a2e6ba2cdc632da5f829621e0ce2939a9d5cfbba9ab7738869f9adbb3df6f80"
+content-hash = "a98b9c01ee7e544aaf1a249eb45b53477572374b10fe9d40ca30c0bcbbad0a02"
