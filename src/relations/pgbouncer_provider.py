@@ -228,7 +228,10 @@ class PgBouncerProvider(Object):
         self.update_endpoints(relation)
 
         # Set the database version.
-        if self.charm.backend.check_backend():
+        if (
+            self.database_provides.fetch_relation_field(relation.id, "database")
+            and self.charm.backend.check_backend()
+        ):
             self.database_provides.set_version(
                 relation.id, self.charm.backend.postgres.get_postgresql_version(current_host=False)
             )
@@ -253,6 +256,9 @@ class PgBouncerProvider(Object):
             user = f"relation_id_{relation.id}"
             database = self.database_provides.fetch_relation_field(relation.id, "database")
             password = self.database_provides.fetch_my_relation_field(relation.id, "password")
+            if not database or not password:
+                return
+
             # Read-write endpoint
             if relation.data[relation.app].get("external-node-connectivity", "false") == "true":
                 self.database_provides.set_endpoints(relation.id, nodeports["rw"])
