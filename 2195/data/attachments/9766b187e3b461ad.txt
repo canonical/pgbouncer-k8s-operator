@@ -1,0 +1,4 @@
+[32mINFO    [0m root:helpers.py:121 running query: 
+ SELECT data FROM test;
+[32mINFO    [0m root:helpers.py:122 {'dbname': 'postgresql_test_app_database', 'query': 'SELECT data FROM test;', 'relation-name': 'database', 'readonly': True}
+[32mINFO    [0m root:helpers.py:125 query results: {'return-code': 1, 'stderr': '/var/lib/juju/agents/unit-postgresql-test-app-0/charm/./src/charm.py:538: DeprecationWarning: Calling `ops.main.main()` is deprecated, call `ops.main()` instead\n  main(ApplicationCharm)\nUncaught OperationalError in charm code: connection to server at "pgbouncer-k8s-1.pgbouncer-k8s-endpoints.test.svc.cluster.local" (10.1.86.140), port 6432 failed: timeout expired\n\nUse `juju debug-log` to see the full traceback.\n'}
