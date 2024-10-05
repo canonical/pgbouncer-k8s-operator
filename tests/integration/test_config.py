@@ -9,7 +9,7 @@ from pytest_operator.plugin import OpsTest
 
 from constants import BACKEND_RELATION_NAME
 
-from .helpers.helpers import PG, PGB
+from .helpers.helpers import CHARM_SERIES, PG, PGB, PGB_METADATA
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,15 @@ async def test_config_parameters(ops_test: OpsTest, pgb_charm) -> None:
         await gather(
             ops_test.model.deploy(
                 pgb_charm,
+                resources={
+                    "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"][
+                        "upstream-source"
+                    ]
+                },
                 application_name=PGB,
-                num_units=None,
+                num_units=1,
+                series=CHARM_SERIES,
+                trust=False,
             ),
             ops_test.model.deploy(
                 PG,
