@@ -176,10 +176,7 @@ async def test_fail_and_rollback(ops_test, continuous_writes, pgb_charm) -> None
             action = await leader_unit.run_action("pre-upgrade-check")
             await action.wait()
 
-    if isinstance(pgb_charm, str):
-        filename = pgb_charm.split("/")[-1]
-    else:
-        filename = pgb_charm.name
+    filename = pgb_charm.split("/")[-1] if isinstance(pgb_charm, str) else pgb_charm.name
     fault_charm = Path("/tmp/", filename)
     shutil.copy(pgb_charm, fault_charm)
 

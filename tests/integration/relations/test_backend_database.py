@@ -33,17 +33,11 @@ logger = logging.getLogger(__name__)
 
 if juju_major_version < 3:
     tls_certificates_app_name = "tls-certificates-operator"
-    if architecture.architecture == "arm64":
-        tls_channel = "legacy/edge"
-    else:
-        tls_channel = "legacy/stable"
+    tls_channel = "legacy/edge" if architecture.architecture == "arm64" else "legacy/stable"
     tls_config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
 else:
     tls_certificates_app_name = "self-signed-certificates"
-    if architecture.architecture == "arm64":
-        tls_channel = "latest/edge"
-    else:
-        tls_channel = "latest/stable"
+    tls_channel = "latest/edge" if architecture.architecture == "arm64" else "latest/stable"
     tls_config = {"ca-common-name": "Test CA"}
 FINOS_WALTZ = "finos-waltz"
 PG = "postgresql-k8s"
@@ -113,7 +107,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
             for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
                 with attempt:
                     cfg = await get_cfg(ops_test, f"{PGB}/0")
-                    if "auth_query" not in cfg["pgbouncer"].keys():
+                    if "auth_query" not in cfg["pgbouncer"]:
                         break
         except RetryError:
             assert False, "pgbouncer config files failed to update in 3 minutes"
