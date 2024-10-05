@@ -104,6 +104,9 @@ class TestPgbouncerProvider(unittest.TestCase):
         user = f"relation_id_{rel_id}"
         with self.harness.hooks_disabled():
             self.harness.update_relation_data(rel_id, "application", {"database": "test-db"})
+            self.harness.update_relation_data(
+                self.peers_rel_id, self.app, {"pgb_dbs_config": "{}"}
+            )
 
         # check we exit immediately if backend doesn't exist.
         _check_backend.return_value = False
