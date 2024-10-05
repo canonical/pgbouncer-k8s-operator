@@ -134,7 +134,7 @@ class Peers(Object):
 
     def _on_joined(self, event: HookEvent):
         self._on_changed(event)
-        if self.charm.unit.is_leader():
+        if self.charm.unit.is_leader() and self.charm.configuration_check():
             self.charm.client_relation.update_endpoints()
 
     def _on_changed(self, event: HookEvent):

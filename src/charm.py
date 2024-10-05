@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Literal, Optional, Tuple, Union, get_args
 import lightkube
 import psycopg2
 from charms.data_platform_libs.v0.data_interfaces import DataPeerData, DataPeerUnitData
+from charms.data_platform_libs.v0.data_models import TypedCharmBase
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
@@ -23,12 +24,19 @@ from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.tempo_coordinator_k8s.v0.charm_tracing import trace_charm
 from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
 from jinja2 import Template
-from ops import JujuVersion, main
-from ops.charm import CharmBase, ConfigChangedEvent, PebbleReadyEvent
-from ops.framework import StoredState
-from ops.model import ActiveStatus, BlockedStatus, Relation, WaitingStatus
+from ops import (
+    ActiveStatus,
+    BlockedStatus,
+    ConfigChangedEvent,
+    JujuVersion,
+    PebbleReadyEvent,
+    Relation,
+    WaitingStatus,
+    main,
+)
 from ops.pebble import ConnectionError, Layer, ServiceStatus
 
+from config import CharmConfig
 from constants import (
     APP_SCOPE,
     AUTH_FILE_DATABAG_KEY,
@@ -79,10 +87,10 @@ Scopes = Literal[APP_SCOPE, UNIT_SCOPE]
         PgbouncerUpgrade,
     ),
 )
-class PgBouncerK8sCharm(CharmBase):
+class PgBouncerK8sCharm(TypedCharmBase):
     """A class implementing charmed PgBouncer."""
 
-    _stored = StoredState()
+    config_type = CharmConfig
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -210,9 +218,9 @@ class PgBouncerK8sCharm(CharmBase):
         # [ServicePort(port=6432, appProtocol=None, name=None, nodePort=31438, protocol='TCP', targetPort=6432)]
         # Keeping this distinction, so we have similarity with mysql-router-k8s
         if port_type == "rw":
-            port = self.config["listen_port"]
+            port = self.config.listen_port
         elif port_type == "ro":
-            port = self.config["listen_port"]
+            port = self.config.listen_port
         else:
             raise ValueError(f"Invalid {port_type=}")
         logger.debug(f"Looking for NodePort for {port_type} in {service.spec.ports}")
@@ -286,8 +294,8 @@ class PgBouncerK8sCharm(CharmBase):
                     ports=[
                         lightkube.models.core_v1.ServicePort(
                             name="pgbouncer",
-                            port=self.config["listen_port"],
-                            targetPort=self.config["listen_port"],
+                            port=self.config.listen_port,
+                            targetPort=self.config.listen_port,
                         )
                     ],
                     type="NodePort",
@@ -419,12 +427,15 @@ class PgBouncerK8sCharm(CharmBase):
             event.defer()
             return
 
+        if not self.configuration_check():
+            return
+
         old_port = self.peers.app_databag.get("current_port")
-        port_changed = old_port != str(self.config["listen_port"])
+        port_changed = old_port != str(self.config.listen_port)
         if self.unit.is_leader() and port_changed:
             # This emits relation-changed events to every client relation, so only do it when
             # necessary
-            self.update_client_connection_info(self.config["listen_port"])
+            self.update_client_connection_info()
             self.patch_port(self.client_relation.external_connectivity())
 
         self.render_pgb_config()
@@ -436,7 +447,7 @@ class PgBouncerK8sCharm(CharmBase):
 
         if self.unit.is_leader() and port_changed:
             # Only update the config once the services have been restarted
-            self.peers.app_databag["current_port"] = str(self.config["listen_port"])
+            self.peers.app_databag["current_port"] = str(self.config.listen_port)
 
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
@@ -538,9 +549,22 @@ class PgBouncerK8sCharm(CharmBase):
         # information in all the relation databags.
         self.update_client_connection_info()
 
+    def configuration_check(self) -> bool:
+        """Check that configuration is valid."""
+        try:
+            self.config
+            return True
+        except ValueError:
+            self.unit.status = BlockedStatus("Configuration Error. Please check the logs")
+            logger.exception("Invalid configuration")
+            return False
+
     def update_status(self):
         """Health check to update pgbouncer status based on charm state."""
         if self.unit.status.message == EXTENSIONS_BLOCKING_MESSAGE:
+            return
+
+        if not self.configuration_check():
             return
 
         if self.backend.postgres is None:
@@ -592,7 +616,7 @@ class PgBouncerK8sCharm(CharmBase):
         if enabled and (stats_password := self.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)):
             command = (
                 f'pgbouncer_exporter --web.listen-address=:{METRICS_PORT} --pgBouncer.connectionString="'
-                f'postgres://{self.backend.stats_user}:{stats_password}@localhost:{self.config["listen_port"]}/pgbouncer?sslmode=disable"'
+                f'postgres://{self.backend.stats_user}:{stats_password}@localhost:{self.config.listen_port}/pgbouncer?sslmode=disable"'
             )
             startup = "enabled"
         else:
@@ -928,7 +952,11 @@ class PgBouncerK8sCharm(CharmBase):
             restart: Whether to restart the service when reloading.
         """
         perm = 0o400
-        max_db_connections = self.config["max_db_connections"]
+
+        if not self.configuration_check():
+            return
+
+        max_db_connections = self.config.max_db_connections
         if max_db_connections == 0:
             default_pool_size = 20
             min_pool_size = 10
@@ -955,8 +983,8 @@ class PgBouncerK8sCharm(CharmBase):
                         peers=service_ids,
                         log_file=f"{service['log_dir']}/pgbouncer.log",
                         pid_file=f"{service['dir']}/pgbouncer.pid",
-                        listen_port=self.config["listen_port"],
-                        pool_mode=self.config["pool_mode"],
+                        listen_port=self.config.listen_port,
+                        pool_mode=self.config.pool_mode,
                         max_db_connections=max_db_connections,
                         default_pool_size=default_pool_size,
                         min_pool_size=min_pool_size,
@@ -988,7 +1016,7 @@ class PgBouncerK8sCharm(CharmBase):
     #  Relation Utilities
     # =====================
 
-    def update_client_connection_info(self, port: Optional[str] = None):
+    def update_client_connection_info(self):
         """Update connection info in client relations.
 
         TODO rename
@@ -997,8 +1025,7 @@ class PgBouncerK8sCharm(CharmBase):
         if not self.backend.postgres or not self.unit.is_leader():
             return
 
-        if not port:
-            port = self.config["listen_port"]
+        port = self.config.listen_port
 
         for relation in self.model.relations.get("db", []):
             self.legacy_db_relation.update_connection_info(relation, port)

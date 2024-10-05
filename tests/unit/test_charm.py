@@ -86,7 +86,7 @@ class TestCharm(unittest.TestCase):
             "listen_port": 6464,
         })
         _reload.assert_called_once_with(restart=True)
-        _update_connection_info.assert_called_with(6464)
+        _update_connection_info.assert_called_with()
         _check_pgb_running.assert_called_once_with()
 
     @patch(

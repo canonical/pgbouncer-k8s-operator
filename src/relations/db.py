@@ -312,7 +312,7 @@ class DbProvides(Object):
 
         self.charm.render_pgb_config(reload_pgbouncer=True)
         if self.charm.unit.is_leader():
-            self.update_connection_info(change_event.relation, self.charm.config["listen_port"])
+            self.update_connection_info(change_event.relation, self.charm.config.listen_port)
             self.update_databags(
                 change_event.relation,
                 {
@@ -331,8 +331,11 @@ class DbProvides(Object):
 
     def update_connection_info(self, relation: Relation, port: str):
         """Updates databag connection information."""
+        if not self.charm.configuration_check():
+            return
+
         if not port:
-            port = self.charm.config["listen_port"]
+            port = self.charm.config.listen_port
 
         databag = self.get_databags(relation)[0]
         database = databag.get("database")

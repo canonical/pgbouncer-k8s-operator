@@ -222,7 +222,7 @@ class PgBouncerProvider(Object):
 
     def update_connection_info(self, relation):
         """Updates client-facing relation information."""
-        if not self.charm.unit.is_leader():
+        if not self.charm.unit.is_leader() or not self.charm.configuration_check():
             return
 
         self.update_endpoints(relation)
@@ -239,11 +239,11 @@ class PgBouncerProvider(Object):
     def update_endpoints(self, relation=None) -> None:
         """Set the endpoints for the relation."""
         nodeports = self.charm.get_node_ports
-        internal_port = self.charm.config["listen_port"]
+        internal_port = self.charm.config.listen_port
         internal_hostnames = sorted(set(self.charm.peers.units_hostnames))
         if self.charm.peers.leader_hostname in internal_hostnames:
             internal_hostnames.remove(self.charm.peers.leader_hostname)
-        internal_rw = f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}"
+        internal_rw = f"{self.charm.leader_hostname}:{self.charm.config.listen_port}"
 
         relations = [relation] if relation else self.model.relations[self.relation_name]
 
