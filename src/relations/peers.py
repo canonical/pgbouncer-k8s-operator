@@ -159,11 +159,11 @@ class Peers(Object):
             event.defer()
             return
 
-        self.charm.render_pgb_config(reload_pgbouncer=True)
-        self.charm.toggle_monitoring_layer(self.charm.backend.ready)
         pgb_dbs_hash = shake_128(self.app_databag.get("pgb_dbs_config", "{}").encode()).hexdigest(
             16
         )
+        self.charm.render_pgb_config(reload_pgbouncer=True)
+        self.charm.toggle_monitoring_layer(self.charm.backend.ready)
         self.unit_databag["pgb_dbs"] = pgb_dbs_hash
 
     def _on_departed(self, event):

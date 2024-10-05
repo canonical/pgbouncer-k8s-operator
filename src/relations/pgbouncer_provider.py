@@ -132,6 +132,27 @@ class PgBouncerProvider(Object):
         extra_user_roles = event.extra_user_roles or ""
         rel_id = event.relation.id
 
+        dbs = self.charm.generate_relation_databases()
+        dbs[str(event.relation.id)] = {"name": database, "legacy": False}
+        roles = extra_user_roles.lower().split(",")
+        if "admin" in roles or "superuser" in roles or "createdb" in roles:
+            dbs["*"] = {"name": "*", "auth_dbname": database}
+        self.charm.set_relation_databases(dbs)
+
+        pgb_dbs_hash = shake_128(
+            self.charm.peers.app_databag["pgb_dbs_config"].encode()
+        ).hexdigest(16)
+        for key, data in self.charm.peers.relation.data.items():
+            # We skip the leader so we don't have to wait on the defer
+            if (
+                key != self.charm.app
+                and key != self.charm.unit
+                and data.get("pgb_dbs", "") != pgb_dbs_hash
+            ):
+                logger.debug("Not all units have synced configuration")
+                event.defer()
+                return
+
         # Creates the user and the database for this specific relation.
         user = f"relation_id_{rel_id}"
         logger.debug("generating relation user")
@@ -157,24 +178,6 @@ class PgBouncerProvider(Object):
                 f"Failed to initialize {self.relation_name} relation"
             )
             return
-
-        dbs = self.charm.generate_relation_databases()
-        dbs[str(event.relation.id)] = {"name": database, "legacy": False}
-        roles = extra_user_roles.lower().split(",")
-        if "admin" in roles or "superuser" in roles or "createdb" in roles:
-            dbs["*"] = {"name": "*", "auth_dbname": database}
-        self.charm.set_relation_databases(dbs)
-
-        pgb_dbs_hash = shake_128(
-            self.charm.peers.app_databag["pgb_dbs_config"].encode()
-        ).hexdigest(16)
-        for key in self.charm.peers.relation.data.keys():
-            # We skip the leader so we don't have to wait on the defer
-            if key != self.charm.app and key != self.charm.unit:
-                if self.charm.peers.relation.data[key].get("pgb_dbs", "") != pgb_dbs_hash:
-                    logger.debug("Not all units have synced configuration")
-                    event.defer()
-                    return
 
         self.charm.render_pgb_config(reload_pgbouncer=True)
 
