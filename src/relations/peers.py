@@ -30,6 +30,7 @@ Example:
 """  # noqa: W505
 
 import logging
+from hashlib import shake_128
 from typing import Optional, Set
 
 from ops.charm import CharmBase, HookEvent, RelationCreatedEvent
@@ -160,6 +161,10 @@ class Peers(Object):
 
         self.charm.render_pgb_config(reload_pgbouncer=True)
         self.charm.toggle_monitoring_layer(self.charm.backend.ready)
+        pgb_dbs_hash = shake_128(self.app_databag.get("pgb_dbs_config", "{}").encode()).hexdigest(
+            16
+        )
+        self.unit_databag["pgb_dbs"] = pgb_dbs_hash
 
     def _on_departed(self, event):
         self.update_leader()

@@ -448,6 +448,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         if self.unit.is_leader() and port_changed:
             # Only update the config once the services have been restarted
             self.peers.app_databag["current_port"] = str(self.config.listen_port)
+        self.update_status()
 
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
