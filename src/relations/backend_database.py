@@ -53,6 +53,7 @@ from ops.model import (
     Application,
     BlockedStatus,
     MaintenanceStatus,
+    ModelError,
     Relation,
     WaitingStatus,
 )
@@ -263,9 +264,14 @@ class BackendDatabaseRequires(Object):
             if not self.charm.is_container_ready:
                 return
 
-            if not (auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)):
-                logger.debug("_on_database_created deferred: waiting for leader to initialise")
+            try:
+                if not (auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)):
+                    logger.debug("_on_database_created deferred: waiting for leader to initialise")
+                    event.defer()
+                    return
+            except ModelError:
                 event.defer()
+                logger.error("deferring database-created hook - cannot access secrets")
                 return
             self.charm.render_auth_file(auth_file)
             self.charm.render_pgb_config(reload_pgbouncer=True)

@@ -103,6 +103,11 @@ class TestDb(unittest.TestCase):
         user = "pgbouncer_k8s_user_1_None"
         password = _gen_pw.return_value
 
+        with self.harness.hooks_disabled():
+            self.harness.update_relation_data(
+                self.peers_rel_id, self.app, {"pgb_dbs_config": "{}"}
+            )
+
         _set_rel_dbs.reset_mock()
         relation_data = mock_event.relation.data = {}
         relation_data[self.charm.unit] = {}

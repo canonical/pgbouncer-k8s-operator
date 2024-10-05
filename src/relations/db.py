@@ -56,6 +56,7 @@ Some example relation data is below. All values are examples, generated in a run
 """
 
 import logging
+from hashlib import shake_128
 from typing import Dict, Iterable, List
 
 from charms.pgbouncer_k8s.v0 import pgb
@@ -241,6 +242,17 @@ class DbProvides(Object):
         if self.admin:
             dbs["*"] = {"name": "*", "auth_dbname": database}
         self.charm.set_relation_databases(dbs)
+
+        pgb_dbs_hash = shake_128(
+            self.charm.peers.app_databag["pgb_dbs_config"].encode()
+        ).hexdigest(16)
+        for key in self.charm.peers.relation.data.keys():
+            # We skip the leader so we don't have to wait on the defer
+            if key != self.charm.app and key != self.charm.unit:
+                if self.charm.peers.relation.data[key].get("pgb_dbs", "") != pgb_dbs_hash:
+                    logger.debug("Not all units have synced configuration")
+                    join_event.defer()
+                    return
 
         self.update_databags(
             join_event.relation,
