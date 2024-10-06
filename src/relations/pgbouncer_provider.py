@@ -136,7 +136,7 @@ class PgBouncerProvider(Object):
         dbs[str(event.relation.id)] = {"name": database, "legacy": False}
         roles = extra_user_roles.lower().split(",")
         if "admin" in roles or "superuser" in roles or "createdb" in roles:
-            dbs["*"] = {"name": "*", "auth_dbname": database}
+            dbs["*"] = {"name": "*", "auth_dbname": database, "legacy": False}
         self.charm.set_relation_databases(dbs)
 
         pgb_dbs_hash = shake_128(

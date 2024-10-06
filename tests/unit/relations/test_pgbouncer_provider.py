@@ -131,7 +131,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         _set_read_only_endpoints.assert_called()
         _set_rel_dbs.assert_called_once_with({
             str(rel_id): {"name": "test-db", "legacy": False},
-            "*": {"name": "*", "auth_dbname": "test-db"},
+            "*": {"name": "*", "auth_dbname": "test-db", "legacy": False},
         })
         _render_pgb_config.assert_called_once_with(reload_pgbouncer=True)
 

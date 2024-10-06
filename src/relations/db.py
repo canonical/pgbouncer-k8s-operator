@@ -240,19 +240,22 @@ class DbProvides(Object):
         dbs = self.charm.generate_relation_databases()
         dbs[str(join_event.relation.id)] = {"name": database, "legacy": True}
         if self.admin:
-            dbs["*"] = {"name": "*", "auth_dbname": database}
+            dbs["*"] = {"name": "*", "auth_dbname": database, "legacy": False}
         self.charm.set_relation_databases(dbs)
 
         pgb_dbs_hash = shake_128(
             self.charm.peers.app_databag["pgb_dbs_config"].encode()
         ).hexdigest(16)
-        for key in self.charm.peers.relation.data.keys():
+        for key, data in self.charm.peers.relation.data.items():
             # We skip the leader so we don't have to wait on the defer
-            if key != self.charm.app and key != self.charm.unit:
-                if self.charm.peers.relation.data[key].get("pgb_dbs", "") != pgb_dbs_hash:
-                    logger.debug("Not all units have synced configuration")
-                    join_event.defer()
-                    return
+            if (
+                key != self.charm.app
+                and key != self.charm.unit
+                and data.get("pgb_dbs", "") != pgb_dbs_hash
+            ):
+                logger.debug("Not all units have synced configuration")
+                join_event.defer()
+                return
 
         self.update_databags(
             join_event.relation,
