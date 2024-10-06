@@ -230,7 +230,8 @@ class DbProvides(Object):
         database = remote_app_databag.get("database")
         user = self._generate_username(join_event.relation)
 
-        password = pgb.generate_password()
+        databag = self.get_databags(join_event.relation)[0]
+        password = databag.get("password", pgb.generate_password())
 
         if None in [database, password]:
             # If database isn't available, defer
