@@ -572,6 +572,15 @@ class TestCharm(unittest.TestCase):
         with self.assertRaises(_FakeApiError):
             self.charm.patch_port(False)
 
+    @patch("charm.PgBouncerK8sCharm.config", new_callable=PropertyMock, return_value={})
+    def test_configuration_check(self, _config):
+        assert self.charm.configuration_check()
+
+        _config.side_effect = ValueError
+        assert not self.charm.configuration_check()
+        assert isinstance(self.charm.unit.status, BlockedStatus)
+        assert self.charm.unit.status.message == "Configuration Error. Please check the logs"
+
     #
     # Secrets
     #

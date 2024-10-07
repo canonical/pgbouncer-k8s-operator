@@ -151,8 +151,7 @@ class Peers(Object):
         """
         self.unit_databag.update({ADDRESS_KEY: self.charm.unit_pod_hostname})
 
-        if self.charm.unit.is_leader():
-            self.update_leader()
+        self.update_leader()
 
         if not self.charm.is_container_ready:
             logger.debug("_on_peer_changed defer: container unavailable")
