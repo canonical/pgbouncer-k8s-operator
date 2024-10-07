@@ -1,16 +1,15 @@
 >Reference > Release Notes > [All revisions] > Revision 268/269
 
 # Revision 268/269
-TODO
+<sub>September 11, 2024</sub>
 
-> :warning: This page is a work in progress for a future release.
 Dear community,
 
 Canonical's newest Charmed PgBouncer K8s operator has been published in the [1/stable channel].
 
 Due to the newly added support for `arm64` architecture, the PgBouncer K8s charm now releases multiple revisions simultaneously:
-* Revision 269 is built for `amd64` on Ubuntu 22.04 LTS
-* Revision 268 is built for `arm64` on Ubuntu 22.04 LTS
+* Revision 269 is built for `amd64` on Ubuntu 22.04 LTS ( pgbouncer-image r85 )
+* Revision 268 is built for `arm64` on Ubuntu 22.04 LTS ( pgbouncer-image r85 )
 
 
 To make sure you deploy for the right architecture, we recommend setting an [architecture constraint](https://juju.is/docs/juju/constraint#heading--arch) for your entire juju model.
@@ -52,7 +51,7 @@ See the [system requirements] for more details about Juju versions and other sof
 
 ### Packaging
 
-This charm is based on the CharmedPgBouncer K8s [rock image]. It packages:
+This charm is based on the CharmedPgBouncer K8s [rock image] (CharmHub `pgbouncer-image` resource-revision `85`). It packages:
 * [pgbouncer `v.1.21`]
 * [prometheus-pgbouncer-exporter `v.0.7.0`]
 
