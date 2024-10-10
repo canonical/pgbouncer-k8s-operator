@@ -107,7 +107,7 @@ LIBAPI = 0
 
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 1
+LIBPATCH = 2
 
 PYDEPS = ["pydantic"]
 
@@ -985,11 +985,16 @@ def charm_tracing_config(
     is_https = endpoint.startswith("https://")
 
     if is_https:
-        if cert_path is None:
-            raise TracingError("Cannot send traces to an https endpoint without a certificate.")
-        elif not Path(cert_path).exists():
-            # if endpoint is https BUT we don't have a server_cert yet:
-            # disable charm tracing until we do to prevent tls errors
+        if cert_path is None or not Path(cert_path).exists():
+            # disable charm tracing until we obtain a cert to prevent tls errors
+            logger.error(
+                "Tracing endpoint is https, but no server_cert has been passed."
+                "Please point @trace_charm to a `server_cert` attr. "
+                "This might also mean that the tracing provider is related to a "
+                "certificates provider, but this application is not (yet). "
+                "In that case, you might just have to wait a bit for the certificates "
+                "integration to settle. "
+            )
             return None, None
         return endpoint, str(cert_path)
     else:

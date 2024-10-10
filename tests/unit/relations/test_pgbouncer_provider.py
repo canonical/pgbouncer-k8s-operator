@@ -104,6 +104,9 @@ class TestPgbouncerProvider(unittest.TestCase):
         user = f"relation_id_{rel_id}"
         with self.harness.hooks_disabled():
             self.harness.update_relation_data(rel_id, "application", {"database": "test-db"})
+            self.harness.update_relation_data(
+                self.peers_rel_id, self.app, {"pgb_dbs_config": "{}"}
+            )
 
         # check we exit immediately if backend doesn't exist.
         _check_backend.return_value = False
@@ -128,7 +131,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         _set_read_only_endpoints.assert_called()
         _set_rel_dbs.assert_called_once_with({
             str(rel_id): {"name": "test-db", "legacy": False},
-            "*": {"name": "*", "auth_dbname": "test-db"},
+            "*": {"name": "*", "auth_dbname": "test-db", "legacy": False},
         })
         _render_pgb_config.assert_called_once_with(reload_pgbouncer=True)
 

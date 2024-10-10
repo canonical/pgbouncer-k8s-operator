@@ -269,7 +269,7 @@ LIBAPI = 0
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
 
-LIBPATCH = 1
+LIBPATCH = 2
 
 PYDEPS = ["opentelemetry-exporter-otlp-proto-http==1.21.0"]
 
@@ -369,10 +369,6 @@ class TracingError(RuntimeError):
 
 class UntraceableObjectError(TracingError):
     """Raised when an object you're attempting to instrument cannot be autoinstrumented."""
-
-
-class TLSError(TracingError):
-    """Raised when the tracing endpoint is https but we don't have a cert yet."""
 
 
 def _get_tracing_endpoint(
@@ -484,10 +480,15 @@ def _setup_root_span_initializer(
         )
 
         if tracing_endpoint.startswith("https://") and not server_cert:
-            raise TLSError(
+            logger.error(
                 "Tracing endpoint is https, but no server_cert has been passed."
-                "Please point @trace_charm to a `server_cert` attr."
+                "Please point @trace_charm to a `server_cert` attr. "
+                "This might also mean that the tracing provider is related to a "
+                "certificates provider, but this application is not (yet). "
+                "In that case, you might just have to wait a bit for the certificates "
+                "integration to settle. "
             )
+            return
 
         exporter = OTLPSpanExporter(
             endpoint=tracing_endpoint,

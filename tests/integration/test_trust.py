@@ -5,22 +5,20 @@
 import asyncio
 import logging
 import time
-from pathlib import Path
 
 import pytest
-import yaml
 from pytest_operator.plugin import OpsTest
 
 from .helpers.helpers import (
     CHARM_SERIES,
     CLIENT_APP_NAME,
+    PG,
+    PGB,
+    PGB_METADATA,
     get_leader_unit,
 )
 
 logger = logging.getLogger(__name__)
-METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
-PGB = METADATA["name"]
-PG = "postgresql-k8s"
 RELATION = "backend-database"
 MAX_RETRIES = 20
 UNTRUST_ERROR_MESSAGE = f"Insufficient permissions, try: `juju trust {PGB} --scope=cluster`"
@@ -95,7 +93,7 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
         await ops_test.model.deploy(
             pgb_charm,
             resources={
-                "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"]
+                "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"]
             },
             application_name=PGB,
             num_units=1,

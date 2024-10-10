@@ -3,18 +3,13 @@
 # See LICENSE file for licensing details.
 
 import logging
-from pathlib import Path
 
 import pytest
-import yaml
 from pytest_operator.plugin import OpsTest
 
-from .helpers.helpers import CHARM_SERIES, get_cfg, run_command_on_unit
+from .helpers.helpers import CHARM_SERIES, PGB, PGB_METADATA, get_cfg, run_command_on_unit
 
 logger = logging.getLogger(__name__)
-
-METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
-PGB = METADATA["name"]
 
 
 @pytest.mark.group(1)
@@ -22,7 +17,7 @@ PGB = METADATA["name"]
 async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
     """Build and deploy pgbouncer charm."""
     resources = {
-        "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
+        "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
     async with ops_test.fast_forward():
         await ops_test.model.deploy(

@@ -56,6 +56,7 @@ Some example relation data is below. All values are examples, generated in a run
 """
 
 import logging
+from hashlib import shake_128
 from typing import Dict, Iterable, List
 
 from charms.pgbouncer_k8s.v0 import pgb
@@ -229,7 +230,8 @@ class DbProvides(Object):
         database = remote_app_databag.get("database")
         user = self._generate_username(join_event.relation)
 
-        password = pgb.generate_password()
+        databag = self.get_databags(join_event.relation)[0]
+        password = databag.get("password", pgb.generate_password())
 
         if None in [database, password]:
             # If database isn't available, defer
@@ -239,8 +241,22 @@ class DbProvides(Object):
         dbs = self.charm.generate_relation_databases()
         dbs[str(join_event.relation.id)] = {"name": database, "legacy": True}
         if self.admin:
-            dbs["*"] = {"name": "*", "auth_dbname": database}
+            dbs["*"] = {"name": "*", "auth_dbname": database, "legacy": False}
         self.charm.set_relation_databases(dbs)
+
+        pgb_dbs_hash = shake_128(
+            self.charm.peers.app_databag["pgb_dbs_config"].encode()
+        ).hexdigest(16)
+        for key, data in self.charm.peers.relation.data.items():
+            # We skip the leader so we don't have to wait on the defer
+            if (
+                key != self.charm.app
+                and key != self.charm.unit
+                and data.get("pgb_dbs", "") != pgb_dbs_hash
+            ):
+                logger.debug("Not all units have synced configuration")
+                join_event.defer()
+                return
 
         self.update_databags(
             join_event.relation,
@@ -312,7 +328,7 @@ class DbProvides(Object):
 
         self.charm.render_pgb_config(reload_pgbouncer=True)
         if self.charm.unit.is_leader():
-            self.update_connection_info(change_event.relation, self.charm.config["listen_port"])
+            self.update_connection_info(change_event.relation, self.charm.config.listen_port)
             self.update_databags(
                 change_event.relation,
                 {
@@ -331,8 +347,11 @@ class DbProvides(Object):
 
     def update_connection_info(self, relation: Relation, port: str):
         """Updates databag connection information."""
+        if not self.charm.configuration_check():
+            return
+
         if not port:
-            port = self.charm.config["listen_port"]
+            port = self.charm.config.listen_port
 
         databag = self.get_databags(relation)[0]
         database = databag.get("database")

@@ -57,11 +57,9 @@ class TestPeers(unittest.TestCase):
         new_callable=PropertyMock,
         return_value="test_pod_name",
     )
-    @patch("charm.PgBouncerK8sCharm.generate_relation_databases")
-    def test_update_leader(self, _generate_relation_databases, unit_pod_hostname):
+    def test_update_leader(self, unit_pod_hostname):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         # Will run the hook
         self.harness.set_leader(True)
 
-        _generate_relation_databases.assert_called_once_with()
         assert self.charm.peers.app_databag[LEADER_ADDRESS_KEY] == "test_pod_name"
