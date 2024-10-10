@@ -81,7 +81,7 @@ juju consume k8s:admin/cos.tempo
 
 Relate Charmed PgBouncer K8s with the above consumed interface:
 
-First, dpeloy [Grafana Agent K8s](https://charmhub.io/grafana-agent-k8s) from the `latest/edge` channel:
+First, deploy [Grafana Agent K8s](https://charmhub.io/grafana-agent-k8s) from the `latest/edge` channel:
 ```shell
 juju deploy grafana-agent-k8s --channel latest/edge
 ```
