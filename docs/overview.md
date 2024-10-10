@@ -43,7 +43,7 @@ This PgBouncer K8s charm is an official distribution of PgBouncer. It’s an ope
 | 3 | h-manage-units | [Manage units](/t/12258) |
 | 3 | h-enable-encryption | [Enable encryption](/t/12259) |
 | 3 | h-manage-app | [Manage applications](/t/12260) |
-| 3 | h-external-k8s-connection | [External k8s connection](/t/15694) |
+| 3 | h-external-access | [External access](/t/15694) |
 | 2 | h-upgrade | [Upgrade]() |
 | 3 | h-upgrade-intro | [Intro](/t/12267) |
 | 3 | h-upgrade-major | [Major upgrade](/t/12268) |
