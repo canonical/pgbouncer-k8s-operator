@@ -31,6 +31,7 @@ f"{dbname}_readonly".
 """  # noqa: W505
 
 import logging
+from hashlib import shake_128
 
 from charms.data_platform_libs.v0.data_interfaces import (
     DatabaseProvides,
@@ -131,6 +132,27 @@ class PgBouncerProvider(Object):
         extra_user_roles = event.extra_user_roles or ""
         rel_id = event.relation.id
 
+        dbs = self.charm.generate_relation_databases()
+        dbs[str(event.relation.id)] = {"name": database, "legacy": False}
+        roles = extra_user_roles.lower().split(",")
+        if "admin" in roles or "superuser" in roles or "createdb" in roles:
+            dbs["*"] = {"name": "*", "auth_dbname": database, "legacy": False}
+        self.charm.set_relation_databases(dbs)
+
+        pgb_dbs_hash = shake_128(
+            self.charm.peers.app_databag["pgb_dbs_config"].encode()
+        ).hexdigest(16)
+        for key, data in self.charm.peers.relation.data.items():
+            # We skip the leader so we don't have to wait on the defer
+            if (
+                key != self.charm.app
+                and key != self.charm.unit
+                and data.get("pgb_dbs", "") != pgb_dbs_hash
+            ):
+                logger.debug("Not all units have synced configuration")
+                event.defer()
+                return
+
         # Creates the user and the database for this specific relation.
         user = f"relation_id_{rel_id}"
         logger.debug("generating relation user")
@@ -156,13 +178,6 @@ class PgBouncerProvider(Object):
                 f"Failed to initialize {self.relation_name} relation"
             )
             return
-
-        dbs = self.charm.generate_relation_databases()
-        dbs[str(event.relation.id)] = {"name": database, "legacy": False}
-        roles = extra_user_roles.lower().split(",")
-        if "admin" in roles or "superuser" in roles or "createdb" in roles:
-            dbs["*"] = {"name": "*", "auth_dbname": database}
-        self.charm.set_relation_databases(dbs)
 
         self.charm.render_pgb_config(reload_pgbouncer=True)
 
@@ -222,7 +237,7 @@ class PgBouncerProvider(Object):
 
     def update_connection_info(self, relation):
         """Updates client-facing relation information."""
-        if not self.charm.unit.is_leader():
+        if not self.charm.unit.is_leader() or not self.charm.configuration_check():
             return
 
         self.update_endpoints(relation)
@@ -239,11 +254,11 @@ class PgBouncerProvider(Object):
     def update_endpoints(self, relation=None) -> None:
         """Set the endpoints for the relation."""
         nodeports = self.charm.get_node_ports
-        internal_port = self.charm.config["listen_port"]
+        internal_port = self.charm.config.listen_port
         internal_hostnames = sorted(set(self.charm.peers.units_hostnames))
         if self.charm.peers.leader_hostname in internal_hostnames:
             internal_hostnames.remove(self.charm.peers.leader_hostname)
-        internal_rw = f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}"
+        internal_rw = f"{self.charm.leader_hostname}:{self.charm.config.listen_port}"
 
         relations = [relation] if relation else self.model.relations[self.relation_name]
 

@@ -3,15 +3,16 @@
 
 import asyncio
 import logging
-from pathlib import Path
 
 import pytest
-import yaml
 from pytest_operator.plugin import OpsTest
 
 from .. import markers
 from ..helpers.helpers import (
     CHARM_SERIES,
+    PG,
+    PGB,
+    PGB_METADATA,
     get_backend_user_pass,
     get_legacy_relation_username,
     wait_for_relation_joined_between,
@@ -26,9 +27,6 @@ logger = logging.getLogger(__name__)
 
 DISCOURSE_APP_NAME = "discourse-charmers-discourse-k8s"
 REDIS_APP_NAME = "redis-k8s"
-METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
-PGB = METADATA["name"]
-PG = "postgresql-k8s"
 
 
 @pytest.mark.group(1)
@@ -37,7 +35,7 @@ PG = "postgresql-k8s"
 async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
     # Build, deploy, and relate charms.
     resources = {
-        "pgbouncer-image": METADATA["resources"]["pgbouncer-image"]["upstream-source"],
+        "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
 
     async with ops_test.fast_forward():
