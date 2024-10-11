@@ -30,6 +30,7 @@ Example:
 """
 
 import logging
+from hashlib import shake_128
 from typing import Optional, Set
 
 from ops.charm import CharmBase, HookEvent, RelationCreatedEvent
@@ -134,7 +135,7 @@ class Peers(Object):
 
     def _on_joined(self, event: HookEvent):
         self._on_changed(event)
-        if self.charm.unit.is_leader():
+        if self.charm.unit.is_leader() and self.charm.configuration_check():
             self.charm.client_relation.update_endpoints()
 
     def _on_changed(self, event: HookEvent):
@@ -150,16 +151,19 @@ class Peers(Object):
         """
         self.unit_databag.update({ADDRESS_KEY: self.charm.unit_pod_hostname})
 
-        if self.charm.unit.is_leader():
-            self.update_leader()
+        self.update_leader()
 
         if not self.charm.is_container_ready:
             logger.debug("_on_peer_changed defer: container unavailable")
             event.defer()
             return
 
+        pgb_dbs_hash = shake_128(self.app_databag.get("pgb_dbs_config", "{}").encode()).hexdigest(
+            16
+        )
         self.charm.render_pgb_config(reload_pgbouncer=True)
         self.charm.toggle_monitoring_layer(self.charm.backend.ready)
+        self.unit_databag["pgb_dbs"] = pgb_dbs_hash
 
     def _on_departed(self, event):
         self.update_leader()
@@ -179,4 +183,3 @@ class Peers(Object):
         """Updates leader hostname in peer databag to match this unit if it's the leader."""
         if self.charm.unit.is_leader():
             self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname
-            self.charm.generate_relation_databases()

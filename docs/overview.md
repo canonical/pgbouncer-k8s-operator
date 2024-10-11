@@ -37,12 +37,13 @@ This PgBouncer K8s charm is an official distribution of PgBouncer. It’s an ope
 | 2 | t-managing-units | [4. Manage units](/t/12254) |
 | 2 | t-enable-security | [5. Enable security](/t/12255) |
 | 2 | t-cleanup-environment | [6. Clean up environment](/t/12256) |
-| 1 | how-to | [How To]() |
+| 1 | how-to | [How to]() |
 | 2 | h-setup | [Setup]() |
 | 3 | h-deploy-microk8s | [Deploy on MicroK8s](/t/12257) |
 | 3 | h-manage-units | [Manage units](/t/12258) |
 | 3 | h-enable-encryption | [Enable encryption](/t/12259) |
 | 3 | h-manage-app | [Manage applications](/t/12260) |
+| 3 | h-external-k8s-connection | [External k8s connection](/t/15694) |
 | 2 | h-upgrade | [Upgrade]() |
 | 3 | h-upgrade-intro | [Intro](/t/12267) |
 | 3 | h-upgrade-major | [Major upgrade](/t/12268) |
@@ -53,21 +54,21 @@ This PgBouncer K8s charm is an official distribution of PgBouncer. It’s an ope
 | 3 | h-enable-monitoring | [Monitor (COS)](/t/12279) |
 | 3 | h-enable-tracing | [Tracing (COS)](/t/14789) |
 | 1 | reference | [Reference]() |
-| 2 | r-releases-group | [Release Notes]() |
-| 3 | r-releases | [All releases](/t/12261) |
-| 3 | r-releases-rev228 | [Revision 228/229](/t/15090) |
-| 3 | r-releases-rev144 | [Revision 144/145](/t/14070) |
-| 3 | r-releases-rev103 | [Revision 103](/t/13297) |
-| 3 | r-releases-rev81 | [Revision 81](/t/12751) |
-| 3 | r-releases-rev76 | [Revision 76](/t/12262) |
+| 2 | r-releases | [Release Notes](/t/12261) |
+| 3 | r-revision-268-269 | [Revision 268/269](/t/15443) |
+| 3 | r-revision-228-229 | [Revision 228/229](/t/15090) |
+| 3 | r-revision-144 | [Revision 144/145](/t/14070) |
+| 3 | r-revision-103 | [Revision 103](/t/13297) |
+| 3 | r-revision-81 | [Revision 81](/t/12751) |
+| 3 | r-revision-76 | [Revision 76](/t/12262) |
 | 2 | r-requirements | [Requirements](/t/12263) |
-| 2 | r-contributing | [Contributing](https://github.com/canonical/pgbouncer-k8s-operator/blob/main/CONTRIBUTING.md) |
 | 2 | r-testing | [Testing](/t/12272) |
 | 2 | r-contacts | [Contacts](/t/12264) |
 | 1 | explanation | [Explanation]() |
+| 2 | e-juju-details | [Juju](/t/12274) |
 | 2 | e-interfaces | [Interfaces/endpoints](/t/12265) |
 | 2 | e-statuses | [Statuses](/t/12266) |
-| 2 | e-juju-details | [Juju](/t/12274) |
+| 2 | e-events-hooks | [Events and hooks](/t/15662) |
 
 [/details]
 

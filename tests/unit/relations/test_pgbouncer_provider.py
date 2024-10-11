@@ -62,6 +62,10 @@ class TestPgbouncerProvider(unittest.TestCase):
     @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_credentials")
     @patch("charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.set_version")
     @patch(
+        "charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.fetch_my_relation_field",
+        return_value="test_pass",
+    )
+    @patch(
         "charm.PgBouncerK8sCharm.get_node_ports",
         return_value={
             "rw": "rw:5432",
@@ -75,6 +79,7 @@ class TestPgbouncerProvider(unittest.TestCase):
         _gen_rel_dbs,
         _set_rel_dbs,
         _get_node_ports,
+        _dbp_fetch_my_relation_field,
         _dbp_set_version,
         _dbp_set_credentials,
         _get_database,
@@ -93,10 +98,15 @@ class TestPgbouncerProvider(unittest.TestCase):
         _gen_rel_dbs.return_value = {}
 
         event = MagicMock()
-        rel_id = event.relation.id = 1
+        rel_id = event.relation.id = self.client_rel_id
         database = event.database = "test-db"
         event.extra_user_roles = "SUPERUSER"
         user = f"relation_id_{rel_id}"
+        with self.harness.hooks_disabled():
+            self.harness.update_relation_data(rel_id, "application", {"database": "test-db"})
+            self.harness.update_relation_data(
+                self.peers_rel_id, self.app, {"pgb_dbs_config": "{}"}
+            )
 
         # check we exit immediately if backend doesn't exist.
         _check_backend.return_value = False
@@ -120,8 +130,8 @@ class TestPgbouncerProvider(unittest.TestCase):
         )
         _set_read_only_endpoints.assert_called()
         _set_rel_dbs.assert_called_once_with({
-            "1": {"name": "test-db", "legacy": False},
-            "*": {"name": "*", "auth_dbname": "test-db"},
+            str(rel_id): {"name": "test-db", "legacy": False},
+            "*": {"name": "*", "auth_dbname": "test-db", "legacy": False},
         })
         _render_pgb_config.assert_called_once_with(reload_pgbouncer=True)
 
