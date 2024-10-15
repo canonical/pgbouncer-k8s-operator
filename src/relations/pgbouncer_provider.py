@@ -28,7 +28,7 @@ f"{dbname}_readonly".
 │                  │ │ <empty>          │ │ <empty>         │                                                      │ │ <empty>           │ │ <empty>            │ │ <empty>           │                             │
 │                  │ ╰──────────────────╯ ╰─────────────────╯                                                      │ ╰───────────────────╯ ╰────────────────────╯ ╰───────────────────╯                             │
 └──────────────────┴───────────────────────────────────────────────────────────────────────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────┘
-"""  # noqa: W505
+"""
 
 import logging
 from hashlib import shake_128
@@ -304,6 +304,6 @@ class PgBouncerProvider(Object):
 
         TODO this is stolen from the db relation - cleanup
         """
-        for entry in relation.data.keys():
+        for entry in relation.data:
             if isinstance(entry, Application) and entry != self.charm.app:
                 return entry

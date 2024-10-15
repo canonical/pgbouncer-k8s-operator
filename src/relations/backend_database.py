@@ -170,7 +170,8 @@ class BackendDatabaseRequires(Object):
         """Generate auth query."""
         if not self.relation:
             return ""
-        return f"SELECT username, password FROM {self.auth_user}.get_auth($1)"
+        # auth user is internally generated
+        return f"SELECT username, password FROM {self.auth_user}.get_auth($1)"  # noqa: S608
 
     @property
     def postgres_databag(self) -> Dict:
@@ -421,7 +422,8 @@ class BackendDatabaseRequires(Object):
             psycopg2.Error if self.postgres isn't usable.
         """
         logger.info("initialising auth function")
-        install_script = open("src/relations/sql/pgbouncer-install.sql", "r").read()
+        with open("src/relations/sql/pgbouncer-install.sql") as f:
+            install_script = f.read()
 
         for dbname in dbs:
             with self.postgres._connect_to_database(dbname) as conn, conn.cursor() as cursor:
@@ -442,7 +444,8 @@ class BackendDatabaseRequires(Object):
             psycopg2.Error if self.postgres isn't usable.
         """
         logger.info("removing auth function from backend relation")
-        uninstall_script = open("src/relations/sql/pgbouncer-uninstall.sql", "r").read()
+        with open("src/relations/sql/pgbouncer-uninstall.sql") as f:
+            uninstall_script = f.read()
         for dbname in dbs:
             with self.postgres._connect_to_database(dbname) as conn, conn.cursor() as cursor:
                 cursor.execute(uninstall_script.replace("auth_user", self.auth_user))

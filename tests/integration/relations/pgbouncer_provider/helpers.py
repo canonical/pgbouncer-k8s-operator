@@ -64,7 +64,7 @@ async def get_application_relation_data(
     application_name: str,
     relation_name: str,
     key: str,
-    relation_id: str = None,
+    relation_id: Optional[str] = None,
 ) -> Optional[str]:
     """Get relation data for an application.
 
@@ -130,7 +130,7 @@ async def is_external_connectivity_set(
     ops_test: OpsTest,
     application_name: str,
     relation_name: str,
-    relation_id: str = None,
+    relation_id: Optional[str] = None,
 ) -> Optional[str]:
     data = await get_application_relation_data(
         ops_test,
@@ -149,9 +149,9 @@ async def build_connection_string(
     application_name: str,
     relation_name: str,
     *,
-    relation_id: str = None,
+    relation_id: Optional[str] = None,
     read_only_endpoint: bool = False,
-    database: str = None,
+    database: Optional[str] = None,
 ) -> str:
     """Build a PostgreSQL connection string.
 
@@ -268,10 +268,7 @@ def check_exposed_connection(credentials, tls):
     table_name = "expose_test"
     smoke_val = str(uuid4())
 
-    if tls:
-        sslmode = "require"
-    else:
-        sslmode = "disable"
+    sslmode = "require" if tls else "disable"
     if "uris" in credentials["postgresql"]:
         uri = credentials["postgresql"]["uris"]
         connstr = f"{uri}?connect_timeout=1&sslmode={sslmode}"

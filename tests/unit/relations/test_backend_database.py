@@ -215,7 +215,8 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
     )
     def test_initialise_auth_function(self, _postgres, _auth_user):
-        install_script = open("src/relations/sql/pgbouncer-install.sql", "r").read()
+        with open("src/relations/sql/pgbouncer-install.sql") as f:
+            install_script = f.read()
         dbs = ["test-db"]
 
         self.backend.initialise_auth_function(dbs)
