@@ -1,4 +1,4 @@
-# External K8s connection
+# How to connect DB from outside of Kubernetes
 
 To make the Charmed PostgreSQL K8s database reachable from outside the Kubernetes cluster, this charm PgBouncer K8s should be deployed. It creates and manages several K8s services including the NodePort one:
 
