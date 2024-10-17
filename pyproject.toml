@@ -10,12 +10,12 @@ ops = "^2.17.0"
 cryptography = "^43.0.1"
 jsonschema = "^4.23.0"
 tenacity = "^9.0.0"
-cosl = "^0.0.41"
+cosl = "^0.0.42"
 poetry-core = "^1.9.1"
 lightkube = "^0.15.4"
 lightkube-models = "^1.29.0.6"
 pydantic = "^1.10.18"
-psycopg2 = "^2.9.9"
+psycopg2 = "^2.9.10"
 psycopg = {extras = ["c"], version = "^3.2.3"}
 jinja2 = "^3.1.4"
 
@@ -67,7 +67,7 @@ allure-pytest-collection-report = {git = "https://github.com/canonical/data-plat
 # renovate caret doesn't work: https://github.com/renovatebot/renovate/issues/26940
 juju = "<=3.5.2.0"
 tenacity = "*"
-psycopg2-binary = "^2.9.9"
+psycopg2-binary = "^2.9.10"
 allure-pytest = "^2.13.5"
 
 [build-system]
