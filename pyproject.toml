@@ -7,7 +7,7 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.10"
 ops = "^2.17.0"
-cryptography = "^43.0.1"
+cryptography = "^43.0.3"
 jsonschema = "^4.23.0"
 tenacity = "^9.0.0"
 cosl = "^0.0.42"
@@ -48,7 +48,7 @@ codespell = "^2.3.0"
 optional = true
 
 [tool.poetry.group.unit.dependencies]
-coverage = {extras = ["toml"], version = "^7.6.3"}
+coverage = {extras = ["toml"], version = "^7.6.4"}
 pytest = "^8.3.3"
 pytest-asyncio = "*"
 parameterized = "^0.9.0"
