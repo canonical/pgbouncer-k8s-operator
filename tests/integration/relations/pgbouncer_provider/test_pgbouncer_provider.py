@@ -258,9 +258,9 @@ async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
     ]
     unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
     databag = await get_app_relation_databag(ops_test, unit.name, relations[0].id)
-    assert not databag.get(
-        "read-only-endpoints", None
-    ), f"read-only-endpoints in pgb databag: {databag}"
+    assert not databag.get("read-only-endpoints", None), (
+        f"read-only-endpoints in pgb databag: {databag}"
+    )
 
 
 @pytest.mark.group(1)

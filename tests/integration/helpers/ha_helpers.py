@@ -50,9 +50,9 @@ async def check_writes(ops_test) -> int:
     total_expected_writes = await stop_continuous_writes(ops_test)
     actual_writes, max_number_written = await count_writes(ops_test)
     for member, count in actual_writes.items():
-        assert (
-            count == max_number_written[member]
-        ), f"{member}: writes to the db were missed: count of actual writes ({count}) on {member} different from the max number written ({max_number_written[member]})."
+        assert count == max_number_written[member], (
+            f"{member}: writes to the db were missed: count of actual writes ({count}) on {member} different from the max number written ({max_number_written[member]})."
+        )
         assert total_expected_writes == count, f"{member}: writes to the db were missed."
     return total_expected_writes
 
@@ -64,9 +64,9 @@ async def are_writes_increasing(ops_test, down_unit: Optional[str] = None) -> No
         for attempt in Retrying(stop=stop_after_delay(60 * 3), wait=wait_fixed(3), reraise=True):
             with attempt:
                 more_writes, _ = await count_writes(ops_test, down_unit=down_unit)
-                assert (
-                    more_writes[member] > count
-                ), f"{member}: writes not continuing to DB (current writes: {more_writes[member]} - previous writes: {count})"
+                assert more_writes[member] > count, (
+                    f"{member}: writes not continuing to DB (current writes: {more_writes[member]} - previous writes: {count})"
+                )
 
 
 async def count_writes(
