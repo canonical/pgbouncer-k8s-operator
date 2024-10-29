@@ -158,9 +158,9 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
             postgresql_primary_unit,
             'grep "database=waltz SSL enabled" /var/log/postgresql/postgresql*.log',
         )
-        assert (
-            f"connection authorized: user={pgb_user} database=waltz SSL enabled" in logs
-        ), "TLS is not being used on connections to PostgreSQL"
+        assert f"connection authorized: user={pgb_user} database=waltz SSL enabled" in logs, (
+            "TLS is not being used on connections to PostgreSQL"
+        )
 
 
 @pytest.mark.group(1)

@@ -140,7 +140,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         )
         self.loki_push = LogProxyConsumer(
             self,
-            log_files=[f'{service["log_dir"]}/pgbouncer.log' for service in self._services],
+            log_files=[f"{service['log_dir']}/pgbouncer.log" for service in self._services],
             relation_name="logging",
             container_name="pgbouncer",
         )

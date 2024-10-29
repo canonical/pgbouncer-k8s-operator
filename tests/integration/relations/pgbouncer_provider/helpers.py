@@ -169,7 +169,7 @@ async def build_connection_string(
     """
     # Get the connection data exposed to the application through the relation.
     if database is None:
-        database = f'{application_name.replace("-", "_")}_{relation_name.replace("-", "_")}'
+        database = f"{application_name.replace('-', '_')}_{relation_name.replace('-', '_')}"
 
     if secret_uri := await get_application_relation_data(
         ops_test,
@@ -239,9 +239,9 @@ async def check_new_relation(
         dbname=dbname,
         relation_name=relation_name,
     )
-    assert (
-        test_data in json.loads(run_query["results"])[0]
-    ), f"smoke check failed. Query output: {run_query}"
+    assert test_data in json.loads(run_query["results"])[0], (
+        f"smoke check failed. Query output: {run_query}"
+    )
 
 
 async def delete_pod(ops_test: OpsTest, unit_name: str) -> None:
