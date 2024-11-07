@@ -7,14 +7,14 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  pull_request:
-    paths-ignore:
-      - '.gitignore'
-      - '.jujuignore'
-      - 'LICENSE'
-      - '**.md'
-      - .github/renovate.json5
-      - '.github/workflows/sync_docs.yaml'
+  # pull_request:
+  #   paths-ignore:
+  #     - '.gitignore'
+  #     - '.jujuignore'
+  #     - 'LICENSE'
+  #     - '**.md'
+  #     - .github/renovate.json5
+  #     - '.github/workflows/sync_docs.yaml'
   schedule:
     - cron: '53 0 * * *' # Daily at 00:53 UTC
   # Triggered on push to branch "main" by .github/workflows/release.yaml
