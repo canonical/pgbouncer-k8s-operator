@@ -31,7 +31,7 @@ jobs:
     needs:
       - lint
       - build
-    uses: canonical/data-platform-workflows/.github/workflows/integration_test_charm.yaml@v23.0.4
+    uses: canonical/data-platform-workflows/.github/workflows/integration_test_charm.yaml@shayan/juju_3_6_tests
     with:
       artifact-prefix: ${{ needs.build.outputs.artifact-prefix }}
       architecture: ${{ matrix.architecture }}
