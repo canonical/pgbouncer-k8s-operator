@@ -1,5 +1,6 @@
 name: Auto-update Charm Libraries
 on:
+  pull_request:
   # Manual trigger
   workflow_dispatch:
   # Check regularly the upstream every four hours
