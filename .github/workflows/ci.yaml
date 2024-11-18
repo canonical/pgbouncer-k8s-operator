@@ -47,8 +47,7 @@ jobs:
     name: Build charm
     uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v23.0.5
     with:
-      cache: false
-      artifact-prefix: temp-packed-charm
+      cache: true
 
   integration-test:
     strategy:
