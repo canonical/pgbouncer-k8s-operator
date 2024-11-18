@@ -1,0 +1,60 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:766 Connecting to existing model microk8s-localhost:test on unspecified cloud
+[32mINFO    [0m juju.model:model.py:2098 Deploying ch:amd64/jammy/postgresql-k8s-459
+[32mINFO    [0m juju.model:model.py:2098 Deploying local:jammy/pgbouncer-k8s-0
+[33mWARNING [0m juju.model:model.py:1564 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  pgbouncer-k8s/0 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [executing] waiting: awaiting for cluster to start
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [executing] active: Primary
+[32mINFO    [0m integration.test_config:test_config.py:58 listen_port
+[32mINFO    [0m integration.test_config:test_config.py:58 pool_mode
+[32mINFO    [0m integration.test_config:test_config.py:58 max_db_connections
+[32mINFO    [0m pytest_operator.plugin:plugin.py:903 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.4.6    unsupported  01:51:11Z
+
+App             Version  Status   Scale  Charm           Channel  Rev  Address         Exposed  Message
+pgbouncer-k8s   1.21.0   waiting      1  pgbouncer-k8s              0  10.152.183.47   no       installing agent
+postgresql-k8s  14.13    active       1  postgresql-k8s  14/edge  459  10.152.183.116  no       
+
+Unit               Workload  Agent      Address      Ports  Message
+pgbouncer-k8s/0*   active    executing  10.1.129.72         (config-changed) 
+postgresql-k8s/0*  active    idle       10.1.129.74         Primary
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:909 Juju error logs:
+
+unit-pgbouncer-k8s-0: 01:51:05 ERROR unit.pgbouncer-k8s/0.juju-log Invalid configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/./src/charm.py", line 554, in configuration_check
+    _ = self.config
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/lib/charms/data_platform_libs/v0/data_models.py", line 200, in config
+    return self.config_type(**translated_keys)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/pydantic/main.py", line 341, in __init__
+    raise validation_error
+pydantic.error_wrappers.ValidationError: 1 validation error for CharmConfig
+listen_port
+  ensure this value is greater than 0 (type=value_error.number.not_gt; limit_value=0)
+unit-pgbouncer-k8s-0: 01:51:07 ERROR unit.pgbouncer-k8s/0.juju-log Invalid configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/./src/charm.py", line 554, in configuration_check
+    _ = self.config
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/lib/charms/data_platform_libs/v0/data_models.py", line 200, in config
+    return self.config_type(**translated_keys)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/pydantic/main.py", line 341, in __init__
+    raise validation_error
+pydantic.error_wrappers.ValidationError: 1 validation error for CharmConfig
+pool_mode
+  unexpected value; permitted: 'session', 'transaction', 'statement' (type=value_error.const; given=abcXYZ123; permitted=('session', 'transaction', 'statement'))
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:991 Forgetting model main...
