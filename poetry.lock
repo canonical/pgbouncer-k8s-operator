@@ -31,8 +31,8 @@ pytest = "*"
 [package.source]
 type = "git"
 url = "https://github.com/canonical/data-platform-workflows"
-reference = "v23.0.4"
-resolved_reference = "60f088b7f0f967a8e35d45339f5123a6e74786f7"
+reference = "v23.0.5"
+resolved_reference = "e3f522c648375decee87fc0982c012e46ffb0b98"
 subdirectory = "python/pytest_plugins/allure_pytest_collection_report"
 
 [[package]]
@@ -1726,8 +1726,8 @@ develop = false
 [package.source]
 type = "git"
 url = "https://github.com/canonical/data-platform-workflows"
-reference = "v23.0.4"
-resolved_reference = "60f088b7f0f967a8e35d45339f5123a6e74786f7"
+reference = "v23.0.5"
+resolved_reference = "e3f522c648375decee87fc0982c012e46ffb0b98"
 subdirectory = "python/pytest_plugins/github_secrets"
 
 [[package]]
@@ -1764,8 +1764,8 @@ pyyaml = "*"
 [package.source]
 type = "git"
 url = "https://github.com/canonical/data-platform-workflows"
-reference = "v23.0.4"
-resolved_reference = "60f088b7f0f967a8e35d45339f5123a6e74786f7"
+reference = "v23.0.5"
+resolved_reference = "e3f522c648375decee87fc0982c012e46ffb0b98"
 subdirectory = "python/pytest_plugins/pytest_operator_cache"
 
 [[package]]
@@ -1783,8 +1783,8 @@ pytest = "*"
 [package.source]
 type = "git"
 url = "https://github.com/canonical/data-platform-workflows"
-reference = "v23.0.4"
-resolved_reference = "60f088b7f0f967a8e35d45339f5123a6e74786f7"
+reference = "v23.0.5"
+resolved_reference = "e3f522c648375decee87fc0982c012e46ffb0b98"
 subdirectory = "python/pytest_plugins/pytest_operator_groups"
 
 [[package]]
@@ -2438,4 +2438,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "5387817e3b8a03ebd03b5c82cc61174827336112e43ebd1f5af7691de0c99472"
+content-hash = "8f69231154888c72d4b692cda94607dc8336324c422c0a98809b581f0eb20ee9"
