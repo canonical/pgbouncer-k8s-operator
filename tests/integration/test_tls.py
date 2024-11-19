@@ -162,6 +162,6 @@ async def test_mattermost_db(ops_test: OpsTest) -> None:
     async with ops_test.fast_forward():
         # Deploy Mattermost
         await deploy_and_relate_application_with_pgbouncer(
-            ops_test, MATTERMOST_APP_NAME, MATTERMOST_APP_NAME, APPLICATION_UNITS, status="waiting"
+            ops_test, MATTERMOST_APP_NAME, MATTERMOST_APP_NAME, 1, status="waiting"
         )
         await ops_test.model.remove_application(MATTERMOST_APP_NAME, block_until_done=True)
