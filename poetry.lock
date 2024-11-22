@@ -403,13 +403,13 @@ files = [
 
 [[package]]
 name = "cosl"
-version = "0.0.43"
+version = "0.0.45"
 description = "Utils for COS Lite charms"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "cosl-0.0.43-py3-none-any.whl", hash = "sha256:b2fb1c6407ebffa1901caf91dfaf588fd53e2d33fac5b71f14cc82a67389c82b"},
-    {file = "cosl-0.0.43.tar.gz", hash = "sha256:7aed2e2a7c77c9528dbabc79fa681db6de007a99174e2a73228022b3731dabf1"},
+    {file = "cosl-0.0.45-py3-none-any.whl", hash = "sha256:aede0ff7238f6e84f8ff69e32b0f0fd69dd049a1d1b922b9e9166c8ce9a443ea"},
+    {file = "cosl-0.0.45.tar.gz", hash = "sha256:0e7db33091f9694666a485bba8e21ddf79ff69f2f86002c855aa58b08a561a95"},
 ]
 
 [package.dependencies]
@@ -2436,4 +2436,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "aaf5eb7f458d4fc0c69c39d28454e6a11b5e8d57f52ee6d3127e2ff50c8fb190"
+content-hash = "b429f6f8e4e024d52da9effa3c9645dff1be7714d5a61bebcbba0eb8ced5d423"
