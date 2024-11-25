@@ -34,7 +34,8 @@ from ops import (
     WaitingStatus,
     main,
 )
-from ops.pebble import ConnectionError, Layer, ServiceStatus
+from ops.pebble import ConnectionError as PebbleConnectionError
+from ops.pebble import Layer, ServiceStatus
 
 from config import CharmConfig
 from constants import (
@@ -440,7 +441,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         try:
             if self.check_pgb_running():
                 self.reload_pgbouncer(restart=port_changed)
-        except ConnectionError:
+        except PebbleConnectionError:
             event.defer()
 
         if self.unit.is_leader() and port_changed:
@@ -577,7 +578,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         try:
             if self.check_pgb_running():
                 self.unit.status = ActiveStatus()
-        except ConnectionError:
+        except PebbleConnectionError:
             not_running = "pgbouncer not running"
             logger.error(not_running)
             self.unit.status = WaitingStatus(not_running)
@@ -603,7 +604,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         for service in self._services:
             if service["name"] not in pebble_services:
                 # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
-                raise ConnectionError
+                raise PebbleConnectionError
             if restart or pebble_services[service["name"]].current != ServiceStatus.ACTIVE:
                 pgb_container.restart(service["name"])
             else:
@@ -662,7 +663,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         for service in services:
             if service not in pebble_services:
                 # pebble_ready event hasn't fired so pgbouncer layer has not been added to pebble
-                raise ConnectionError
+                raise PebbleConnectionError
             pgb_service_status = pgb_container.get_services().get(service).current
             if pgb_service_status != ServiceStatus.ACTIVE:
                 pgb_not_running = f"PgBouncer service {service} not running: service status = {pgb_service_status}"

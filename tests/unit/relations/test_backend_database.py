@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, PropertyMock, call, patch
 
 from charms.pgbouncer_k8s.v0.pgb import get_hashed_password
 from ops import ModelError, WaitingStatus
-from ops.pebble import ConnectionError
+from ops.pebble import ConnectionError as PebbleConnectionError
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
@@ -164,7 +164,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         assert not _update_client_conn.called
 
         # connerror
-        _check_pgb.side_effect = ConnectionError
+        _check_pgb.side_effect = PebbleConnectionError
         self.charm.backend._on_relation_changed(MagicMock())
         assert not _render_pgb.called
         assert not _update_client_conn.called

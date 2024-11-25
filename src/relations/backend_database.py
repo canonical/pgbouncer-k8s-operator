@@ -57,7 +57,8 @@ from ops.model import (
     Relation,
     WaitingStatus,
 )
-from ops.pebble import ConnectionError, PathError
+from ops.pebble import ConnectionError as PebbleConnectionError
+from ops.pebble import PathError
 
 from constants import (
     APP_SCOPE,
@@ -288,7 +289,7 @@ class BackendDatabaseRequires(Object):
                 logger.debug("_on_database_created deferred: PGB not running")
                 event.defer()
                 return
-        except ConnectionError:
+        except PebbleConnectionError:
             # on_pebble_ready hasn't been fired yet, so wait
             logger.debug("_on_database_created deferred: pebble ready not fired")
             event.defer()
@@ -330,7 +331,7 @@ class BackendDatabaseRequires(Object):
             if not self.charm.check_pgb_running():
                 logger.debug("_on_relation_changed early exit: PGB not running")
                 return
-        except ConnectionError:
+        except PebbleConnectionError:
             # on_pebble_ready hasn't been fired yet, so wait
             logger.debug("_on_reltion_changed early exit: pebble ready not fired")
             return
