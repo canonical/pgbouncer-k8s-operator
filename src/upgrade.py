@@ -16,7 +16,7 @@ from lightkube.core.client import Client
 from lightkube.core.exceptions import ApiError
 from lightkube.resources.apps_v1 import StatefulSet
 from ops.charm import WorkloadEvent
-from ops.pebble import ConnectionError
+from ops.pebble import ConnectionError as PebbleConnectionError
 from pydantic import BaseModel
 from typing_extensions import override
 
@@ -60,7 +60,7 @@ class PgbouncerUpgrade(DataUpgrade):
                 raise ClusterNotReadyError(
                     DEFAULT_MESSAGE, "Not all pgbouncer services are up yet."
                 )
-        except ConnectionError as e:
+        except PebbleConnectionError as e:
             raise ClusterNotReadyError(
                 DEFAULT_MESSAGE, "Not all pgbouncer services are missing."
             ) from e
@@ -113,7 +113,7 @@ class PgbouncerUpgrade(DataUpgrade):
         try:
             if not self.peer_relation or not self.charm.check_pgb_running():
                 return
-        except ConnectionError:
+        except PebbleConnectionError:
             logger.debug("on_upgrade_changed early exit: Cannot get pebble services")
             return
 
