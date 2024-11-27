@@ -1,0 +1,39 @@
+[32mINFO    [0m juju.model:model.py:2098 Deploying ch:amd64/focal/mattermost-k8s-27
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  mattermost-k8s/0 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+[33mWARNING [0m juju.model:model.py:1564 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  mattermost-k8s/0 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  mattermost-k8s/0 [idle] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:903 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.4.6    unsupported  01:50:43Z
+
+App                       Version  Status  Scale  Charm                     Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   active      2  pgbouncer-k8s                              0  10.152.183.163  no       
+postgresql-k8s            14.13    active      3  postgresql-k8s            14/edge        466  10.152.183.46   no       
+postgresql-test-app                active      1  postgresql-test-app       latest/edge    289  10.152.183.153  no       received database credentials of the first database
+self-signed-certificates           active      1  self-signed-certificates  latest/stable  155  10.152.183.88   no       
+
+Unit                         Workload  Agent      Address      Ports  Message
+pgbouncer-k8s/0*             active    idle       10.1.241.72         
+pgbouncer-k8s/1              active    executing  10.1.241.73         
+postgresql-k8s/0             active    idle       10.1.241.79         
+postgresql-k8s/1             active    idle       10.1.241.80         
+postgresql-k8s/2*            active    idle       10.1.241.81         Primary
+postgresql-test-app/0*       active    idle       10.1.241.74         received database credentials of the first database
+self-signed-certificates/0*  active    idle       10.1.241.78         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:909 Juju error logs:
+
+unit-postgresql-k8s-0: 01:42:21 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-1: 01:42:50 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-pgbouncer-k8s-1: 01:50:34 ERROR juju.worker.dependency "uniter" manifold worker returned unexpected error: relation scope id "70e7aa9a-2d2c-4ab9-8aff-42848195ff49:r#11#mattermost-k8s": settings 70e7aa9a-2d2c-4ab9-8aff-42848195ff49:r#11#mattermost-k8s not found (not found)
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:991 Forgetting model main...
