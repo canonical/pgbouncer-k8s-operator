@@ -1,0 +1,100 @@
+[32mINFO    [0m httpx:_client.py:1786 HTTP Request: DELETE https://10.1.0.66:16443/api/v1/namespaces/test/pods/pgbouncer-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-test-app/0 [idle] active: 
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  pgbouncer-k8s/0 [executing] maintenance: stopping charm software
+  pgbouncer-k8s/1 [idle] active: 
+  secondary-application/0 [idle] active: received database credentials of the second database
+  finos-waltz-k8s/0 [idle] active: 
+  pgbouncer-k8s-secondary/0 [idle] active: 
+  data-integrator/0 [idle] active: 
+  indico/0 [idle] active: 
+  redis-broker/0 [idle] active: 
+  redis-cache/0 [idle] active: 
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  pgbouncer-k8s/0 [executing] waiting: pgbouncer not running
+  pgbouncer-k8s/1 [executing] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:903 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.4.6    unsupported  01:52:48Z
+
+App                      Version               Status  Scale  Charm                Channel        Rev  Address         Exposed  Message
+data-integrator                                active      1  data-integrator      latest/edge     80  10.152.183.209  no       
+finos-waltz-k8s                                active      1  finos-waltz-k8s      latest/edge     33  10.152.183.119  no       
+indico                   3.3.1                 active      1  indico               latest/stable  233  10.152.183.184  no       
+pgbouncer-k8s            1.21.0                active      2  pgbouncer-k8s                         0  10.152.183.69   no       
+pgbouncer-k8s-secondary  1.21.0                active      1  pgbouncer-k8s                         1  10.152.183.70   no       
+postgresql-k8s           14.13                 active      2  postgresql-k8s       14/edge        472  10.152.183.213  no       
+postgresql-test-app                            active      1  postgresql-test-app  latest/edge    305  10.152.183.232  no       
+redis-broker             ubuntu/redis@691f315  active      1  redis-k8s            latest/stable    7                  no       
+redis-cache              ubuntu/redis@691f315  active      1  redis-k8s            latest/stable    7                  no       
+secondary-application                          active      1  postgresql-test-app  latest/edge    305  10.152.183.109  no       received database credentials of the second database
+
+Unit                        Workload  Agent  Address      Ports     Message
+data-integrator/0*          active    idle   10.1.37.148            
+finos-waltz-k8s/0*          active    idle   10.1.37.145            
+indico/0*                   active    idle   10.1.37.151            
+pgbouncer-k8s-secondary/0*  active    idle   10.1.37.146            
+pgbouncer-k8s/0*            active    idle   10.1.37.156            
+pgbouncer-k8s/1             active    idle   10.1.37.147            
+postgresql-k8s/0            active    idle   10.1.37.142            
+postgresql-k8s/1*           active    idle   10.1.37.141            Primary
+postgresql-test-app/0*      active    idle   10.1.37.136            
+redis-broker/0*             active    idle   10.1.37.153  6379/TCP  
+redis-cache/0*              active    idle   10.1.37.155  6379/TCP  
+secondary-application/0*    active    idle   10.1.37.144            received database credentials of the second database
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:909 Juju error logs:
+
+unit-postgresql-test-app-0: 01:36:07 ERROR unit.postgresql-test-app/0.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/./src/charm.py", line 565, in <module>
+    main(ApplicationCharm)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/ops/__init__.py", line 343, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/ops/_main.py", line 543, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/ops/_main.py", line 529, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/ops/_main.py", line 518, in _emit
+    _emit_charm_event(self.charm, self.dispatcher.event_name, self._juju_context)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/ops/_main.py", line 134, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/ops/framework.py", line 347, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/ops/framework.py", line 857, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/ops/framework.py", line 947, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/./src/charm.py", line 494, in _on_run_sql_action
+    cursor.execute(query)
+psycopg2.errors.ReadOnlySqlTransaction: cannot execute DROP TABLE in a read-only transaction
+
+application-redis-cache: 01:49:08 ERROR unit.redis-cache/0.juju-log redis:20: Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "./src/charm.py", line 159, in <module>
+    main(RedisCharm)
+  File "/var/lib/juju/agents/unit-redis-cache-0/charm/venv/ops/main.py", line 402, in main
+    _emit_charm_event(charm, dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-redis-cache-0/charm/venv/ops/main.py", line 140, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-redis-cache-0/charm/venv/ops/framework.py", line 278, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-redis-cache-0/charm/venv/ops/framework.py", line 722, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-redis-cache-0/charm/venv/ops/framework.py", line 767, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-redis-cache-0/charm/lib/charms/redis_k8s/v0/redis.py", line 91, in _on_relation_changed
+    event.relation.data[self.model.unit]['hostname'] = str(self._bind_address(event))
+  File "/var/lib/juju/agents/unit-redis-cache-0/charm/lib/charms/redis_k8s/v0/redis.py", line 103, in _bind_address
+    return self.app.name
+AttributeError: 'RedisProvides' object has no attribute 'app'
+application-redis-cache: 01:49:08 ERROR juju.worker.caasoperator.uniter.redis-cache/0.operation hook "redis-relation-changed" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-0: 01:51:55 ERROR unit.pgbouncer-k8s/0.juju-log Cluster upgrade failed, ensure pre-upgrade checks are ran first.
+unit-pgbouncer-k8s-0: 01:51:57 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:52:00 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:52:01 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:991 Forgetting model main...
