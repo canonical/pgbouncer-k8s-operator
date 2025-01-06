@@ -15,6 +15,7 @@ For each release, this table shows:
 
 | Revision | PgBouncer version | Juju version | [TLS encryption](/t/12259) | [COS monitoring](/t/12279) |  [Minor version upgrades](/t/12270) |
 |:---:|:---:|:---:|:---:|:---:|:---:|
+|[359], [360]| `1.21.0` | `3.4.5+` | ![check] | ![check] | ![check]
 |[268], [269]| `1.21.0` | `3.4.5+` | ![check] | ![check] | ![check]
 |[228], [229]| `1.21.0` | `3.4.5+` | ![check] | ![check] |
 |[144], [145]| `1.21.0` | `3.1.8+` | ![check] | ![check] |
@@ -30,11 +31,20 @@ Several [revisions](https://juju.is/docs/sdk/revision) are released simultaneous
 
 > If you deploy a specific revision, **you must make sure it matches your base and architecture** via the tables below or with [`juju info`](https://juju.is/docs/juju/juju-info).
 
+### Release 359/360 (latest)
+| Revision | `amd64` | `arm64` |  Ubuntu 22.04 (jammy)
+|:-----:|:--------:|:--------:|:-----:|
+| [360] |          | ![check] | ![check] |
+| [359] | ![check] |          | ![check] |
+
+[details=Release 268/269]
+
 ### Release 268/269 (latest)
 | Revision | `amd64` | `arm64` |  Ubuntu 22.04 (jammy)
 |:-----:|:--------:|:--------:|:-----:|
 | [268] |          | ![check] | ![check] |
 | [269] | ![check] |          | ![check] |
+[/details]
 
 [details=Release 228/229]
 
@@ -85,6 +95,8 @@ Several [revisions](https://juju.is/docs/sdk/revision) are released simultaneous
 [/note]
 
 <!--LINKS-->
+[360]: /t/16124
+[359]: /t/16124
 [268]: /t/15443
 [269]: /t/15443
 [228]: /t/15090

@@ -55,6 +55,7 @@ This PgBouncer K8s charm is an official distribution of PgBouncer. It’s an ope
 | 3 | h-enable-tracing | [Tracing (COS)](/t/14789) |
 | 1 | reference | [Reference]() |
 | 2 | r-releases | [Release Notes](/t/12261) |
+| 3 | r-revision-359-360 | [Revision 359/360](/t/16124) |
 | 3 | r-revision-268-269 | [Revision 268/269](/t/15443) |
 | 3 | r-revision-228-229 | [Revision 228/229](/t/15090) |
 | 3 | r-revision-144 | [Revision 144/145](/t/14070) |
