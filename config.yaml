@@ -59,3 +59,18 @@ options:
 
       0 = unlimited.
     type: int
+
+  expose-external:
+    description: |
+      String to determine how to expose PgBouncer externally from the
+      Kubernetes cluster.
+      Possible values: 'false', 'nodeport', 'loadbalancer'
+    type: string
+    default: "false"
+
+  loadbalancer-extra-annotations:
+    description: |
+      A JSON string representing extra annotations for the Kubernetes service
+      created and managed by the charm.
+    type: string
+    default: "{}"

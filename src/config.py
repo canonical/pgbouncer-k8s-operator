@@ -19,3 +19,5 @@ class CharmConfig(BaseConfigModel):
     listen_port: PositiveInt
     pool_mode: Literal["session", "transaction", "statement"]
     max_db_connections: conint(ge=0)
+    expose_external: Literal["false", "nodeport", "loadbalancer"]
+    loadbalancer_extra_annotations: str

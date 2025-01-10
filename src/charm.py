@@ -4,6 +4,8 @@
 
 """Charmed PgBouncer connection pooler."""
 
+import enum
+import functools
 import json
 import logging
 import math
@@ -11,7 +13,7 @@ import os
 import socket
 from configparser import ConfigParser
 from signal import SIGHUP
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union, get_args
+from typing import Dict, List, Literal, Optional, Tuple, Union, get_args
 
 import lightkube
 import psycopg2
@@ -29,6 +31,7 @@ from ops import (
     BlockedStatus,
     ConfigChangedEvent,
     JujuVersion,
+    MaintenanceStatus,
     PebbleReadyEvent,
     Relation,
     WaitingStatus,
@@ -46,6 +49,7 @@ from constants import (
     CLIENT_RELATION_NAME,
     CONTAINER_UNAVAILABLE_MESSAGE,
     EXTENSIONS_BLOCKING_MESSAGE,
+    K8S_SERVICE_CONNECT_TIMEOUT,
     METRICS_PORT,
     MONITORING_PASSWORD_KEY,
     PEER_RELATION_NAME,
@@ -63,6 +67,7 @@ from constants import (
     TRACING_PROTOCOL,
     TRACING_RELATION_NAME,
     UNIT_SCOPE,
+    WAITING_FOR_K8S_SERVICE_MESSAGE,
 )
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
@@ -73,6 +78,14 @@ from upgrade import PgbouncerUpgrade, get_pgbouncer_k8s_dependencies_model
 logger = logging.getLogger(__name__)
 
 Scopes = Literal[APP_SCOPE, UNIT_SCOPE]
+
+
+class ServiceType(enum.Enum):
+    """Supported K8s service types."""
+
+    CLUSTER_IP = "ClusterIP"
+    NODE_PORT = "NodePort"
+    LOAD_BALANCER = "LoadBalancer"
 
 
 @trace_charm(
@@ -156,77 +169,48 @@ class PgBouncerK8sCharm(TypedCharmBase):
             self, relation_name=TRACING_RELATION_NAME, protocols=[TRACING_PROTOCOL]
         )
 
+        self.k8s_service_name = f"{self.app.name}-service"
+        self.lightkube_client = lightkube.Client()
+
     @property
     def tracing_endpoint(self) -> Optional[str]:
         """Otlp http endpoint for charm instrumentation."""
         if self.tracing.is_ready():
             return self.tracing.get_endpoint(TRACING_PROTOCOL)
 
-    @property
-    def _node_name(self) -> str:
-        """Return the node name for this unit's pod ip."""
+    def get_service(self) -> Optional[lightkube.resources.core_v1.Service]:
+        """Get the managed k8s service."""
         try:
-            pod = lightkube.Client().get(
-                lightkube.resources.core_v1.Pod,
-                name=self.unit.name.replace("/", "-"),
-                namespace=self._namespace,
+            service = self.lightkube_client.get(
+                res=lightkube.resources.core_v1.Service,
+                name=self.k8s_service_name,
+                namespace=self.model.name,
             )
-        except lightkube.ApiError as e:
-            if e.status.code == 403:
-                self.on_deployed_without_trust()
-                return
-        return pod.spec.nodeName
-
-    @property
-    def _node_ip(self) -> Optional[str]:
-        """Return node IP."""
-        try:
-            node = lightkube.Client().get(
-                lightkube.resources.core_v1.Node,
-                name=self._node_name,
-                namespace=self._namespace,
-            )
-        except lightkube.ApiError as e:
-            if e.status.code == 403:
-                self.on_deployed_without_trust()
-                return
-        # [
-        #    NodeAddress(address='192.168.0.228', type='InternalIP'),
-        #    NodeAddress(address='example.com', type='Hostname')
-        # ]
-        # Remember that OpenStack, for example, will return an internal hostname, which is not
-        # accessible from the outside. Give preference to ExternalIP, then InternalIP first
-        # Separated, as we want to give preference to ExternalIP, InternalIP and then Hostname
-        for typ in ["ExternalIP", "InternalIP", "Hostname"]:
-            for a in node.status.addresses:
-                if a.type == typ:
-                    return a.address
-
-    def _node_port(self, port_type: str) -> int:
-        """Return node port."""
-        service_name = f"{self.app.name}-nodeport"
-        try:
-            service = lightkube.Client().get(
-                lightkube.resources.core_v1.Service, service_name, namespace=self._namespace
-            )
-        except lightkube.ApiError as e:
-            if e.status.code == 403:
-                self.on_deployed_without_trust()
-                return
+        except lightkube.core.exceptions.ApiError as e:
             if e.status.code == 404:
-                return -1
-        # svc.spec.ports
-        # [ServicePort(port=6432, appProtocol=None, name=None, nodePort=31438, protocol='TCP', targetPort=6432)]
-        # Keeping this distinction, so we have similarity with mysql-router-k8s
-        if port_type == "rw" or port_type == "ro":
-            port = self.config.listen_port
-        else:
-            raise ValueError(f"Invalid {port_type=}")
-        logger.debug(f"Looking for NodePort for {port_type} in {service.spec.ports}")
-        for svc_port in service.spec.ports:
-            if svc_port.port == port:
-                return svc_port.nodePort
-        raise Exception(f"NodePort not found for {port_type}")
+                return None
+            raise
+
+        return service
+
+    @functools.cache  # noqa: B019
+    def get_pod(self, unit_name: str) -> lightkube.resources.core_v1.Pod:
+        """Get the pod for the provided unit name."""
+        return self.lightkube_client.get(
+            res=lightkube.resources.core_v1.Pod,
+            name=unit_name.replace("/", "-"),
+            namespace=self.model.name,
+        )
+
+    @functools.cache  # noqa: B019
+    def get_node(self, unit_name: str) -> lightkube.resources.core_v1.Node:
+        """Return the node for the provided unit name."""
+        node_name = self.get_pod(unit_name).spec.nodeName
+        return self.lightkube_client.get(
+            res=lightkube.resources.core_v1.Node,
+            name=node_name,
+            namespace=self.model.name,
+        )
 
     def get_all_k8s_node_hostnames_and_ips(
         self,
@@ -251,83 +235,83 @@ class PgBouncerK8sCharm(TypedCharmBase):
                 hostnames.append(a.address)
         return hostnames, ips
 
-    @property
-    def get_node_ports(self) -> Dict[str, Any]:
-        """Returns the service's nodes IPs and ports for both rw and ro types."""
-        return {
-            "rw": f"{self._node_ip}:{self._node_port('rw')}",
-            "ro": f"{self._node_ip}:{self._node_port('ro')}",
-        }
+    # @property
+    # def get_node_ports(self) -> Dict[str, Any]:
+    #     """Returns the service's nodes IPs and ports for both rw and ro types."""
+    #     return {
+    #         "rw": f"{self._node_ip}:{self._node_port('rw')}",
+    #         "ro": f"{self._node_ip}:{self._node_port('ro')}",
+    #     }
 
     # =======================
     #  Charm Lifecycle Hooks
     # =======================
 
-    def patch_port(self, use_node_port: bool = False) -> None:
+    def reconcile_k8s_service(self) -> None:
         """Create or delete a nodeport service for external node connectivity."""
         if not self.unit.is_leader():
             return
 
-        client = lightkube.Client()
-        service_name = f"{self.app.name}-nodeport"
-        if use_node_port:
-            logger.debug("Creating nodeport service")
-            pod0 = client.get(
-                res=lightkube.resources.core_v1.Pod,
-                name=self.app.name + "-0",
-                namespace=self._namespace,
-            )
-            service = lightkube.resources.core_v1.Service(
-                apiVersion="v1",
-                kind="Service",
-                metadata=lightkube.models.meta_v1.ObjectMeta(
-                    name=service_name,
-                    namespace=self._namespace,
-                    ownerReferences=pod0.metadata.ownerReferences,
-                    labels={
-                        "app.kubernetes.io/name": self.app.name,
-                    },
-                ),
-                spec=lightkube.models.core_v1.ServiceSpec(
-                    selector={"app.kubernetes.io/name": self.app.name},
-                    ports=[
-                        lightkube.models.core_v1.ServicePort(
-                            name="pgbouncer",
-                            port=self.config.listen_port,
-                            targetPort=self.config.listen_port,
-                        )
-                    ],
-                    type="NodePort",
-                ),
-            )
+        expose_external = self.config.expose_external
+        if expose_external not in ["false", "nodeport", "loadbalancer"]:
+            logger.warning(f"Invalid config value {expose_external=}")
+            self.app.status = BlockedStatus("Invalid expose-external config value")
+            return
 
-            try:
-                client.create(service)
-                logger.info(f"Kubernetes service {service_name} created")
-            except lightkube.ApiError as e:
-                if e.status.code == 403:
-                    self.on_deployed_without_trust()
-                    return
-                if e.status.code == 409:
-                    logger.info("Nodeport service already exists")
-                    return
-                logger.exception("Failed to create k8s service")
-                raise
-        else:
-            logger.debug("Deleting nodeport service")
-            try:
-                client.delete(
-                    lightkube.resources.core_v1.Service, service_name, namespace=self.model.name
-                )
-            except lightkube.ApiError as e:
-                if e.status.code == 403:
-                    self.on_deployed_without_trust()
-                    return
-                if e.status.code == 404:
-                    logger.info("No nodeport service to clean up")
-                    return
-                logger.exception("Failed to delete k8s service")
-                raise
+        desired_service_type = {
+            "false": ServiceType.CLUSTER_IP,
+            "nodeport": ServiceType.NODE_PORT,
+            "loadbalancer": ServiceType.LOAD_BALANCER,
+        }[expose_external]
+
+        service = self.get_service()
+        service_exists = service is not None
+        service_type = service_exists and ServiceType(service.spec.type)
+        if service_exists and service_type == desired_service_type:
+            return
+
+        pod0 = self.get_pod(self.unit.name)
+
+        annotations = (
+            json.loads(self.config.loadbalancer_extra_annotations)
+            if desired_service_type == ServiceType.LOAD_BALANCER
+            else {}
+        )
+
+        desired_service = lightkube.resources.core_v1.Service(
+            metadata=lightkube.models.meta_v1.ObjectMeta(
+                name=self.k8s_service_name,
+                namespace=self.model.name,
+                ownerReferences=pod0.metadata.ownerReferences,  # the stateful set
+                labels={"app.kubernetes.io/name": self.app.name},
+                annotations=annotations,
+            ),
+            spec=lightkube.models.core_v1.ServiceSpec(
+                ports=[
+                    lightkube.models.core_v1.ServicePort(
+                        name="pgbouncer",
+                        port=self.config.listen_port,
+                        targetPort=self.config.listen_port,
+                    ),
+                ],
+                type=desired_service_type.value,
+                selector={"app.kubernetes.io/name": self.app.name},
+            ),
+        )
+
+        logger.info(f"Creating desired service {desired_service_type=}")
+        try:
+            self.lightkube_client.apply(desired_service, field_manager=self.app.name)
+        except lightkube.ApiError as e:
+            if e.status.code == 403:
+                self.on_deployed_without_trust()
+                return
+            logger.exception("Failed to create K8s service")
+            raise
+
+        logger.info(f"Request to create desired service {desired_service_type=} dispatched")
+
+        self.app.status = MaintenanceStatus(WAITING_FOR_K8S_SERVICE_MESSAGE)
 
     @property
     def version(self) -> str:
@@ -435,7 +419,8 @@ class PgBouncerK8sCharm(TypedCharmBase):
             # This emits relation-changed events to every client relation, so only do it when
             # necessary
             self.update_client_connection_info()
-            self.patch_port(self.client_relation.external_connectivity())
+        
+        self.reconcile_k8s_service()
 
         self.render_pgb_config()
         try:
@@ -447,7 +432,9 @@ class PgBouncerK8sCharm(TypedCharmBase):
         if self.unit.is_leader() and port_changed:
             # Only update the config once the services have been restarted
             self.peers.app_databag["current_port"] = str(self.config.listen_port)
+
         self.update_status()
+        self.update_client_connection_info()
 
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
@@ -546,7 +533,8 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         # Update relation connection information. This is necessary because we don't receive any
         # information when the leader is removed, but we still need to have up-to-date connection
-        # information in all the relation databags.
+        # information in all the relation databags. Furthermore, endpoints need to be updated
+        # after confirming that the K8s service is connectable.
         self.update_client_connection_info()
 
     def configuration_check(self) -> bool:
@@ -558,6 +546,123 @@ class PgBouncerK8sCharm(TypedCharmBase):
             self.unit.status = BlockedStatus("Configuration Error. Please check the logs")
             logger.exception("Invalid configuration")
             return False
+
+    def get_node_hosts(self) -> set[str]:
+        """Return the node ports of nodes where units of this app are scheduled."""
+        peer_relation = self.model.get_relation(PEER_RELATION_NAME)
+        if not peer_relation:
+            return set()
+
+        def _get_node_address(node) -> str:
+            # OpenStack will return an internal hostname, not externally accessible
+            # Preference: ExternalIP > InternalIP > Hostname
+            for typ in ["ExternalIP", "InternalIP", "Hostname"]:
+                for address in node.status.addresses:
+                    if address.type == typ:
+                        return address.address
+
+        hosts = set()
+        for unit in peer_relation.units | {self.model.unit}:
+            node = self.get_node(unit.name)
+            hosts.add(_get_node_address(node))
+        return hosts
+
+    def get_hosts_ports(self, port_type: str) -> str:  # noqa: C901
+        """Gets the host and port for the endpoint depending of type of service."""
+        if port_type not in ["rw", "ro"]:
+            raise ValueError("Invalid port type")
+
+        service = self.get_service()
+        if not service:
+            return ""
+
+        port = self.config.listen_port
+
+        service_type = ServiceType(service.spec.type)
+
+        if service_type == ServiceType.CLUSTER_IP:
+            if port_type == "rw":
+                return f"{self.peers.leader_hostname}:{port}"
+
+            return ",".join([
+                f"{host}:{port}"
+                for host in self.peers.units_hostnames
+                if host != self.peers.leader_hostname
+            ])
+        elif service_type == ServiceType.NODE_PORT:
+            hosts = self.get_node_hosts()
+
+            for p in service.spec.ports:
+                if p.name == "pgbouncer":
+                    node_port = p.nodePort
+
+            return ",".join(sorted({f"{host}:{node_port}" for host in hosts}))
+        elif service_type == ServiceType.LOAD_BALANCER and service.status.loadBalancer.ingress:
+            if len(service.status.loadBalancer.ingress) != 0:
+                ip = service.status.loadBalancer.ingress[0].ip
+                hostname = service.status.loadBalancer.ingress[0].hostname
+
+            if ip:
+                return f"{ip}:{port}"
+
+            if hostname:
+                return f"{hostname}:{port}"
+
+        return ""
+
+    @property
+    def read_write_endpoints(self) -> str:
+        """The read write endpoints."""
+        return self.get_hosts_ports("rw")
+
+    @property
+    def read_only_endpoints(self) -> str:
+        """The read only endpoints."""
+        return self.get_hosts_ports("ro")
+
+    def check_service_connectivity(self) -> bool:
+        """Check if the service is available (connectable with a socket)."""
+        try:
+            is_pgb_running = self.check_pgb_running()
+        except PebbleConnectionError:
+            return False
+        
+        service = self.get_service()
+
+        if not service or not is_pgb_running:
+            return False
+
+        service_type = ServiceType(service.spec.type)
+
+        endpoints_to_connect = [self.read_write_endpoints]
+        if self.read_only_endpoints or service_type != ServiceType.CLUSTER_IP:
+            endpoints_to_connect.append(self.read_only_endpoints)
+
+        for endpoints in  endpoints_to_connect:
+            if endpoints == "":
+                logger.debug(
+                    f"Empty endpoints {self.read_write_endpoints=} {self.read_only_endpoints=}"
+                )
+                return False
+
+            for endpoint in endpoints.split(","):
+                with socket.socket() as s:
+                    s.settimeout(K8S_SERVICE_CONNECT_TIMEOUT)
+
+                    host, port = endpoint.split(":")
+
+                    try:
+                        socket_connect_code = s.connect_ex((host, int(port)))
+                    except socket.gaierror:
+                        # Sometimes, it may take LB hostname record to propagate
+                        logger.info(f"Unable to resolve {endpoint=}")
+                        return False
+
+                    if socket_connect_code != 0:
+                        logger.info(f"Unable to connect to {endpoint=}")
+                        return False
+
+        return True
 
     def update_status(self):
         """Health check to update pgbouncer status based on charm state."""
@@ -575,9 +680,16 @@ class PgBouncerK8sCharm(TypedCharmBase):
             self.unit.status = BlockedStatus("backend database relation not ready")
             return
 
+        if not self.check_service_connectivity():
+            if self.app.status.message != WAITING_FOR_K8S_SERVICE_MESSAGE:
+                self.app.status = BlockedStatus("K8s service not connectable")
+
+            return
+
         try:
             if self.check_pgb_running():
                 self.unit.status = ActiveStatus()
+                self.app.status = ActiveStatus()
         except PebbleConnectionError:
             not_running = "pgbouncer not running"
             logger.error(not_running)
@@ -1041,11 +1153,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
     def unit_pod_hostname(self, name="") -> str:
         """Creates the pod hostname from its name."""
         return socket.getfqdn(name)
-
-    @property
-    def leader_hostname(self) -> str:
-        """Gets leader hostname."""
-        return self.peers.leader_hostname
 
     @property
     def _has_blocked_status(self) -> bool:
