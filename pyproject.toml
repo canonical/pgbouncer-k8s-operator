@@ -7,18 +7,18 @@ requires-poetry = ">=2.0.0"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-ops = "^2.17.0"
+ops = "^2.17.1"
 cryptography = "^44.0.0"
 jsonschema = "^4.23.0"
 tenacity = "^9.0.0"
-cosl = "^0.0.45"
-poetry-core = "^2.0.0"
-lightkube = "^0.15.5"
+cosl = "^0.0.50"
+poetry-core = "^2.0.1"
+lightkube = "^0.17.1"
 lightkube-models = "^1.29.0.6"
-pydantic = "^1.10.19"
+pydantic = "^1.10.21"
 psycopg2 = "^2.9.10"
 psycopg = {extras = ["c"], version = "^3.2.3"}
-jinja2 = "^3.1.4"
+jinja2 = "^3.1.5"
 
 [tool.poetry.group.charm-libs.dependencies]
 # data_platform_libs/v0/data_interfaces.py
@@ -37,7 +37,7 @@ opentelemetry-exporter-otlp-proto-http = "1.21.0"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.8.0"
+ruff = "^0.9.1"
 
 [tool.poetry.group.lint]
 optional = true
@@ -49,8 +49,8 @@ codespell = "^2.3.0"
 optional = true
 
 [tool.poetry.group.unit.dependencies]
-coverage = {extras = ["toml"], version = "^7.6.8"}
-pytest = "^8.3.3"
+coverage = {extras = ["toml"], version = "^7.6.10"}
+pytest = "^8.3.4"
 pytest-asyncio = "*"
 parameterized = "^0.9.0"
 
@@ -59,9 +59,9 @@ optional = true
 
 [tool.poetry.group.integration.dependencies]
 lightkube = "*"
-pytest = "^8.3.3"
+pytest = "^8.3.4"
 pytest-github-secrets = {git = "https://github.com/canonical/data-platform-workflows", tag = "v26.0.0", subdirectory = "python/pytest_plugins/github_secrets"}
-pytest-operator = "^0.38.0"
+pytest-operator = "^0.39.0"
 pytest-operator-cache = {git = "https://github.com/canonical/data-platform-workflows", tag = "v26.0.0", subdirectory = "python/pytest_plugins/pytest_operator_cache"}
 pytest-operator-groups = {git = "https://github.com/canonical/data-platform-workflows", tag = "v26.0.0", subdirectory = "python/pytest_plugins/pytest_operator_groups"}
 allure-pytest-collection-report = {git = "https://github.com/canonical/data-platform-workflows", tag = "v26.0.0", subdirectory = "python/pytest_plugins/allure_pytest_collection_report"}
