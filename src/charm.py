@@ -11,7 +11,7 @@ import os
 import socket
 from configparser import ConfigParser
 from signal import SIGHUP
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union, get_args
+from typing import Any, Dict, List, Optional, Tuple, Union, get_args
 
 import lightkube
 import psycopg2
@@ -63,6 +63,7 @@ from constants import (
     TRACING_PROTOCOL,
     TRACING_RELATION_NAME,
     UNIT_SCOPE,
+    Scopes,
 )
 from relations.backend_database import BackendDatabaseRequires
 from relations.db import DbProvides
@@ -71,8 +72,6 @@ from relations.pgbouncer_provider import PgBouncerProvider
 from upgrade import PgbouncerUpgrade, get_pgbouncer_k8s_dependencies_model
 
 logger = logging.getLogger(__name__)
-
-Scopes = Literal[APP_SCOPE, UNIT_SCOPE]
 
 
 @trace_charm(
@@ -734,7 +733,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         peers = self.model.get_relation(PEER_RELATION_NAME)
         secret_key = self._translate_field_to_secret_key(key)
         # Old translation in databag is to be deleted
-        self.peer_relation_data(scope).delete_relation_data(peers.id, [key])
+        self.peers.scoped_peer_data(scope).pop(key, None)
         self.peer_relation_data(scope).set_secret(peers.id, secret_key, value)
 
     def remove_secret(self, scope: Scopes, key: str) -> None:
