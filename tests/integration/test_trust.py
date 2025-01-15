@@ -2,9 +2,7 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import asyncio
 import logging
-import time
 
 import pytest
 from pytest_operator.plugin import OpsTest
@@ -20,68 +18,7 @@ from .helpers.helpers import (
 
 logger = logging.getLogger(__name__)
 RELATION = "backend-database"
-MAX_RETRIES = 20
 UNTRUST_ERROR_MESSAGE = f"Insufficient permissions, try: `juju trust {PGB} --scope=cluster`"
-
-
-@pytest.mark.group(1)
-async def test_enable_rbac(ops_test: OpsTest):
-    """Enables RBAC from inside test runner's environment.
-
-    Assert on permission enforcement being active.
-    """
-    enable_rbac_call = await asyncio.create_subprocess_exec(
-        "sudo",
-        "microk8s",
-        "enable",
-        "rbac",
-        stdout=asyncio.subprocess.PIPE,
-        stderr=None,
-    )
-    await enable_rbac_call.communicate()
-
-    is_default_auth = None
-    retries = 0
-    while is_default_auth != "no" and retries < MAX_RETRIES:
-        rbac_check = await asyncio.create_subprocess_exec(
-            "microk8s",
-            "kubectl",
-            "auth",
-            "can-i",
-            "get",
-            "cm",
-            "-A",
-            "--as=system:serviceaccount:default:no-permissions",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=None,
-        )
-        stdout, _ = await rbac_check.communicate()
-        if stdout:
-            is_default_auth = stdout.decode().split()[0]
-            logger.info(f"Response from rbac check ('no' means enabled): {is_default_auth}")
-        retries += 1
-
-    assert is_default_auth == "no"
-
-
-@pytest.mark.group(1)
-async def test_model_connectivity(ops_test: OpsTest):
-    """Tries to regain connectivity to model after microK8s restart."""
-    retries = 0
-    while retries < MAX_RETRIES:
-        try:
-            await ops_test.model.connect_current()
-            status = await ops_test.model.get_status()
-            logger.info(f"Connection established: {status}")
-            return
-        except Exception as e:
-            logger.info(f"Connection attempt failed: {e}")
-            retries += 1
-            logger.info(f"Retrying ({retries}/{MAX_RETRIES})...")
-            time.sleep(3)
-
-    logger.error(f"Max retries number of {MAX_RETRIES} reached. Unable to connect.")
-    assert False
 
 
 @pytest.mark.group(1)

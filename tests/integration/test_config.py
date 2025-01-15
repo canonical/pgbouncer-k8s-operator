@@ -31,7 +31,7 @@ async def test_config_parameters(ops_test: OpsTest, pgb_charm) -> None:
                 application_name=PGB,
                 num_units=1,
                 series=CHARM_SERIES,
-                trust=False,
+                trust=True,
             ),
             ops_test.model.deploy(
                 PG,
@@ -39,6 +39,7 @@ async def test_config_parameters(ops_test: OpsTest, pgb_charm) -> None:
                 num_units=1,
                 channel="14/edge",
                 config={"profile": "testing"},
+                trust=True,
             ),
         )
         await ops_test.model.add_relation(f"{PGB}:{BACKEND_RELATION_NAME}", f"{PG}:database")
