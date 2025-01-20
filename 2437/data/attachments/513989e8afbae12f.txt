@@ -1,0 +1,2 @@
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:75 Get leader unit
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:79 Run pre-upgrade-check action
