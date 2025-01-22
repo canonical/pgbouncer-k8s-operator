@@ -13,7 +13,7 @@ import os
 import socket
 from configparser import ConfigParser
 from signal import SIGHUP
-from typing import Dict, List, Literal, Optional, Tuple, Union, get_args
+from typing import Dict, List, Literal, Optional, Union, get_args
 
 import lightkube
 import psycopg2
@@ -133,7 +133,28 @@ class PgBouncerK8sCharm(TypedCharmBase):
         self.client_relation = PgBouncerProvider(self)
         self.legacy_db_relation = DbProvides(self, admin=False)
         self.legacy_db_admin_relation = DbProvides(self, admin=True)
-        self.tls = PostgreSQLTLS(self, PEER_RELATION_NAME, [self.unit_pod_hostname])
+
+        self.k8s_service_name = f"{self.app.name}-service"
+        unit_name = self.unit.name.replace("/", "-")
+
+        self.tls = PostgreSQLTLS(
+            self,
+            PEER_RELATION_NAME,
+            [
+                self.unit_pod_hostname,
+                self.k8s_service_name,
+                f"{self.k8s_service_name}.{self.model.name}.svc.cluster.local",
+                unit_name,
+                f"{unit_name}.{self.app.name}-endpoints.{self.model.name}.svc.cluster.local",
+                self.app.name,
+                f"{self.app.name}.{self.app.name}-endpoints",
+                f"{self.app.name}.{self.app.name}-endpoints.{self.model.name}.svc.cluster.local",
+                f"{self.app.name}-endpoints",
+                f"{self.app.name}-endpoints.{self.model.name}.svc.cluster.local",
+                f"{self.app.name}.{self.model.name}.svc.cluster.local",
+                "127.0.0.1",
+            ],
+        )
 
         self._cores = max(min(os.cpu_count(), 4), 2)
         self._services = [
@@ -169,7 +190,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
             self, relation_name=TRACING_RELATION_NAME, protocols=[TRACING_PROTOCOL]
         )
 
-        self.k8s_service_name = f"{self.app.name}-service"
         self.lightkube_client = lightkube.Client()
 
     @property
@@ -211,37 +231,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
             name=node_name,
             namespace=self.model.name,
         )
-
-    def get_all_k8s_node_hostnames_and_ips(
-        self,
-    ) -> Tuple[list[str], list[str]]:
-        """Return all node hostnames and IPs registered in k8s."""
-        try:
-            node = lightkube.Client().get(
-                lightkube.resources.core_v1.Node,
-                name=self._node_name,
-                namespace=self._namespace,
-            )
-        except lightkube.ApiError as e:
-            if e.status.code == 403:
-                self.on_deployed_without_trust()
-                return
-        hostnames = []
-        ips = []
-        for a in node.status.addresses:
-            if a.type in ["ExternalIP", "InternalIP"]:
-                ips.append(a.address)
-            elif a.type == "Hostname":
-                hostnames.append(a.address)
-        return hostnames, ips
-
-    # @property
-    # def get_node_ports(self) -> Dict[str, Any]:
-    #     """Returns the service's nodes IPs and ports for both rw and ro types."""
-    #     return {
-    #         "rw": f"{self._node_ip}:{self._node_port('rw')}",
-    #         "ro": f"{self._node_ip}:{self._node_port('ro')}",
-    #     }
 
     # =======================
     #  Charm Lifecycle Hooks
@@ -419,7 +408,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             # This emits relation-changed events to every client relation, so only do it when
             # necessary
             self.update_client_connection_info()
-        
+
         self.reconcile_k8s_service()
 
         self.render_pgb_config()
@@ -581,14 +570,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         service_type = ServiceType(service.spec.type)
 
         if service_type == ServiceType.CLUSTER_IP:
-            if port_type == "rw":
-                return f"{self.peers.leader_hostname}:{port}"
-
-            return ",".join([
-                f"{host}:{port}"
-                for host in self.peers.units_hostnames
-                if host != self.peers.leader_hostname
-            ])
+            return f"{self.k8s_service_name}.{self.model.name}.svc.cluster.local:{self.config.listen_port}"
         elif service_type == ServiceType.NODE_PORT:
             hosts = self.get_node_hosts()
 
@@ -626,7 +608,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             is_pgb_running = self.check_pgb_running()
         except PebbleConnectionError:
             return False
-        
+
         service = self.get_service()
 
         if not service or not is_pgb_running:
@@ -638,7 +620,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         if self.read_only_endpoints or service_type != ServiceType.CLUSTER_IP:
             endpoints_to_connect.append(self.read_only_endpoints)
 
-        for endpoints in  endpoints_to_connect:
+        for endpoints in endpoints_to_connect:
             if endpoints == "":
                 logger.debug(
                     f"Empty endpoints {self.read_write_endpoints=} {self.read_only_endpoints=}"
@@ -680,7 +662,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             self.unit.status = BlockedStatus("backend database relation not ready")
             return
 
-        if not self.check_service_connectivity():
+        if self.unit.is_leader() and not self.check_service_connectivity():
             if self.app.status.message != WAITING_FOR_K8S_SERVICE_MESSAGE:
                 self.app.status = BlockedStatus("K8s service not connectable")
 
@@ -689,7 +671,9 @@ class PgBouncerK8sCharm(TypedCharmBase):
         try:
             if self.check_pgb_running():
                 self.unit.status = ActiveStatus()
-                self.app.status = ActiveStatus()
+
+                if self.unit.is_leader():
+                    self.app.status = ActiveStatus()
         except PebbleConnectionError:
             not_running = "pgbouncer not running"
             logger.error(not_running)

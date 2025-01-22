@@ -21,6 +21,8 @@ from tenacity import (
 
 from constants import AUTH_FILE_PATH, PGB_DIR
 
+from ..juju_ import run_action
+
 CHARM_SERIES = "jammy"
 CLIENT_APP_NAME = "postgresql-test-app"
 PGB_METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
@@ -369,3 +371,8 @@ async def get_leader_unit(ops_test: OpsTest, app: str) -> Optional[Unit]:
             break
 
     return leader_unit
+
+
+async def get_data_integrator_credentials(unit: Unit) -> Dict:
+    """Helper to run an action on data-integrator to get credentials."""
+    return await run_action(unit, "get-credentials")

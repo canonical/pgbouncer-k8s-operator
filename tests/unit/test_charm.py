@@ -9,7 +9,6 @@ import unittest
 from signal import SIGHUP
 from unittest.mock import Mock, PropertyMock, call, patch
 
-import lightkube
 import psycopg2
 import pytest
 from jinja2 import Template
@@ -26,8 +25,6 @@ from constants import (
     PGB,
     SECRET_INTERNAL_LABEL,
 )
-
-from .helpers import _FakeApiError
 
 
 class TestCharm(unittest.TestCase):
@@ -57,7 +54,7 @@ class TestCharm(unittest.TestCase):
     def use_caplog(self, caplog):
         self._caplog = caplog
 
-    @patch("charm.PgBouncerK8sCharm.patch_port")
+    @patch("charm.PgBouncerK8sCharm.reconcile_k8s_service")
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
@@ -103,10 +100,9 @@ class TestCharm(unittest.TestCase):
         layer = self.charm._pgbouncer_layer()
         assert len(layer.services) == self.charm._cores + 2
 
-    @patch("charm.PgBouncerK8sCharm.patch_port")
     @patch("charm.PgBouncerK8sCharm.update_status")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
-    def test_on_pgbouncer_pebble_ready(self, _render, _update_status, _):
+    def test_on_pgbouncer_pebble_ready(self, _render, _update_status):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
 
@@ -120,13 +116,12 @@ class TestCharm(unittest.TestCase):
         _update_status.assert_called_once_with()
         _render.assert_called_once_with()
 
-    @patch("charm.PgBouncerK8sCharm.patch_port")
     @patch("charm.PgBouncerK8sCharm.update_status")
     @patch("charm.PgBouncerK8sCharm.push_tls_files_to_workload")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PostgreSQLTLS.get_tls_files")
     def test_on_pgbouncer_pebble_ready_ensure_tls_files(
-        self, get_tls_files, _render, push_tls_files_to_workload, _update_status, _
+        self, get_tls_files, _render, push_tls_files_to_workload, _update_status
     ):
         get_tls_files.return_value = ("key", "ca", "cert")
 
@@ -346,11 +341,10 @@ class TestCharm(unittest.TestCase):
 
         assert self.charm.generate_relation_databases() == {}
 
-    @patch("charm.PgBouncerK8sCharm.patch_port")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("ops.model.Container.send_signal")
-    def test_reload_pgbouncer(self, _send_signal, _check_pgb_running, _, __):
+    def test_reload_pgbouncer(self, _send_signal, _check_pgb_running, _):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         # necessary hooks before we can check reloads
@@ -460,117 +454,6 @@ class TestCharm(unittest.TestCase):
         self.charm._collect_readonly_dbs()
 
         assert self.charm.peers.app_databag["readonly_dbs"] == '["includeddb"]'
-
-    @patch("charm.PgBouncerK8sCharm.on_deployed_without_trust")
-    @patch("lightkube.Client.get", side_effect=_FakeApiError(403))
-    @patch("lightkube.core.client.GenericSyncClient")
-    def test_raise_untrusted_error(self, _, __, _deployed_without_trust):
-        self.harness.set_leader(True)
-
-        # call the methods that try to access K8s resources
-        _ = self.charm._node_name
-        _ = self.charm._node_ip
-        self.charm._node_port("port")
-        self.charm.get_all_k8s_node_hostnames_and_ips()
-
-        self.assertIsInstance(self.harness.charm.unit.status, BlockedStatus)
-        # 6 total calls:
-        #   4 (1 per method)
-        #   2 extra _node_name calls from inside _node_ip and get_all_k8s_node_hostnames_and_ips
-        assert _deployed_without_trust.call_count == 6
-
-    @patch("lightkube.Client")
-    def test_patch_port(self, _client):
-        # not run unless leader
-        self.charm.patch_port()
-
-        assert not _client.called
-
-        self.harness.set_leader(True)
-        self.charm.patch_port(True)
-        service = lightkube.resources.core_v1.Service(
-            apiVersion="v1",
-            kind="Service",
-            metadata=lightkube.models.meta_v1.ObjectMeta(
-                name="pgbouncer-k8s-nodeport",
-                namespace=self.charm._namespace,
-                ownerReferences=_client.return_value.get.return_value.metadata.ownerReferences,
-                labels={"app.kubernetes.io/name": "pgbouncer-k8s"},
-            ),
-            spec=lightkube.models.core_v1.ServiceSpec(
-                selector={"app.kubernetes.io/name": self.charm.app.name},
-                ports=[
-                    lightkube.models.core_v1.ServicePort(
-                        name="pgbouncer",
-                        port=6432,
-                        targetPort=6432,
-                    )
-                ],
-                type="NodePort",
-            ),
-        )
-
-        _client.return_value.create.assert_called_once_with(service)
-
-        self.charm.patch_port(False)
-
-        _client.return_value.delete.assert_called_once_with(
-            lightkube.resources.core_v1.Service,
-            "pgbouncer-k8s-nodeport",
-            namespace=self.charm.model.name,
-        )
-
-    @patch("charm.logger.info")
-    @patch("charm.PgBouncerK8sCharm.on_deployed_without_trust")
-    @patch("lightkube.Client")
-    def test_patch_port_create_errors(self, _client, _on_deployed_without_trust, _logger_info):
-        self.harness.set_leader(True)
-
-        # No permissions
-        _client.return_value.create.side_effect = _FakeApiError(403)
-
-        self.charm.patch_port(True)
-
-        _on_deployed_without_trust.assert_called_once_with()
-        _on_deployed_without_trust.reset_mock()
-
-        # Svc already exists
-        _client.return_value.create.side_effect = _FakeApiError(409)
-
-        self.charm.patch_port(True)
-
-        _logger_info.assert_called_once_with("Nodeport service already exists")
-
-        # General error
-        _client.return_value.create.side_effect = _FakeApiError(500)
-        with self.assertRaises(_FakeApiError):
-            self.charm.patch_port(True)
-
-    @patch("charm.logger.info")
-    @patch("charm.PgBouncerK8sCharm.on_deployed_without_trust")
-    @patch("lightkube.Client")
-    def test_patch_port_delete_errors(self, _client, _on_deployed_without_trust, _logger_info):
-        self.harness.set_leader(True)
-
-        # No permissions
-        _client.return_value.delete.side_effect = _FakeApiError(403)
-
-        self.charm.patch_port(False)
-
-        _on_deployed_without_trust.assert_called_once_with()
-        _on_deployed_without_trust.reset_mock()
-
-        # Svc already exists
-        _client.return_value.delete.side_effect = _FakeApiError(404)
-
-        self.charm.patch_port(False)
-
-        _logger_info.assert_called_once_with("No nodeport service to clean up")
-
-        # General error
-        _client.return_value.delete.side_effect = _FakeApiError(500)
-        with self.assertRaises(_FakeApiError):
-            self.charm.patch_port(False)
 
     @patch("charm.PgBouncerK8sCharm.config", new_callable=PropertyMock, return_value={})
     def test_configuration_check(self, _config):

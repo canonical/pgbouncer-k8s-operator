@@ -65,20 +65,24 @@ class TestPgbouncerProvider(unittest.TestCase):
         "charms.data_platform_libs.v0.data_interfaces.DatabaseProvides.fetch_my_relation_field",
         return_value="test_pass",
     )
-    @patch(
-        "charm.PgBouncerK8sCharm.get_node_ports",
-        return_value={
-            "rw": "rw:5432",
-            "ro": "ro:5432",
-        },
-    )
     @patch("charm.PgBouncerK8sCharm.set_relation_databases")
     @patch("charm.PgBouncerK8sCharm.generate_relation_databases")
+    @patch(
+        "charm.PgBouncerK8sCharm.read_write_endpoints",
+        new_callable=PropertyMock,
+        return_value="host:port",
+    )
+    @patch(
+        "charm.PgBouncerK8sCharm.read_only_endpoints",
+        new_callable=PropertyMock,
+        return_value="host:port",
+    )
     def test_on_database_requested(
         self,
+        _read_only_endpoints,
+        _read_write_endpoints,
         _gen_rel_dbs,
         _set_rel_dbs,
-        _get_node_ports,
         _dbp_fetch_my_relation_field,
         _dbp_set_version,
         _dbp_set_credentials,
@@ -125,17 +129,14 @@ class TestPgbouncerProvider(unittest.TestCase):
         )
         _dbp_set_credentials.assert_called_with(rel_id, user, _password())
         _dbp_set_version.assert_called_with(rel_id, _pg().get_postgresql_version())
-        _dbp_set_endpoints.assert_called_with(
-            rel_id, f"{self.charm.leader_hostname}:{self.charm.config['listen_port']}"
-        )
-        _set_read_only_endpoints.assert_called()
+        _dbp_set_endpoints.assert_called_with(rel_id, "host:port")
+        _set_read_only_endpoints.assert_called_with(rel_id, "host:port")
         _set_rel_dbs.assert_called_once_with({
             str(rel_id): {"name": "test-db", "legacy": False},
             "*": {"name": "*", "auth_dbname": "test-db", "legacy": False},
         })
         _render_pgb_config.assert_called_once_with(reload_pgbouncer=True)
 
-    @patch("charm.PgBouncerK8sCharm._node_port")
     @patch("relations.backend_database.BackendDatabaseRequires.check_backend", return_value=True)
     @patch(
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
@@ -143,9 +144,7 @@ class TestPgbouncerProvider(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.set_relation_databases")
     @patch("charm.PgBouncerK8sCharm.generate_relation_databases")
     @patch("charm.lightkube")
-    def test_on_relation_broken(
-        self, _lightkube, _gen_rel_dbs, _set_rel_dbs, _pg, _check_backend, _
-    ):
+    def test_on_relation_broken(self, _lightkube, _gen_rel_dbs, _set_rel_dbs, _pg, _check_backend):
         _pg.return_value.get_postgresql_version.return_value = "10"
         _gen_rel_dbs.return_value = {"1": {"name": "test_db", "legacy": False}}
         self.harness.set_leader()

@@ -246,7 +246,9 @@ class PgBouncerProvider(Object):
                 return
 
             self.database_provides.set_endpoints(relation.id, self.charm.read_write_endpoints)
-            self.database_provides.set_endpoints(relation.id, self.charm.read_only_endpoints)
+            self.database_provides.set_read_only_endpoints(
+                relation.id, self.charm.read_only_endpoints
+            )
             self.database_provides.set_uris(
                 relation.id,
                 f"postgresql://{user}:{password}@{self.charm.read_write_endpoints}/{database}",
