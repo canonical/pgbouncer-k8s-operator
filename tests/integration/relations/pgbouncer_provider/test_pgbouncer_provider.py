@@ -532,6 +532,9 @@ async def test_indico_datatabase(ops_test: OpsTest) -> None:
             timeout=2000,
         )
 
+        # FIXME: Pebble in Indico doesn't survive the subsequent restart. Investigate further
+        await ops_test.model.remove_application("indico", block_until_done=True)
+
 
 @pytest.mark.group(1)
 async def test_connection_is_possible_after_pod_deletion(ops_test: OpsTest) -> None:

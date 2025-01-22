@@ -37,7 +37,7 @@ from ops.charm import CharmBase, HookEvent, RelationCreatedEvent
 from ops.framework import Object
 from ops.model import MaintenanceStatus, Relation, Unit
 
-from constants import PEER_RELATION_NAME
+from constants import APP_SCOPE, PEER_RELATION_NAME, UNIT_SCOPE, Scopes
 
 ADDRESS_KEY = "private-address"
 LEADER_ADDRESS_KEY = "leader_hostname"
@@ -73,6 +73,13 @@ class Peers(Object):
     def relation(self) -> Relation:
         """Returns the relations in this model , or None if peer is not initialised."""
         return self.charm.model.get_relation(PEER_RELATION_NAME)
+
+    def scoped_peer_data(self, scope: Scopes) -> dict | None:
+        """Returns peer data based on scope."""
+        if scope == APP_SCOPE:
+            return self.app_databag
+        elif scope == UNIT_SCOPE:
+            return self.unit_databag
 
     @property
     def app_databag(self):

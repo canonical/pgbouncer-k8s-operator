@@ -4,6 +4,8 @@
 
 """Constants for the PgBouncer charm."""
 
+from typing import Literal
+
 PGB = "pgbouncer"
 PG = PG_USER = PG_GROUP = "postgres"
 
@@ -40,6 +42,8 @@ SECRET_DELETED_LABEL = "None"  # noqa: S105
 
 APP_SCOPE = "app"
 UNIT_SCOPE = "unit"
+
+Scopes = Literal[APP_SCOPE, UNIT_SCOPE]
 
 SECRET_KEY_OVERRIDES = {
     "ca": "cauth",

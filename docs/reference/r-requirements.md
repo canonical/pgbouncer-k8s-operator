@@ -1,11 +1,10 @@
 ## Juju version
 
-The charm supports both [Juju 2.9 LTS](https://github.com/juju/juju/releases) and [Juju 3.1](https://github.com/juju/juju/releases).
+The charm supports both [Juju 2.9 LTS](https://github.com/juju/juju/releases) and [Juju 3.x](https://github.com/juju/juju/releases). The supported Juju versions are:
 
-The minimum supported Juju versions are:
-
-* 2.9.32+
-* 3.1.7+ (Juju secrets refactored/stabilized in Juju 3.1.7)
+* 3.6.1+ LTS (recommended)
+* 3.1.7+ (minimal for 3.x: Juju secrets refactored/stabilized in Juju 3.1.7)
+* 2.9.32+ (minimal for 2.x)
 
 ## Kubernetes requirements
 
