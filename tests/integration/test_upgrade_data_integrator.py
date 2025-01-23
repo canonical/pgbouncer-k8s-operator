@@ -45,6 +45,7 @@ async def test_deploy_stable(ops_test: OpsTest, pgb_charm) -> None:
             channel="1/stable",
             trust=True,
             num_units=2,
+            config={"expose-external": "nodeport"},
         ),
         ops_test.model.deploy(
             DATA_INTEGRATOR_APP_NAME,
