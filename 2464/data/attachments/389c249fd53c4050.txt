@@ -1,0 +1,36 @@
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m pytest_operator.plugin:plugin.py:929 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.6.2    unsupported  01:39:15Z
+
+App             Version  Status   Scale  Charm           Channel  Rev  Address         Exposed  Message
+pgbouncer-k8s   1.21.0   blocked      2  pgbouncer-k8s              0  10.152.183.97   no       waiting for backend database relation to initialise
+postgresql-k8s  14.15    active     1/0  postgresql-k8s  14/edge  491  10.152.183.100  no       
+
+Unit               Workload    Agent      Address       Ports  Message
+pgbouncer-k8s/0    blocked     idle       10.1.252.200         waiting for backend database relation to initialise
+pgbouncer-k8s/1*   blocked     idle       10.1.252.202         waiting for backend database relation to initialise
+postgresql-k8s/0   terminated  executing  10.1.252.207         (remove) 
+postgresql-k8s/1   terminated  executing  10.1.252.209         (remove) 
+postgresql-k8s/2*  active      executing  10.1.252.208         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:935 Juju error logs:
+
+controller-0: 01:33:57 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": finding filesystem info for postgresql-k8s-pgdata-a27b4ace: unable to get persistent volume: rpc error: code = Unavailable desc = error reading from server: read unix @->/var/snap/microk8s/7588/var/kubernetes/backend/kine.sock:12379: read: connection reset by peer
+unit-postgresql-k8s-2: 01:34:10 ERROR unit.postgresql-k8s/2.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+controller-0: 01:38:26 ERROR juju.worker.caasapplicationprovisioner.runner exited "finos-waltz": getting OCI image resources: unable to fetch OCI image resources for finos-waltz: application "finos-waltz" dying or dead
+unit-postgresql-k8s-2: 01:38:59 ERROR juju.worker.dependency "uniter" manifold worker returned unexpected error: relation scope id "b49b28ec-f74e-4cb1-883e-099bd678f9b5:r#5#pgbouncer-k8s": settings b49b28ec-f74e-4cb1-883e-099bd678f9b5:r#5#pgbouncer-k8s not found (not found)
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1017 Forgetting model main...
