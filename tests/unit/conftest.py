@@ -13,4 +13,4 @@ def disable_charm_tracing():
 
 @pytest.fixture(autouse=True)
 def lightkube_patch(monkeypatch):
-    monkeypatch.setattr("lightkube.Client", lambda *args, **kwargs: None)
+    monkeypatch.setattr("lightkube.Client", lambda *_, **__: None)

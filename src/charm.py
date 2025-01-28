@@ -78,8 +78,6 @@ from upgrade import PgbouncerUpgrade, get_pgbouncer_k8s_dependencies_model
 
 logger = logging.getLogger(__name__)
 
-lightkube_client = lightkube.Client()
-
 
 class ServiceType(enum.Enum):
     """Supported K8s service types."""
@@ -110,6 +108,7 @@ class ServiceType(enum.Enum):
 @functools.cache
 def get_pod(unit_name: str, model_name: str) -> lightkube.resources.core_v1.Pod:
     """Get the pod for the provided unit name."""
+    lightkube_client = lightkube.Client()
     return lightkube_client.get(
         res=lightkube.resources.core_v1.Pod,
         name=unit_name.replace("/", "-"),
@@ -121,6 +120,7 @@ def get_pod(unit_name: str, model_name: str) -> lightkube.resources.core_v1.Pod:
 def get_node(unit_name: str, model_name: str) -> lightkube.resources.core_v1.Node:
     """Return the node for the provided unit name."""
     node_name = get_pod(unit_name, model_name).spec.nodeName
+    lightkube_client = lightkube.Client()
     return lightkube_client.get(
         res=lightkube.resources.core_v1.Node,
         name=node_name,
@@ -229,6 +229,8 @@ class PgBouncerK8sCharm(TypedCharmBase):
             self, relation_name=TRACING_RELATION_NAME, protocols=[TRACING_PROTOCOL]
         )
 
+        self.lightkube_client = lightkube.Client()
+
     @property
     def tracing_endpoint(self) -> Optional[str]:
         """Otlp http endpoint for charm instrumentation."""
@@ -238,7 +240,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
     def get_service(self) -> Optional[lightkube.resources.core_v1.Service]:
         """Get the managed k8s service."""
         try:
-            service = lightkube_client.get(
+            service = self.lightkube_client.get(
                 res=lightkube.resources.core_v1.Service,
                 name=self.k8s_service_name,
                 namespace=self.model.name,
@@ -304,7 +306,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         logger.info(f"Creating desired service {desired_service_type=}")
         try:
-            lightkube_client.apply(desired_service, field_manager=self.app.name)
+            self.lightkube_client.apply(desired_service, field_manager=self.app.name)
         except lightkube.ApiError as e:
             if e.status.code == 403:
                 self.on_deployed_without_trust()
