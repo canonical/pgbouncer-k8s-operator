@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 TIMEOUT = 600
 DATA_INTEGRATOR_APP_NAME = "data-integrator"
+SLOW_TIMEOUT = 15 * 60
+TEST_DATABASE_NAME = "test-database"
 
 
 @pytest.mark.group(1)
@@ -45,15 +47,22 @@ async def test_deploy_stable(ops_test: OpsTest, pgb_charm) -> None:
             channel="1/stable",
             trust=True,
             num_units=2,
-            config={"expose-external": "nodeport"},
         ),
         ops_test.model.deploy(
             DATA_INTEGRATOR_APP_NAME,
             num_units=2,
             channel="latest/edge",
-            config={"database-name": "test-database"},
+            config={"database-name": TEST_DATABASE_NAME},
         ),
     )
+
+    logger.info("Set expose-external=nodeport if applicable")
+
+    pgb_application = ops_test.model.applications[PGB]
+    pgb_configs = await pgb_application.get_config()
+    if "expose-external" in pgb_configs:
+        pgb_application.set_config({"expose-external": "nodeport"})
+
     logger.info("Wait for applications to become active")
 
     await ops_test.model.add_relation(f"{PGB}:{BACKEND_RELATION_NAME}", f"{PG}:database")
@@ -124,6 +133,14 @@ async def test_upgrade_from_stable(ops_test: OpsTest, pgb_charm):
         await ops_test.model.wait_for_idle(
             apps=[PGB], status="active", idle_period=30, timeout=TIMEOUT
         )
+
+    await application.set_config({"expose-external": "nodeport"})
+    await ops_test.model.wait_for_idle(
+        apps=[PGB],
+        status="active",
+        timeout=SLOW_TIMEOUT,
+        idle_period=30,
+    )
 
     credentials = await fetch_action_get_credentials(
         ops_test.model.applications[DATA_INTEGRATOR_APP_NAME].units[0]

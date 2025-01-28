@@ -78,6 +78,8 @@ from upgrade import PgbouncerUpgrade, get_pgbouncer_k8s_dependencies_model
 
 logger = logging.getLogger(__name__)
 
+lightkube_client = lightkube.Client()
+
 
 class ServiceType(enum.Enum):
     """Supported K8s service types."""
@@ -85,6 +87,45 @@ class ServiceType(enum.Enum):
     CLUSTER_IP = "ClusterIP"
     NODE_PORT = "NodePort"
     LOAD_BALANCER = "LoadBalancer"
+    FALSE_LOWER = "false"
+    NODE_PORT_LOWER = "nodeport"
+    LOAD_BALANCER_LOWER = "loadbalancer"
+
+    def __str__(self):
+        """The string representation of the enum."""
+        if self is ServiceType.FALSE_LOWER:
+            return "ClusterIP"
+        elif self is ServiceType.NODE_PORT_LOWER:
+            return "NodePort"
+        elif self is ServiceType.LOAD_BALANCER_LOWER:
+            return "LoadBalancer"
+
+        return self.value
+
+    def __eq__(self, other):
+        """The equality of the enum."""
+        return str(self) == str(other)
+
+
+@functools.cache
+def get_pod(unit_name: str, model_name: str) -> lightkube.resources.core_v1.Pod:
+    """Get the pod for the provided unit name."""
+    return lightkube_client.get(
+        res=lightkube.resources.core_v1.Pod,
+        name=unit_name.replace("/", "-"),
+        namespace=model_name,
+    )
+
+
+@functools.cache
+def get_node(unit_name: str, model_name: str) -> lightkube.resources.core_v1.Node:
+    """Return the node for the provided unit name."""
+    node_name = get_pod(unit_name, model_name).spec.nodeName
+    return lightkube_client.get(
+        res=lightkube.resources.core_v1.Node,
+        name=node_name,
+        namespace=model_name,
+    )
 
 
 @trace_charm(
@@ -151,7 +192,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
                 f"{self.app.name}-endpoints",
                 f"{self.app.name}-endpoints.{self.model.name}.svc.cluster.local",
                 f"{self.app.name}.{self.model.name}.svc.cluster.local",
-                "127.0.0.1",
             ],
         )
 
@@ -189,8 +229,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
             self, relation_name=TRACING_RELATION_NAME, protocols=[TRACING_PROTOCOL]
         )
 
-        self.lightkube_client = lightkube.Client()
-
     @property
     def tracing_endpoint(self) -> Optional[str]:
         """Otlp http endpoint for charm instrumentation."""
@@ -200,7 +238,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
     def get_service(self) -> Optional[lightkube.resources.core_v1.Service]:
         """Get the managed k8s service."""
         try:
-            service = self.lightkube_client.get(
+            service = lightkube_client.get(
                 res=lightkube.resources.core_v1.Service,
                 name=self.k8s_service_name,
                 namespace=self.model.name,
@@ -212,25 +250,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         return service
 
-    @functools.cache  # noqa: B019
-    def get_pod(self, unit_name: str) -> lightkube.resources.core_v1.Pod:
-        """Get the pod for the provided unit name."""
-        return self.lightkube_client.get(
-            res=lightkube.resources.core_v1.Pod,
-            name=unit_name.replace("/", "-"),
-            namespace=self.model.name,
-        )
-
-    @functools.cache  # noqa: B019
-    def get_node(self, unit_name: str) -> lightkube.resources.core_v1.Node:
-        """Return the node for the provided unit name."""
-        node_name = self.get_pod(unit_name).spec.nodeName
-        return self.lightkube_client.get(
-            res=lightkube.resources.core_v1.Node,
-            name=node_name,
-            namespace=self.model.name,
-        )
-
     # =======================
     #  Charm Lifecycle Hooks
     # =======================
@@ -241,16 +260,12 @@ class PgBouncerK8sCharm(TypedCharmBase):
             return
 
         expose_external = self.config.expose_external
-        if expose_external not in ["false", "nodeport", "loadbalancer"]:
+        try:
+            desired_service_type = ServiceType(expose_external)
+        except ValueError:
             logger.warning(f"Invalid config value {expose_external=}")
             self.app.status = BlockedStatus("Invalid expose-external config value")
             return
-
-        desired_service_type = {
-            "false": ServiceType.CLUSTER_IP,
-            "nodeport": ServiceType.NODE_PORT,
-            "loadbalancer": ServiceType.LOAD_BALANCER,
-        }[expose_external]
 
         service = self.get_service()
         service_exists = service is not None
@@ -258,7 +273,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         if service_exists and service_type == desired_service_type:
             return
 
-        pod0 = self.get_pod(self.unit.name)
+        pod0 = get_pod(self.unit.name, self.model.name)
 
         annotations = (
             json.loads(self.config.loadbalancer_extra_annotations)
@@ -282,14 +297,14 @@ class PgBouncerK8sCharm(TypedCharmBase):
                         targetPort=self.config.listen_port,
                     ),
                 ],
-                type=desired_service_type.value,
+                type=str(desired_service_type),
                 selector={"app.kubernetes.io/name": self.app.name},
             ),
         )
 
         logger.info(f"Creating desired service {desired_service_type=}")
         try:
-            self.lightkube_client.apply(desired_service, field_manager=self.app.name)
+            lightkube_client.apply(desired_service, field_manager=self.app.name)
         except lightkube.ApiError as e:
             if e.status.code == 403:
                 self.on_deployed_without_trust()
@@ -535,24 +550,24 @@ class PgBouncerK8sCharm(TypedCharmBase):
             logger.exception("Invalid configuration")
             return False
 
+    def _get_node_address(self, node) -> str:
+        # OpenStack will return an internal hostname, not externally accessible
+        # Preference: ExternalIP > InternalIP > Hostname
+        for typ in ["ExternalIP", "InternalIP", "Hostname"]:
+            for address in node.status.addresses:
+                if address.type == typ:
+                    return address.address
+
     def get_node_hosts(self) -> set[str]:
         """Return the node ports of nodes where units of this app are scheduled."""
         peer_relation = self.model.get_relation(PEER_RELATION_NAME)
         if not peer_relation:
             return set()
 
-        def _get_node_address(node) -> str:
-            # OpenStack will return an internal hostname, not externally accessible
-            # Preference: ExternalIP > InternalIP > Hostname
-            for typ in ["ExternalIP", "InternalIP", "Hostname"]:
-                for address in node.status.addresses:
-                    if address.type == typ:
-                        return address.address
-
         hosts = set()
         for unit in peer_relation.units | {self.model.unit}:
-            node = self.get_node(unit.name)
-            hosts.add(_get_node_address(node))
+            node = get_node(unit.name, self.model.name)
+            hosts.add(self._get_node_address(node))
         return hosts
 
     def get_hosts_ports(self, port_type: str) -> str:  # noqa: C901
