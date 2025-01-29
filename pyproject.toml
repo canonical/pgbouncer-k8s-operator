@@ -42,7 +42,7 @@ ruff = "^0.9.3"
 optional = true
 
 [tool.poetry.group.lint.dependencies]
-codespell = "^2.4.0"
+codespell = "^2.4.1"
 
 [tool.poetry.group.unit]
 optional = true
