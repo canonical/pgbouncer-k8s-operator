@@ -1079,7 +1079,7 @@
   ],
   "schemaVersion": 26,
   "style": "dark",
-  "tags": ["pgbouncer"],
+  "tags": ["postgres", "pgbouncer", "k8s"],
   "templating": {
     "list": [
       {
