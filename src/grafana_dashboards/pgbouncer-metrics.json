@@ -402,7 +402,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum (rate(pgbouncer_databases_reserve_pool_size{database=~\"$db\"}[30m]))",
+          "expr": "sum (pgbouncer_databases_reserve_pool{database=~\"$db\"})",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -508,7 +508,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sort_desc( sum ( rate(pgbouncer_stats_queries_duration_seconds_total{database=\"$db\"}[30m]) ) )",
+          "expr": "sort_desc( sum ( irate(pgbouncer_stats_queries_duration_seconds_total{database=~\"$db\"}[30m]) ) )",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -618,16 +618,16 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sort_desc( sum ( rate(pgbouncer_stats_queries_duration_seconds_total{database=~\"$db\"}[30m]) ) )",
+          "expr": "sort_desc( sum ( irate(pgbouncer_stats_queries_duration_seconds_total{database=~\"$db\"}[30m]) ) ) * 1000",
           "format": "time_series",
           "hide": false,
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "Duration microseconds",
+          "legendFormat": "Query duration microseconds",
           "refId": "B"
         },
         {
-          "expr": "sort_desc( sum ( rate(pgbouncer_pools_client_maxwait_seconds{database=~\"$db\"}[30m]) ) ) ",
+          "expr": "sort_desc( sum ( irate(pgbouncer_stats_client_wait_seconds_total{database=~\"$db\"}[30m]) ) ) * 1000",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -639,7 +639,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Stats queries",
+      "title": "Queries (execution and waiting durations)",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -735,7 +735,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sort_desc( sum ( rate(pgbouncer_stats_server_in_transaction_seconds{database=~\"$db\"}[30m]) ) )  ",
+          "expr": "sort_desc( sum ( irate(pgbouncer_stats_server_in_transaction_seconds_total{database=~\"$db\"}[30m]) ) ) * 1000 ",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -743,11 +743,11 @@
           "refId": "D"
         },
         {
-          "expr": "sort_desc( sum ( rate(pgbouncer_stats_sql_transactions_pooled_total{database=~\"$db\"}[30m]) ) )",
+          "expr": "sort_desc( sum ( irate(pgbouncer_stats_sql_transactions_pooled_total{database=~\"$db\"}[30m]) ) )",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "Transactions total",
+          "legendFormat": "Transactions count",
           "refId": "A"
         }
       ],
@@ -755,7 +755,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Transactions stats",
+      "title": "Transactions (duration and count)",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1018,7 +1018,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sort_desc( sum ( rate(pgbouncer_stats_received_bytes_total{database=~\"$db\"}[30m])*8 ) )",
+          "expr": "sort_desc( sum ( irate(pgbouncer_stats_received_bytes_total{database=~\"$db\"}[30m])*8 ) )",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -1027,7 +1027,7 @@
           "refId": "B"
         },
         {
-          "expr": "sort_desc( sum ( rate(pgbouncer_stats_sent_bytes_total{database=~\"$db\"}[30m])*8 ) )",
+          "expr": "sort_desc( sum ( irate(pgbouncer_stats_sent_bytes_total{database=~\"$db\"}[30m])*8 ) )",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
