@@ -375,7 +375,7 @@ class DbProvides(Object):
         connection_updates = {
             "master": pgb.parse_dict_to_kv_string(master_dbconnstr),
             "port": str(port),
-            "host": self.charm.unit_pod_hostname,
+            "host": read_write_host,
         }
 
         read_only_hosts = [
