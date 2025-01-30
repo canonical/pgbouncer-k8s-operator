@@ -264,7 +264,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
     #  Charm Lifecycle Hooks
     # =======================
 
-    def reconcile_k8s_service(self) -> bool:
+    def reconcile_k8s_service(self, port_changed: bool) -> bool:
         """Create or delete a nodeport service for external node connectivity."""
         expose_external = self.config.expose_external
         try:
@@ -277,7 +277,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         service = self.get_service()
         service_exists = service is not None
         service_type = service_exists and ServiceType(service.spec.type)
-        if service_exists and service_type == desired_service_type:
+        if not port_changed and service_exists and service_type == desired_service_type:
             return True
 
         pod0 = get_pod(self.unit.name, self.model.name)
@@ -433,7 +433,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             # necessary
             self.update_client_connection_info()
 
-        if self.unit.is_leader() and not self.reconcile_k8s_service():
+        if self.unit.is_leader() and not self.reconcile_k8s_service(port_changed):
             return
 
         self.render_pgb_config()
@@ -682,11 +682,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             self.unit.status = BlockedStatus("backend database relation not ready")
             return
 
-        if (
-            self.unit.is_leader()
-            and self.backend.postgres
-            and not self.check_service_connectivity()
-        ):
+        if self.unit.is_leader() and not self.check_service_connectivity():
             if self.app.status.message != WAITING_FOR_K8S_SERVICE_MESSAGE:
                 self.app.status = BlockedStatus("K8s service not connectable")
 

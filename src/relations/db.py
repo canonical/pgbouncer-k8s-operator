@@ -361,8 +361,10 @@ class DbProvides(Object):
             logger.warning("relation not fully initialised - skipping port update")
             return
 
+        read_write_host = self.charm.read_write_endpoints.split(",")[0].split(":")[0]
+
         master_dbconnstr = {
-            "host": self.charm.peers.leader_hostname,
+            "host": read_write_host,
             "dbname": database,
             "port": port,
             "user": user,
@@ -376,11 +378,13 @@ class DbProvides(Object):
             "host": self.charm.unit_pod_hostname,
         }
 
-        standby_hostnames = self.charm.peers.units_hostnames - {self.charm.peers.leader_hostname}
+        read_only_hosts = [
+            host.split(":")[0] for host in self.charm.read_only_endpoints.split(",")
+        ]
         # Only one standby value in legacy relation on pgbouncer. There are multiple standbys on
         # postgres, but not on the legacy pgbouncer charm.
-        if len(standby_hostnames) > 0:
-            standby_ip = standby_hostnames.pop()
+        if len(read_only_hosts) > 0:
+            standby_ip = read_only_hosts.pop()
             standby_dbconnstr = dict(master_dbconnstr)
             standby_dbconnstr.update({"host": standby_ip, "dbname": f"{database}_standby"})
             connection_updates["standbys"] = pgb.parse_dict_to_kv_string(standby_dbconnstr)
