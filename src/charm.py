@@ -264,7 +264,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
     #  Charm Lifecycle Hooks
     # =======================
 
-    def reconcile_k8s_service(self, port_changed: bool) -> bool:
+    def reconcile_k8s_service(self, port_changed: bool = False) -> bool:
         """Create or delete a nodeport service for external node connectivity."""
         expose_external = self.config.expose_external
         try:
@@ -433,7 +433,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             # necessary
             self.update_client_connection_info()
 
-        if self.unit.is_leader() and not self.reconcile_k8s_service(port_changed):
+        if self.unit.is_leader() and not self.reconcile_k8s_service(port_changed=port_changed):
             return
 
         self.render_pgb_config()
