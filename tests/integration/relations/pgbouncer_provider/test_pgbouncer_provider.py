@@ -393,6 +393,7 @@ async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_ch
         resources=PGB_RESOURCES,
         application_name=pgb_secondary,
         series=CHARM_SERIES,
+        trust=True,
     )
     async with ops_test.fast_forward():
         (await ops_test.model.wait_for_idle(apps=[pgb_secondary], status="blocked"),)

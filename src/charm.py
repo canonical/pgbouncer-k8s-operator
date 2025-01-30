@@ -105,6 +105,11 @@ class ServiceType(enum.Enum):
         return str(self) == str(other)
 
 
+CLUSTER_IP_SERVICE_TYPE = ServiceType("ClusterIP")
+NODE_PORT_SERVICE_TYPE = ServiceType("NodePort")
+LOAD_BALANCER_SERVICE_TYPE = ServiceType("LoadBalancer")
+
+
 @functools.cache
 def get_pod(unit_name: str, model_name: str) -> lightkube.resources.core_v1.Pod:
     """Get the pod for the provided unit name."""
@@ -230,6 +235,9 @@ class PgBouncerK8sCharm(TypedCharmBase):
         )
 
         self.lightkube_client = lightkube.Client()
+        self.INSUFFICIENT_PERMISSIONS_MESSAGE = (
+            f"Insufficient permissions, try: `juju trust {self.app.name} --scope=cluster`"
+        )
 
     @property
     def tracing_endpoint(self) -> Optional[str]:
@@ -256,30 +264,27 @@ class PgBouncerK8sCharm(TypedCharmBase):
     #  Charm Lifecycle Hooks
     # =======================
 
-    def reconcile_k8s_service(self) -> None:
+    def reconcile_k8s_service(self) -> bool:
         """Create or delete a nodeport service for external node connectivity."""
-        if not self.unit.is_leader():
-            return
-
         expose_external = self.config.expose_external
         try:
             desired_service_type = ServiceType(expose_external)
         except ValueError:
             logger.warning(f"Invalid config value {expose_external=}")
             self.app.status = BlockedStatus("Invalid expose-external config value")
-            return
+            return False
 
         service = self.get_service()
         service_exists = service is not None
         service_type = service_exists and ServiceType(service.spec.type)
         if service_exists and service_type == desired_service_type:
-            return
+            return True
 
         pod0 = get_pod(self.unit.name, self.model.name)
 
         annotations = (
             json.loads(self.config.loadbalancer_extra_annotations)
-            if desired_service_type == ServiceType.LOAD_BALANCER
+            if desired_service_type == LOAD_BALANCER_SERVICE_TYPE
             else {}
         )
 
@@ -310,13 +315,16 @@ class PgBouncerK8sCharm(TypedCharmBase):
         except lightkube.ApiError as e:
             if e.status.code == 403:
                 self.on_deployed_without_trust()
-                return
+                return False
             logger.exception("Failed to create K8s service")
             raise
 
         logger.info(f"Request to create desired service {desired_service_type=} dispatched")
 
-        self.app.status = MaintenanceStatus(WAITING_FOR_K8S_SERVICE_MESSAGE)
+        if self.backend.postgres:
+            self.app.status = MaintenanceStatus(WAITING_FOR_K8S_SERVICE_MESSAGE)
+
+        return True
 
     @property
     def version(self) -> str:
@@ -425,7 +433,8 @@ class PgBouncerK8sCharm(TypedCharmBase):
             # necessary
             self.update_client_connection_info()
 
-        self.reconcile_k8s_service()
+        if self.unit.is_leader() and not self.reconcile_k8s_service():
+            return
 
         self.render_pgb_config()
         try:
@@ -439,7 +448,8 @@ class PgBouncerK8sCharm(TypedCharmBase):
             self.peers.app_databag["current_port"] = str(self.config.listen_port)
 
         self.update_status()
-        self.update_client_connection_info()
+        if self.unit.is_leader() and self.backend.postgres and self.check_service_connectivity():
+            self.update_client_connection_info()
 
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
@@ -585,9 +595,9 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         service_type = ServiceType(service.spec.type)
 
-        if service_type == ServiceType.CLUSTER_IP:
+        if service_type == CLUSTER_IP_SERVICE_TYPE:
             return f"{self.k8s_service_name}.{self.model.name}.svc.cluster.local:{self.config.listen_port}"
-        elif service_type == ServiceType.NODE_PORT:
+        elif service_type == NODE_PORT_SERVICE_TYPE:
             hosts = self.get_node_hosts()
 
             for p in service.spec.ports:
@@ -595,7 +605,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
                     node_port = p.nodePort
 
             return ",".join(sorted({f"{host}:{node_port}" for host in hosts}))
-        elif service_type == ServiceType.LOAD_BALANCER and service.status.loadBalancer.ingress:
+        elif service_type == LOAD_BALANCER_SERVICE_TYPE and service.status.loadBalancer.ingress:
             if len(service.status.loadBalancer.ingress) != 0:
                 ip = service.status.loadBalancer.ingress[0].ip
                 hostname = service.status.loadBalancer.ingress[0].hostname
@@ -620,20 +630,14 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
     def check_service_connectivity(self) -> bool:
         """Check if the service is available (connectable with a socket)."""
-        try:
-            is_pgb_running = self.check_pgb_running()
-        except PebbleConnectionError:
-            return False
-
         service = self.get_service()
-
-        if not service or not is_pgb_running:
+        if not service:
             return False
 
         service_type = ServiceType(service.spec.type)
 
         endpoints_to_connect = [self.read_write_endpoints]
-        if self.read_only_endpoints or service_type != ServiceType.CLUSTER_IP:
+        if self.read_only_endpoints or service_type != CLUSTER_IP_SERVICE_TYPE:
             endpoints_to_connect.append(self.read_only_endpoints)
 
         for endpoints in endpoints_to_connect:
@@ -678,7 +682,11 @@ class PgBouncerK8sCharm(TypedCharmBase):
             self.unit.status = BlockedStatus("backend database relation not ready")
             return
 
-        if self.unit.is_leader() and not self.check_service_connectivity():
+        if (
+            self.unit.is_leader()
+            and self.backend.postgres
+            and not self.check_service_connectivity()
+        ):
             if self.app.status.message != WAITING_FOR_K8S_SERVICE_MESSAGE:
                 self.app.status = BlockedStatus("K8s service not connectable")
 
@@ -1170,9 +1178,8 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
     def on_deployed_without_trust(self) -> None:
         """Blocks the application and returns a specific error message for deployments made without --trust."""
-        self.unit.status = BlockedStatus(
-            f"Insufficient permissions, try: `juju trust {self.app.name} --scope=cluster`"
-        )
+        logger.warning(self.INSUFFICIENT_PERMISSIONS_MESSAGE)
+        self.app.status = BlockedStatus(self.INSUFFICIENT_PERMISSIONS_MESSAGE)
 
 
 if __name__ == "__main__":
