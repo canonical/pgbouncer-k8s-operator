@@ -60,7 +60,7 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
         backend_relation = await ops_test.model.add_relation(
             f"{PGB}:backend-database", f"{PG}:database"
         )
-        wait_for_relation_joined_between(ops_test, PGB, PG)
+        wait_for_relation_joined_between(ops_test, f"{PGB}:backend-database", f"{PG}:database")
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, REDIS_APP_NAME], status="active", timeout=1000
         )
@@ -100,7 +100,7 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
             f"{PGB}:db-admin",
             DISCOURSE_APP_NAME,
         )
-        wait_for_relation_joined_between(ops_test, PGB, DISCOURSE_APP_NAME)
+        wait_for_relation_joined_between(ops_test, f"{PGB}:db-admin", f"{DISCOURSE_APP_NAME}:db")
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, DISCOURSE_APP_NAME, REDIS_APP_NAME],
             status="active",

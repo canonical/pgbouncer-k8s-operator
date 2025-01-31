@@ -271,7 +271,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             desired_service_type = ServiceType(expose_external)
         except ValueError:
             logger.warning(f"Invalid config value {expose_external=}")
-            self.app.status = BlockedStatus("Invalid expose-external config value")
+            self.unit.status = BlockedStatus("Invalid expose-external config value")
             return False
 
         service = self.get_service()
@@ -322,7 +322,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         logger.info(f"Request to create desired service {desired_service_type=} dispatched")
 
         if self.backend.postgres:
-            self.app.status = MaintenanceStatus(WAITING_FOR_K8S_SERVICE_MESSAGE)
+            self.unit.status = MaintenanceStatus(WAITING_FOR_K8S_SERVICE_MESSAGE)
 
         return True
 
@@ -683,17 +683,14 @@ class PgBouncerK8sCharm(TypedCharmBase):
             return
 
         if self.unit.is_leader() and not self.check_service_connectivity():
-            if self.app.status.message != WAITING_FOR_K8S_SERVICE_MESSAGE:
-                self.app.status = BlockedStatus("K8s service not connectable")
+            if self.unit.status.message != WAITING_FOR_K8S_SERVICE_MESSAGE:
+                self.unit.status = BlockedStatus("K8s service not connectable")
 
             return
 
         try:
             if self.check_pgb_running():
                 self.unit.status = ActiveStatus()
-
-                if self.unit.is_leader():
-                    self.app.status = ActiveStatus()
         except PebbleConnectionError:
             not_running = "pgbouncer not running"
             logger.error(not_running)
@@ -1175,7 +1172,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
     def on_deployed_without_trust(self) -> None:
         """Blocks the application and returns a specific error message for deployments made without --trust."""
         logger.warning(self.INSUFFICIENT_PERMISSIONS_MESSAGE)
-        self.app.status = BlockedStatus(self.INSUFFICIENT_PERMISSIONS_MESSAGE)
+        self.unit.status = BlockedStatus(self.INSUFFICIENT_PERMISSIONS_MESSAGE)
 
 
 if __name__ == "__main__":
