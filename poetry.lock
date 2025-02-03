@@ -416,14 +416,14 @@ files = [
 
 [[package]]
 name = "cosl"
-version = "0.0.51"
+version = "0.0.54"
 description = "Utils for COS Lite charms"
 optional = false
 python-versions = ">=3.8"
 groups = ["charm-libs"]
 files = [
-    {file = "cosl-0.0.51-py3-none-any.whl", hash = "sha256:2ef43a94f0ca130fb4f2af924b75329f3c5e74b5c40ad4036af16713ad7d47d4"},
-    {file = "cosl-0.0.51.tar.gz", hash = "sha256:32af380475bba32df7334d53ff16fb93466a169c7433e79a9fef8dbbecfdd43c"},
+    {file = "cosl-0.0.54-py3-none-any.whl", hash = "sha256:b16520d73c72ac83cb42f0abe997d36510732d4f8499f70e9068cfa05f0d02fa"},
+    {file = "cosl-0.0.54.tar.gz", hash = "sha256:6baa889cc4468b0c0f746cc6319892a30ea8fbe38cbf5c49c6885f6fdf89d6a9"},
 ]
 
 [package.dependencies]
@@ -809,14 +809,14 @@ tomli = {version = "*", markers = "python_version > \"3.6\" and python_version <
 
 [[package]]
 name = "ipython"
-version = "8.31.0"
+version = "8.32.0"
 description = "IPython: Productive Interactive Computing"
 optional = false
 python-versions = ">=3.10"
 groups = ["integration"]
 files = [
-    {file = "ipython-8.31.0-py3-none-any.whl", hash = "sha256:46ec58f8d3d076a61d128fe517a51eb730e3aaf0c184ea8c17d16e366660c6a6"},
-    {file = "ipython-8.31.0.tar.gz", hash = "sha256:b6a2274606bec6166405ff05e54932ed6e5cfecaca1fc05f2cacde7bb074d70b"},
+    {file = "ipython-8.32.0-py3-none-any.whl", hash = "sha256:cae85b0c61eff1fc48b0a8002de5958b6528fa9c8defb1894da63f42613708aa"},
+    {file = "ipython-8.32.0.tar.gz", hash = "sha256:be2c91895b0b9ea7ba49d33b23e2040c352b33eb6a519cca7ce6e0c743444251"},
 ]
 
 [package.dependencies]
