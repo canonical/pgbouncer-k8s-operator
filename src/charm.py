@@ -428,10 +428,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         old_port = self.peers.app_databag.get("current_port")
         port_changed = old_port != str(self.config.listen_port)
-        if self.unit.is_leader() and port_changed:
-            # This emits relation-changed events to every client relation, so only do it when
-            # necessary
-            self.update_client_connection_info()
 
         if self.unit.is_leader() and not self.reconcile_k8s_service(port_changed=port_changed):
             return

@@ -376,3 +376,9 @@ async def get_leader_unit(ops_test: OpsTest, app: str) -> Optional[Unit]:
 async def get_data_integrator_credentials(unit: Unit) -> Dict:
     """Helper to run an action on data-integrator to get credentials."""
     return await run_action(unit, "get-credentials")
+
+
+async def get_status_log(ops_test: OpsTest, unit: Unit) -> str:
+    """Helper to get the status log of a unit."""
+    _, status_log, _ = await ops_test.juju("show-status-log", unit.name)
+    return status_log

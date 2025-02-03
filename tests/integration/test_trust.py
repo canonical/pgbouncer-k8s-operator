@@ -7,6 +7,7 @@ import logging
 import time
 
 import pytest
+import tenacity
 from pytest_operator.plugin import OpsTest
 
 from .helpers.helpers import (
@@ -15,6 +16,7 @@ from .helpers.helpers import (
     PG,
     PGB,
     PGB_METADATA,
+    get_status_log,
 )
 
 logger = logging.getLogger(__name__)
@@ -120,8 +122,18 @@ async def test_trust(ops_test: OpsTest, pgb_charm):
         )
 
         logger.info(f"Waiting until {PGB} blocked due to lack of trust")
-        await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1200)
-        assert ops_test.model.applications[PGB].status_message == UNTRUST_ERROR_MESSAGE
+        await ops_test.model.block_until(
+            lambda: ops_test.model.applications[PGB].status == "blocked", timeout=1200
+        )
+
+        for attempt in tenacity.Retrying(
+            stop=tenacity.stop_after_attempt(3), wait=tenacity.wait_fixed(10)
+        ):
+            with attempt:
+                status_log = await get_status_log(
+                    ops_test, ops_test.model.applications[PGB].units[0]
+                )
+                assert UNTRUST_ERROR_MESSAGE in status_log
 
         logger.info(f"Trusting application {PGB}")
         await ops_test.juju("trust", PGB, "--scope=cluster")
