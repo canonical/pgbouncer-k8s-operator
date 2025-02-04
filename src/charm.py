@@ -4,7 +4,6 @@
 
 """Charmed PgBouncer connection pooler."""
 
-import enum
 import functools
 import json
 import logging
@@ -40,7 +39,7 @@ from ops import (
 from ops.pebble import ConnectionError as PebbleConnectionError
 from ops.pebble import Layer, ServiceStatus
 
-from config import CharmConfig
+from config import CharmConfig, ServiceType
 from constants import (
     APP_SCOPE,
     AUTH_FILE_DATABAG_KEY,
@@ -77,37 +76,6 @@ from relations.pgbouncer_provider import PgBouncerProvider
 from upgrade import PgbouncerUpgrade, get_pgbouncer_k8s_dependencies_model
 
 logger = logging.getLogger(__name__)
-
-
-class ServiceType(enum.Enum):
-    """Supported K8s service types."""
-
-    CLUSTER_IP = "ClusterIP"
-    NODE_PORT = "NodePort"
-    LOAD_BALANCER = "LoadBalancer"
-    FALSE_LOWER = "false"
-    NODE_PORT_LOWER = "nodeport"
-    LOAD_BALANCER_LOWER = "loadbalancer"
-
-    def __str__(self):
-        """The string representation of the enum."""
-        if self is ServiceType.FALSE_LOWER:
-            return "ClusterIP"
-        elif self is ServiceType.NODE_PORT_LOWER:
-            return "NodePort"
-        elif self is ServiceType.LOAD_BALANCER_LOWER:
-            return "LoadBalancer"
-
-        return self.value
-
-    def __eq__(self, other):
-        """The equality of the enum."""
-        return str(self) == str(other)
-
-
-CLUSTER_IP_SERVICE_TYPE = ServiceType("ClusterIP")
-NODE_PORT_SERVICE_TYPE = ServiceType("NodePort")
-LOAD_BALANCER_SERVICE_TYPE = ServiceType("LoadBalancer")
 
 
 @functools.cache
@@ -276,15 +244,14 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         service = self.get_service()
         service_exists = service is not None
-        service_type = service_exists and ServiceType(service.spec.type)
-        if not port_changed and service_exists and service_type == desired_service_type:
+        if not port_changed and service_exists and service.spec.type == desired_service_type.name:
             return True
 
         pod0 = get_pod(self.unit.name, self.model.name)
 
         annotations = (
             json.loads(self.config.loadbalancer_extra_annotations)
-            if desired_service_type == LOAD_BALANCER_SERVICE_TYPE
+            if desired_service_type == ServiceType("loadbalancer")
             else {}
         )
 
@@ -304,7 +271,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
                         targetPort=self.config.listen_port,
                     ),
                 ],
-                type=str(desired_service_type),
+                type=desired_service_type.name,
                 selector={"app.kubernetes.io/name": self.app.name},
             ),
         )
@@ -589,11 +556,9 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         port = self.config.listen_port
 
-        service_type = ServiceType(service.spec.type)
-
-        if service_type == CLUSTER_IP_SERVICE_TYPE:
+        if service.spec.type == "ClusterIP":
             return f"{self.k8s_service_name}.{self.model.name}.svc.cluster.local:{self.config.listen_port}"
-        elif service_type == NODE_PORT_SERVICE_TYPE:
+        elif service.spec.type == "NodePort":
             hosts = self.get_node_hosts()
 
             for p in service.spec.ports:
@@ -601,7 +566,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
                     node_port = p.nodePort
 
             return ",".join(sorted({f"{host}:{node_port}" for host in hosts}))
-        elif service_type == LOAD_BALANCER_SERVICE_TYPE and service.status.loadBalancer.ingress:
+        elif service.spec.type == "LoadBalancer" and service.status.loadBalancer.ingress:
             if len(service.status.loadBalancer.ingress) != 0:
                 ip = service.status.loadBalancer.ingress[0].ip
                 hostname = service.status.loadBalancer.ingress[0].hostname
@@ -630,10 +595,8 @@ class PgBouncerK8sCharm(TypedCharmBase):
         if not service:
             return False
 
-        service_type = ServiceType(service.spec.type)
-
         endpoints_to_connect = [self.read_write_endpoints]
-        if self.read_only_endpoints or service_type != CLUSTER_IP_SERVICE_TYPE:
+        if self.read_only_endpoints or service.spec.name != ServiceType("false").name:
             endpoints_to_connect.append(self.read_only_endpoints)
 
         for endpoints in endpoints_to_connect:

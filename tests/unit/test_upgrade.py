@@ -113,7 +113,7 @@ class TestUpgrade(unittest.TestCase):
 
         self.charm.upgrade._on_pgbouncer_pebble_ready(event)
 
-        _reconcile_k8s_service.assert_called_once()
+        _reconcile_k8s_service.assert_called_once_with()
 
     @patch("charm.PgBouncerK8sCharm.check_pgb_running", return_value=True)
     @patch("charm.PgBouncerK8sCharm.update_config")

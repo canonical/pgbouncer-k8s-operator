@@ -204,8 +204,7 @@ def wait_for_relation_joined_between(
     try:
         for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
             with attempt:
-                if not new_relation_joined(ops_test, endpoint_one, endpoint_two):
-                    raise Exception("Relation not created")
+                assert new_relation_joined(ops_test, endpoint_one, endpoint_two)
     except RetryError:
         assert False, "New relation failed to join after 3 minutes."
 
@@ -231,8 +230,7 @@ def wait_for_relation_removed_between(
     try:
         for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
             with attempt:
-                if not relation_exited(ops_test, endpoint_one, endpoint_two):
-                    raise Exception("Relation not exited")
+                assert relation_exited(ops_test, endpoint_one, endpoint_two)
     except RetryError:
         assert False, "Relation failed to exit after 3 minutes."
 
