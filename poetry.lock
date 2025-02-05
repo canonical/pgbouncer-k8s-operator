@@ -1249,14 +1249,14 @@ files = [
 
 [[package]]
 name = "ops"
-version = "2.18.0"
+version = "2.18.1"
 description = "The Python library behind great charms"
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "charm-libs"]
 files = [
-    {file = "ops-2.18.0-py3-none-any.whl", hash = "sha256:19aa71d06bdeac1af76ab31de3aab5ec828a92796ff157141c3c324b588cfaaf"},
-    {file = "ops-2.18.0.tar.gz", hash = "sha256:4ef43553097e1d27af6f1a1906a8dbcbac379f316124e40f7638923ed992b1ad"},
+    {file = "ops-2.18.1-py3-none-any.whl", hash = "sha256:ba0312366e25b3ae90cf4b8d0af6ea6b612d4951500f856bce609cdb25c9bdeb"},
+    {file = "ops-2.18.1.tar.gz", hash = "sha256:5619deb370c00ea851f9579b780a09b88b1a1d020e58e1ed81d31c8fb7b28c8a"},
 ]
 
 [package.dependencies]
@@ -1296,14 +1296,14 @@ dev = ["jinja2"]
 
 [[package]]
 name = "paramiko"
-version = "3.5.0"
+version = "3.5.1"
 description = "SSH2 protocol library"
 optional = false
 python-versions = ">=3.6"
 groups = ["integration"]
 files = [
-    {file = "paramiko-3.5.0-py3-none-any.whl", hash = "sha256:1fedf06b085359051cd7d0d270cebe19e755a8a921cc2ddbfa647fb0cd7d68f9"},
-    {file = "paramiko-3.5.0.tar.gz", hash = "sha256:ad11e540da4f55cedda52931f1a3f812a8238a7af7f62a60de538cd80bb28124"},
+    {file = "paramiko-3.5.1-py3-none-any.whl", hash = "sha256:43b9a0501fc2b5e70680388d9346cf252cfb7d00b0667c39e80eb43a408b8f61"},
+    {file = "paramiko-3.5.1.tar.gz", hash = "sha256:b2c665bc45b2b215bd7d7f039901b14b067da00f3a11e6640995fd58f2664822"},
 ]
 
 [package.dependencies]
@@ -2588,4 +2588,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "31a2eab7640859498982c882a3736bf791f83f5a7a318f13b2789ec34d267bb0"
+content-hash = "9f544a919ee519c362e6d692952e45b54f48bd6807f27c45fe8d10c58db68f22"

@@ -7,7 +7,7 @@ requires-poetry = ">=2.0.0"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-ops = "^2.18.0"
+ops = "^2.18.1"
 tenacity = "^9.0.0"
 lightkube = "^0.17.1"
 lightkube-models = "^1.29.0.6"
