@@ -596,7 +596,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             return False
 
         endpoints_to_connect = [self.read_write_endpoints]
-        if self.read_only_endpoints or service.spec.name != ServiceType("false").name:
+        if self.read_only_endpoints or service.spec.type != ServiceType("false").name:
             endpoints_to_connect.append(self.read_only_endpoints)
 
         for endpoints in endpoints_to_connect:

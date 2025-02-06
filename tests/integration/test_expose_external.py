@@ -61,7 +61,7 @@ async def confirm_cluster_ip_endpoints(ops_test: OpsTest) -> None:
     ), "URIs is unexpected"
 
 
-async def confirm_endpoint_connectivity(ops_test: OpsTest) -> None:
+async def confirm_endpoint_connectivity(ops_test: OpsTest) -> str:
     """Helper to confirm endpoint connectivity."""
     for attempt in tenacity.Retrying(
         reraise=True,
@@ -84,6 +84,8 @@ async def confirm_endpoint_connectivity(ops_test: OpsTest) -> None:
             ) as connection, connection.cursor() as cursor:
                 cursor.execute("SELECT 1;")
                 assert cursor.fetchone()[0] == 1, "Unable to execute query"
+
+            return endpoints
 
 
 @pytest.mark.group(1)
@@ -151,7 +153,7 @@ async def test_expose_external(ops_test) -> None:
             timeout=SLOW_TIMEOUT,
         )
 
-        await confirm_endpoint_connectivity(ops_test)
+        nodeport_endpoints = await confirm_endpoint_connectivity(ops_test)
 
         logger.info("Testing endpoint when expose-external=loadbalancer")
         await pgbouncer_application.set_config({"expose-external": "loadbalancer"})
@@ -161,7 +163,9 @@ async def test_expose_external(ops_test) -> None:
             timeout=SLOW_TIMEOUT,
         )
 
-        await confirm_endpoint_connectivity(ops_test)
+        load_balancer_endpoints = await confirm_endpoint_connectivity(ops_test)
+
+        assert nodeport_endpoints != load_balancer_endpoints, "Endpoints did not change for expose-external=loadbalancer"
 
 
 @pytest.mark.group(1)
@@ -208,7 +212,7 @@ async def test_expose_external_with_tls(ops_test: OpsTest) -> None:
             timeout=SLOW_TIMEOUT,
         )
 
-        await confirm_endpoint_connectivity(ops_test)
+        nodeport_endpoints = await confirm_endpoint_connectivity(ops_test)
 
         logger.info("Testing endpoint when expose-external=loadbalancer")
         await pgbouncer_application.set_config({"expose-external": "loadbalancer"})
@@ -218,4 +222,6 @@ async def test_expose_external_with_tls(ops_test: OpsTest) -> None:
             timeout=SLOW_TIMEOUT,
         )
 
-        await confirm_endpoint_connectivity(ops_test)
+        load_balancer_endpoints = await confirm_endpoint_connectivity(ops_test)
+
+        assert nodeport_endpoints != load_balancer_endpoints, "Endpoints did not change for expose-external=loadbalancer"
