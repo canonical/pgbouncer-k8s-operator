@@ -92,7 +92,7 @@ async def test_expose_external(ops_test) -> None:
     """Test the expose-external config option."""
     logger.info("Building pgbouncer-k8s charm")
     pgbouncer_charm = await ops_test.build_charm(".")
-    # await ops_test.model.set_config(MODEL_CONFIG)
+    await ops_test.model.set_config(MODEL_CONFIG)
 
     pgbouncer_resources = {
         "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"]
