@@ -201,7 +201,19 @@ class TestDb(unittest.TestCase):
     @patch("relations.db.DbProvides.get_databags", return_value=[{}])
     @patch("relations.db.DbProvides.get_external_app")
     @patch("relations.db.DbProvides.update_databags")
-    def test_update_connection_info(self, _update_databags, _get_external_app, _get_databags):
+    @patch(
+        "charm.PgBouncerK8sCharm.read_write_endpoints",
+        new_callable=PropertyMock,
+        return_value="rw_host:5555",
+    )
+    @patch(
+        "charm.PgBouncerK8sCharm.read_only_endpoints",
+        new_callable=PropertyMock,
+        return_value="ro_host:5555,ro_host:5555",
+    )
+    def test_update_connection_info(
+        self, _, __, _update_databags, _get_external_app, _get_databags
+    ):
         relation = Mock()
         database = "test_db"
         user = "test_user"
@@ -215,7 +227,7 @@ class TestDb(unittest.TestCase):
         }
 
         master_dbconnstr = {
-            "host": self.charm.peers.leader_hostname,
+            "host": "rw_host",
             "dbname": database,
             "port": port,
             "user": user,
@@ -223,11 +235,8 @@ class TestDb(unittest.TestCase):
             "fallback_application_name": _get_external_app().name,
         }
 
-        standby_hostnames = self.charm.peers.units_hostnames - {self.charm.peers.leader_hostname}
-        if len(standby_hostnames) > 0:
-            standby_hostname = standby_hostnames.pop()
-            standby_dbconnstr = dict(master_dbconnstr)
-            standby_dbconnstr.update({"host": standby_hostname, "dbname": f"{database}_standby"})
+        standby_dbconnstr = dict(master_dbconnstr)
+        standby_dbconnstr.update({"host": "ro_host", "dbname": f"{database}_standby"})
 
         self.db_relation.update_connection_info(relation, port)
         _update_databags.assert_called_with(
@@ -235,7 +244,7 @@ class TestDb(unittest.TestCase):
             {
                 "master": parse_dict_to_kv_string(master_dbconnstr),
                 "port": port,
-                "host": self.charm.unit_pod_hostname,
+                "host": "rw_host",
                 "standbys": parse_dict_to_kv_string(standby_dbconnstr),
             },
         )

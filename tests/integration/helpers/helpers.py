@@ -21,6 +21,8 @@ from tenacity import (
 
 from constants import AUTH_FILE_PATH, PGB_DIR
 
+from ..juju_ import run_action
+
 CHARM_SERIES = "jammy"
 CLIENT_APP_NAME = "postgresql-test-app"
 PGB_METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
@@ -202,15 +204,14 @@ def wait_for_relation_joined_between(
     try:
         for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
             with attempt:
-                if new_relation_joined(ops_test, endpoint_one, endpoint_two):
-                    break
+                assert new_relation_joined(ops_test, endpoint_one, endpoint_two)
     except RetryError:
         assert False, "New relation failed to join after 3 minutes."
 
 
 def new_relation_joined(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> bool:
     for rel in ops_test.model.relations:
-        endpoints = [endpoint.name for endpoint in rel.endpoints]
+        endpoints = [f"{endpoint.application_name}:{endpoint.name}" for endpoint in rel.endpoints]
         if endpoint_one in endpoints and endpoint_two in endpoints:
             return True
     return False
@@ -229,8 +230,7 @@ def wait_for_relation_removed_between(
     try:
         for attempt in Retrying(stop=stop_after_delay(3 * 60), wait=wait_fixed(3)):
             with attempt:
-                if relation_exited(ops_test, endpoint_one, endpoint_two):
-                    break
+                assert relation_exited(ops_test, endpoint_one, endpoint_two)
     except RetryError:
         assert False, "Relation failed to exit after 3 minutes."
 
@@ -238,7 +238,7 @@ def wait_for_relation_removed_between(
 def relation_exited(ops_test: OpsTest, endpoint_one: str, endpoint_two: str) -> bool:
     """Returns true if the relation between endpoint_one and endpoint_two has been removed."""
     for rel in ops_test.model.relations:
-        endpoints = [endpoint.name for endpoint in rel.endpoints]
+        endpoints = [f"{endpoint.application_name}:{endpoint.name}" for endpoint in rel.endpoints]
         if endpoint_one not in endpoints and endpoint_two not in endpoints:
             return True
     return False
@@ -369,3 +369,14 @@ async def get_leader_unit(ops_test: OpsTest, app: str) -> Optional[Unit]:
             break
 
     return leader_unit
+
+
+async def get_data_integrator_credentials(unit: Unit) -> Dict:
+    """Helper to run an action on data-integrator to get credentials."""
+    return await run_action(unit, "get-credentials")
+
+
+async def get_status_log(ops_test: OpsTest, unit: Unit) -> str:
+    """Helper to get the status log of a unit."""
+    _, status_log, _ = await ops_test.juju("show-status-log", unit.name)
+    return status_log

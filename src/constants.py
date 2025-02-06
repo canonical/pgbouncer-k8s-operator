@@ -30,6 +30,9 @@ CFG_FILE_DATABAG_KEY = "cfg_file"
 
 EXTENSIONS_BLOCKING_MESSAGE = "bad relation request - remote app requested extensions, which are unsupported. Please remove this relation."
 CONTAINER_UNAVAILABLE_MESSAGE = "PgBouncer container currently unavailable"
+WAITING_FOR_K8S_SERVICE_MESSAGE = "Waiting for K8s service connectivity"
+
+K8S_SERVICE_CONNECT_TIMEOUT = 3
 
 # Labels are not confidential
 SECRET_LABEL = "secret"  # noqa: S105

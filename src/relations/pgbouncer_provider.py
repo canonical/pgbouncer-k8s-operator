@@ -87,25 +87,6 @@ class PgBouncerProvider(Object):
             charm.on[self.relation_name].relation_broken, self._on_relation_broken
         )
 
-    def external_connectivity(self, event=None) -> bool:
-        """Whether any of the relations are marked as external."""
-        # New list to avoid modifying the original
-        relations = list(self.model.relations[self.relation_name])
-        if (
-            event
-            and type(event) in [RelationBrokenEvent, RelationDepartedEvent]
-            and event.relation in relations
-        ):
-            # Disregard of what has been requested by the client, this relation is being removed
-            relations.remove(event.relation)
-
-        # Now, we will return true if any of the relations are marked as external
-        return any(
-            relation.data.get(relation.app, {}).get("external-node-connectivity", "false")
-            == "true"
-            for relation in relations
-        )
-
     def _depart_flag(self, relation):
         return f"{self.relation_name}_{relation.id}_departing"
 
@@ -186,7 +167,6 @@ class PgBouncerProvider(Object):
         # Set the database name
         self.database_provides.set_database(rel_id, database)
 
-        self.charm.patch_port(self.external_connectivity())
         self.update_connection_info(event.relation)
 
     def _on_relation_departed(self, event: RelationDepartedEvent) -> None:
@@ -232,8 +212,6 @@ class PgBouncerProvider(Object):
                 f"Failed to delete user during {self.relation_name} relation broken event"
             )
             raise
-        # Check if we need to close the node port
-        self.charm.patch_port(self.external_connectivity(event))
 
     def update_connection_info(self, relation):
         """Updates client-facing relation information."""
@@ -253,13 +231,6 @@ class PgBouncerProvider(Object):
 
     def update_endpoints(self, relation=None) -> None:
         """Set the endpoints for the relation."""
-        nodeports = self.charm.get_node_ports
-        internal_port = self.charm.config.listen_port
-        internal_hostnames = sorted(set(self.charm.peers.units_hostnames))
-        if self.charm.peers.leader_hostname in internal_hostnames:
-            internal_hostnames.remove(self.charm.peers.leader_hostname)
-        internal_rw = f"{self.charm.leader_hostname}:{self.charm.config.listen_port}"
-
         relations = [relation] if relation else self.model.relations[self.relation_name]
 
         # Set the endpoints for each relation.
@@ -274,24 +245,14 @@ class PgBouncerProvider(Object):
             if not database or not password:
                 return
 
-            # Read-write endpoint
-            if relation.data[relation.app].get("external-node-connectivity", "false") == "true":
-                self.database_provides.set_endpoints(relation.id, nodeports["rw"])
-                self.database_provides.set_read_only_endpoints(relation.id, nodeports["ro"])
-                self.database_provides.set_uris(
-                    relation.id,
-                    f"postgresql://{user}:{password}@{nodeports['rw']}/{database}",
-                )
-            else:
-                self.database_provides.set_endpoints(relation.id, internal_rw)
-                self.database_provides.set_read_only_endpoints(
-                    relation.id,
-                    ",".join([f"{host}:{internal_port}" for host in internal_hostnames]),
-                )
-                self.database_provides.set_uris(
-                    relation.id,
-                    f"postgresql://{user}:{password}@{internal_rw}/{database}",
-                )
+            self.database_provides.set_endpoints(relation.id, self.charm.read_write_endpoints)
+            self.database_provides.set_read_only_endpoints(
+                relation.id, self.charm.read_only_endpoints
+            )
+            self.database_provides.set_uris(
+                relation.id,
+                f"postgresql://{user}:{password}@{self.charm.read_write_endpoints}/{database}",
+            )
 
     def get_database(self, relation):
         """Gets database name from relation."""

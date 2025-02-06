@@ -235,7 +235,7 @@ async def test_database_admin_permissions(ops_test: OpsTest):
 
 @pytest.mark.group(1)
 async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
-    """Test that there is no read-only endpoint in a standalone cluster."""
+    """Test that there is a read-only endpoint in a standalone cluster."""
     unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
     await scale_application(ops_test, PGB, 1)
     async with ops_test.fast_forward():
@@ -258,8 +258,8 @@ async def test_no_read_only_endpoint_in_standalone_cluster(ops_test: OpsTest):
     ]
     unit = ops_test.model.applications[CLIENT_APP_NAME].units[0]
     databag = await get_app_relation_databag(ops_test, unit.name, relations[0].id)
-    assert not databag.get("read-only-endpoints", None), (
-        f"read-only-endpoints in pgb databag: {databag}"
+    assert databag.get("read-only-endpoints", None), (
+        f"read-only-endpoints not in pgb databag: {databag}"
     )
 
 
@@ -307,7 +307,9 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest):
     await ops_test.model.add_relation(
         f"{SECONDARY_CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB
     )
-    wait_for_relation_joined_between(ops_test, PGB, SECONDARY_CLIENT_APP_NAME)
+    wait_for_relation_joined_between(
+        ops_test, f"{SECONDARY_CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", f"{PGB}:database"
+    )
     await ops_test.model.wait_for_idle(status="active", apps=all_app_names)
 
     # Check both relations can connect
@@ -364,7 +366,7 @@ async def test_legacy_relation_compatibility(ops_test: OpsTest):
     finos = "finos-waltz-k8s"
     (await ops_test.model.deploy(finos, application_name=finos, channel="edge"),)
     finos_relation = await ops_test.model.add_relation(f"{PGB}:db", f"{finos}:db")
-    wait_for_relation_joined_between(ops_test, PGB, finos)
+    wait_for_relation_joined_between(ops_test, f"{PGB}:db", f"{finos}:db")
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(status="active", timeout=600)
 
@@ -393,12 +395,15 @@ async def test_multiple_pgb_can_connect_to_one_backend(ops_test: OpsTest, pgb_ch
         resources=PGB_RESOURCES,
         application_name=pgb_secondary,
         series=CHARM_SERIES,
+        trust=True,
     )
     async with ops_test.fast_forward():
         (await ops_test.model.wait_for_idle(apps=[pgb_secondary], status="blocked"),)
 
     await ops_test.model.add_relation(f"{pgb_secondary}:{BACKEND_RELATION_NAME}", f"{PG}:database")
-    wait_for_relation_joined_between(ops_test, PG, pgb_secondary)
+    wait_for_relation_joined_between(
+        ops_test, f"{pgb_secondary}:{BACKEND_RELATION_NAME}", f"{PG}:database"
+    )
 
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(apps=[*APP_NAMES, pgb_secondary])
@@ -539,6 +544,14 @@ async def test_indico_datatabase(ops_test: OpsTest) -> None:
 @pytest.mark.group(1)
 async def test_connection_is_possible_after_pod_deletion(ops_test: OpsTest) -> None:
     """Tests that the connection is possible after the pod is deleted."""
+    await ops_test.model.applications[PGB].set_config({"expose-external": "nodeport"})
+    await ops_test.model.wait_for_idle(
+        apps=[PGB],
+        status="active",
+        timeout=600,
+        idle_period=30,
+    )
+
     # Delete the pod.
     unit = ops_test.model.applications[PGB].units[0]
     await delete_pod(ops_test, unit.name)

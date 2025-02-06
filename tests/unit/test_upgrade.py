@@ -64,8 +64,7 @@ class TestUpgrade(unittest.TestCase):
 
         _set_partition.assert_called_once_with(2)
 
-    @patch("charm.PgBouncerProvider.external_connectivity", return_value=True)
-    @patch("charm.PgBouncerK8sCharm.patch_port")
+    @patch("charm.PgBouncerK8sCharm.reconcile_k8s_service")
     @patch("charm.PgbouncerUpgrade.set_unit_completed")
     @patch("charm.PgbouncerUpgrade._cluster_checks")
     @patch("charm.PgbouncerUpgrade.peer_relation", new_callable=PropertyMock, return_value=None)
@@ -74,8 +73,7 @@ class TestUpgrade(unittest.TestCase):
         _peer_relation: Mock,
         _cluster_checks: Mock,
         _set_unit_completed: Mock,
-        _patch_port: Mock,
-        _,
+        _reconcile_k8s_service: Mock,
     ):
         event = Mock()
 
@@ -115,7 +113,7 @@ class TestUpgrade(unittest.TestCase):
 
         self.charm.upgrade._on_pgbouncer_pebble_ready(event)
 
-        _patch_port.assert_called_once_with(True)
+        _reconcile_k8s_service.assert_called_once_with()
 
     @patch("charm.PgBouncerK8sCharm.check_pgb_running", return_value=True)
     @patch("charm.PgBouncerK8sCharm.update_config")

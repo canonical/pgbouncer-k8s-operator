@@ -93,8 +93,8 @@ class PgbouncerUpgrade(DataUpgrade):
         if self.state not in ["upgrading", "recovery"]:
             return
 
-        if self.charm.unit.is_leader() and self.charm.client_relation.external_connectivity():
-            self.charm.patch_port(True)
+        if self.charm.unit.is_leader():
+            self.charm.reconcile_k8s_service()
             for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
                 self.charm.client_relation.update_connection_info(relation)
 

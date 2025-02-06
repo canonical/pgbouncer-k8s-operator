@@ -5,9 +5,10 @@
 
 import logging
 import math
+import socket
 import unittest
 from signal import SIGHUP
-from unittest.mock import Mock, PropertyMock, call, patch
+from unittest.mock import MagicMock, Mock, PropertyMock, call, patch
 
 import lightkube
 import psycopg2
@@ -26,8 +27,6 @@ from constants import (
     PGB,
     SECRET_INTERNAL_LABEL,
 )
-
-from .helpers import _FakeApiError
 
 
 class TestCharm(unittest.TestCase):
@@ -57,7 +56,7 @@ class TestCharm(unittest.TestCase):
     def use_caplog(self, caplog):
         self._caplog = caplog
 
-    @patch("charm.PgBouncerK8sCharm.patch_port")
+    @patch("charm.PgBouncerK8sCharm.reconcile_k8s_service")
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
@@ -103,10 +102,9 @@ class TestCharm(unittest.TestCase):
         layer = self.charm._pgbouncer_layer()
         assert len(layer.services) == self.charm._cores + 2
 
-    @patch("charm.PgBouncerK8sCharm.patch_port")
     @patch("charm.PgBouncerK8sCharm.update_status")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
-    def test_on_pgbouncer_pebble_ready(self, _render, _update_status, _):
+    def test_on_pgbouncer_pebble_ready(self, _render, _update_status):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
 
@@ -120,13 +118,12 @@ class TestCharm(unittest.TestCase):
         _update_status.assert_called_once_with()
         _render.assert_called_once_with()
 
-    @patch("charm.PgBouncerK8sCharm.patch_port")
     @patch("charm.PgBouncerK8sCharm.update_status")
     @patch("charm.PgBouncerK8sCharm.push_tls_files_to_workload")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PostgreSQLTLS.get_tls_files")
     def test_on_pgbouncer_pebble_ready_ensure_tls_files(
-        self, get_tls_files, _render, push_tls_files_to_workload, _update_status, _
+        self, get_tls_files, _render, push_tls_files_to_workload, _update_status
     ):
         get_tls_files.return_value = ("key", "ca", "cert")
 
@@ -346,11 +343,10 @@ class TestCharm(unittest.TestCase):
 
         assert self.charm.generate_relation_databases() == {}
 
-    @patch("charm.PgBouncerK8sCharm.patch_port")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("ops.model.Container.send_signal")
-    def test_reload_pgbouncer(self, _send_signal, _check_pgb_running, _, __):
+    def test_reload_pgbouncer(self, _send_signal, _check_pgb_running, _):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.harness.set_leader(True)
         # necessary hooks before we can check reloads
@@ -461,116 +457,238 @@ class TestCharm(unittest.TestCase):
 
         assert self.charm.peers.app_databag["readonly_dbs"] == '["includeddb"]'
 
-    @patch("charm.PgBouncerK8sCharm.on_deployed_without_trust")
-    @patch("lightkube.Client.get", side_effect=_FakeApiError(403))
-    @patch("lightkube.core.client.GenericSyncClient")
-    def test_raise_untrusted_error(self, _, __, _deployed_without_trust):
-        self.harness.set_leader(True)
+    @patch("charm.PgBouncerK8sCharm.get_service")
+    @patch("charm.get_pod")
+    def test_reconcile_k8s_service_already_exists(self, _get_pod, _get_service):
+        get_service_mock, spec_mock = MagicMock(), MagicMock()
+        type(spec_mock).type = PropertyMock(return_value="ClusterIP")
+        type(get_service_mock).spec = spec_mock
+        _get_service.return_value = get_service_mock
 
-        # call the methods that try to access K8s resources
-        _ = self.charm._node_name
-        _ = self.charm._node_ip
-        self.charm._node_port("port")
-        self.charm.get_all_k8s_node_hostnames_and_ips()
+        assert self.charm.reconcile_k8s_service(port_changed=False)
+        _get_pod.assert_not_called()
 
-        self.assertIsInstance(self.harness.charm.unit.status, BlockedStatus)
-        # 6 total calls:
-        #   4 (1 per method)
-        #   2 extra _node_name calls from inside _node_ip and get_all_k8s_node_hostnames_and_ips
-        assert _deployed_without_trust.call_count == 6
+    @patch("charm.PgBouncerK8sCharm.get_service")
+    @patch("charm.get_pod")
+    def test_reconcile_k8s_service_port_changed(self, _get_pod, _get_service):
+        get_service_mock, spec_mock = MagicMock(), MagicMock()
+        type(spec_mock).type = PropertyMock(return_value="NodePort")
+        type(get_service_mock).spec = spec_mock
+        _get_service.return_value = get_service_mock
 
-    @patch("lightkube.Client")
-    def test_patch_port(self, _client):
-        # not run unless leader
-        self.charm.patch_port()
+        _lightkube_client = MagicMock()
+        self.charm.lightkube_client = _lightkube_client
 
-        assert not _client.called
+        _get_pod_mock, metadata_mock = MagicMock(), MagicMock()
+        type(metadata_mock).ownerReferences = PropertyMock(return_value="owner")
+        type(_get_pod_mock).metadata = metadata_mock
+        _get_pod.return_value = _get_pod_mock
 
-        self.harness.set_leader(True)
-        self.charm.patch_port(True)
-        service = lightkube.resources.core_v1.Service(
-            apiVersion="v1",
-            kind="Service",
+        expected_service = lightkube.resources.core_v1.Service(
             metadata=lightkube.models.meta_v1.ObjectMeta(
-                name="pgbouncer-k8s-nodeport",
-                namespace=self.charm._namespace,
-                ownerReferences=_client.return_value.get.return_value.metadata.ownerReferences,
-                labels={"app.kubernetes.io/name": "pgbouncer-k8s"},
+                name=self.charm.k8s_service_name,
+                namespace=self.charm.model.name,
+                ownerReferences="owner",  # the stateful set
+                labels={"app.kubernetes.io/name": self.charm.app.name},
+                annotations={},
             ),
             spec=lightkube.models.core_v1.ServiceSpec(
-                selector={"app.kubernetes.io/name": self.charm.app.name},
                 ports=[
                     lightkube.models.core_v1.ServicePort(
                         name="pgbouncer",
-                        port=6432,
-                        targetPort=6432,
-                    )
+                        port=self.charm.config.listen_port,
+                        targetPort=self.charm.config.listen_port,
+                    ),
                 ],
-                type="NodePort",
+                type="ClusterIP",
+                selector={"app.kubernetes.io/name": self.charm.app.name},
             ),
         )
 
-        _client.return_value.create.assert_called_once_with(service)
-
-        self.charm.patch_port(False)
-
-        _client.return_value.delete.assert_called_once_with(
-            lightkube.resources.core_v1.Service,
-            "pgbouncer-k8s-nodeport",
-            namespace=self.charm.model.name,
+        assert self.charm.reconcile_k8s_service(port_changed=True)
+        _get_pod.assert_called()
+        _lightkube_client.apply.assert_called_with(
+            expected_service, field_manager=self.charm.app.name
         )
 
-    @patch("charm.logger.info")
-    @patch("charm.PgBouncerK8sCharm.on_deployed_without_trust")
-    @patch("lightkube.Client")
-    def test_patch_port_create_errors(self, _client, _on_deployed_without_trust, _logger_info):
-        self.harness.set_leader(True)
+    @patch("charm.PgBouncerK8sCharm.get_service")
+    @patch("charm.get_pod")
+    def test_reconcile_k8s_service(self, _get_pod, _get_service):
+        get_service_mock, spec_mock = MagicMock(), MagicMock()
+        type(spec_mock).type = PropertyMock(return_value="NodePort")
+        type(get_service_mock).spec = spec_mock
+        _get_service.return_value = get_service_mock
 
-        # No permissions
-        _client.return_value.create.side_effect = _FakeApiError(403)
+        _lightkube_client = MagicMock()
+        self.charm.lightkube_client = _lightkube_client
 
-        self.charm.patch_port(True)
+        _get_pod_mock, metadata_mock = MagicMock(), MagicMock()
+        type(metadata_mock).ownerReferences = PropertyMock(return_value="owner")
+        type(_get_pod_mock).metadata = metadata_mock
+        _get_pod.return_value = _get_pod_mock
 
-        _on_deployed_without_trust.assert_called_once_with()
-        _on_deployed_without_trust.reset_mock()
+        expected_service = lightkube.resources.core_v1.Service(
+            metadata=lightkube.models.meta_v1.ObjectMeta(
+                name=self.charm.k8s_service_name,
+                namespace=self.charm.model.name,
+                ownerReferences="owner",  # the stateful set
+                labels={"app.kubernetes.io/name": self.charm.app.name},
+                annotations={},
+            ),
+            spec=lightkube.models.core_v1.ServiceSpec(
+                ports=[
+                    lightkube.models.core_v1.ServicePort(
+                        name="pgbouncer",
+                        port=self.charm.config.listen_port,
+                        targetPort=self.charm.config.listen_port,
+                    ),
+                ],
+                type="ClusterIP",
+                selector={"app.kubernetes.io/name": self.charm.app.name},
+            ),
+        )
 
-        # Svc already exists
-        _client.return_value.create.side_effect = _FakeApiError(409)
+        assert self.charm.reconcile_k8s_service(port_changed=True)
+        _get_pod.assert_called()
+        _lightkube_client.apply.assert_called_with(
+            expected_service, field_manager=self.charm.app.name
+        )
 
-        self.charm.patch_port(True)
+    @patch("charm.PgBouncerK8sCharm.get_service")
+    def test_get_hosts_ports_cluster_ip(self, _get_service):
+        get_service_mock, spec_mock = MagicMock(), MagicMock()
+        type(spec_mock).type = PropertyMock(return_value="ClusterIP")
+        type(get_service_mock).spec = spec_mock
+        _get_service.return_value = get_service_mock
 
-        _logger_info.assert_called_once_with("Nodeport service already exists")
+        expected_k8s_service = f"{self.charm.k8s_service_name}.{self.charm.model.name}.svc.cluster.local:{self.charm.config.listen_port}"
 
-        # General error
-        _client.return_value.create.side_effect = _FakeApiError(500)
-        with self.assertRaises(_FakeApiError):
-            self.charm.patch_port(True)
+        assert self.charm.get_hosts_ports("rw") == expected_k8s_service
+        assert self.charm.get_hosts_ports("rw") == expected_k8s_service
 
-    @patch("charm.logger.info")
-    @patch("charm.PgBouncerK8sCharm.on_deployed_without_trust")
-    @patch("lightkube.Client")
-    def test_patch_port_delete_errors(self, _client, _on_deployed_without_trust, _logger_info):
-        self.harness.set_leader(True)
+    @patch("charm.PgBouncerK8sCharm.get_service")
+    @patch("charm.get_node")
+    def test_get_hosts_ports_node_port(self, _get_node, _get_service):
+        get_service_mock, spec_mock, node_ports_mock = MagicMock(), MagicMock(), MagicMock()
+        type(node_ports_mock).name = PropertyMock(return_value="pgbouncer")
+        type(node_ports_mock).nodePort = "5678"
+        type(spec_mock).type = PropertyMock(return_value="NodePort")
+        type(spec_mock).ports = [node_ports_mock]
+        type(get_service_mock).spec = spec_mock
+        _get_service.return_value = get_service_mock
 
-        # No permissions
-        _client.return_value.delete.side_effect = _FakeApiError(403)
+        _get_node_mock, status_mock, address_mock = MagicMock(), MagicMock(), MagicMock()
+        type(address_mock).type = PropertyMock(return_value="ExternalIP")
+        type(address_mock).address = PropertyMock(return_value="1.2.3.4")
+        type(status_mock).addresses = [address_mock]
+        type(_get_node_mock).status = status_mock
+        _get_node.return_value = _get_node_mock
 
-        self.charm.patch_port(False)
+        assert self.charm.get_hosts_ports("rw") == "1.2.3.4:5678"
+        assert self.charm.get_hosts_ports("ro") == "1.2.3.4:5678"
 
-        _on_deployed_without_trust.assert_called_once_with()
-        _on_deployed_without_trust.reset_mock()
+    @patch("charm.PgBouncerK8sCharm.get_service")
+    def test_get_hosts_ports_load_balancer(self, _get_service):
+        get_service_mock, spec_mock = MagicMock(), MagicMock()
+        type(spec_mock).type = PropertyMock(return_value="LoadBalancer")
+        type(get_service_mock).spec = spec_mock
 
-        # Svc already exists
-        _client.return_value.delete.side_effect = _FakeApiError(404)
+        status_mock, load_balancer_mock, ingress_mock = MagicMock(), MagicMock(), MagicMock()
+        type(ingress_mock).ip = "1.2.3.4"
+        type(load_balancer_mock).ingress = [ingress_mock]
+        type(status_mock).loadBalancer = load_balancer_mock
+        type(get_service_mock).status = status_mock
 
-        self.charm.patch_port(False)
+        _get_service.return_value = get_service_mock
 
-        _logger_info.assert_called_once_with("No nodeport service to clean up")
+        assert self.charm.get_hosts_ports("rw") == f"1.2.3.4:{self.charm.config.listen_port}"
+        assert self.charm.get_hosts_ports("ro") == f"1.2.3.4:{self.charm.config.listen_port}"
 
-        # General error
-        _client.return_value.delete.side_effect = _FakeApiError(500)
-        with self.assertRaises(_FakeApiError):
-            self.charm.patch_port(False)
+        type(ingress_mock).ip = None
+        type(ingress_mock).hostname = "test-host"
+
+        assert self.charm.get_hosts_ports("rw") == f"test-host:{self.charm.config.listen_port}"
+        assert self.charm.get_hosts_ports("ro") == f"test-host:{self.charm.config.listen_port}"
+
+    @patch("charm.PgBouncerK8sCharm.get_service")
+    @patch(
+        "charm.PgBouncerK8sCharm.read_write_endpoints",
+        new_callable=PropertyMock,
+        return_value="1.2.3.4:1234",
+    )
+    @patch(
+        "charm.PgBouncerK8sCharm.read_only_endpoints",
+        new_callable=PropertyMock,
+        return_value="1.2.3.4:5678",
+    )
+    @patch("socket.socket")
+    def test_check_service_connectivity(
+        self, _socket, _read_only_endpoints, _read_write_endpoints, _get_service
+    ):
+        get_service_mock, spec_mock = MagicMock(), MagicMock()
+        type(spec_mock).type = PropertyMock(return_value="ClusterIP")
+        type(get_service_mock).spec = spec_mock
+        _get_service.return_value = get_service_mock
+
+        _socket.return_value.__enter__.return_value.connect_ex.return_value = 0
+
+        assert self.charm.check_service_connectivity()
+
+        assert sorted(
+            _socket.return_value.__enter__.return_value.connect_ex.call_args_list
+        ) == sorted([call(("1.2.3.4", 1234)), call(("1.2.3.4", 5678))])
+
+    @patch("charm.PgBouncerK8sCharm.get_service")
+    @patch(
+        "charm.PgBouncerK8sCharm.read_write_endpoints",
+        new_callable=PropertyMock,
+        return_value="1.2.3.4:1234",
+    )
+    @patch(
+        "charm.PgBouncerK8sCharm.read_only_endpoints",
+        new_callable=PropertyMock,
+        return_value="1.2.3.4:5678",
+    )
+    @patch("socket.socket")
+    def test_check_service_connectivity_false(
+        self, _socket, _read_only_endpoints, _read_write_endpoints, _get_service
+    ):
+        get_service_mock, spec_mock = MagicMock(), MagicMock()
+        type(spec_mock).type = PropertyMock(return_value="ClusterIP")
+        type(get_service_mock).spec = spec_mock
+        _get_service.return_value = get_service_mock
+
+        _socket.return_value.__enter__.return_value.connect_ex.return_value = 1
+
+        assert not self.charm.check_service_connectivity()
+
+        assert sorted(
+            _socket.return_value.__enter__.return_value.connect_ex.call_args_list
+        ) == sorted([call(("1.2.3.4", 1234))])
+
+    @patch("charm.PgBouncerK8sCharm.get_service")
+    @patch(
+        "charm.PgBouncerK8sCharm.read_write_endpoints",
+        new_callable=PropertyMock,
+        return_value="1.2.3.4:1234",
+    )
+    @patch(
+        "charm.PgBouncerK8sCharm.read_only_endpoints",
+        new_callable=PropertyMock,
+        return_value="1.2.3.4:5678",
+    )
+    @patch("socket.socket")
+    def test_check_service_connectivity_error(
+        self, _socket, _read_only_endpoints, _read_write_endpoints, _get_service
+    ):
+        get_service_mock, spec_mock = MagicMock(), MagicMock()
+        type(spec_mock).type = PropertyMock(return_value="ClusterIP")
+        type(get_service_mock).spec = spec_mock
+        _get_service.return_value = get_service_mock
+
+        _socket.return_value.__enter__.return_value.connect_ex.side_effect = socket.gaierror
+
+        assert not self.charm.check_service_connectivity()
 
     @patch("charm.PgBouncerK8sCharm.config", new_callable=PropertyMock, return_value={})
     def test_configuration_check(self, _config):

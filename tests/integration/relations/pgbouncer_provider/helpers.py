@@ -126,24 +126,6 @@ async def run_sql_on_application_charm(
     return result.results
 
 
-async def is_external_connectivity_set(
-    ops_test: OpsTest,
-    application_name: str,
-    relation_name: str,
-    relation_id: Optional[str] = None,
-) -> Optional[str]:
-    data = await get_application_relation_data(
-        ops_test,
-        application_name,
-        relation_name,
-        "data",
-        relation_id,
-    )
-    if not data:
-        return False
-    return json.loads(data).get("external-node-connectivity", None) == "true"
-
-
 async def build_connection_string(
     ops_test: OpsTest,
     application_name: str,
@@ -197,24 +179,7 @@ async def build_connection_string(
     )
     host = endpoints.split(",")[0].split(":")[0]
 
-    use_node_port = await is_external_connectivity_set(
-        ops_test,
-        application_name,
-        relation_name,
-        relation_id,
-    )
-
-    if use_node_port:
-        return f"dbname='{database}' user='{username}' host='{host}' port={endpoints.split(',')[0].split(':')[1]} password='{password}' connect_timeout=10"
-    else:
-        # Translate the pod hostname to an IP address.
-        model = ops_test.model.info
-        client = AsyncClient(namespace=model.name)
-        pod = await client.get(Pod, name=host.split(".")[0])
-        ip = pod.status.podIP
-
-    # Build the complete connection string to connect to the database.
-    return f"dbname='{database}' user='{username}' host='{ip}' password='{password}' connect_timeout=10 port=6432"
+    return f"dbname='{database}' user='{username}' host='{host}' port={endpoints.split(',')[0].split(':')[1]} password='{password}' connect_timeout=10"
 
 
 async def check_new_relation(
@@ -239,7 +204,9 @@ async def check_new_relation(
         dbname=dbname,
         relation_name=relation_name,
     )
-    assert test_data in json.loads(run_query["results"])[0], (
+
+    query_results = json.loads(run_query.get("results", "[]"))
+    assert len(query_results) > 0 and test_data in query_results[0], (
         f"smoke check failed. Query output: {run_query}"
     )
 

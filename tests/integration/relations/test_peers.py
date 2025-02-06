@@ -76,7 +76,7 @@ async def test_scaled_relations(ops_test: OpsTest):
         )
 
         await ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database")
-        wait_for_relation_joined_between(ops_test, PG, PGB)
+        wait_for_relation_joined_between(ops_test, f"{PG}:database", f"{PGB}:{RELATION}")
         await asyncio.gather(
             ops_test.model.wait_for_idle(apps=[PGB], status="active", timeout=1000),
             ops_test.model.wait_for_idle(
@@ -85,7 +85,7 @@ async def test_scaled_relations(ops_test: OpsTest):
         )
 
         await ops_test.model.add_relation(f"{PGB}:db", f"{FINOS_WALTZ}:db")
-        wait_for_relation_joined_between(ops_test, PGB, FINOS_WALTZ)
+        wait_for_relation_joined_between(ops_test, f"{PGB}:db", f"{FINOS_WALTZ}:db")
         await asyncio.gather(
             ops_test.model.wait_for_idle(apps=[PGB, FINOS_WALTZ], status="active", timeout=1000),
             ops_test.model.wait_for_idle(
@@ -125,9 +125,9 @@ async def test_exit_relations(ops_test: OpsTest):
     """Test that we can exit relations with multiple units without breaking anything."""
     async with ops_test.fast_forward():
         await ops_test.model.remove_application(FINOS_WALTZ)
-        wait_for_relation_removed_between(ops_test, PGB, FINOS_WALTZ)
+        wait_for_relation_removed_between(ops_test, f"{PGB}:db", f"{FINOS_WALTZ}:db")
         await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1000)
 
         await ops_test.model.remove_application(PG)
-        wait_for_relation_removed_between(ops_test, PG, PGB)
+        wait_for_relation_removed_between(ops_test, f"{PG}:database", f"{PGB}:{RELATION}")
         await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)

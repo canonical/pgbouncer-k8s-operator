@@ -78,7 +78,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
         )
 
         relation = await ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database")
-        wait_for_relation_joined_between(ops_test, PG, PGB)
+        wait_for_relation_joined_between(ops_test, f"{PGB}:{RELATION}", f"{PG}:database")
         (await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000),)
 
         cfg = await get_cfg(ops_test, f"{PGB}/0")
@@ -94,7 +94,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
         )
         pgb_unit = ops_test.model.applications[PGB].units[0]
         logging.info(await get_app_relation_databag(ops_test, pgb_unit.name, relation.id))
-        wait_for_relation_removed_between(ops_test, PG, PGB)
+        wait_for_relation_removed_between(ops_test, f"{PG}:database", f"{PGB}:{RELATION}")
         await asyncio.gather(
             ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000),
             ops_test.model.wait_for_idle(
@@ -122,7 +122,7 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
         # Relate PgBouncer to PostgreSQL.
         relation = await ops_test.model.add_relation(f"{PGB}:{RELATION}", f"{PG}:database")
-        wait_for_relation_joined_between(ops_test, PG, PGB)
+        wait_for_relation_joined_between(ops_test, f"{PGB}:{RELATION}", f"{PG}:database")
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
         pgb_user, _ = await get_backend_user_pass(ops_test, relation)
 

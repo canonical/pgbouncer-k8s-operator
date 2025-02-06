@@ -65,7 +65,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
         backend_relation = await ops_test.model.add_relation(
             f"{PGB}:backend-database", f"{PG}:database"
         )
-        wait_for_relation_joined_between(ops_test, PGB, PG)
+        wait_for_relation_joined_between(ops_test, f"{PGB}:backend-database", f"{PG}:database")
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB], status="active", timeout=1000, raise_on_error=False
         )
@@ -81,7 +81,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
         )
 
         finos_relation = await ops_test.model.add_relation(f"{PGB}:db", f"{FINOS_WALTZ}:db")
-        wait_for_relation_joined_between(ops_test, PGB, FINOS_WALTZ)
+        wait_for_relation_joined_between(ops_test, f"{PGB}:db", f"{FINOS_WALTZ}:db")
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, FINOS_WALTZ], status="active", timeout=1000
         )
@@ -102,7 +102,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
         another_finos_relation = await ops_test.model.add_relation(
             f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db"
         )
-        wait_for_relation_joined_between(ops_test, PGB, ANOTHER_FINOS_WALTZ)
+        wait_for_relation_joined_between(ops_test, f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db")
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, FINOS_WALTZ, ANOTHER_FINOS_WALTZ],
             status="active",
@@ -146,7 +146,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
         # Scale down the second deployment of Finos Waltz and confirm that the first deployment
         # is still active.
         await ops_test.model.remove_application(ANOTHER_FINOS_WALTZ)
-        wait_for_relation_removed_between(ops_test, PGB, ANOTHER_FINOS_WALTZ)
+        wait_for_relation_removed_between(ops_test, f"{PGB}:db", f"{ANOTHER_FINOS_WALTZ}:db")
         await ops_test.model.wait_for_idle(
             apps=[PG, PGB, FINOS_WALTZ], status="active", timeout=1000
         )
@@ -163,7 +163,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, pgb_charm):
 
         # Remove the first deployment of Finos Waltz.
         await ops_test.model.remove_application(FINOS_WALTZ, block_until_done=True)
-        wait_for_relation_removed_between(ops_test, PGB, FINOS_WALTZ)
+        wait_for_relation_removed_between(ops_test, f"{PGB}:db", f"{FINOS_WALTZ}:db")
         await ops_test.model.wait_for_idle(apps=[PGB, PG], status="active", timeout=1000)
 
         await check_database_users_existence(ops_test, [], [finos_user], pgb_user, pgb_password)
