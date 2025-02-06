@@ -165,7 +165,9 @@ async def test_expose_external(ops_test) -> None:
 
         load_balancer_endpoints = await confirm_endpoint_connectivity(ops_test)
 
-        assert nodeport_endpoints != load_balancer_endpoints, "Endpoints did not change for expose-external=loadbalancer"
+        assert nodeport_endpoints != load_balancer_endpoints, (
+            "Endpoints did not change for expose-external=loadbalancer"
+        )
 
 
 @pytest.mark.group(1)
@@ -224,4 +226,6 @@ async def test_expose_external_with_tls(ops_test: OpsTest) -> None:
 
         load_balancer_endpoints = await confirm_endpoint_connectivity(ops_test)
 
-        assert nodeport_endpoints != load_balancer_endpoints, "Endpoints did not change for expose-external=loadbalancer"
+        assert nodeport_endpoints != load_balancer_endpoints, (
+            "Endpoints did not change for expose-external=loadbalancer"
+        )
