@@ -6,13 +6,16 @@ import pytest
 from pytest_operator.plugin import OpsTest
 from tenacity import Retrying, stop_after_delay, wait_fixed
 
+from . import architecture
 from .helpers.helpers import CLIENT_APP_NAME
 
 
-@pytest.fixture(scope="module")
-async def pgb_charm(ops_test: OpsTest):
-    """Build the pgbouncer charm."""
-    return await ops_test.build_charm(".")
+@pytest.fixture(scope="session")
+def charm():
+    # Return str instead of pathlib.Path since python-libjuju's model.deploy(), juju deploy, and
+    # juju bundle files expect local charms to begin with `./` or `/` to distinguish them from
+    # Charmhub charms.
+    return f"./pgbouncer-k8s_ubuntu@22.04-{architecture.architecture}.charm"
 
 
 @pytest.fixture

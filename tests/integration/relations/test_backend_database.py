@@ -44,9 +44,8 @@ PG = "postgresql-k8s"
 RELATION = "backend-database"
 
 
-@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
-async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
+async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, charm):
     """Test that the pgbouncer and postgres charms can relate to one another."""
     # Build, deploy, and relate charms.
     resources = {
@@ -55,7 +54,7 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
     async with ops_test.fast_forward():
         await asyncio.gather(
             ops_test.model.deploy(
-                pgb_charm,
+                charm,
                 resources=resources,
                 application_name=PGB,
                 series=CHARM_SERIES,
@@ -116,7 +115,6 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, pgb_charm):
         logging.info(cfg)
 
 
-@pytest.mark.group(1)
 @markers.amd64_only  # finos-waltz-k8s charm not available for arm64
 async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
     async with ops_test.fast_forward():
@@ -163,7 +161,6 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
         )
 
 
-@pytest.mark.group(1)
 @markers.amd64_only  # finos-waltz-k8s charm not available for arm64
 # (and this test depends on previous test with finos-waltz-k8s charm)
 async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):

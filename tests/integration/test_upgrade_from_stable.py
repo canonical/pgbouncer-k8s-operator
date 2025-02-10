@@ -38,9 +38,8 @@ PGB_RESOURCES = {
 FIRST_DATABASE_RELATION_NAME = "database"
 
 
-@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
-async def test_deploy_stable(ops_test: OpsTest, pgb_charm) -> None:
+async def test_deploy_stable(ops_test: OpsTest, charm) -> None:
     """Simple test to ensure that the PostgreSQL and application charms get deployed."""
     await asyncio.gather(
         ops_test.model.deploy(
@@ -82,7 +81,6 @@ async def test_deploy_stable(ops_test: OpsTest, pgb_charm) -> None:
     assert len(ops_test.model.applications[PGB].units) == 3
 
 
-@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
 async def test_pre_upgrade_check(ops_test: OpsTest) -> None:
     """Test that the pre-upgrade-check action runs successfully."""
@@ -103,9 +101,8 @@ async def test_pre_upgrade_check(ops_test: OpsTest) -> None:
     assert stateful_set.spec.updateStrategy.rollingUpdate.partition == 2, "Partition not set to 2"
 
 
-@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
-async def test_upgrade_from_stable(ops_test: OpsTest, continuous_writes, pgb_charm) -> None:
+async def test_upgrade_from_stable(ops_test: OpsTest, continuous_writes, charm) -> None:
     # Start an application that continuously writes data to the database.
     logger.info("starting continuous writes to the database")
     await start_continuous_writes(ops_test, PGB)
@@ -118,7 +115,7 @@ async def test_upgrade_from_stable(ops_test: OpsTest, continuous_writes, pgb_cha
     application = ops_test.model.applications[PGB]
 
     logger.info("Refresh the charm")
-    await application.refresh(path=pgb_charm, resources=resources)
+    await application.refresh(path=charm, resources=resources)
 
     logger.info("Wait for upgrade to complete on first upgrading unit")
     # highest ordinal unit always the first to upgrade

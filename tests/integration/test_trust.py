@@ -25,7 +25,6 @@ MAX_RETRIES = 20
 UNTRUST_ERROR_MESSAGE = f"Insufficient permissions, try: `juju trust {PGB} --scope=cluster`"
 
 
-@pytest.mark.group(1)
 async def test_enable_rbac(ops_test: OpsTest):
     """Enables RBAC from inside test runner's environment.
 
@@ -65,7 +64,6 @@ async def test_enable_rbac(ops_test: OpsTest):
     assert is_default_auth == "no"
 
 
-@pytest.mark.group(1)
 async def test_model_connectivity(ops_test: OpsTest):
     """Tries to regain connectivity to model after microK8s restart."""
     retries = 0
@@ -85,9 +83,8 @@ async def test_model_connectivity(ops_test: OpsTest):
     assert False
 
 
-@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
-async def test_trust(ops_test: OpsTest, pgb_charm):
+async def test_trust(ops_test: OpsTest, charm):
     """Test the deployment of the charm."""
     async with ops_test.fast_forward():
         logger.info("Deploying applications")
@@ -95,7 +92,7 @@ async def test_trust(ops_test: OpsTest, pgb_charm):
         # Build and deploy applications
         await asyncio.gather(
             ops_test.model.deploy(
-                pgb_charm,
+                charm,
                 resources={
                     "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"][
                         "upstream-source"

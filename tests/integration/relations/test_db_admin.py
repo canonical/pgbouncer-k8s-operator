@@ -29,10 +29,9 @@ DISCOURSE_APP_NAME = "discourse-charmers-discourse-k8s"
 REDIS_APP_NAME = "redis-k8s"
 
 
-@pytest.mark.group(1)
 @markers.amd64_only  # redis-k8s charm not available for arm64
 @pytest.mark.abort_on_fail
-async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
+async def test_create_db_admin_legacy_relation(ops_test: OpsTest, charm):
     # Build, deploy, and relate charms.
     resources = {
         "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"],
@@ -41,7 +40,7 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest, pgb_charm):
     async with ops_test.fast_forward():
         await asyncio.gather(
             ops_test.model.deploy(
-                pgb_charm,
+                charm,
                 resources=resources,
                 application_name=PGB,
                 series=CHARM_SERIES,

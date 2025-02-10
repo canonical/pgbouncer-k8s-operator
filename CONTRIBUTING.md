@@ -45,10 +45,9 @@ Use the following tox commands to run tests:
 tox run -e format              # update your code according to linting rules
 tox run -e lint                # code style
 tox run -e unit                # unit tests
+charmcraft test lxd-vm:        # integration tests
 tox                            # runs 'fmt', 'lint', and 'unit' environments
 ```
-
-Integration tests for individual functionality can be found in tox.ini
 
 ## Build charm
 

@@ -44,9 +44,8 @@ PGB_RESOURCES = {
 FIRST_DATABASE_RELATION_NAME = "database"
 
 
-@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
-async def test_deploy_latest(ops_test: OpsTest, pgb_charm) -> None:
+async def test_deploy_latest(ops_test: OpsTest, charm) -> None:
     """Simple test to ensure that the PostgreSQL and application charms get deployed."""
     await asyncio.gather(
         ops_test.model.deploy(
@@ -88,7 +87,6 @@ async def test_deploy_latest(ops_test: OpsTest, pgb_charm) -> None:
     assert len(ops_test.model.applications[PGB].units) == 3
 
 
-@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
 async def test_pre_upgrade_check(ops_test: OpsTest) -> None:
     """Test that the pre-upgrade-check action runs successfully."""
@@ -109,9 +107,8 @@ async def test_pre_upgrade_check(ops_test: OpsTest) -> None:
     assert stateful_set.spec.updateStrategy.rollingUpdate.partition == 2, "Partition not set to 2"
 
 
-@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
-async def test_upgrade_from_edge(ops_test: OpsTest, continuous_writes, pgb_charm) -> None:
+async def test_upgrade_from_edge(ops_test: OpsTest, continuous_writes, charm) -> None:
     # Start an application that continuously writes data to the database.
     logger.info("starting continuous writes to the database")
     await start_continuous_writes(ops_test, PGB)
@@ -124,7 +121,7 @@ async def test_upgrade_from_edge(ops_test: OpsTest, continuous_writes, pgb_charm
     application = ops_test.model.applications[PGB]
 
     logger.info("Refresh the charm")
-    await application.refresh(path=pgb_charm, resources=resources)
+    await application.refresh(path=charm, resources=resources)
 
     logger.info("Wait for upgrade to complete on first upgrading unit")
     # highest ordinal unit always the first to upgrade
@@ -155,9 +152,8 @@ async def test_upgrade_from_edge(ops_test: OpsTest, continuous_writes, pgb_charm
     await check_writes(ops_test)
 
 
-@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
-async def test_fail_and_rollback(ops_test, continuous_writes, pgb_charm) -> None:
+async def test_fail_and_rollback(ops_test, continuous_writes, charm) -> None:
     # Start an application that continuously writes data to the database.
     logger.info("starting continuous writes to the database")
     await start_continuous_writes(ops_test, PGB)
@@ -176,9 +172,9 @@ async def test_fail_and_rollback(ops_test, continuous_writes, pgb_charm) -> None
             action = await leader_unit.run_action("pre-upgrade-check")
             await action.wait()
 
-    filename = pgb_charm.split("/")[-1] if isinstance(pgb_charm, str) else pgb_charm.name
+    filename = Path(charm).name
     fault_charm = Path("/tmp/", filename)
-    shutil.copy(pgb_charm, fault_charm)
+    shutil.copy(charm, fault_charm)
 
     logger.info("Inject dependency fault")
     await inject_dependency_fault(ops_test, PGB, fault_charm)
@@ -207,7 +203,7 @@ async def test_fail_and_rollback(ops_test, continuous_writes, pgb_charm) -> None
     await action.wait()
 
     logger.info("Re-refresh the charm")
-    await application.refresh(path=pgb_charm)
+    await application.refresh(path=charm)
 
     async with ops_test.fast_forward("60s"):
         await ops_test.model.block_until(lambda: unit.workload_status == "active", timeout=TIMEOUT)
@@ -233,7 +229,6 @@ async def test_fail_and_rollback(ops_test, continuous_writes, pgb_charm) -> None
     fault_charm.unlink()
 
 
-@pytest.mark.group(1)
 async def inject_dependency_fault(
     ops_test: OpsTest, application_name: str, charm_file: Union[str, Path]
 ) -> None:
