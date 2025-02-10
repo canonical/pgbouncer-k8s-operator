@@ -30,9 +30,8 @@ SLOW_TIMEOUT = 15 * 60
 TEST_DATABASE_NAME = "test-database"
 
 
-@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
-async def test_deploy_stable(ops_test: OpsTest, pgb_charm) -> None:
+async def test_deploy_stable(ops_test: OpsTest, charm) -> None:
     """Simple test to ensure that the PostgreSQL and application charms get deployed."""
     await asyncio.gather(
         ops_test.model.deploy(
@@ -78,7 +77,6 @@ async def test_deploy_stable(ops_test: OpsTest, pgb_charm) -> None:
     assert len(ops_test.model.applications[PGB].units) == 2
 
 
-@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
 async def test_pre_upgrade_check(ops_test: OpsTest) -> None:
     """Test that the pre-upgrade-check action runs successfully."""
@@ -91,9 +89,8 @@ async def test_pre_upgrade_check(ops_test: OpsTest) -> None:
     await action.wait()
 
 
-@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
-async def test_upgrade_from_stable(ops_test: OpsTest, pgb_charm):
+async def test_upgrade_from_stable(ops_test: OpsTest, charm):
     """Test updating from stable channel."""
     credentials = await fetch_action_get_credentials(
         ops_test.model.applications[DATA_INTEGRATOR_APP_NAME].units[0]
@@ -106,7 +103,7 @@ async def test_upgrade_from_stable(ops_test: OpsTest, pgb_charm):
     actions = await application.get_actions()
 
     logger.info("Refresh the charm")
-    await application.refresh(path=pgb_charm)
+    await application.refresh(path=charm)
 
     logger.info("Wait for upgrade to start")
     await ops_test.model.block_until(

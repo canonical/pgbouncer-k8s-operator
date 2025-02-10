@@ -12,16 +12,15 @@ from .helpers.helpers import CHARM_SERIES, PGB, PGB_METADATA, get_cfg, run_comma
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.group(1)
 @pytest.mark.abort_on_fail
-async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
+async def test_build_and_deploy(ops_test: OpsTest, charm):
     """Build and deploy pgbouncer charm."""
     resources = {
         "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"],
     }
     async with ops_test.fast_forward():
         await ops_test.model.deploy(
-            pgb_charm,
+            charm,
             resources=resources,
             application_name=PGB,
             series=CHARM_SERIES,
@@ -30,7 +29,6 @@ async def test_build_and_deploy(ops_test: OpsTest, pgb_charm):
         await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)
 
 
-@pytest.mark.group(1)
 async def test_config_updates(ops_test: OpsTest):
     """Test updating charm config updates pgbouncer config & relation data."""
     pgbouncer_app = ops_test.model.applications[PGB]
@@ -45,7 +43,6 @@ async def test_config_updates(ops_test: OpsTest):
         assert cfg["pgbouncer"]["listen_port"] == port
 
 
-@pytest.mark.group(1)
 async def test_multiple_pebble_services(ops_test: OpsTest):
     """Test we have the correct pebble services."""
     unit = ops_test.model.applications[PGB].units[0]
@@ -63,7 +60,6 @@ async def test_multiple_pebble_services(ops_test: OpsTest):
             assert service[2] == "active"
 
 
-@pytest.mark.group(1)
 async def test_logrotate(ops_test: OpsTest):
     """Verify that logs will be rotated."""
     unit = ops_test.model.applications[PGB].units[0]
