@@ -8,6 +8,7 @@ providers:
     addons:
       - dns
       - hostpath-storage
+      - metallb:10.64.140.43-10.64.140.49
 host:
   snaps:
     jhack:
