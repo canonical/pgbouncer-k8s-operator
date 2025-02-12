@@ -1,0 +1,23 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:929 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.2    unsupported  02:10:01Z
+
+App              Version  Status   Scale  Charm            Channel      Rev  Address         Exposed  Message
+data-integrator           blocked      2  data-integrator  latest/edge   94  10.152.183.78   no       Please relate the data-integrator with the desired product
+pgbouncer-k8s    1.21.0   blocked      2  pgbouncer-k8s    1/stable     359  10.152.183.114  no       waiting for backend database relation to initialise
+postgresql-k8s            waiting      3  postgresql-k8s   14/edge      499  10.152.183.178  no       awaiting for primary endpoint to be ready
+
+Unit                Workload  Agent      Address       Ports  Message
+data-integrator/0*  blocked   idle       10.1.205.137         Please relate the data-integrator with the desired product
+data-integrator/1   blocked   idle       10.1.205.138         Please relate the data-integrator with the desired product
+pgbouncer-k8s/0     blocked   idle       10.1.205.142         waiting for backend database relation to initialise
+pgbouncer-k8s/1*    blocked   idle       10.1.205.143         waiting for backend database relation to initialise
+postgresql-k8s/0    unknown   idle       10.1.205.145         
+postgresql-k8s/1    unknown   idle       10.1.205.146         
+postgresql-k8s/2*   waiting   executing  10.1.205.144         awaiting for primary endpoint to be ready
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:935 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1017 Forgetting model main...
