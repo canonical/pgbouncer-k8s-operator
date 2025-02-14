@@ -650,14 +650,14 @@ requests = ["requests (>=2.20.0,<3.0.0.dev0)"]
 
 [[package]]
 name = "googleapis-common-protos"
-version = "1.66.0"
+version = "1.67.0"
 description = "Common protobufs used in Google APIs"
 optional = false
 python-versions = ">=3.7"
 groups = ["charm-libs"]
 files = [
-    {file = "googleapis_common_protos-1.66.0-py2.py3-none-any.whl", hash = "sha256:d7abcd75fabb2e0ec9f74466401f6c119a0b498e27370e9be4c94cb7e382b8ed"},
-    {file = "googleapis_common_protos-1.66.0.tar.gz", hash = "sha256:c3e7b33d15fdca5374cc0a7346dd92ffa847425cc4ea941d970f13680052ec8c"},
+    {file = "googleapis_common_protos-1.67.0-py2.py3-none-any.whl", hash = "sha256:579de760800d13616f51cf8be00c876f00a9f146d3e6510e19d1f4111758b741"},
+    {file = "googleapis_common_protos-1.67.0.tar.gz", hash = "sha256:21398025365f138be356d5923e9168737d94d46a72aefee4a6110a1f23463c86"},
 ]
 
 [package.dependencies]
@@ -1799,14 +1799,14 @@ testing = ["coverage (>=6.2)", "flaky (>=3.5.0)", "hypothesis (>=5.7.1)", "mypy 
 
 [[package]]
 name = "pytest-operator"
-version = "0.39.0"
+version = "0.40.0"
 description = "Fixtures for Operators"
 optional = false
 python-versions = "*"
 groups = ["integration"]
 files = [
-    {file = "pytest_operator-0.39.0-py3-none-any.whl", hash = "sha256:ade76e1896eaf7f71704b537fd6661a705d81a045b8db71531d9e4741913fa19"},
-    {file = "pytest_operator-0.39.0.tar.gz", hash = "sha256:b66bd8c6d161593c258a5714118a51e9f37721e7cd9e503299423d8a7d900f90"},
+    {file = "pytest_operator-0.40.0-py3-none-any.whl", hash = "sha256:1cfa93ab61b11e8d7bf58dbb1a39e75fcbfcc084781bb571fde08fda7e236713"},
+    {file = "pytest_operator-0.40.0.tar.gz", hash = "sha256:45394ade32b7765b6ba89871b676d1fb8aa7578589f74df26ff0fca4692d1c7b"},
 ]
 
 [package.dependencies]
@@ -2531,4 +2531,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "0f3abade4289cc2b56c19d5cc7e9100aaf38126751e9ecc96e8d702f1cc58922"
+content-hash = "a8768b993b6231a0bb515f7bd4749c739747558d8cc7845c074b1c6bf031dcb5"
