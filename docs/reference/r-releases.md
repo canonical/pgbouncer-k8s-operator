@@ -1,8 +1,8 @@
-# Release Notes
+# Releases
 
 This page provides high-level overviews of the dependencies and features that are supported by each revision in every stable release. To learn more about the different release tracks, see the [Juju documentation about risk levels](https://juju.is/docs/juju/channel?#heading--risk).
 
-To see all releases and commits, check the [Charmed PgBouncer K8s Releases page on GitHub](https://github.com/canonical/pgbouncer-k8s-operator/releases).
+To see all releases and commits, check the [Charmed PgBouncer K8s releases on GitHub](https://github.com/canonical/pgbouncer-k8s-operator/releases).
 
 ## Dependencies and supported features
 
@@ -90,22 +90,24 @@ Several [revisions](https://juju.is/docs/sdk/revision) are released simultaneous
 
 <br>
 
-[note]
- Our release notes are an ongoing work in progress. If there is any additional information about releases that you would like to see or suggestions for other improvements, don't hesitate to contact us on [Matrix ](https://matrix.to/#/#charmhub-data-platform:ubuntu.com) or [leave a comment](https://discourse.charmhub.io/t/pgbouncer-k8s-reference-release-notes/12261).
-[/note]
+>**Note**: Our release notes are an ongoing work in progress. If there is any additional information about releases that you would like to see or suggestions for other improvements, don't hesitate to contact us on [Matrix ](https://matrix.to/#/#charmhub-data-platform:ubuntu.com) or [leave a comment](https://discourse.charmhub.io/t/pgbouncer-k8s-reference-release-notes/12261).
+
 
 <!--LINKS-->
-[360]: /t/16124
-[359]: /t/16124
-[268]: /t/15443
-[269]: /t/15443
-[228]: /t/15090
-[229]: /t/15090
-[144]: /t/14070
-[145]: /t/14070
-[103]: /t/13297
-[81]: /t/12751
-[76]: /t/12262
+[360]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev359
+[359]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev359
 
+[268]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev268
+[269]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev268
+
+[228]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev228
+[229]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev228
+
+[144]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev144
+[145]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev144
+
+[103]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev103
+[81]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev81
+[76]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev76
 <!-- BADGES -->
 [check]: https://img.icons8.com/color/20/checkmark--v1.png
