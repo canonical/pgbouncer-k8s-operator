@@ -6,6 +6,7 @@ import logging
 
 import pytest
 from pytest_operator.plugin import OpsTest
+from tenacity import Retrying, stop_after_delay, wait_fixed
 
 from constants import BACKEND_RELATION_NAME
 
@@ -60,7 +61,7 @@ async def test_deploy_stable(ops_test: OpsTest, charm) -> None:
     pgb_application = ops_test.model.applications[PGB]
     pgb_configs = await pgb_application.get_config()
     if "expose-external" in pgb_configs:
-        pgb_application.set_config({"expose-external": "nodeport"})
+        await pgb_application.set_config({"expose-external": "nodeport"})
 
     logger.info("Wait for applications to become active")
 
@@ -95,7 +96,9 @@ async def test_upgrade_from_stable(ops_test: OpsTest, charm):
     credentials = await fetch_action_get_credentials(
         ops_test.model.applications[DATA_INTEGRATOR_APP_NAME].units[0]
     )
-    check_exposed_connection(credentials, False)
+    for attempt in Retrying(stop=stop_after_delay(30), wait=wait_fixed(3), reraise=True):
+        with attempt:
+            check_exposed_connection(credentials, False)
     global initial_credentials
     initial_credentials = credentials
 
@@ -144,5 +147,4 @@ async def test_upgrade_from_stable(ops_test: OpsTest, charm):
     )
     check_exposed_connection(credentials, False)
 
-    # TODO Enable when we habe persistent service
-    # assert credentials["postgresql"]["endpoints"] == initial_credentials["postgresql"]["endpoints"]
+    assert credentials["postgresql"]["endpoints"] == initial_credentials["postgresql"]["endpoints"]
