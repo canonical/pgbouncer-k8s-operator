@@ -6,6 +6,7 @@ import logging
 
 import pytest
 from pytest_operator.plugin import OpsTest
+from tenacity import Retrying, stop_after_delay, wait_fixed
 
 from constants import BACKEND_RELATION_NAME
 
@@ -95,7 +96,9 @@ async def test_upgrade_from_stable(ops_test: OpsTest, charm):
     credentials = await fetch_action_get_credentials(
         ops_test.model.applications[DATA_INTEGRATOR_APP_NAME].units[0]
     )
-    check_exposed_connection(credentials, False)
+    for attempt in Retrying(stop=stop_after_delay(30), wait=wait_fixed(3), reraise=True):
+        with attempt:
+            check_exposed_connection(credentials, False)
     global initial_credentials
     initial_credentials = credentials
 
