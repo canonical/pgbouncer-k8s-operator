@@ -1,0 +1,119 @@
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: DELETE https://10.1.0.91:16443/api/v1/namespaces/testing/pods/pgbouncer-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-test-app/0 [idle] active: 
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  pgbouncer-k8s/0 [executing] maintenance: stopping charm software
+  pgbouncer-k8s/1 [idle] active: 
+  secondary-application/0 [idle] active: received database credentials of the second database
+  finos-waltz-k8s/0 [idle] active: 
+  pgbouncer-k8s-secondary/0 [idle] active: 
+  data-integrator/0 [idle] active: 
+  redis-broker/0 [idle] active: 
+  redis-cache/0 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [idle] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:936 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.2    unsupported  02:01:44Z
+
+App                      Version               Status  Scale  Charm                Channel        Rev  Address         Exposed  Message
+data-integrator                                active      1  data-integrator      latest/edge    105  10.152.183.221  no       
+finos-waltz-k8s                                active      1  finos-waltz-k8s      latest/edge     33  10.152.183.187  no       
+pgbouncer-k8s            1.21.0                active      2  pgbouncer-k8s                         0  10.152.183.72   no       
+pgbouncer-k8s-secondary  1.21.0                active      1  pgbouncer-k8s                         1  10.152.183.57   no       
+postgresql-k8s           14.15                 active      2  postgresql-k8s       14/edge        509  10.152.183.39   no       
+postgresql-test-app                            active      1  postgresql-test-app  latest/edge    365  10.152.183.79   no       
+redis-broker             ubuntu/redis@691f315  active      1  redis-k8s            latest/stable    7  10.64.140.43    no       
+redis-cache              ubuntu/redis@691f315  active      1  redis-k8s            latest/stable    7  10.64.140.44    no       
+secondary-application                          active      1  postgresql-test-app  latest/edge    365  10.152.183.63   no       received database credentials of the second database
+
+Unit                        Workload  Agent  Address      Ports     Message
+data-integrator/0*          active    idle   10.1.173.85            
+finos-waltz-k8s/0*          active    idle   10.1.173.82            
+pgbouncer-k8s-secondary/0*  active    idle   10.1.173.83            
+pgbouncer-k8s/0*            active    idle   10.1.173.93            
+pgbouncer-k8s/1             active    idle   10.1.173.84            
+postgresql-k8s/0            active    idle   10.1.173.78            
+postgresql-k8s/1*           active    idle   10.1.173.79            Primary
+postgresql-test-app/0*      active    idle   10.1.173.73            
+redis-broker/0*             active    idle   10.1.173.90  6379/TCP  
+redis-cache/0*              active    idle   10.1.173.92  6379/TCP  
+secondary-application/0*    active    idle   10.1.173.81            received database credentials of the second database
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:942 Juju error logs:
+
+unit-postgresql-test-app-0: 01:44:39 ERROR unit.postgresql-test-app/0.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/src/charm.py", line 560, in <module>
+    main(ApplicationCharm)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 343, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 558, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 543, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 502, in _emit
+    self._emit_charm_event(self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 530, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 347, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 906, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 996, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/src/charm.py", line 489, in _on_run_sql_action
+    cursor.execute(query)
+psycopg2.errors.ReadOnlySqlTransaction: cannot execute DROP TABLE in a read-only transaction
+
+unit-pgbouncer-k8s-0: 02:01:00 ERROR unit.pgbouncer-k8s/0.juju-log Cluster upgrade failed, ensure pre-upgrade checks are ran first.
+unit-pgbouncer-k8s-0: 02:01:08 ERROR unit.pgbouncer-k8s/0.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/src/charm.py", line 1138, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 343, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 558, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 543, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 502, in _emit
+    self._emit_charm_event(self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 530, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 347, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 906, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 996, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 1106, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/src/charm.py", line 365, in _on_pgbouncer_pebble_ready
+    container.replan()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 2381, in replan
+    self._pebble.replan_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2144, in replan_services
+    return self._services_action('replan', [], timeout, delay)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2244, in _services_action
+    raise ChangeError(change.err, change)
+ops.pebble.ChangeError: cannot perform the following tasks:
+- Start service "metrics_server" (service start attempt: exited quickly with code 1, will restart)
+----- Logs from task 5 -----
+2025-02-26T02:01:06Z INFO Most recent service output:
+    ts=2025-02-26T02:01:06.987Z caller=collector.go:138 level=error msg="error setting up DB connection" err="error pinging pgbouncer: dial tcp [::1]:6432: connect: connection refused"
+2025-02-26T02:01:06Z ERROR service start attempt: exited quickly with code 1, will restart
+-----
+unit-pgbouncer-k8s-0: 02:01:08 ERROR juju.worker.uniter.operation hook "pgbouncer-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-0: 02:01:08 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: hook failed
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1024 Forgetting model main...
