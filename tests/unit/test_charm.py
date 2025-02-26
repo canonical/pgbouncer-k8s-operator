@@ -249,9 +249,9 @@ class TestCharm(unittest.TestCase):
             self.harness.update_config({
                 "max_db_connections": 0,
             })
-        del expected_databases["first_test_readonly"]
-        del expected_databases["first_test_standby"]
-        del expected_databases["second_test_readonly"]
+        expected_databases["first_test_readonly"]["host"] = "HOST"
+        expected_databases["first_test_standby"]["host"] = "HOST"
+        expected_databases["second_test_readonly"]["host"] = "HOST"
         expected_databases["*"] = {
             "host": "HOST",
             "port": "PORT",

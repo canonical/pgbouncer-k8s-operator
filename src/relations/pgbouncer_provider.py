@@ -253,6 +253,10 @@ class PgBouncerProvider(Object):
                 relation.id,
                 f"postgresql://{user}:{password}@{self.charm.read_write_endpoints}/{database}",
             )
+            self.database_provides.set_read_only_uris(
+                relation.id,
+                f"postgresql://{user}:{password}@{self.charm.read_write_endpoints}/{database}_readonly",
+            )
 
     def get_database(self, relation):
         """Gets database name from relation."""
