@@ -30,31 +30,40 @@ This PgBouncer K8s charm is an official distribution of PgBouncer. It’s an ope
 
 | Level | Path | Navlink |
 |---------|---------|-------------|
-| 1 | tutorial | [Tutorial]() |
-| 2 | t-overview | [1. Introduction](/t/12251) |
-| 2 | t-setup-environment | [2. Set up the environment](/t/12252) |
-| 2 | t-deploy-charm | [3. Deploy PgBouncer](/t/12253) |
-| 2 | t-managing-units | [4. Manage units](/t/12254) |
-| 2 | t-enable-security | [5. Enable security](/t/12255) |
-| 2 | t-cleanup-environment | [6. Clean up environment](/t/12256) |
-| 1 | how-to | [How to]() |
-| 2 | h-setup | [Setup]() |
-| 3 | h-deploy-microk8s | [Deploy on MicroK8s](/t/12257) |
-| 3 | h-manage-units | [Manage units](/t/12258) |
-| 3 | h-enable-encryption | [Enable encryption](/t/12259) |
-| 3 | h-manage-app | [Manage applications](/t/12260) |
-| 3 | h-external-access | [External access](/t/15694) |
-| 2 | h-upgrade | [Upgrade]() |
-| 3 | h-upgrade-intro | [Intro](/t/12267) |
+| 1 | tutorial | [Tutorial](/t/12251) |
+| 2 | t-setup-environment | [1. Set up the environment](/t/12252) |
+| 2 | t-deploy-charm | [2. Deploy PgBouncer](/t/12253) |
+| 2 | t-managing-units | [3. Manage units](/t/12254) |
+| 2 | t-enable-security | [4. Enable TLS](/t/12255) |
+| 2 | t-cleanup-environment | [5. Clean up environment](/t/12256) |
+| 1 | how-to | [How-to guides](/t/16793) |
+| 2 | h-deploy-microk8s | [Deploy](/t/12257) |
+| 2 | h-manage-units | [Manage units](/t/12258) |
+| 2 | h-manage-app | [Manage integrations](/t/12260) |
+| 2 | h-enable-encryption | [Enable TLS](/t/12259) |
+| 2 | h-external-access | [External network access](/t/15694) |
+| 2 | h-monitoring | [Monitoring (COS)]() |
+| 3 | h-enable-monitoring | [Enable monitoring](/t/12279) |
+| 3 | h-enable-tracing | [Enable tracing](/t/14789) |
+| 2 | h-upgrade | [Upgrade](/t/12267) |
+| 3 | h-upgrade-minor | [Perform a minor upgrade](/t/12270) |
+| 3 | h-rollback-minor | [Perform a minor rollback](/t/12271) |
+| 1 | reference | [Reference](/t/16795) |
+| 2 | r-releases | [Releases](/t/12261) |
+| 2 | r-requirements | [System requirements](/t/12263) |
+| 2 | r-testing | [Software testing](/t/12272) |
+| 2 | r-contacts | [Contacts](/t/12264) |
+| 1 | explanation | [Explanation](/t/16797) |
+| 2 | e-juju-details | [Juju](/t/12274) |
+| 2 | e-interfaces | [Interfaces/endpoints](/t/12265) |
+| 2 | e-statuses | [Statuses](/t/12266) |
+| 2 | e-events-hooks | [Events and hooks](/t/15662) |
+[/details]
+
+<!-- Archived
 | 3 | h-upgrade-major | [Major upgrade](/t/12268) |
 | 3 | h-rollback-major | [Major rollback](/t/12269) |
-| 3 | h-upgrade-minor | [Minor upgrade](/t/12270) |
-| 3 | h-rollback-minor | [Minor rollback](/t/12271) |
-| 2 | h-monitoring | [Monitoring]() |
-| 3 | h-enable-monitoring | [Monitor (COS)](/t/12279) |
-| 3 | h-enable-tracing | [Tracing (COS)](/t/14789) |
-| 1 | reference | [Reference]() |
-| 2 | r-releases | [Release Notes](/t/12261) |
+
 | 3 | r-revision-359-360 | [Revision 359/360](/t/16124) |
 | 3 | r-revision-268-269 | [Revision 268/269](/t/15443) |
 | 3 | r-revision-228-229 | [Revision 228/229](/t/15090) |
@@ -62,16 +71,7 @@ This PgBouncer K8s charm is an official distribution of PgBouncer. It’s an ope
 | 3 | r-revision-103 | [Revision 103](/t/13297) |
 | 3 | r-revision-81 | [Revision 81](/t/12751) |
 | 3 | r-revision-76 | [Revision 76](/t/12262) |
-| 2 | r-requirements | [Requirements](/t/12263) |
-| 2 | r-testing | [Testing](/t/12272) |
-| 2 | r-contacts | [Contacts](/t/12264) |
-| 1 | explanation | [Explanation]() |
-| 2 | e-juju-details | [Juju](/t/12274) |
-| 2 | e-interfaces | [Interfaces/endpoints](/t/12265) |
-| 2 | e-statuses | [Statuses](/t/12266) |
-| 2 | e-events-hooks | [Events and hooks](/t/15662) |
-
-[/details]
+-->
 
 # Redirects
 
