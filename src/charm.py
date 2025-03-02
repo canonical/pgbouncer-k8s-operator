@@ -976,6 +976,9 @@ class PgBouncerK8sCharm(TypedCharmBase):
             for r_host in read_only_endpoints:
                 r_port = r_host.split(":")[1]
                 break
+        else:
+            r_hosts = host
+            r_port = port
 
         pgb_dbs = {}
 
@@ -989,15 +992,14 @@ class PgBouncerK8sCharm(TypedCharmBase):
                 "port": port,
                 "auth_user": self.backend.auth_user,
             }
-            if r_hosts:
-                pgb_dbs[f"{name}_readonly"] = {
-                    "host": r_hosts,
-                    "dbname": name,
-                    "port": r_port,
-                    "auth_user": self.backend.auth_user,
-                }
-                if database["legacy"]:
-                    pgb_dbs[f"{name}_standby"] = pgb_dbs[f"{name}_readonly"]
+            pgb_dbs[f"{name}_readonly"] = {
+                "host": r_hosts,
+                "dbname": name,
+                "port": r_port,
+                "auth_user": self.backend.auth_user,
+            }
+            if database["legacy"]:
+                pgb_dbs[f"{name}_standby"] = pgb_dbs[f"{name}_readonly"]
         if "*" in databases:
             pgb_dbs["*"] = {
                 "host": host,
