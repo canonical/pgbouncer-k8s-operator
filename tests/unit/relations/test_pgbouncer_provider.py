@@ -122,10 +122,14 @@ class TestPgbouncerProvider(unittest.TestCase):
 
         # Verify we've called everything we should
         _pg().create_user.assert_called_with(
-            user, _password(), extra_user_roles=event.extra_user_roles
+            user,
+            _password(),
+            extra_user_roles=[role.lower() for role in event.extra_user_roles.split(",")],
         )
         _pg().create_database.assert_called_with(
-            database, user, client_relations=sentinel.client_rels
+            database,
+            user,
+            client_relations=sentinel.client_rels,
         )
         _dbp_set_credentials.assert_called_with(rel_id, user, _password())
         _dbp_set_version.assert_called_with(rel_id, _pg().get_postgresql_version())
