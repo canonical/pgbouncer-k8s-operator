@@ -32,6 +32,7 @@ f"{dbname}_readonly".
 
 import logging
 from hashlib import shake_128
+from typing import List, Optional
 
 from charms.data_platform_libs.v0.data_interfaces import (
     DatabaseProvides,
@@ -39,6 +40,7 @@ from charms.data_platform_libs.v0.data_interfaces import (
 )
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import (
+    PERMISSIONS_GROUP_ADMIN,
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
     PostgreSQLDeleteUserError,
@@ -87,6 +89,14 @@ class PgBouncerProvider(Object):
             charm.on[self.relation_name].relation_broken, self._on_relation_broken
         )
 
+    @staticmethod
+    def sanitize_extra_roles(extra_roles: Optional[str]) -> List[str]:
+        """Standardize and sanitize user extra-roles."""
+        if extra_roles is None:
+            return []
+
+        return [role.lower() for role in extra_roles.split(",")]
+
     def _depart_flag(self, relation):
         return f"{self.relation_name}_{relation.id}_departing"
 
@@ -110,14 +120,20 @@ class PgBouncerProvider(Object):
 
         # Retrieve the database name and extra user roles using the charm library.
         database = event.database
-        extra_user_roles = event.extra_user_roles or ""
         rel_id = event.relation.id
 
+        # Make sure that certain groups are not in the list
+        extra_user_roles = self.sanitize_extra_roles(event.extra_user_roles)
+
         dbs = self.charm.generate_relation_databases()
-        dbs[str(event.relation.id)] = {"name": database, "legacy": False}
-        roles = extra_user_roles.lower().split(",")
-        if "admin" in roles or "superuser" in roles or "createdb" in roles:
+        dbs[str(rel_id)] = {"name": database, "legacy": False}
+        if (
+            PERMISSIONS_GROUP_ADMIN in extra_user_roles
+            or "superuser" in extra_user_roles
+            or "createdb" in extra_user_roles
+        ):
             dbs["*"] = {"name": "*", "auth_dbname": database, "legacy": False}
+
         self.charm.set_relation_databases(dbs)
 
         pgb_dbs_hash = shake_128(

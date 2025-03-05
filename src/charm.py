@@ -20,6 +20,7 @@ from charms.data_platform_libs.v0.data_interfaces import DataPeerData, DataPeerU
 from charms.data_platform_libs.v0.data_models import TypedCharmBase
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
+from charms.postgresql_k8s.v0.postgresql import PERMISSIONS_GROUP_ADMIN
 from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
 from charms.tempo_coordinator_k8s.v0.charm_tracing import trace_charm
@@ -944,16 +945,23 @@ class PgBouncerK8sCharm(TypedCharmBase):
             fields=["database", "extra-user-roles"]
         ).items():
             database = data.get("database")
-            roles = data.get("extra-user-roles", "").lower().split(",")
+            extra_user_roles = data.get("extra-user-roles")
+            extra_user_roles = self.client_relation.sanitize_extra_roles(extra_user_roles)
             if database:
                 databases[str(rel_id)] = {
                     "name": database,
                     "legacy": False,
                 }
-            if "admin" in roles or "superuser" in roles or "createdb" in roles:
+            if (
+                PERMISSIONS_GROUP_ADMIN in extra_user_roles
+                or "superuser" in extra_user_roles
+                or "createdb" in extra_user_roles
+            ):
                 add_wildcard = True
+
         if add_wildcard:
             databases["*"] = {"name": "*", "auth_dbname": database, "legacy": False}
+
         self.set_relation_databases(databases)
         return databases
 
