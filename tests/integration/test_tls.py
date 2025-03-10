@@ -90,7 +90,9 @@ async def test_build_and_deploy(ops_test: OpsTest, charm):
 
     if wait_for_apps:
         async with ops_test.fast_forward():
-            await ops_test.model.wait_for_idle(status="active", timeout=1200, raise_on_error=False)
+            await ops_test.model.wait_for_idle(
+                status="active", timeout=1200, raise_on_error=False, idle_period=30
+            )
     tls_flag, tls_ca = await get_tls_flags(
         ops_test,
         CLIENT_APP_NAME,
