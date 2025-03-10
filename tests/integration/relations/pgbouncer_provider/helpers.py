@@ -142,8 +142,10 @@ async def get_tls_flags(
     else:
         return (
             await get_application_relation_data(ops_test, application_name, relation_name, "ca"),
+            await get_application_relation_data(
+                ops_test, application_name, relation_name, "tls-ca"
+            ),
         )
-        await get_application_relation_data(ops_test, application_name, relation_name, "tls-ca")
 
 
 async def build_connection_string(
