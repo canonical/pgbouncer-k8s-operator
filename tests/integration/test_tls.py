@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
-from asyncio import gather
 
 import pytest as pytest
 from pytest_operator.plugin import OpsTest
@@ -19,7 +18,7 @@ from .helpers.helpers import (
     scale_application,
 )
 from .juju_ import juju_major_version
-from .relations.pgbouncer_provider.helpers import get_application_relation_data
+from .relations.pgbouncer_provider.helpers import get_tls_flags
 
 FIRST_DATABASE_RELATION_NAME = "database"
 MATTERMOST_APP_NAME = "mattermost-k8s"
@@ -92,19 +91,10 @@ async def test_build_and_deploy(ops_test: OpsTest, charm):
     if wait_for_apps:
         async with ops_test.fast_forward():
             await ops_test.model.wait_for_idle(status="active", timeout=1200, raise_on_error=False)
-    tls_flag, tls_ca = await gather(
-        get_application_relation_data(
-            ops_test,
-            CLIENT_APP_NAME,
-            FIRST_DATABASE_RELATION_NAME,
-            "tls",
-        ),
-        get_application_relation_data(
-            ops_test,
-            CLIENT_APP_NAME,
-            FIRST_DATABASE_RELATION_NAME,
-            "tls-ca",
-        ),
+    tls_flag, tls_ca = await get_tls_flags(
+        ops_test,
+        CLIENT_APP_NAME,
+        FIRST_DATABASE_RELATION_NAME,
     )
     assert tls_flag == "True"
     assert tls_ca
@@ -151,19 +141,10 @@ async def test_remove_tls(ops_test: OpsTest) -> None:
     )
     await ops_test.model.wait_for_idle(status="active", timeout=1000)
     assert await check_tls(ops_test, False)
-    tls_flag, tls_ca = await gather(
-        get_application_relation_data(
-            ops_test,
-            CLIENT_APP_NAME,
-            FIRST_DATABASE_RELATION_NAME,
-            "tls",
-        ),
-        get_application_relation_data(
-            ops_test,
-            CLIENT_APP_NAME,
-            FIRST_DATABASE_RELATION_NAME,
-            "tls-ca",
-        ),
+    tls_flag, tls_ca = await get_tls_flags(
+        ops_test,
+        CLIENT_APP_NAME,
+        FIRST_DATABASE_RELATION_NAME,
     )
     assert tls_flag == "False"
     assert not tls_ca
@@ -178,19 +159,10 @@ async def test_add_tls(ops_test: OpsTest) -> None:
     await ops_test.model.relate(PGB, tls_certificates_app_name)
     await ops_test.model.wait_for_idle(status="active", timeout=1000)
     assert await check_tls(ops_test, True)
-    tls_flag, tls_ca = await gather(
-        get_application_relation_data(
-            ops_test,
-            CLIENT_APP_NAME,
-            FIRST_DATABASE_RELATION_NAME,
-            "tls",
-        ),
-        get_application_relation_data(
-            ops_test,
-            CLIENT_APP_NAME,
-            FIRST_DATABASE_RELATION_NAME,
-            "tls-ca",
-        ),
+    tls_flag, tls_ca = await get_tls_flags(
+        ops_test,
+        CLIENT_APP_NAME,
+        FIRST_DATABASE_RELATION_NAME,
     )
     assert tls_flag == "True"
     assert tls_ca

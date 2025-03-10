@@ -126,6 +126,26 @@ async def run_sql_on_application_charm(
     return result.results
 
 
+async def get_tls_flags(
+    ops_test: OpsTest,
+    application_name: str,
+    relation_name: str,
+) -> tuple[str, str]:
+    if secret_uri := await get_application_relation_data(
+        ops_test,
+        application_name,
+        relation_name,
+        "secret-tls",
+    ):
+        secret_data = await get_juju_secret(ops_test, secret_uri)
+        return secret_data["tls"], secret_data["tls-ca"]
+    else:
+        return (
+            await get_application_relation_data(ops_test, application_name, relation_name, "ca"),
+        )
+        await get_application_relation_data(ops_test, application_name, relation_name, "tls-ca")
+
+
 async def build_connection_string(
     ops_test: OpsTest,
     application_name: str,
