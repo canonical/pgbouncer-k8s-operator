@@ -507,7 +507,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
         """
         self.update_status()
 
-        self.peers.update_leader()
         self._collect_readonly_dbs()
 
         # Update relation connection information. This is necessary because we don't receive any

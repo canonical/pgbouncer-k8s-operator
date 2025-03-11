@@ -143,11 +143,9 @@ class BackendDatabaseRequires(Object):
     @property
     def auth_user(self) -> str | None:
         """Username for auth_user."""
-        if not self.relation:
-            return None
-
-        username = self.database.fetch_relation_field(self.relation.id, "username")
-        if username is None:
+        if not self.relation or not (
+            username := self.database.fetch_relation_field(self.relation.id, "username")
+        ):
             return None
         return f"pgbouncer_auth_{username}".replace("-", "_")
 
@@ -167,7 +165,7 @@ class BackendDatabaseRequires(Object):
         return f"SELECT username, password FROM {self.auth_user}.get_auth($1)"  # noqa: S608
 
     @property
-    def postgres_databag(self) -> dict:
+    def postgres_databag(self) -> dict | None:
         """Wrapper around accessing the remote application databag for the backend relation.
 
         Returns None if relation is none.
