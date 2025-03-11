@@ -249,6 +249,13 @@ class PgBouncerProvider(Object):
         """Set the endpoints for the relation."""
         relations = [relation] if relation else self.model.relations[self.relation_name]
 
+        key, ca, cert = self.charm.tls.get_tls_files()
+        if all((key, ca, cert)):
+            tls_flag = "True"
+            tls_ca = ca
+        else:
+            tls_flag = "False"
+            tls_ca = ""
         # Set the endpoints for each relation.
         for relation in relations:
             if not relation or not relation.data or not relation.data.get(relation.app):
@@ -261,6 +268,8 @@ class PgBouncerProvider(Object):
             if not database or not password:
                 return
 
+            self.database_provides.set_tls(relation.id, tls_flag)
+            self.database_provides.set_tls_ca(relation.id, tls_ca)
             self.database_provides.set_endpoints(relation.id, self.charm.read_write_endpoints)
             self.database_provides.set_read_only_endpoints(
                 relation.id, self.charm.read_only_endpoints
