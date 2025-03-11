@@ -32,7 +32,6 @@ f"{dbname}_readonly".
 
 import logging
 from hashlib import shake_128
-from typing import List, Optional
 
 from charms.data_platform_libs.v0.data_interfaces import (
     DatabaseProvides,
@@ -90,7 +89,7 @@ class PgBouncerProvider(Object):
         )
 
     @staticmethod
-    def sanitize_extra_roles(extra_roles: Optional[str]) -> List[str]:
+    def sanitize_extra_roles(extra_roles: str | None) -> list[str]:
         """Standardize and sanitize user extra-roles."""
         if extra_roles is None:
             return []

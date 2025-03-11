@@ -38,7 +38,6 @@ Example:
 """
 
 import logging
-from typing import Dict, List, Optional, Set
 
 import psycopg2
 from charms.data_platform_libs.v0.data_interfaces import (
@@ -113,24 +112,17 @@ class BackendDatabaseRequires(Object):
         )
 
     @property
-    def relation(self) -> Relation:
+    def relation(self) -> Relation | None:
         """Relation object for postgres backend-database relation."""
-        backend_relation = self.model.get_relation(BACKEND_RELATION_NAME)
-        if not backend_relation:
-            return None
-        else:
-            return backend_relation
+        return self.model.get_relation(BACKEND_RELATION_NAME)
 
     @property
-    def postgres(self) -> PostgreSQL:
+    def postgres(self) -> PostgreSQL | None:
         """Returns PostgreSQL representation of backend database, as defined in relation.
 
         Returns None if backend relation is not fully initialised.
         """
-        if not self.relation:
-            return None
-
-        if not (databag := self.postgres_databag):
+        if not self.relation or not (databag := self.postgres_databag):
             return None
         endpoint = databag.get("endpoints")
         user = self.database.fetch_relation_field(self.relation.id, "username")
@@ -149,7 +141,7 @@ class BackendDatabaseRequires(Object):
         )
 
     @property
-    def auth_user(self) -> Optional[str]:
+    def auth_user(self) -> str | None:
         """Username for auth_user."""
         if not self.relation:
             return None
@@ -175,7 +167,7 @@ class BackendDatabaseRequires(Object):
         return f"SELECT username, password FROM {self.auth_user}.get_auth($1)"  # noqa: S608
 
     @property
-    def postgres_databag(self) -> Dict:
+    def postgres_databag(self) -> dict:
         """Wrapper around accessing the remote application databag for the backend relation.
 
         Returns None if relation is none.
@@ -217,7 +209,7 @@ class BackendDatabaseRequires(Object):
 
         return True
 
-    def collect_databases(self) -> List[str]:
+    def collect_databases(self) -> list[str]:
         """Collects the names of all client dbs to inject or remove the auth_query."""
         databases = [self.database.database, PG]
         for relation in self.charm.model.relations.get("db", []):
@@ -410,7 +402,7 @@ class BackendDatabaseRequires(Object):
             "waiting for backend database relation to initialise"
         )
 
-    def initialise_auth_function(self, dbs: List[str]):
+    def initialise_auth_function(self, dbs: list[str]):
         """Runs an SQL script to initialise the auth function.
 
         This function must run in every database for authentication to work correctly, and assumes
@@ -432,7 +424,7 @@ class BackendDatabaseRequires(Object):
             conn.close()
         logger.info("auth function initialised")
 
-    def remove_auth_function(self, dbs: List[str]):
+    def remove_auth_function(self, dbs: list[str]):
         """Runs an SQL script to remove auth function.
 
         pgbouncer-uninstall doesn't actually uninstall anything - it actually removes permissions
@@ -453,7 +445,7 @@ class BackendDatabaseRequires(Object):
             conn.close()
         logger.info("auth function removed")
 
-    def get_read_only_endpoints(self) -> Set[str]:
+    def get_read_only_endpoints(self) -> set[str]:
         """Get read-only-endpoints from backend relation."""
         read_only_endpoints = self.postgres_databag.get("read-only-endpoints", None)
         if not read_only_endpoints:
