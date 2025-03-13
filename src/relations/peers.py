@@ -31,16 +31,14 @@ Example:
 
 import logging
 from hashlib import shake_128
-from typing import Optional, Set
 
 from ops.charm import CharmBase, HookEvent, RelationCreatedEvent
 from ops.framework import Object
-from ops.model import MaintenanceStatus, Relation, Unit
+from ops.model import Relation, Unit
 
 from constants import APP_SCOPE, PEER_RELATION_NAME, UNIT_SCOPE, Scopes
 
 ADDRESS_KEY = "private-address"
-LEADER_ADDRESS_KEY = "leader_hostname"
 
 
 logger = logging.getLogger(__name__)
@@ -95,32 +93,7 @@ class Peers(Object):
             return None
         return self.relation.data[self.charm.unit]
 
-    @property
-    def units_hostnames(self) -> Set[str]:
-        """Fetch current set of peers hostnames.
-
-        Returns:
-            A set of peers addresses (strings).
-        """
-        units_hostnames = {self._get_unit_hostname(unit) for unit in self.relation.units}
-        units_hostnames.discard(None)
-        units_hostnames.discard(self.leader_hostname)
-        units_hostnames.add(self.charm.unit_pod_hostname)
-        return units_hostnames
-
-    @property
-    def leader_hostname(self) -> str:
-        """Gets the hostname of the leader unit."""
-        return self.app_databag.get(LEADER_ADDRESS_KEY, None)
-
-    @property
-    def leader_unit(self) -> Unit:
-        """Gets the leader unit."""
-        for unit in self.relation.units:
-            if self._get_unit_hostname(unit) == self.leader_hostname:
-                return unit
-
-    def _get_unit_hostname(self, unit: Unit) -> Optional[str]:
+    def _get_unit_hostname(self, unit: Unit) -> str | None:
         """Get the hostname of a specific unit."""
         # Check if host is current host.
         if unit == self.charm.unit:
@@ -153,8 +126,6 @@ class Peers(Object):
         """
         self.unit_databag.update({ADDRESS_KEY: self.charm.unit_pod_hostname})
 
-        self.update_leader()
-
         if not self.charm.is_container_ready:
             logger.debug("_on_peer_changed defer: container unavailable")
             event.defer()
@@ -171,20 +142,9 @@ class Peers(Object):
             self.charm.client_relation.update_endpoints()
 
     def _on_departed(self, event):
-        self.update_leader()
         self.charm.update_client_connection_info()
-        if event.departing_unit == self.leader_unit:
-            self.charm.unit.status = MaintenanceStatus(
-                "Leader unit removed - waiting for leader_elected event"
-            )
         if self.charm.unit.is_leader():
             self.charm.client_relation.update_endpoints()
 
     def _on_leader_elected(self, _):
-        self.update_leader()
         self.charm.update_client_connection_info()
-
-    def update_leader(self):
-        """Updates leader hostname in peer databag to match this unit if it's the leader."""
-        if self.charm.unit.is_leader():
-            self.app_databag[LEADER_ADDRESS_KEY] = self.charm.unit_pod_hostname

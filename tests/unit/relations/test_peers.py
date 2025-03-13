@@ -8,7 +8,6 @@ from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
 from constants import BACKEND_RELATION_NAME, PEER_RELATION_NAME
-from relations.peers import LEADER_ADDRESS_KEY
 
 
 class TestPeers(unittest.TestCase):
@@ -51,15 +50,3 @@ class TestPeers(unittest.TestCase):
         event.defer.assert_called_once_with()
         assert not render_pgb_config.called
         assert not toggle_monitoring_layer.called
-
-    @patch(
-        "charm.PgBouncerK8sCharm.unit_pod_hostname",
-        new_callable=PropertyMock,
-        return_value="test_pod_name",
-    )
-    def test_update_leader(self, unit_pod_hostname):
-        self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
-        # Will run the hook
-        self.harness.set_leader(True)
-
-        assert self.charm.peers.app_databag[LEADER_ADDRESS_KEY] == "test_pod_name"
