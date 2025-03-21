@@ -32,7 +32,6 @@ f"{dbname}_readonly".
 
 import logging
 from hashlib import shake_128
-from typing import List, Optional
 
 from charms.data_platform_libs.v0.data_interfaces import (
     DatabaseProvides,
@@ -90,7 +89,7 @@ class PgBouncerProvider(Object):
         )
 
     @staticmethod
-    def sanitize_extra_roles(extra_roles: Optional[str]) -> List[str]:
+    def sanitize_extra_roles(extra_roles: str | None) -> list[str]:
         """Standardize and sanitize user extra-roles."""
         if extra_roles is None:
             return []
@@ -114,7 +113,7 @@ class PgBouncerProvider(Object):
         if not self.charm.unit.is_leader():
             return
 
-        if not self.charm.backend.check_backend():
+        if not self.charm.backend.check_backend() or not self.charm.read_write_endpoints:
             event.defer()
             return
 
@@ -197,7 +196,7 @@ class PgBouncerProvider(Object):
 
         # This only ever evaluates to true when the relation is being removed - on app scale-down,
         # depart events are only sent to the other application in the relation.
-        if event.departing_unit == self.charm.unit:
+        if event.departing_unit == self.charm.unit and self.charm.peers.unit_databag:
             self.charm.peers.unit_databag.update({self._depart_flag(event.relation): "true"})
 
     def _on_relation_broken(self, event: RelationBrokenEvent) -> None:
@@ -278,6 +277,16 @@ class PgBouncerProvider(Object):
                 relation.id,
                 f"postgresql://{user}:{password}@{self.charm.read_write_endpoints}/{database}",
             )
+            # Make sure that the URI will be a secret
+            if (
+                secret_fields := self.database_provides.fetch_relation_field(
+                    relation.id, "requested-secrets"
+                )
+            ) and "read-only-uris" in secret_fields:
+                self.database_provides.set_read_only_uris(
+                    relation.id,
+                    f"postgresql://{user}:{password}@{self.charm.read_write_endpoints}/{database}_readonly",
+                )
 
     def get_database(self, relation):
         """Gets database name from relation."""

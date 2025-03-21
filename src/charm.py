@@ -507,7 +507,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
         """
         self.update_status()
 
-        self.peers.update_leader()
         self._collect_readonly_dbs()
 
         # Update relation connection information. This is necessary because we don't receive any
@@ -546,7 +545,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             hosts.add(self._get_node_address(node))
         return hosts
 
-    def get_hosts_ports(self, port_type: str) -> str:  # noqa: C901
+    def get_hosts_ports(self, port_type: str) -> str:
         """Gets the host and port for the endpoint depending of type of service."""
         if port_type not in ["rw", "ro"]:
             raise ValueError("Invalid port type")
@@ -567,17 +566,15 @@ class PgBouncerK8sCharm(TypedCharmBase):
                     node_port = p.nodePort
 
             return ",".join(sorted({f"{host}:{node_port}" for host in hosts}))
-        elif service.spec.type == "LoadBalancer" and service.status.loadBalancer.ingress:
-            if len(service.status.loadBalancer.ingress) != 0:
-                ip = service.status.loadBalancer.ingress[0].ip
-                hostname = service.status.loadBalancer.ingress[0].hostname
-
-            if ip:
+        elif (
+            service.spec.type == "LoadBalancer"
+            and service.status.loadBalancer.ingress
+            and len(service.status.loadBalancer.ingress) != 0
+        ):
+            if ip := service.status.loadBalancer.ingress[0].ip:
                 return f"{ip}:{port}"
-
-            if hostname:
+            if hostname := service.status.loadBalancer.ingress[0].hostname:
                 return f"{hostname}:{port}"
-
         return ""
 
     @property
@@ -984,6 +981,9 @@ class PgBouncerK8sCharm(TypedCharmBase):
             for r_host in read_only_endpoints:
                 r_port = r_host.split(":")[1]
                 break
+        else:
+            r_hosts = host
+            r_port = port
 
         pgb_dbs = {}
 
@@ -997,15 +997,14 @@ class PgBouncerK8sCharm(TypedCharmBase):
                 "port": port,
                 "auth_user": self.backend.auth_user,
             }
-            if r_hosts:
-                pgb_dbs[f"{name}_readonly"] = {
-                    "host": r_hosts,
-                    "dbname": name,
-                    "port": r_port,
-                    "auth_user": self.backend.auth_user,
-                }
-                if database["legacy"]:
-                    pgb_dbs[f"{name}_standby"] = pgb_dbs[f"{name}_readonly"]
+            pgb_dbs[f"{name}_readonly"] = {
+                "host": r_hosts,
+                "dbname": name,
+                "port": r_port,
+                "auth_user": self.backend.auth_user,
+            }
+            if database["legacy"]:
+                pgb_dbs[f"{name}_standby"] = pgb_dbs[f"{name}_readonly"]
         if "*" in databases:
             pgb_dbs["*"] = {
                 "host": host,

@@ -5,7 +5,7 @@
 import pytest as pytest
 from pytest_operator.plugin import OpsTest
 
-from . import architecture, markers
+from . import markers
 from .helpers.helpers import (
     CHARM_SERIES,
     CLIENT_APP_NAME,
@@ -24,11 +24,11 @@ FIRST_DATABASE_RELATION_NAME = "database"
 MATTERMOST_APP_NAME = "mattermost-k8s"
 if juju_major_version < 3:
     tls_certificates_app_name = "tls-certificates-operator"
-    tls_channel = "legacy/edge" if architecture.architecture == "arm64" else "legacy/stable"
+    tls_channel = "legacy/stable"
     tls_config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
 else:
     tls_certificates_app_name = "self-signed-certificates"
-    tls_channel = "latest/edge" if architecture.architecture == "arm64" else "latest/stable"
+    tls_channel = "latest/stable"
     tls_config = {"ca-common-name": "Test CA"}
 APPLICATION_UNITS = 2
 DATABASE_UNITS = 3
@@ -86,7 +86,9 @@ async def test_build_and_deploy(ops_test: OpsTest, charm):
         )
         # Relate it to the PgBouncer to enable TLS.
         await ops_test.model.relate(PGB, tls_certificates_app_name)
-        await ops_test.model.relate(tls_certificates_app_name, POSTGRESQL_APP_NAME)
+        await ops_test.model.relate(
+            tls_certificates_app_name, f"{POSTGRESQL_APP_NAME}:certificates"
+        )
 
     if wait_for_apps:
         async with ops_test.fast_forward():
