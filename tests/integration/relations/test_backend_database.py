@@ -8,7 +8,7 @@ import pytest
 from pytest_operator.plugin import OpsTest
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
-from .. import architecture, markers
+from .. import markers
 from ..helpers.helpers import (
     CHARM_SERIES,
     PGB,
@@ -33,11 +33,11 @@ logger = logging.getLogger(__name__)
 
 if juju_major_version < 3:
     tls_certificates_app_name = "tls-certificates-operator"
-    tls_channel = "legacy/edge" if architecture.architecture == "arm64" else "legacy/stable"
+    tls_channel = "legacy/stable"
     tls_config = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
 else:
     tls_certificates_app_name = "self-signed-certificates"
-    tls_channel = "latest/edge" if architecture.architecture == "arm64" else "latest/stable"
+    tls_channel = "latest/stable"
     tls_config = {"ca-common-name": "Test CA"}
 FINOS_WALTZ = "finos-waltz"
 PG = "postgresql-k8s"

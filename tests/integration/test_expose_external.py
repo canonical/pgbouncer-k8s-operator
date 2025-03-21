@@ -11,7 +11,6 @@ import pytest
 import tenacity
 from pytest_operator.plugin import OpsTest
 
-from .architecture import architecture
 from .helpers.helpers import CHARM_SERIES, PG, PGB, PGB_METADATA, get_data_integrator_credentials
 from .juju_ import juju_major_version
 
@@ -25,11 +24,11 @@ TEST_DATABASE_NAME = "testdatabase"
 TLS_SETUP_SLEEP_TIME = 30
 if juju_major_version >= 3:
     TLS_APP_NAME = "self-signed-certificates"
-    TLS_CHANNEL = "latest/edge" if architecture == "arm64" else "latest/stable"
+    TLS_CHANNEL = "latest/stable"
     TLS_CONFIG = {"ca-common-name": "Test CA"}
 else:
     TLS_APP_NAME = "tls-certificates-operator"
-    TLS_CHANNEL = "legacy/edge" if architecture == "arm64" else "legacy/stable"
+    TLS_CHANNEL = "legacy/stable"
     TLS_CONFIG = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
 
 
