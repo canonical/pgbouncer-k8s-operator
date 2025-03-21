@@ -86,7 +86,9 @@ async def test_build_and_deploy(ops_test: OpsTest, charm):
         )
         # Relate it to the PgBouncer to enable TLS.
         await ops_test.model.relate(PGB, tls_certificates_app_name)
-        await ops_test.model.relate(tls_certificates_app_name, POSTGRESQL_APP_NAME)
+        await ops_test.model.relate(
+            tls_certificates_app_name, f"{POSTGRESQL_APP_NAME}:certificates"
+        )
 
     if wait_for_apps:
         async with ops_test.fast_forward():
