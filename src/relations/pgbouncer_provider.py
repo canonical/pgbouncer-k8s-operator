@@ -113,7 +113,7 @@ class PgBouncerProvider(Object):
         if not self.charm.unit.is_leader():
             return
 
-        if not self.charm.backend.check_backend():
+        if not self.charm.backend.check_backend() or not self.charm.read_write_endpoints:
             event.defer()
             return
 

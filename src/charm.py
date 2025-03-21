@@ -545,7 +545,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             hosts.add(self._get_node_address(node))
         return hosts
 
-    def get_hosts_ports(self, port_type: str) -> str:  # noqa: C901
+    def get_hosts_ports(self, port_type: str) -> str:
         """Gets the host and port for the endpoint depending of type of service."""
         if port_type not in ["rw", "ro"]:
             raise ValueError("Invalid port type")
@@ -566,17 +566,15 @@ class PgBouncerK8sCharm(TypedCharmBase):
                     node_port = p.nodePort
 
             return ",".join(sorted({f"{host}:{node_port}" for host in hosts}))
-        elif service.spec.type == "LoadBalancer" and service.status.loadBalancer.ingress:
-            if len(service.status.loadBalancer.ingress) != 0:
-                ip = service.status.loadBalancer.ingress[0].ip
-                hostname = service.status.loadBalancer.ingress[0].hostname
-
-            if ip:
+        elif (
+            service.spec.type == "LoadBalancer"
+            and service.status.loadBalancer.ingress
+            and len(service.status.loadBalancer.ingress) != 0
+        ):
+            if ip := service.status.loadBalancer.ingress[0].ip:
                 return f"{ip}:{port}"
-
-            if hostname:
+            if hostname := service.status.loadBalancer.ingress[0].hostname:
                 return f"{hostname}:{port}"
-
         return ""
 
     @property
