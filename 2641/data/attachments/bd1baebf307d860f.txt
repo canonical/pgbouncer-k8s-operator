@@ -1,0 +1,92 @@
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:108 Refresh the charm
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:111 Wait for upgrade to start
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:118 Wait for upgrade to complete on first upgrading unit
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] waiting: other units upgrading first...
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] waiting: other units upgrading first...
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:126 Resume upgrade
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:131 Wait for upgrade to complete
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] maintenance: stopping charm software
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:937 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.4    unsupported  01:47:34Z
+
+App              Version  Status  Scale  Charm            Channel      Rev  Address         Exposed  Message
+data-integrator           active      2  data-integrator  latest/edge  113  10.152.183.220  no       
+pgbouncer-k8s    1.21.0   active      2  pgbouncer-k8s                   0  10.152.183.77   no       
+postgresql-k8s   14.17    active      3  postgresql-k8s   14/edge      533  10.152.183.29   no       
+
+Unit                Workload  Agent  Address    Ports  Message
+data-integrator/0*  active    idle   10.1.4.9          
+data-integrator/1   active    idle   10.1.4.10         
+pgbouncer-k8s/0*    active    idle   10.1.4.20         
+pgbouncer-k8s/1     active    idle   10.1.4.19         
+postgresql-k8s/0    active    idle   10.1.4.18         
+postgresql-k8s/1    active    idle   10.1.4.16         
+postgresql-k8s/2*   active    idle   10.1.4.17         Primary
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:943 Juju error logs:
+
+unit-pgbouncer-k8s-1: 01:44:48 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:44:50 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:44:51 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:44:52 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:44:54 ERROR unit.pgbouncer-k8s/1.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/charm.py", line 1145, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 343, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 558, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 543, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 502, in _emit
+    self._emit_charm_event(self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 530, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 347, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 906, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 996, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 1109, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/charm.py", line 366, in _on_pgbouncer_pebble_ready
+    container.replan()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/model.py", line 2387, in replan
+    self._pebble.replan_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2177, in replan_services
+    return self._services_action('replan', [], timeout, delay)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2277, in _services_action
+    raise ChangeError(change.err, change)
+ops.pebble.ChangeError: cannot perform the following tasks:
+- Start service "metrics_server" (service start attempt: exited quickly with code 1, will restart)
+----- Logs from task 5 -----
+2025-03-24T01:44:53Z INFO Most recent service output:
+    ts=2025-03-24T01:44:53.191Z caller=collector.go:138 level=error msg="error setting up DB connection" err="error pinging pgbouncer: dial tcp [::1]:6432: connect: connection refused"
+2025-03-24T01:44:53Z ERROR service start attempt: exited quickly with code 1, will restart
+-----
+unit-pgbouncer-k8s-1: 01:44:54 ERROR juju.worker.uniter.operation hook "pgbouncer-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-1: 01:44:54 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: hook failed
+unit-pgbouncer-k8s-0: 01:45:50 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1025 Forgetting model main...
