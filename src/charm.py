@@ -15,6 +15,7 @@ from signal import SIGHUP
 from typing import Dict, List, Optional, Union, get_args
 
 import lightkube
+import ops
 import psycopg2
 from charms.data_platform_libs.v0.data_interfaces import DataPeerData, DataPeerUnitData
 from charms.data_platform_libs.v0.data_models import TypedCharmBase
@@ -23,8 +24,6 @@ from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
 from charms.postgresql_k8s.v0.postgresql import PERMISSIONS_GROUP_ADMIN
 from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
-from charms.tempo_coordinator_k8s.v0.charm_tracing import trace_charm
-from charms.tempo_coordinator_k8s.v0.tracing import TracingEndpointRequirer
 from jinja2 import Template
 from ops import (
     ActiveStatus,
@@ -64,7 +63,6 @@ from constants import (
     TLS_CA_FILE,
     TLS_CERT_FILE,
     TLS_KEY_FILE,
-    TRACING_PROTOCOL,
     TRACING_RELATION_NAME,
     UNIT_SCOPE,
     WAITING_FOR_K8S_SERVICE_MESSAGE,
@@ -102,19 +100,6 @@ def get_node(unit_name: str, model_name: str) -> lightkube.resources.core_v1.Nod
     )
 
 
-@trace_charm(
-    tracing_endpoint="tracing_endpoint",
-    extra_types=(
-        BackendDatabaseRequires,
-        DbProvides,
-        GrafanaDashboardProvider,
-        LogProxyConsumer,
-        MetricsEndpointProvider,
-        Peers,
-        PgBouncerProvider,
-        PgbouncerUpgrade,
-    ),
-)
 class PgBouncerK8sCharm(TypedCharmBase):
     """A class implementing charmed PgBouncer."""
 
@@ -124,6 +109,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         super().__init__(*args)
 
         self._namespace = self.model.name
+        self.tracing = ops.tracing.Tracing(self, TRACING_RELATION_NAME)
         self.peer_relation_app = DataPeerData(
             self.model,
             relation_name=PEER_RELATION_NAME,
@@ -199,20 +185,11 @@ class PgBouncerK8sCharm(TypedCharmBase):
             relation_name="upgrade",
             substrate="k8s",
         )
-        self.tracing = TracingEndpointRequirer(
-            self, relation_name=TRACING_RELATION_NAME, protocols=[TRACING_PROTOCOL]
-        )
 
         self.lightkube_client = lightkube.Client()
         self.INSUFFICIENT_PERMISSIONS_MESSAGE = (
             f"Insufficient permissions, try: `juju trust {self.app.name} --scope=cluster`"
         )
-
-    @property
-    def tracing_endpoint(self) -> Optional[str]:
-        """Otlp http endpoint for charm instrumentation."""
-        if self.tracing.is_ready():
-            return self.tracing.get_endpoint(TRACING_PROTOCOL)
 
     def get_service(self) -> Optional[lightkube.resources.core_v1.Service]:
         """Get the managed k8s service."""
