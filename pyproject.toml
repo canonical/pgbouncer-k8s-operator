@@ -26,8 +26,6 @@ poetry-core = "*"
 pydantic = "^1.10"
 # loki_k8s/v0/loki_push_api.py and prometheus_k8s/v0/prometheus_scrape.py
 cosl = "*"
-# tempo_coordinator_k8s/v0/charm_tracing.py
-opentelemetry-exporter-otlp-proto-http = "1.21.0"
 # tls_certificates_interface/v2/tls_certificates.py
 cryptography = "*"
 jsonschema = "*"
