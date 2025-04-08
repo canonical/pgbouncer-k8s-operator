@@ -39,6 +39,7 @@ from charms.data_platform_libs.v0.data_interfaces import (
 )
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import (
+    ACCESS_GROUP_RELATION,
     PERMISSIONS_GROUP_ADMIN,
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
@@ -123,6 +124,7 @@ class PgBouncerProvider(Object):
 
         # Make sure that certain groups are not in the list
         extra_user_roles = self.sanitize_extra_roles(event.extra_user_roles)
+        extra_user_roles.append(ACCESS_GROUP_RELATION)
 
         dbs = self.charm.generate_relation_databases()
         dbs[str(rel_id)] = {"name": database, "legacy": False}

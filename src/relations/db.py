@@ -61,6 +61,7 @@ from typing import Dict, Iterable, List
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import (
+    ACCESS_GROUP_RELATION,
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
 )
@@ -273,7 +274,7 @@ class DbProvides(Object):
             self.charm.unit.status = MaintenanceStatus(init_msg)
             logger.info(init_msg)
 
-            self.charm.backend.postgres.create_user(user, password, admin=self.admin)
+            self.charm.backend.postgres.create_user(user, password, admin=self.admin, extra_user_roles=[ACCESS_GROUP_RELATION])
             self.charm.backend.postgres.create_database(
                 database, user, client_relations=self.charm.client_relations
             )
