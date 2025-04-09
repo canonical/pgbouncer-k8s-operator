@@ -274,7 +274,11 @@ class DbProvides(Object):
             self.charm.unit.status = MaintenanceStatus(init_msg)
             logger.info(init_msg)
 
-            self.charm.backend.postgres.create_user(user, password, admin=self.admin, extra_user_roles=[ACCESS_GROUP_RELATION])
+            extra_user_roles = None
+            if ACCESS_GROUP_RELATION in self.charm.backend.postgres.list_access_groups():
+                # We have access groups, so we need to add the access group role to the auth user
+                extra_user_roles = [ACCESS_GROUP_RELATION]
+            self.charm.backend.postgres.create_user(user, password, admin=self.admin, extra_user_roles=extra_user_roles)
             self.charm.backend.postgres.create_database(
                 database, user, client_relations=self.charm.client_relations
             )

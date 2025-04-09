@@ -45,7 +45,7 @@ from charms.data_platform_libs.v0.data_interfaces import (
     DatabaseRequires,
 )
 from charms.pgbouncer_k8s.v0 import pgb
-from charms.postgresql_k8s.v0.postgresql import PostgreSQL
+from charms.postgresql_k8s.v0.postgresql import ACCESS_GROUP_RELATION, PostgreSQL
 from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
 from ops.model import (
@@ -294,7 +294,11 @@ class BackendDatabaseRequires(Object):
         hashed_password = pgb.get_hashed_password(self.auth_user, plaintext_password)
         # create authentication user on postgres database, so we can authenticate other users
         # later on
-        self.postgres.create_user(self.auth_user, hashed_password, admin=True)
+        extra_user_roles = None
+        if ACCESS_GROUP_RELATION in self.postgres.list_access_groups():
+            # We have access groups, so we need to add the access group role to the auth user
+            extra_user_roles = [ACCESS_GROUP_RELATION]
+        self.postgres.create_user(self.auth_user, hashed_password, admin=True, extra_user_roles=extra_user_roles)
         self.initialise_auth_function(self.collect_databases())
 
         # Add the monitoring user.
