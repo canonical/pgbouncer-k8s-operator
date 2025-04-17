@@ -10,7 +10,7 @@ from ops.pebble import ConnectionError as PebbleConnectionError
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
-from constants import BACKEND_RELATION_NAME, PEER_RELATION_NAME, PGB_DIR
+from constants import AUTH_FILE_PATH, BACKEND_RELATION_NAME, PEER_RELATION_NAME
 
 # TODO clean up mocks
 
@@ -203,7 +203,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         self.backend._on_relation_broken(event)
 
         _render.assert_called_once_with(reload_pgbouncer=True)
-        _delete_file.assert_called_with(f"{PGB_DIR}/userlist.txt")
+        _delete_file.assert_called_with(AUTH_FILE_PATH)
         self.toggle_monitoring_layer.assert_called_with(False)
 
     @patch(
