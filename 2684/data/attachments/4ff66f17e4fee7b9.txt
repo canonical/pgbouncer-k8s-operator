@@ -1,0 +1,60 @@
+[32mINFO    [0m integration.relations.test_db:test_db.py:181 Deploying test app
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/jammy/postgresql-test-app-279
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m integration.relations.test_db:test_db.py:185 Wait for PGB to block due to extensions
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] blocked: bad relation request - remote app requested extensions, which are unsupported. Please remove this relation.
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+[32mINFO    [0m integration.relations.test_db:test_db.py:193 Rerelate with extensions enabled
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [idle] active: 
+  postgresql-test-app/0 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+  postgresql-test-app/0 [idle] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:937 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.5    unsupported  01:50:35Z
+
+App                  Version  Status  Scale  Charm                Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s        1.21.0   active      3  pgbouncer-k8s                         0  10.152.183.65   no       
+postgresql-k8s       14.17    active      3  postgresql-k8s       14/edge        565  10.152.183.118  no       
+postgresql-test-app           active      1  postgresql-test-app  latest/stable  279  10.152.183.162  no       
+
+Unit                    Workload  Agent  Address      Ports  Message
+pgbouncer-k8s/0*        active    idle   10.1.22.205         
+pgbouncer-k8s/1         active    idle   10.1.22.207         
+pgbouncer-k8s/2         active    idle   10.1.22.206         
+postgresql-k8s/0        active    idle   10.1.22.208         
+postgresql-k8s/1*       active    idle   10.1.22.209         Primary
+postgresql-k8s/2        active    idle   10.1.22.210         
+postgresql-test-app/0*  active    idle   10.1.22.212         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:943 Juju error logs:
+
+unit-pgbouncer-k8s-2: 01:48:29 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-1: 01:48:29 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: write tcp 10.1.22.207:55984->10.152.183.74:17070: write: broken pipe: write tcp 10.1.22.207:55984->10.152.183.74:17070: write: broken pipe
+unit-pgbouncer-k8s-1: 01:48:31 ERROR juju.worker.dependency "uniter" manifold worker returned unexpected error: relation scope id "7b7a90e9-fd86-41ff-8e8f-dd38c0bbbcab:r#6#finos-waltz": settings 7b7a90e9-fd86-41ff-8e8f-dd38c0bbbcab:r#6#finos-waltz not found (not found)
+unit-pgbouncer-k8s-0: 01:48:31 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-1: 01:48:37 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-2: 01:48:38 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-0: 01:48:38 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-1: 01:49:27 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-2: 01:49:27 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 01:49:27 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1025 Forgetting model main...
