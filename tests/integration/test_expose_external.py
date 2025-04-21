@@ -78,9 +78,12 @@ async def confirm_endpoint_connectivity(ops_test: OpsTest) -> str:
             endpoints = credentials["postgresql"]["endpoints"]
             host, port = endpoints.split(",")[0].split(":")
 
-            with psycopg2.connect(
-                f"dbname='{database}' user='{user}' password='{password}' host='{host}' port='{port}' connect_timeout=10"
-            ) as connection, connection.cursor() as cursor:
+            with (
+                psycopg2.connect(
+                    f"dbname='{database}' user='{user}' password='{password}' host='{host}' port='{port}' connect_timeout=10"
+                ) as connection,
+                connection.cursor() as cursor,
+            ):
                 cursor.execute("SELECT 1;")
                 assert cursor.fetchone()[0] == 1, "Unable to execute query"
 

@@ -56,8 +56,8 @@ Some example relation data is below. All values are examples, generated in a run
 """
 
 import logging
+from collections.abc import Iterable
 from hashlib import shake_128
-from typing import Dict, Iterable, List
 
 from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import (
@@ -139,7 +139,7 @@ class DbProvides(Object):
     def _depart_flag(self, relation):
         return f"{self.relation_name}_{relation.id}_departing"
 
-    def _check_extensions(self, extensions: List) -> bool:
+    def _check_extensions(self, extensions: list) -> bool:
         """Checks if requested extensions are enabled."""
         for extension in extensions:
             extension_name = extension.split(":")[0]
@@ -147,7 +147,7 @@ class DbProvides(Object):
                 return False
         return True
 
-    def _block_on_extensions(self, relation, remote_app_databag: Dict) -> bool:
+    def _block_on_extensions(self, relation, remote_app_databag: dict) -> bool:
         """Verifies that extensions are enabled or blocks the charm."""
         if "extensions" in remote_app_databag:
             self.update_databags(
@@ -167,7 +167,7 @@ class DbProvides(Object):
                 return True
         return False
 
-    def _get_relation_extensions(self, relation: Relation) -> List[str]:
+    def _get_relation_extensions(self, relation: Relation) -> list[str]:
         """Get enabled extensions for a relation."""
         try:
             for data in relation.data.values():
@@ -467,7 +467,7 @@ class DbProvides(Object):
 
         self._check_for_blocking_relations(broken_event.relation.id)
 
-    def update_databags(self, relation, updates: Dict[str, str]):
+    def update_databags(self, relation, updates: dict[str, str]):
         """Updates databag with the given dict."""
         # Databag entries can only be strings
         for key, item in updates.items():
