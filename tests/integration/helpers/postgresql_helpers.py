@@ -3,7 +3,7 @@
 # See LICENSE file for licensing details.
 import itertools
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import psycopg2
 import yaml
@@ -16,8 +16,8 @@ PG = "postgresql-k8s"
 
 async def check_database_users_existence(
     ops_test: OpsTest,
-    users_that_should_exist: List[str],
-    users_that_should_not_exist: List[str],
+    users_that_should_exist: list[str],
+    users_that_should_not_exist: list[str],
     pg_user: str,
     pg_user_password: str,
     admin: bool = False,
@@ -112,9 +112,12 @@ async def execute_query_on_unit(
     Returns:
         A list of rows that were potentially returned from the query.
     """
-    with psycopg2.connect(
-        f"dbname='{database}' user='{user}' host='{unit_address}' password='{password}' connect_timeout=10"
-    ) as connection, connection.cursor() as cursor:
+    with (
+        psycopg2.connect(
+            f"dbname='{database}' user='{user}' host='{unit_address}' password='{password}' connect_timeout=10"
+        ) as connection,
+        connection.cursor() as cursor,
+    ):
         cursor.execute(query)
         output = list(itertools.chain(*cursor.fetchall()))
     return output

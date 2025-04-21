@@ -1,6 +1,6 @@
 # Copyright 2022 Canonical Ltd.
 # See LICENSE file for licensing details.
-from typing import Dict, Optional, Tuple
+from typing import Optional
 
 import psycopg2
 import requests
@@ -32,12 +32,12 @@ async def get_password(ops_test: OpsTest, app: str, down_unit: Optional[str] = N
     return action.results["password"]
 
 
-def get_patroni_cluster(unit_ip: str) -> Dict[str, str]:
+def get_patroni_cluster(unit_ip: str) -> dict[str, str]:
     resp = requests.get(f"http://{unit_ip}:8008/cluster")
     return resp.json()
 
 
-def get_member_lag(cluster: Dict, member_name: str) -> int:
+def get_member_lag(cluster: dict, member_name: str) -> int:
     """Return the lag of a specific member."""
     for member in cluster["members"]:
         if member["name"] == member_name.replace("/", "-"):
@@ -71,7 +71,7 @@ async def are_writes_increasing(ops_test, down_unit: Optional[str] = None) -> No
 
 async def count_writes(
     ops_test: OpsTest, down_unit: Optional[str] = None
-) -> Tuple[Dict[str, int], Dict[str, int]]:
+) -> tuple[dict[str, int], dict[str, int]]:
     """Count the number of writes in the database."""
     app = "postgresql-k8s"
     password = await get_password(ops_test, app=app, down_unit=down_unit)

@@ -12,7 +12,7 @@ import os
 import socket
 from configparser import ConfigParser
 from signal import SIGHUP
-from typing import Dict, List, Optional, Union, get_args
+from typing import Optional, get_args
 
 import lightkube
 import psycopg2
@@ -458,7 +458,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             "services": pebble_services,
         })
 
-    def _get_readonly_dbs(self, databases: Dict) -> Dict[str, str]:
+    def _get_readonly_dbs(self, databases: dict) -> dict[str, str]:
         readonly_dbs = {}
         if self.backend.relation and "*" in databases:
             read_only_endpoints = self.backend.get_read_only_endpoints()
@@ -486,9 +486,10 @@ class PgBouncerK8sCharm(TypedCharmBase):
             existing_dbs = [db["name"] for db in self.get_relation_databases().values()]
             existing_dbs += ["postgres", "pgbouncer"]
             try:
-                with self.backend.postgres._connect_to_database(
-                    PGB
-                ) as conn, conn.cursor() as cursor:
+                with (
+                    self.backend.postgres._connect_to_database(PGB) as conn,
+                    conn.cursor() as cursor,
+                ):
                     cursor.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")
                     results = cursor.fetchall()
                 conn.close()
@@ -682,7 +683,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         self.check_pgb_running()
 
-    def _generate_monitoring_service(self, enabled: bool = True) -> Dict[str, str]:
+    def _generate_monitoring_service(self, enabled: bool = True) -> dict[str, str]:
         if enabled and (stats_password := self.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)):
             command = (
                 f'pgbouncer_exporter --web.listen-address=:{METRICS_PORT} --pgBouncer.connectionString="'
@@ -883,11 +884,11 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         pgb_container.remove_path(path)
 
-    def set_relation_databases(self, databases: Dict[int, Dict[str, Union[str, bool]]]) -> None:
+    def set_relation_databases(self, databases: dict[int, dict[str, str | bool]]) -> None:
         """Updates the relation databases."""
         self.peers.app_databag["pgb_dbs_config"] = json.dumps(databases)
 
-    def get_relation_databases(self) -> Dict[str, Dict[str, Union[str, bool]]]:
+    def get_relation_databases(self) -> dict[str, dict[str, str | bool]]:
         """Get relation databases."""
         if "pgb_dbs_config" in self.peers.app_databag:
             return json.loads(self.peers.app_databag["pgb_dbs_config"])
@@ -914,7 +915,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
                 logger.exception("Unable to parse legacy config format")
         return {}
 
-    def generate_relation_databases(self) -> Dict[str, Dict[str, Union[str, bool]]]:
+    def generate_relation_databases(self) -> dict[str, dict[str, str | bool]]:
         """Generates a mapping between relation and database and sets it in the app databag."""
         if not self.unit.is_leader():
             return {}
@@ -962,7 +963,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         self.set_relation_databases(databases)
         return databases
 
-    def _get_relation_config(self) -> [Dict[str, Dict[str, Union[str, bool]]]]:
+    def _get_relation_config(self) -> [dict[str, dict[str, str | bool]]]:
         """Generate pgb config for databases and admin users."""
         if not self.backend.relation or not (databases := self.get_relation_databases()):
             return {}
@@ -1127,7 +1128,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         return isinstance(self.unit.status, BlockedStatus)
 
     @property
-    def client_relations(self) -> List[Relation]:
+    def client_relations(self) -> list[Relation]:
         """Return the list of established client relations."""
         relations = []
         for relation_name in ["database", "db", "db-admin"]:
