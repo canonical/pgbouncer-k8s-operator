@@ -1,0 +1,47 @@
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:108 Refresh the charm
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:111 Wait for upgrade to start
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:118 Wait for upgrade to complete on first upgrading unit
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] waiting: other units upgrading first...
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] waiting: other units upgrading first...
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:126 Resume upgrade
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:131 Wait for upgrade to complete
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] maintenance: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:937 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.5    unsupported  01:53:30Z
+
+App              Version  Status  Scale  Charm            Channel      Rev  Address         Exposed  Message
+data-integrator           active      2  data-integrator  latest/edge  133  10.152.183.152  no       
+pgbouncer-k8s    1.21.0   active      2  pgbouncer-k8s                   0  10.152.183.49   no       
+postgresql-k8s   14.17    active      3  postgresql-k8s   14/edge      567  10.152.183.17   no       
+
+Unit                Workload  Agent  Address       Ports  Message
+data-integrator/0   active    idle   10.1.188.137         
+data-integrator/1*  active    idle   10.1.188.138         
+pgbouncer-k8s/0     active    idle   10.1.188.148         
+pgbouncer-k8s/1*    active    idle   10.1.188.147         
+postgresql-k8s/0    active    idle   10.1.188.144         
+postgresql-k8s/1    active    idle   10.1.188.145         
+postgresql-k8s/2*   active    idle   10.1.188.146         Primary
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:943 Juju error logs:
+
+unit-pgbouncer-k8s-0: 01:52:18 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:52:19 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:52:20 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:52:22 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1025 Forgetting model main...
