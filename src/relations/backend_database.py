@@ -62,11 +62,11 @@ from ops.pebble import PathError
 from constants import (
     APP_SCOPE,
     AUTH_FILE_DATABAG_KEY,
+    AUTH_FILE_PATH,
     BACKEND_RELATION_NAME,
     MONITORING_PASSWORD_KEY,
     PG,
     PGB,
-    PGB_DIR,
 )
 
 logger = logging.getLogger(__name__)
@@ -384,7 +384,7 @@ class BackendDatabaseRequires(Object):
 
         self.charm.toggle_monitoring_layer(False)
         try:
-            self.charm.delete_file(f"{PGB_DIR}/userlist.txt")
+            self.charm.delete_file(AUTH_FILE_PATH)
         except PathError:
             logger.warning("Cannot delete userlist.txt")
         if self.charm.unit.is_leader():

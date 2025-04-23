@@ -7,7 +7,6 @@ import logging
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Union
 
 import pytest
 from lightkube import Client
@@ -230,7 +229,7 @@ async def test_fail_and_rollback(ops_test, continuous_writes, charm) -> None:
 
 
 async def inject_dependency_fault(
-    ops_test: OpsTest, application_name: str, charm_file: Union[str, Path]
+    ops_test: OpsTest, application_name: str, charm_file: str | Path
 ) -> None:
     """Inject a dependency fault into the PostgreSQL charm."""
     # Query running dependency to overwrite with incompatible version.

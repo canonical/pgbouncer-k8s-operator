@@ -4,7 +4,7 @@
 import asyncio
 import json
 import logging
-from typing import Dict, Optional
+from typing import Optional
 from uuid import uuid4
 
 import psycopg2
@@ -240,7 +240,7 @@ async def delete_pod(ops_test: OpsTest, unit_name: str) -> None:
     await client.delete(Pod, name=unit_name.replace("/", "-"))
 
 
-async def fetch_action_get_credentials(unit: Unit) -> Dict:
+async def fetch_action_get_credentials(unit: Unit) -> dict:
     """Helper to run an action to fetch connection info.
 
     Args:

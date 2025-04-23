@@ -36,7 +36,7 @@ jsonschema = "*"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.11.5"
+ruff = "^0.11.6"
 
 [tool.poetry.group.lint]
 optional = true
@@ -58,7 +58,7 @@ optional = true
 [tool.poetry.group.integration.dependencies]
 lightkube = "*"
 pytest = "^8.3.5"
-pytest-operator = "^0.41.0"
+pytest-operator = "^0.42.0"
 allure-pytest-default-results = "^0.1.2"
 # renovate caret doesn't work: https://github.com/renovatebot/renovate/issues/26940
 juju = "<=3.6.1.1"
@@ -90,22 +90,17 @@ pythonpath = [
   "lib"
 ]
 
-# Formatting tools configuration
-[tool.black]
-line-length = 99
-target-version = ["py310"]
-
 # Linting tools configuration
 [tool.ruff]
 # preview and explicit preview are enabled for CPY001
 preview = true
-target-version = "py38"
+target-version = "py310"
 src = ["src", "."]
 line-length = 99
 
 [tool.ruff.lint]
 explicit-preview-rules = true
-select = ["A", "E", "W", "F", "C", "N", "D", "I001", "B", "CPY", "RUF", "S", "SIM", "UP", "TC"]
+select = ["A", "E", "W", "F", "C", "N", "D", "I001", "B", "CPY001", "RUF", "S", "SIM", "UP", "TC"]
 extend-ignore = [
     "D203",
     "D204",

@@ -6,7 +6,7 @@ import json
 from configparser import ConfigParser
 from multiprocessing import ProcessError
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 import yaml
 from juju.unit import Unit
@@ -53,7 +53,7 @@ def get_legacy_relation_username(ops_test: OpsTest, relation_id: int):
     return f"{app_name}_user_{relation_id}_{model_name}".replace("-", "_")
 
 
-async def get_unit_info(ops_test: OpsTest, unit_name: str) -> Dict:
+async def get_unit_info(ops_test: OpsTest, unit_name: str) -> dict:
     """Gets the databags from the given relation.
 
     Args:
@@ -93,7 +93,7 @@ async def get_endpoint_info(ops_test: OpsTest, unit_name: str, endpoint: str) ->
     ]
 
 
-async def get_app_relation_databag(ops_test: OpsTest, unit_name: str, relation_id: int) -> Dict:
+async def get_app_relation_databag(ops_test: OpsTest, unit_name: str, relation_id: int) -> dict:
     """Gets the app relation databag from the given relation.
 
     Juju show-unit command is backwards, so you have to pass the unit_name of the unit to which the
@@ -116,7 +116,7 @@ async def get_app_relation_databag(ops_test: OpsTest, unit_name: str, relation_i
     return None
 
 
-async def get_juju_secret(ops_test: OpsTest, secret_uri: str) -> Dict[str, str]:
+async def get_juju_secret(ops_test: OpsTest, secret_uri: str) -> dict[str, str]:
     """Retrieve juju secret."""
     secret_unique_id = secret_uri.split("/")[-1]
     complete_command = f"show-secret {secret_uri} --reveal --format=json"
@@ -371,7 +371,7 @@ async def get_leader_unit(ops_test: OpsTest, app: str) -> Optional[Unit]:
     return leader_unit
 
 
-async def get_data_integrator_credentials(unit: Unit) -> Dict:
+async def get_data_integrator_credentials(unit: Unit) -> dict:
     """Helper to run an action on data-integrator to get credentials."""
     return await run_action(unit, "get-credentials")
 
