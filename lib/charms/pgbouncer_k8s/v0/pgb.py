@@ -25,8 +25,6 @@ import secrets
 import string
 from typing import Dict
 
-from psycopg2 import extensions
-
 # The unique Charmhub library identifier, never change it
 LIBID = "113f4a7480c04631bfdf5fe776f760cd"
 # Increment this major API version when introducing breaking changes
@@ -84,8 +82,3 @@ def generate_password() -> str:
     """
     choices = string.ascii_letters + string.digits
     return "".join([secrets.choice(choices) for _ in range(24)])
-
-
-def get_hashed_password(username: str, password: str, connection) -> str:
-    """Creates an md5 hashed password for the given user, in the format postgresql expects."""
-    return extensions.encrypt_password(password, username, connection, "scram-sha-256")

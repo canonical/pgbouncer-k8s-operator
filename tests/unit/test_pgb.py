@@ -29,11 +29,3 @@ class TestPgb(TestCase):
         valid_chars = string.ascii_letters + string.digits
         for char in pw:
             assert char in valid_chars
-
-    # @patch("charms.pgbouncer_k8s.v0.pgb.md5")
-    # def test_get_hashed_password(self, _md5):
-    #     hexdigest = _md5.return_value.hexdigest
-    #     hexdigest.return_value = "hashval"
-    #     assert pgb.get_hashed_password("user", "pass") == "md5hashval"
-    #     _md5.assert_called_once_with(b"passuser")
-    #     hexdigest.assert_called_once_with()

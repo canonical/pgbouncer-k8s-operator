@@ -291,29 +291,14 @@ class BackendDatabaseRequires(Object):
             return
 
         plaintext_password = pgb.generate_password()
-        try:
-            with self.postgres._connect_to_database() as conn:
-                if not (
-                    monitoring_password := self.charm.get_secret(
-                        APP_SCOPE, MONITORING_PASSWORD_KEY
-                    )
-                ):
-                    monitoring_password = pgb.generate_password()
-                    self.charm.set_secret(APP_SCOPE, MONITORING_PASSWORD_KEY, monitoring_password)
-                hashed_monitoring_password = pgb.get_hashed_password(
-                    self.stats_user, monitoring_password, conn
-                )
-            conn.close()
-        except psycopg2.Error:
-            event.defer()
-            logger.error("deferring database-created hook - cannot hash password")
-            return
+        monitoring_password = pgb.generate_password()
+        self.charm.set_secret(APP_SCOPE, MONITORING_PASSWORD_KEY, monitoring_password)
         # create authentication user on postgres database, so we can authenticate other users
         # later on
         self.postgres.create_user(self.auth_user, plaintext_password, admin=True)
         self.initialise_auth_function(self.collect_databases())
 
-        auth_file = f'"{self.auth_user}" "{plaintext_password}"\n"{self.stats_user}" "{hashed_monitoring_password}"'
+        auth_file = f'"{self.auth_user}" "{plaintext_password}"\n"{self.stats_user}" "{monitoring_password}"'
         self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, auth_file)
         self.charm.render_auth_file(auth_file)
 

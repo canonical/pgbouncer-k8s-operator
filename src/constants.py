@@ -11,7 +11,8 @@ PG = PG_USER = PG_GROUP = "postgres"
 
 PGB_DIR = "/var/lib/pgbouncer"
 INI_PATH = f"{PGB_DIR}/pgbouncer.ini"
-AUTH_FILE_PATH = f"{PGB_DIR}/userlist.txt"
+# Transient file
+AUTH_FILE_PATH = "/dev/shm/userlist.txt"  # noqa: S108
 
 PEER_RELATION_NAME = "pgb-peers"
 BACKEND_RELATION_NAME = "backend-database"
