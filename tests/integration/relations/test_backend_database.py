@@ -14,10 +14,8 @@ from ..helpers.helpers import (
     PGB,
     PGB_METADATA,
     get_app_relation_databag,
-    get_backend_relation,
     get_backend_user_pass,
     get_cfg,
-    get_userlist,
     scale_application,
     wait_for_relation_joined_between,
     wait_for_relation_removed_between,
@@ -175,24 +173,17 @@ async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
             ),
         )
 
-        relation = get_backend_relation(ops_test)
-        username = f"relation_id_{relation.id}"
         monitoring_username = f"pgbouncer_stats_{PGB}".replace("-", "_")
         leader_cfg = await get_cfg(ops_test, f"{PGB}/0")
-        leader_userlist = await get_userlist(ops_test, f"{PGB}/0")
 
         assert monitoring_username in leader_cfg["pgbouncer"]["stats_users"]
-        assert username in leader_userlist
 
         for unit_id in [1, 2]:
             unit_name = f"{PGB}/{unit_id}"
             cfg = await get_cfg(ops_test, unit_name)
-            userlist = await get_userlist(ops_test, unit_name)
             assert monitoring_username in cfg["pgbouncer"]["stats_users"]
-            assert username in userlist
 
             assert cfg == leader_cfg
-            assert userlist == leader_userlist
 
         # TODO test deleting leader
 

@@ -290,12 +290,15 @@ class BackendDatabaseRequires(Object):
             return
 
         plaintext_password = pgb.generate_password()
-        monitoring_password = pgb.generate_password()
-        self.charm.set_secret(APP_SCOPE, MONITORING_PASSWORD_KEY, monitoring_password)
         # create authentication user on postgres database, so we can authenticate other users
         # later on
         self.postgres.create_user(self.auth_user, plaintext_password, admin=True)
         self.initialise_auth_function(self.collect_databases())
+
+        # Add the monitoring user.
+        if not (monitoring_password := self.charm.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)):
+            monitoring_password = pgb.generate_password()
+            self.charm.set_secret(APP_SCOPE, MONITORING_PASSWORD_KEY, monitoring_password)
 
         auth_file = f'"{self.auth_user}" "{plaintext_password}"\n"{self.stats_user}" "{monitoring_password}"'
         self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, auth_file)

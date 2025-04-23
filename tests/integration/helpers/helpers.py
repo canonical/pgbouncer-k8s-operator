@@ -19,7 +19,7 @@ from tenacity import (
     wait_fixed,
 )
 
-from constants import AUTH_FILE_PATH, PGB_DIR
+from constants import PGB_DIR
 
 from ..juju_ import run_action
 
@@ -153,11 +153,6 @@ async def get_cfg(ops_test: OpsTest, unit_name: str) -> dict:
     del cfg["DEFAULT"]
 
     return cfg
-
-
-async def get_userlist(ops_test: OpsTest, unit_name) -> str:
-    """Gets pgbouncer logs from pgbouncer container."""
-    return await cat_file_from_unit(ops_test, AUTH_FILE_PATH, unit_name)
 
 
 async def run_command_on_unit(ops_test: OpsTest, unit_name: str, command: str) -> str:
