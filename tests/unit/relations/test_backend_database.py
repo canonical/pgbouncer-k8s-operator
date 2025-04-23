@@ -38,65 +38,62 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     def tearDown(self):
         self.togggle_monitoring_patch.stop()
 
-    # @patch("charm.PgBouncerK8sCharm.get_secret", return_value=None)
-    # @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
-    # @patch(
-    #     "relations.backend_database.BackendDatabaseRequires.stats_user",
-    #     new_callable=PropertyMock,
-    #     return_value="stats_user",
-    # )
-    # @patch(
-    #     "relations.backend_database.BackendDatabaseRequires.auth_user",
-    #     new_callable=PropertyMock,
-    #     return_value="user",
-    # )
-    # @patch(
-    #     "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
-    # )
-    # @patch(
-    #     "relations.backend_database.BackendDatabaseRequires.relation", new_callable=PropertyMock
-    # )
-    # @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
-    # @patch("relations.backend_database.BackendDatabaseRequires.initialise_auth_function")
-    # @patch("charm.PgBouncerK8sCharm.render_pgb_config")
-    # @patch("charm.PgBouncerK8sCharm.render_auth_file")
-    # @patch("charm.PgBouncerK8sCharm.check_pgb_running")
-    # def test_on_database_created(
-    #     self,
-    #     _check_running,
-    #     _render_auth_file,
-    #     _render_cfg_file,
-    #     _init_auth,
-    #     _gen_pw,
-    #     _relation,
-    #     _postgres,
-    #     _auth_user,
-    #     _stats_user,
-    #     _app_databag,
-    #     _,
-    # ):
-    #     self.harness.set_leader(True)
-    #     pw = _gen_pw.return_value
-    #     postgres = _postgres.return_value
-    #     _relation.return_value.data = {}
-    #     _relation.return_value.data[self.charm.app] = {"database": "database"}
+    @patch("charm.PgBouncerK8sCharm.get_secret", return_value=None)
+    @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.stats_user",
+        new_callable=PropertyMock,
+        return_value="stats_user",
+    )
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.auth_user",
+        new_callable=PropertyMock,
+        return_value="user",
+    )
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
+    )
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.relation", new_callable=PropertyMock
+    )
+    @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
+    @patch("relations.backend_database.BackendDatabaseRequires.initialise_auth_function")
+    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
+    @patch("charm.PgBouncerK8sCharm.render_auth_file")
+    @patch("charm.PgBouncerK8sCharm.check_pgb_running")
+    def test_on_database_created(
+        self,
+        _check_running,
+        _render_auth_file,
+        _render_cfg_file,
+        _init_auth,
+        _gen_pw,
+        _relation,
+        _postgres,
+        _auth_user,
+        _stats_user,
+        _app_databag,
+        _,
+    ):
+        self.harness.set_leader(True)
+        postgres = _postgres.return_value
+        _relation.return_value.data = {}
+        _relation.return_value.data[self.charm.app] = {"database": "database"}
 
-    #     mock_event = MagicMock()
-    #     mock_event.username = "mock_user"
+        mock_event = MagicMock()
+        mock_event.username = "mock_user"
 
-    #     self.backend._on_database_created(mock_event)
-    #     hash_pw = get_hashed_password(self.backend.auth_user, pw)
+        self.backend._on_database_created(mock_event)
 
-    #     postgres.create_user.assert_called_with(self.backend.auth_user, hash_pw, admin=True)
-    #     _init_auth.assert_has_calls([call([self.backend.database.database, "postgres"])])
+        postgres.create_user.assert_called_with(self.backend.auth_user, "pw", admin=True)
+        _init_auth.assert_any_call([self.backend.database.database, "postgres"])
 
-    #     hash_mon_pw = get_hashed_password(self.backend.stats_user, pw)
-    #     _render_auth_file.assert_any_call(
-    #         f'"{self.backend.auth_user}" "{hash_pw}"\n"{self.backend.stats_user}" "{hash_mon_pw}"'
-    #     )
+        _render_auth_file.assert_any_call(
+            f'"{self.backend.auth_user}" "pw"\n"{self.backend.stats_user}" "pw"'
+        )
 
-    #     self.toggle_monitoring_layer.assert_called_with(True)
-    #     _render_cfg_file.assert_called_once_with(reload_pgbouncer=True)
+        self.toggle_monitoring_layer.assert_called_with(True)
+        _render_cfg_file.assert_called_once_with(reload_pgbouncer=True)
 
     @patch(
         "charm.PgBouncerK8sCharm.is_container_ready", new_callable=PropertyMock, return_value=True
