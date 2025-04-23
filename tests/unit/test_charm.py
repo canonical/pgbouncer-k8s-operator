@@ -289,19 +289,6 @@ class TestCharm(unittest.TestCase):
                 f"/var/lib/pgbouncer/instance_{i}/pgbouncer.ini", expected_content, 0o400
             )
 
-    @patch("charm.PgBouncerK8sCharm.push_file")
-    @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
-    def test_render_auth_file(self, _reload_pgbouncer, _push_file):
-        self.charm.render_auth_file("test", reload_pgbouncer=False)
-
-        _reload_pgbouncer.assert_not_called()
-        _push_file.assert_called_once_with(AUTH_FILE_PATH, "test", 0o400)
-        _reload_pgbouncer.reset_mock()
-
-        # Test reload
-        self.charm.render_auth_file("test", reload_pgbouncer=True)
-        _reload_pgbouncer.assert_called_once_with()
-
     @patch("charm.Peers.app_databag", new_callable=PropertyMock, return_value={})
     @patch("charm.PgBouncerK8sCharm.get_secret")
     def test_get_relation_databases_legacy_data(self, _get_secret, _):

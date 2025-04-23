@@ -59,12 +59,10 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
     @patch("relations.backend_database.BackendDatabaseRequires.initialise_auth_function")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
-    @patch("charm.PgBouncerK8sCharm.render_auth_file")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     def test_on_database_created(
         self,
         _check_running,
-        _render_auth_file,
         _render_cfg_file,
         _init_auth,
         _gen_pw,
@@ -88,10 +86,6 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         postgres.create_user.assert_called_with(self.backend.auth_user, "pw", admin=True)
         _init_auth.assert_any_call([self.backend.database.database, "postgres"])
 
-        _render_auth_file.assert_any_call(
-            f'"{self.backend.auth_user}" "pw"\n"{self.backend.stats_user}" "pw"'
-        )
-
         self.toggle_monitoring_layer.assert_called_with(True)
         _render_cfg_file.assert_called_once_with(reload_pgbouncer=True)
 
@@ -99,12 +93,9 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         "charm.PgBouncerK8sCharm.is_container_ready", new_callable=PropertyMock, return_value=True
     )
     @patch("charm.PgBouncerK8sCharm.toggle_monitoring_layer")
-    @patch("charm.PgBouncerK8sCharm.render_auth_file")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.get_secret")
-    def test_on_database_created_not_leader(
-        self, _get_secret, _render_pgb, _render_auth, _toggle_monitoring, _
-    ):
+    def test_on_database_created_not_leader(self, _get_secret, _render_pgb, _toggle_monitoring, _):
         self.harness.set_leader(False)
 
         # No secret yet
@@ -124,7 +115,6 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         _get_secret.side_effect = None
 
         self.backend._on_database_created(mock_event)
-        assert not _render_auth.called
         assert not _render_pgb.called
         assert not _toggle_monitoring.called
         _get_secret.assert_called_once_with("app", "auth_file")
@@ -132,7 +122,6 @@ class TestBackendDatabaseRelation(unittest.TestCase):
 
         _get_secret.return_value = "AUTH"
         self.backend._on_database_created(mock_event)
-        _render_auth.assert_called_once_with("AUTH")
         _render_pgb.assert_called_once_with(reload_pgbouncer=True)
         _toggle_monitoring.assert_called_once_with(True)
 

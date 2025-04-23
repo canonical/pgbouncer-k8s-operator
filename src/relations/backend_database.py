@@ -265,7 +265,6 @@ class BackendDatabaseRequires(Object):
                 event.defer()
                 logger.error("deferring database-created hook - cannot access secrets")
                 return
-            self.charm.render_auth_file(auth_file)
             self.charm.render_pgb_config(reload_pgbouncer=True)
             self.charm.toggle_monitoring_layer(True)
             self.charm.update_status()
@@ -300,7 +299,6 @@ class BackendDatabaseRequires(Object):
 
         auth_file = f'"{self.auth_user}" "{plaintext_password}"\n"{self.stats_user}" "{monitoring_password}"'
         self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, auth_file)
-        self.charm.render_auth_file(auth_file)
 
         self.charm.render_pgb_config(reload_pgbouncer=True)
         self.charm.toggle_monitoring_layer(True)

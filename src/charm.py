@@ -354,9 +354,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
             event.defer()
             return
 
-        if auth_file := self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
-            self.render_auth_file(auth_file)
-
         # in case of pod restart
         if all(self.tls.get_tls_files()):
             self.push_tls_files_to_workload(False)
@@ -656,8 +653,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
     def _on_upgrade_charm(self, _) -> None:
         """Re-render the auth file, which is lost in a pod reschedule."""
-        if auth_file := self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
-            self.render_auth_file(auth_file)
 
     def reload_pgbouncer(self, restart: bool = False) -> None:
         """Reloads pgbouncer application.
@@ -672,14 +667,21 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         pgb_container = self.unit.get_container(PGB)
         pebble_services = pgb_container.get_services()
-        for service in self._services:
-            if service["name"] not in pebble_services:
-                # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
-                raise PebbleConnectionError
-            if restart or pebble_services[service["name"]].current != ServiceStatus.ACTIVE:
-                pgb_container.restart(service["name"])
-            else:
-                pgb_container.send_signal(SIGHUP, service["name"])
+        try:
+            auth_file = self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
+            if not auth_file:
+                auth_file = ""
+            self.push_file(AUTH_FILE_PATH, auth_file, 0o400)
+            for service in self._services:
+                if service["name"] not in pebble_services:
+                    # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
+                    raise PebbleConnectionError
+                if restart or pebble_services[service["name"]].current != ServiceStatus.ACTIVE:
+                    pgb_container.restart(service["name"])
+                else:
+                    pgb_container.send_signal(SIGHUP, service["name"])
+        finally:
+            self.delete_file(AUTH_FILE_PATH)
 
         self.check_pgb_running()
 
@@ -1084,14 +1086,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         if reload_pgbouncer:
             self.reload_pgbouncer(restart)
-
-    def render_auth_file(self, auth_file: str, reload_pgbouncer=False):
-        """Renders the given auth_file to the correct location."""
-        self.push_file(AUTH_FILE_PATH, auth_file, 0o400)
-        logger.info("pushed new auth file to pgbouncer container")
-
-        if reload_pgbouncer:
-            self.reload_pgbouncer()
 
     # =====================
     #  Relation Utilities
