@@ -9,7 +9,7 @@ from ops.pebble import ConnectionError as PebbleConnectionError
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
-from constants import AUTH_FILE_PATH, BACKEND_RELATION_NAME, PEER_RELATION_NAME
+from constants import BACKEND_RELATION_NAME, PEER_RELATION_NAME
 
 # TODO clean up mocks
 
@@ -87,7 +87,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         _init_auth.assert_any_call([self.backend.database.database, "postgres"])
 
         self.toggle_monitoring_layer.assert_called_with(True)
-        _render_cfg_file.assert_called_once_with(reload_pgbouncer=True)
+        _render_cfg_file.assert_called_once_with()
 
     @patch(
         "charm.PgBouncerK8sCharm.is_container_ready", new_callable=PropertyMock, return_value=True
@@ -122,14 +122,14 @@ class TestBackendDatabaseRelation(unittest.TestCase):
 
         _get_secret.return_value = "AUTH"
         self.backend._on_database_created(mock_event)
-        _render_pgb.assert_called_once_with(reload_pgbouncer=True)
+        _render_pgb.assert_called_once_with()
         _toggle_monitoring.assert_called_once_with(True)
 
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_endpoints_changed(self, _render_pgb, _update_client_conn):
         self.charm.backend._on_endpoints_changed(MagicMock())
-        _render_pgb.assert_called_once_with(reload_pgbouncer=True)
+        _render_pgb.assert_called_once_with()
         _update_client_conn.assert_called_once_with()
 
     @patch("charm.PgBouncerK8sCharm.check_pgb_running", return_value=True)
@@ -137,7 +137,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_relation_changed(self, _render_pgb, _update_client_conn, _check_pgb):
         self.charm.backend._on_relation_changed(MagicMock())
-        _render_pgb.assert_called_once_with(reload_pgbouncer=True)
+        _render_pgb.assert_called_once_with()
         _update_client_conn.assert_called_once_with()
         _render_pgb.reset_mock()
         _update_client_conn.reset_mock()
@@ -168,7 +168,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         depart_event = MagicMock()
         depart_event.departing_unit = self.charm.unit
         self.backend._on_relation_departed(depart_event)
-        _render.assert_called_once_with(reload_pgbouncer=True)
+        _render.assert_called_once_with()
 
     @patch(
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
@@ -187,8 +187,8 @@ class TestBackendDatabaseRelation(unittest.TestCase):
 
         self.backend._on_relation_broken(event)
 
-        _render.assert_called_once_with(reload_pgbouncer=True)
-        _delete_file.assert_called_with(AUTH_FILE_PATH)
+        _render.assert_called_once_with()
+        # _delete_file.assert_called_with(AUTH_FILE_PATH)
         self.toggle_monitoring_layer.assert_called_with(False)
 
     @patch(

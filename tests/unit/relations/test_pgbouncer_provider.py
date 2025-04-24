@@ -139,7 +139,7 @@ class TestPgbouncerProvider(unittest.TestCase):
             str(rel_id): {"name": "test-db", "legacy": False},
             "*": {"name": "*", "auth_dbname": "test-db", "legacy": False},
         })
-        _render_pgb_config.assert_called_once_with(reload_pgbouncer=True)
+        _render_pgb_config.assert_called_once_with()
 
     @patch("relations.backend_database.BackendDatabaseRequires.check_backend", return_value=True)
     @patch(

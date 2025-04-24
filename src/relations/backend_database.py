@@ -57,12 +57,10 @@ from ops.model import (
     WaitingStatus,
 )
 from ops.pebble import ConnectionError as PebbleConnectionError
-from ops.pebble import PathError
 
 from constants import (
     APP_SCOPE,
     AUTH_FILE_DATABAG_KEY,
-    AUTH_FILE_PATH,
     BACKEND_RELATION_NAME,
     MONITORING_PASSWORD_KEY,
     PG,
@@ -265,7 +263,7 @@ class BackendDatabaseRequires(Object):
                 event.defer()
                 logger.error("deferring database-created hook - cannot access secrets")
                 return
-            self.charm.render_pgb_config(reload_pgbouncer=True)
+            self.charm.render_pgb_config()
             self.charm.toggle_monitoring_layer(True)
             self.charm.update_status()
             return
@@ -303,13 +301,13 @@ class BackendDatabaseRequires(Object):
         auth_file = f'"{self.auth_user}" "{plaintext_password}"\n"{self.stats_user}" "{monitoring_password}"'
         self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, auth_file)
 
-        self.charm.render_pgb_config(reload_pgbouncer=True)
+        self.charm.render_pgb_config()
         self.charm.toggle_monitoring_layer(True)
 
         self.charm.update_status()
 
     def _on_endpoints_changed(self, _):
-        self.charm.render_pgb_config(reload_pgbouncer=True)
+        self.charm.render_pgb_config()
         self.charm.update_client_connection_info()
 
     def _on_relation_changed(self, _):
@@ -322,7 +320,7 @@ class BackendDatabaseRequires(Object):
             logger.debug("_on_reltion_changed early exit: pebble ready not fired")
             return
 
-        self.charm.render_pgb_config(reload_pgbouncer=True)
+        self.charm.render_pgb_config()
         self.charm.update_client_connection_info()
 
     def _on_relation_departed(self, event: RelationDepartedEvent):
@@ -333,7 +331,7 @@ class BackendDatabaseRequires(Object):
         users we create.
         """
         if self.charm.peers.relation:
-            self.charm.render_pgb_config(reload_pgbouncer=True)
+            self.charm.render_pgb_config()
         self.charm.update_client_connection_info()
 
         if event.departing_unit == self.charm.unit:
@@ -384,14 +382,14 @@ class BackendDatabaseRequires(Object):
             return
 
         self.charm.toggle_monitoring_layer(False)
-        try:
-            self.charm.delete_file(AUTH_FILE_PATH)
-        except PathError:
-            logger.warning("Cannot delete userlist.txt")
+        # try:
+        #     self.charm.delete_file("/dev/shm/{self.charm.app.name}_")
+        # except PathError:
+        #     logger.warning("Cannot delete userlist.txt")
         if self.charm.unit.is_leader():
             self.charm.remove_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
 
-        self.charm.render_pgb_config(reload_pgbouncer=True)
+        self.charm.render_pgb_config()
         self.charm.unit.status = BlockedStatus(
             "waiting for backend database relation to initialise"
         )

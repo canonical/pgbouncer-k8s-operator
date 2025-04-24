@@ -20,6 +20,7 @@ from charms.data_platform_libs.v0.data_interfaces import DataPeerData, DataPeerU
 from charms.data_platform_libs.v0.data_models import TypedCharmBase
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
+from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import PERMISSIONS_GROUP_ADMIN
 from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
@@ -44,7 +45,6 @@ from config import CharmConfig, ServiceType
 from constants import (
     APP_SCOPE,
     AUTH_FILE_DATABAG_KEY,
-    AUTH_FILE_PATH,
     CFG_FILE_DATABAG_KEY,
     CLIENT_RELATION_NAME,
     CONTAINER_UNAVAILABLE_MESSAGE,
@@ -330,7 +330,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
                     permissions=0o700,
                 )
 
-        self.render_pgb_config()
         # Render the logrotate config
         with open("templates/logrotate.j2") as file:
             template = Template(file.read())
@@ -361,7 +360,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         pebble_layer = self._pgbouncer_layer()
         container.add_layer(PGB, pebble_layer, combine=True)
         container.replan()
-        self.reload_pgbouncer(True)
+        self.render_pgb_config(True)
 
         self.update_status()
 
@@ -398,12 +397,11 @@ class PgBouncerK8sCharm(TypedCharmBase):
         if self.unit.is_leader() and not self.reconcile_k8s_service(port_changed=port_changed):
             return
 
-        self.render_pgb_config()
-        try:
-            if self.check_pgb_running():
-                self.reload_pgbouncer(restart=port_changed)
-        except PebbleConnectionError:
-            event.defer()
+        if self.is_container_ready:
+            try:
+                self.render_pgb_config(restart=port_changed)
+            except PebbleConnectionError:
+                event.defer()
 
         if self.unit.is_leader() and port_changed:
             # Only update the config once the services have been restarted
@@ -447,7 +445,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
                 "group": PG_GROUP,
                 # -R flag reuses sockets on restart
                 "command": f"pgbouncer {service['ini_path']}",
-                "startup": "enabled",
+                "startup": "disabled",
                 "override": "replace",
             }
         return Layer({
@@ -655,42 +653,11 @@ class PgBouncerK8sCharm(TypedCharmBase):
     def _on_upgrade_charm(self, _) -> None:
         """Re-render the auth file, which is lost in a pod reschedule."""
 
-    def reload_pgbouncer(self, restart: bool = False) -> None:
-        """Reloads pgbouncer application.
-
-        Pgbouncer will not apply configuration changes without reloading, so this must be called
-        after each time config files are changed.
-
-        Raises:
-            ops.pebble.ConnectionError if pgb service isn't accessible
-        """
-        logger.info("reloading pgbouncer application")
-
-        pgb_container = self.unit.get_container(PGB)
-        pebble_services = pgb_container.get_services()
-        try:
-            auth_file = self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
-            if not auth_file:
-                auth_file = ""
-            self.push_file(AUTH_FILE_PATH, auth_file, 0o400)
-            for service in self._services:
-                if service["name"] not in pebble_services:
-                    # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
-                    raise PebbleConnectionError
-                if restart or pebble_services[service["name"]].current != ServiceStatus.ACTIVE:
-                    pgb_container.restart(service["name"])
-                else:
-                    pgb_container.send_signal(SIGHUP, service["name"])
-        finally:
-            self.delete_file(AUTH_FILE_PATH)
-
-        self.check_pgb_running()
-
     def _generate_monitoring_service(self, enabled: bool = True) -> dict[str, str]:
         if enabled and (stats_password := self.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)):
             command = (
                 f'pgbouncer_exporter --web.listen-address=:{METRICS_PORT} --pgBouncer.connectionString="'
-                f'postgres://{self.backend.stats_user}:{stats_password}@localhost:{self.config.listen_port}/pgbouncer?sslmode=disable"'
+                f'postgresql://{self.backend.stats_user}:{stats_password}@localhost:{self.config.listen_port}/pgbouncer?sslmode=disable"'
             )
             startup = "enabled"
         else:
@@ -1018,7 +985,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             }
         return pgb_dbs
 
-    def render_pgb_config(self, reload_pgbouncer=False, restart=False) -> None:
+    def render_pgb_config(self, restart=False) -> None:
         """Generate pgbouncer.ini from juju config and deploy it to the container.
 
         Every time the config is rendered, `peers.update_cfg` is called. This updates the config in
@@ -1029,16 +996,16 @@ class PgBouncerK8sCharm(TypedCharmBase):
         most convenient to have a single source of truth for the whole config.
 
         Args:
-            reload_pgbouncer: A boolean defining whether or not to reload the pgbouncer application
-                in the container. When config files are updated, pgbouncer must be restarted for
-                the changes to take effect. However, these config updates can be done in batches,
-                minimising the amount of necessary restarts.
             restart: Whether to restart the service when reloading.
         """
         perm = 0o400
 
-        if not self.configuration_check():
+        pgb_container = self.unit.get_container(PGB)
+        if not self.configuration_check() or not pgb_container.can_connect():
             return
+
+        # Transient file
+        auth_file = f"/dev/shm/{self.app.name}_{pgb.generate_password()}"  # noqa: S108
 
         max_db_connections = self.config.max_db_connections
         if max_db_connections == 0:
@@ -1075,7 +1042,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
                         reserve_pool_size=reserve_pool_size,
                         stats_user=self.backend.stats_user,
                         auth_query=self.backend.auth_query,
-                        auth_file=AUTH_FILE_PATH,
+                        auth_file=auth_file,
                         enable_tls=enable_tls,
                         key_file=f"{PGB_DIR}/{TLS_KEY_FILE}",
                         ca_file=f"{PGB_DIR}/{TLS_CA_FILE}",
@@ -1085,8 +1052,26 @@ class PgBouncerK8sCharm(TypedCharmBase):
                 )
         logger.info("pushed new pgbouncer.ini config files to pgbouncer container")
 
-        if reload_pgbouncer:
-            self.reload_pgbouncer(restart)
+        logger.info(f"{'restarting' if restart else 'reloading'} pgbouncer application")
+
+        pebble_services = pgb_container.get_services()
+        try:
+            userlist = self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
+            if not userlist:
+                userlist = ""
+            self.push_file(auth_file, auth_file, 0o400)
+            for service in self._services:
+                if service["name"] not in pebble_services:
+                    # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
+                    raise PebbleConnectionError
+                if restart or pebble_services[service["name"]].current != ServiceStatus.ACTIVE:
+                    pgb_container.restart(service["name"])
+                else:
+                    pgb_container.send_signal(SIGHUP, service["name"])
+        finally:
+            self.delete_file(auth_file)
+
+        self.check_pgb_running()
 
     # =====================
     #  Relation Utilities
