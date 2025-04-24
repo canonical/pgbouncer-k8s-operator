@@ -682,6 +682,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         pgb_container.add_layer(PGB, pebble_layer, combine=True)
         if enabled:
             pgb_container.replan()
+            self.render_pgb_config(True)
         else:
             pgb_container.stop(self._metrics_service)
         self.check_pgb_running()
