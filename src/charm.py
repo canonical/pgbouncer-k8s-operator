@@ -682,7 +682,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
         pgb_container.add_layer(PGB, pebble_layer, combine=True)
         if enabled:
             pgb_container.replan()
-            self.render_pgb_config(True)
         else:
             pgb_container.stop(self._metrics_service)
         self.check_pgb_running()
@@ -1060,7 +1059,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             userlist = self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
             if not userlist:
                 userlist = ""
-            self.push_file(auth_file, auth_file, 0o400)
+            self.push_file(auth_file, userlist, 0o400)
             for service in self._services:
                 if service["name"] not in pebble_services:
                     # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
