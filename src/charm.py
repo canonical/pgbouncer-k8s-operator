@@ -645,6 +645,8 @@ class PgBouncerK8sCharm(TypedCharmBase):
         try:
             if self.check_pgb_running():
                 self.unit.status = ActiveStatus()
+            else:
+                self.render_pgb_config(True)
         except PebbleConnectionError:
             not_running = "pgbouncer not running"
             logger.error(not_running)
@@ -686,7 +688,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             pgb_container.stop(self._metrics_service)
         self.check_pgb_running()
 
-    def check_pgb_running(self):
+    def check_pgb_running(self) -> bool:
         """Checks that pgbouncer pebble service is running, and updates status accordingly."""
         pgb_container = self.unit.get_container(PGB)
         if not pgb_container.can_connect():
