@@ -56,7 +56,7 @@ async def test_multiple_pebble_services(ops_test: OpsTest):
     for service in services:
         service = service.split()
         if service[0] not in ["metrics_server", "logrotate"]:
-            assert service[1] == "enabled"
+            assert service[1] == "disabled"
             assert service[2] == "active"
 
 
