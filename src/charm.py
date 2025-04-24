@@ -361,6 +361,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         pebble_layer = self._pgbouncer_layer()
         container.add_layer(PGB, pebble_layer, combine=True)
         container.replan()
+        self.reload_pgbouncer(True)
 
         self.update_status()
 
