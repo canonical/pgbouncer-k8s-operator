@@ -646,6 +646,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             if self.check_pgb_running():
                 self.unit.status = ActiveStatus()
             else:
+                # Try to restart
                 self.render_pgb_config(True)
         except PebbleConnectionError:
             not_running = "pgbouncer not running"
@@ -816,7 +817,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
     def update_config(self) -> bool:
         """Updates PgBouncer config file based on the existence of the TLS files."""
-        self.render_pgb_config(True)
+        self.render_pgb_config()
 
         return True
 
