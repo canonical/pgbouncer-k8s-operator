@@ -175,6 +175,9 @@ async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
 
         monitoring_username = f"pgbouncer_stats_{PGB}".replace("-", "_")
         leader_cfg = await get_cfg(ops_test, f"{PGB}/0")
+        # Auth file name is randomised
+        assert leader_cfg["pgbouncer"].get("auth_file")
+        del leader_cfg["pgbouncer"]["auth_file"]
 
         assert monitoring_username in leader_cfg["pgbouncer"]["stats_users"]
 
@@ -182,6 +185,8 @@ async def test_pgbouncer_stable_when_deleting_postgres(ops_test: OpsTest):
             unit_name = f"{PGB}/{unit_id}"
             cfg = await get_cfg(ops_test, unit_name)
             assert monitoring_username in cfg["pgbouncer"]["stats_users"]
+            assert cfg["pgbouncer"].get("auth_file")
+            del cfg["pgbouncer"]["auth_file"]
 
             assert cfg == leader_cfg
 
