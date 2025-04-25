@@ -382,10 +382,6 @@ class BackendDatabaseRequires(Object):
             return
 
         self.charm.toggle_monitoring_layer(False)
-        # try:
-        #     self.charm.delete_file("/dev/shm/{self.charm.app.name}_")
-        # except PathError:
-        #     logger.warning("Cannot delete userlist.txt")
         if self.charm.unit.is_leader():
             self.charm.remove_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
 

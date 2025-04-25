@@ -656,12 +656,13 @@ class PgBouncerK8sCharm(TypedCharmBase):
     def _on_upgrade_charm(self, _) -> None:
         """Handle upgrade logic."""
         # Regenerate monitoring hash if it is still md5
-        if self.unit.is_leader() and (
-            auth_file := self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
-        ):
+        if not (auth_file := self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)):
+            return
+        monitoring_prefix = f'"{self.backend.stats_user}" "md5'
+        if self.unit.is_leader():
             new_auth = []
             for line in auth_file.split("\n"):
-                if line.startswith(f'"{self.backend.stats_user}" "md5'):
+                if line.startswith(monitoring_prefix):
                     stats_password = self.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)
                     new_auth.append(f'"{self.backend.stats_user}" "{stats_password}"')
                 else:
@@ -669,6 +670,9 @@ class PgBouncerK8sCharm(TypedCharmBase):
             new_auth_file = "\n".join(new_auth)
             if new_auth_file != auth_file:
                 self.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, new_auth_file)
+        # Disable monitoring until auth is regenerated
+        elif monitoring_prefix in auth_file:
+            self.toggle_monitoring_layer(False)
 
     def _generate_monitoring_service(self, enabled: bool = True) -> dict[str, str]:
         if enabled and (stats_password := self.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)):
