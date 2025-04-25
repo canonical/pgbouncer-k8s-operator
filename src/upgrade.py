@@ -90,25 +90,23 @@ class PgbouncerUpgrade(DataUpgrade):
             raise ClusterNotReadyError(e.message, e.cause) from e
 
     def _handle_md5_monitoring_auth(self) -> None:
-        if not (auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)):
+        if not self.charm.unit.is_leader() or not (
+            auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
+        ):
             return
 
         monitoring_prefix = f'"{self.charm.backend.stats_user}" "md5'
         # Regenerate monitoring user if it is still md5
-        if self.charm.unit.is_leader():
-            new_auth = []
-            for line in auth_file.split("\n"):
-                if line.startswith(monitoring_prefix):
-                    stats_password = self.charm.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)
-                    new_auth.append(f'"{self.charm.backend.stats_user}" "{stats_password}"')
-                else:
-                    new_auth.append(line)
-            new_auth_file = "\n".join(new_auth)
-            if new_auth_file != auth_file:
-                self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, new_auth_file)
-        # Disable monitoring until auth is regenerated
-        elif monitoring_prefix in auth_file:
-            self.charm.toggle_monitoring_layer(False)
+        new_auth = []
+        for line in auth_file.split("\n"):
+            if line.startswith(monitoring_prefix):
+                stats_password = self.charm.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)
+                new_auth.append(f'"{self.charm.backend.stats_user}" "{stats_password}"')
+            else:
+                new_auth.append(line)
+        new_auth_file = "\n".join(new_auth)
+        if new_auth_file != auth_file:
+            self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, new_auth_file)
 
     def _on_pgbouncer_pebble_ready(self, event: WorkloadEvent) -> None:
         if not self.peer_relation:
