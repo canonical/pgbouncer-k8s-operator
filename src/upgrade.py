@@ -93,7 +93,7 @@ class PgbouncerUpgrade(DataUpgrade):
         if not (auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)):
             return
 
-        monitoring_prefix = f'"{self.backend.stats_user}" "md5'
+        monitoring_prefix = f'"{self.charm.backend.stats_user}" "md5'
         # Regenerate monitoring user if it is still md5
         if self.charm.unit.is_leader():
             new_auth = []
@@ -105,7 +105,7 @@ class PgbouncerUpgrade(DataUpgrade):
                     new_auth.append(line)
             new_auth_file = "\n".join(new_auth)
             if new_auth_file != auth_file:
-                self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, new_auth_file)
+                self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, new_auth_file)
         # Disable monitoring until auth is regenerated
         elif monitoring_prefix in auth_file:
             self.charm.toggle_monitoring_layer(False)
