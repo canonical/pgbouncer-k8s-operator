@@ -20,7 +20,12 @@ from ops.pebble import ConnectionError as PebbleConnectionError
 from pydantic import BaseModel
 from typing_extensions import override
 
-from constants import CLIENT_RELATION_NAME
+from constants import (
+    APP_SCOPE,
+    AUTH_FILE_DATABAG_KEY,
+    CLIENT_RELATION_NAME,
+    MONITORING_PASSWORD_KEY,
+)
 
 DEFAULT_MESSAGE = "Pre-upgrade check failed and cannot safely upgrade"
 
@@ -84,6 +89,27 @@ class PgbouncerUpgrade(DataUpgrade):
         except KubernetesClientError as e:
             raise ClusterNotReadyError(e.message, e.cause) from e
 
+    def _handle_md5_monitoring_auth(self) -> None:
+        if not (auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)):
+            return
+
+        monitoring_prefix = f'"{self.backend.stats_user}" "md5'
+        # Regenerate monitoring user if it is still md5
+        if self.charm.unit.is_leader():
+            new_auth = []
+            for line in auth_file.split("\n"):
+                if line.startswith(monitoring_prefix):
+                    stats_password = self.charm.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)
+                    new_auth.append(f'"{self.charm.backend.stats_user}" "{stats_password}"')
+                else:
+                    new_auth.append(line)
+            new_auth_file = "\n".join(new_auth)
+            if new_auth_file != auth_file:
+                self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, new_auth_file)
+        # Disable monitoring until auth is regenerated
+        elif monitoring_prefix in auth_file:
+            self.charm.toggle_monitoring_layer(False)
+
     def _on_pgbouncer_pebble_ready(self, event: WorkloadEvent) -> None:
         if not self.peer_relation:
             logger.debug("Deferring on_pebble_ready: no upgrade peer relation yet")
@@ -97,6 +123,7 @@ class PgbouncerUpgrade(DataUpgrade):
             self.charm.reconcile_k8s_service()
             for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
                 self.charm.client_relation.update_connection_info(relation)
+        self._handle_md5_monitoring_auth()
 
         try:
             self._cluster_checks()

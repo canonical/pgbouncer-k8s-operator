@@ -140,7 +140,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
         self.framework.observe(self.on.update_status, self._on_update_status)
-        self.framework.observe(self.on.upgrade_charm, self._on_upgrade_charm)
 
         self.peers = Peers(self)
         self.backend = BackendDatabaseRequires(self)
@@ -652,27 +651,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
             not_running = "pgbouncer not running"
             logger.error(not_running)
             self.unit.status = WaitingStatus(not_running)
-
-    def _on_upgrade_charm(self, _) -> None:
-        """Handle upgrade logic."""
-        # Regenerate monitoring hash if it is still md5
-        if not (auth_file := self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)):
-            return
-        monitoring_prefix = f'"{self.backend.stats_user}" "md5'
-        if self.unit.is_leader():
-            new_auth = []
-            for line in auth_file.split("\n"):
-                if line.startswith(monitoring_prefix):
-                    stats_password = self.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)
-                    new_auth.append(f'"{self.backend.stats_user}" "{stats_password}"')
-                else:
-                    new_auth.append(line)
-            new_auth_file = "\n".join(new_auth)
-            if new_auth_file != auth_file:
-                self.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, new_auth_file)
-        # Disable monitoring until auth is regenerated
-        elif monitoring_prefix in auth_file:
-            self.toggle_monitoring_layer(False)
 
     def _generate_monitoring_service(self, enabled: bool = True) -> dict[str, str]:
         if enabled and (stats_password := self.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)):
