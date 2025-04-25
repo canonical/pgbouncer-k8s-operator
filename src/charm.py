@@ -435,9 +435,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
                 "override": "replace",
                 "after": [service["name"] for service in self._services],
             },
-            self._metrics_service: self._generate_monitoring_service(
-                self._should_enable_monitoring(self.backend.postgres)
-            ),
+            self._metrics_service: self._generate_monitoring_service(self.backend.postgres),
         }
         for service in self._services:
             pebble_services[service["name"]] = {
@@ -654,17 +652,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
             logger.error(not_running)
             self.unit.status = WaitingStatus(not_running)
 
-    def _should_enable_monitoring(self, enabled) -> bool:
-        # Disable monitoring until auth is regenerated
-        if (
-            not self.unit.is_leader()
-            and (auth_file := self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY))
-            and f'"{self.backend.stats_user}" "md5' in auth_file
-        ):
-            logger.warning("Old monitoring hash detected. Disabling until updated.")
-            enabled = False
-        return enabled
-
     def _generate_monitoring_service(self, enabled: bool = True) -> dict[str, str]:
         if enabled and (stats_password := self.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)):
             command = (
@@ -687,7 +674,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
     def toggle_monitoring_layer(self, enabled: bool) -> None:
         """Starts or stops the monitoring service."""
-        enabled = self._should_enable_monitoring(enabled)
         pebble_layer = Layer({
             "services": {self._metrics_service: self._generate_monitoring_service(enabled)}
         })
@@ -711,7 +697,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         pebble_services = pgb_container.get_services()
 
         services = [service["name"] for service in self._services]
-        if self.backend.ready:
+        if self.backend.ready and not self.upgrade.is_upgrading:
             services.append(self._metrics_service)
 
         for service in services:
