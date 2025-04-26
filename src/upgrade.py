@@ -89,11 +89,6 @@ class PgbouncerUpgrade(DataUpgrade):
         except KubernetesClientError as e:
             raise ClusterNotReadyError(e.message, e.cause) from e
 
-    @property
-    def is_upgrading(self) -> bool:
-        """Check if the unit is upgrding."""
-        return self.state not in ["upgrading", "recovery"]
-
     def _handle_md5_monitoring_auth(self) -> None:
         if not self.charm.unit.is_leader() or not (
             auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
@@ -119,7 +114,7 @@ class PgbouncerUpgrade(DataUpgrade):
             event.defer()
             return
 
-        if self.is_upgrading:
+        if self.state not in ["upgrading", "recovery"]:
             return
 
         if self.charm.unit.is_leader():

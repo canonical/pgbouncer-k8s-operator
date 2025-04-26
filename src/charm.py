@@ -38,8 +38,8 @@ from ops import (
     WaitingStatus,
     main,
 )
-from ops.pebble import ChangeError, Layer, ServiceStatus
 from ops.pebble import ConnectionError as PebbleConnectionError
+from ops.pebble import Layer, ServiceStatus
 
 from config import CharmConfig, ServiceType
 from constants import (
@@ -358,12 +358,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         pebble_layer = self._pgbouncer_layer()
         container.add_layer(PGB, pebble_layer, combine=True)
-        try:
-            container.replan()
-        except ChangeError as e:
-            if self.upgrade.is_upgrading:
-                return
-            raise e
+        container.replan()
         self.render_pgb_config(True)
 
         self.update_status()
@@ -702,7 +697,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         pebble_services = pgb_container.get_services()
 
         services = [service["name"] for service in self._services]
-        if self.backend.ready and not self.upgrade.is_upgrading:
+        if self.backend.ready:
             services.append(self._metrics_service)
 
         for service in services:
