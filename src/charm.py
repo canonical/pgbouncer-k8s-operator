@@ -1005,6 +1005,10 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         # Transient file
         auth_file = f"/dev/shm/{self.app.name}_{pgb.generate_password()}"  # noqa: S108
+        userlist = self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
+        if not userlist:
+            userlist = ""
+        auth_type = "md5" if f'"{self.backend.stats_user}" "md5' in userlist else "scram-sha-256"
 
         max_db_connections = self.config.max_db_connections
         if max_db_connections == 0:
@@ -1040,6 +1044,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
                         min_pool_size=min_pool_size,
                         reserve_pool_size=reserve_pool_size,
                         stats_user=self.backend.stats_user,
+                        auth_type=auth_type,
                         auth_query=self.backend.auth_query,
                         auth_file=auth_file,
                         enable_tls=enable_tls,
@@ -1055,9 +1060,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         pebble_services = pgb_container.get_services()
         try:
-            userlist = self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
-            if not userlist:
-                userlist = ""
             self.push_file(auth_file, userlist, 0o400)
             for service in self._services:
                 if service["name"] not in pebble_services:
