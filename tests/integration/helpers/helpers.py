@@ -303,7 +303,6 @@ async def deploy_and_relate_application_with_pgbouncer(
         apps=[application_name],
         status="active",
         raise_on_blocked=False,  # Application that needs a relation is blocked initially.
-        raise_on_error=False,
         timeout=1000,
     )
 

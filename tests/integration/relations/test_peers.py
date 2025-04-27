@@ -69,7 +69,6 @@ async def test_scaled_relations(ops_test: OpsTest):
                 status="active",
                 timeout=1000,
                 wait_for_exact_units=3,
-                raise_on_error=False,
             ),
         )
 

@@ -91,7 +91,6 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, charm):
             status="active",
             raise_on_blocked=False,
             timeout=1200,
-            raise_on_error=False,
         )
 
     # Relate the charms and wait for them exchanging some connection data.

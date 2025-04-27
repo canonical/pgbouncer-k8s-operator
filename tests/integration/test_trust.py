@@ -77,9 +77,7 @@ async def test_trust(ops_test: OpsTest, charm):
 
         logger.info(f"Relating application {PGB} with {PG}")
         await ops_test.model.relate(PGB, PG)
-        await ops_test.model.wait_for_idle(
-            apps=[PG, PGB], status="active", timeout=1200, raise_on_error=False
-        )
+        await ops_test.model.wait_for_idle(apps=[PG, PGB], status="active", timeout=1200)
 
         logger.info(f"Relating application {PGB} with {CLIENT_APP_NAME}")
         await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:database")

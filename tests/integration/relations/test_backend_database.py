@@ -70,7 +70,6 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, charm):
                 status="active",
                 timeout=1000,
                 wait_for_exact_units=3,
-                raise_on_error=False,
             ),
         )
 
