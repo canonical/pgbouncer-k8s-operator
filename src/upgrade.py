@@ -109,7 +109,11 @@ class PgbouncerUpgrade(DataUpgrade):
             self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, new_auth_file)
 
     def _on_pgbouncer_pebble_ready(self, event: WorkloadEvent) -> None:
-        if not self.peer_relation or not self.charm.peers.relation:
+        if (
+            not self.peer_relation
+            or not self.charm.peers.relation
+            or self.charm.peers.unit_databag.get("container_initialised") != "True"
+        ):
             logger.debug("Deferring on_pebble_ready: no upgrade peer relation yet")
             event.defer()
             return
