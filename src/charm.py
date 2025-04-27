@@ -713,6 +713,11 @@ class PgBouncerK8sCharm(TypedCharmBase):
                 if self.unit.status.message != EXTENSIONS_BLOCKING_MESSAGE:
                     self.unit.status = BlockedStatus(pgb_not_running)
                 logger.warning(pgb_not_running)
+                if service == self._metrics_service:
+                    try:
+                        pgb_container.restart(service)
+                    except ChangeError as e:
+                        logger.debug(f"Failed to start metrics service with error: {e}")
                 return False
 
         return True
