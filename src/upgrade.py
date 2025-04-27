@@ -25,6 +25,7 @@ from constants import (
     AUTH_FILE_DATABAG_KEY,
     CLIENT_RELATION_NAME,
     MONITORING_PASSWORD_KEY,
+    PGB,
 )
 
 DEFAULT_MESSAGE = "Pre-upgrade check failed and cannot safely upgrade"
@@ -109,12 +110,13 @@ class PgbouncerUpgrade(DataUpgrade):
             self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, new_auth_file)
 
     def _on_pgbouncer_pebble_ready(self, event: WorkloadEvent) -> None:
+        pgb_container = self.charm.unit.get_container(PGB)
         if (
             not self.peer_relation
             or not self.charm.peers.relation
-            or self.charm.peers.unit_databag.get("container_initialised") != "True"
+            or not pgb_container.get_services()
         ):
-            logger.debug("Deferring on_pebble_ready: no upgrade peer relation yet")
+            logger.debug("Deferring upgrade on_pebble_ready: no unit not yet")
             event.defer()
             return
 
