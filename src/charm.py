@@ -349,7 +349,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         """
         container = event.workload
 
-        if not self._init_config(container):
+        if not self.peers.relation or not self._init_config(container):
             event.defer()
             return
 
