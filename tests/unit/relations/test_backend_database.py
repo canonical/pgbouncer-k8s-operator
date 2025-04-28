@@ -4,7 +4,7 @@
 import unittest
 from unittest.mock import MagicMock, PropertyMock, patch
 
-from charms.pgbouncer_k8s.v0.pgb import get_hashed_password
+from charms.pgbouncer_k8s.v0.pgb import get_md5_password
 from ops import ModelError, WaitingStatus
 from ops.pebble import ConnectionError as PebbleConnectionError
 from ops.testing import Harness
@@ -40,6 +40,10 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         self.togggle_monitoring_patch.stop()
 
     @patch("charm.PgBouncerK8sCharm.get_secret", return_value=None)
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.generate_monitoring_hash",
+        return_value="scram-hash",
+    )
     @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
     @patch(
         "relations.backend_database.BackendDatabaseRequires.stats_user",
@@ -57,7 +61,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     @patch(
         "relations.backend_database.BackendDatabaseRequires.relation", new_callable=PropertyMock
     )
-    @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
+    @patch("relations.backend_database.generate_password", return_value="pw")
     @patch("relations.backend_database.BackendDatabaseRequires.initialise_auth_function")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.render_auth_file")
@@ -74,6 +78,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         _auth_user,
         _stats_user,
         _app_databag,
+        _generate_hash,
         _,
     ):
         self.harness.set_leader(True)
@@ -86,7 +91,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         mock_event.username = "mock_user"
 
         self.backend._on_database_created(mock_event)
-        hash_pw = get_hashed_password(self.backend.auth_user, pw)
+        hash_pw = get_md5_password(self.backend.auth_user, pw)
 
         postgres.create_user.assert_called_with(self.backend.auth_user, hash_pw, admin=True)
         _init_auth.assert_any_call([self.backend.database.database, "postgres"])

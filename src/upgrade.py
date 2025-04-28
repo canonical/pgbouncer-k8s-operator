@@ -6,6 +6,7 @@
 import json
 import logging
 
+import psycopg2
 from charms.data_platform_libs.v0.upgrade import (
     ClusterNotReadyError,
     DataUpgrade,
@@ -102,7 +103,18 @@ class PgbouncerUpgrade(DataUpgrade):
         for line in auth_file.split("\n"):
             if line.startswith(monitoring_prefix):
                 stats_password = self.charm.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)
-                new_auth.append(f'"{self.charm.backend.stats_user}" "{stats_password}"')
+                try:
+                    hashed_monitoring_password = self.charm.backend.generate_monitoring_hash(
+                        stats_password
+                    )
+                except psycopg2.Error:
+                    logger.error(
+                        "Cannot generate SCRAM monitoring password. Keeping existing MD5 hash"
+                    )
+                    return
+                new_auth.append(
+                    f'"{self.charm.backend.stats_user}" "{hashed_monitoring_password}"'
+                )
             else:
                 new_auth.append(line)
         new_auth_file = "\n".join(new_auth)

@@ -1018,7 +1018,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
         if not self.configuration_check() or not pgb_container.can_connect():
             return
 
-        # Transient file
         userlist = self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
         if not userlist:
             userlist = ""
