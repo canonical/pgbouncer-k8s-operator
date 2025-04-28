@@ -110,7 +110,7 @@ class TestCharm(unittest.TestCase):
             )
             self.assertTrue(container_service.is_running())
         _update_status.assert_called_once_with()
-        _render.assert_called_once_with(True)
+        _render.assert_called_once_with()
 
     @patch("charm.PgBouncerK8sCharm.update_status")
     @patch("charm.PgBouncerK8sCharm.push_tls_files_to_workload")
@@ -133,7 +133,7 @@ class TestCharm(unittest.TestCase):
         get_tls_files.assert_called_once_with()
         push_tls_files_to_workload.assert_called_once_with(False)
         _update_status.assert_called_once_with()
-        _render.assert_called_once_with(True)
+        _render.assert_called_once_with()
 
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     @patch("ops.model.Container.send_signal")
@@ -291,6 +291,13 @@ class TestCharm(unittest.TestCase):
             _push_file.assert_any_call(
                 f"/var/lib/pgbouncer/instance_{i}/pgbouncer.ini", expected_content, 0o400
             )
+
+    @patch("charm.PgBouncerK8sCharm.get_secret", return_value="test")
+    @patch("charm.PgBouncerK8sCharm.push_file")
+    def test_render_auth_file(self, _push_file, get_secret):
+        self.charm.render_auth_file()
+
+        _push_file.assert_called_once_with(self.charm.auth_file, "test", 0o400)
 
     @patch("charm.Peers.app_databag", new_callable=PropertyMock, return_value={})
     @patch("charm.PgBouncerK8sCharm.get_secret")

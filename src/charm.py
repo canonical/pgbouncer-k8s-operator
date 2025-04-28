@@ -4,7 +4,6 @@
 
 """Charmed PgBouncer connection pooler."""
 
-import contextlib
 import functools
 import json
 import logging
@@ -21,7 +20,7 @@ from charms.data_platform_libs.v0.data_interfaces import DataPeerData, DataPeerU
 from charms.data_platform_libs.v0.data_models import TypedCharmBase
 from charms.grafana_k8s.v0.grafana_dashboard import GrafanaDashboardProvider
 from charms.loki_k8s.v0.loki_push_api import LogProxyConsumer
-from charms.pgbouncer_k8s.v0 import pgb
+from charms.pgbouncer_k8s.v0.pgb import generate_password
 from charms.postgresql_k8s.v0.postgresql import PERMISSIONS_GROUP_ADMIN
 from charms.postgresql_k8s.v0.postgresql_tls import PostgreSQLTLS
 from charms.prometheus_k8s.v0.prometheus_scrape import MetricsEndpointProvider
@@ -359,7 +358,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         if not self.peers.relation or not self._init_config(container):
             event.defer()
             return
-        self.peers.unit_databag["userlist_nonce"] = pgb.generate_password()
+        self.peers.unit_databag["userlist_nonce"] = generate_password()
 
         self.render_auth_file()
 
@@ -370,9 +369,8 @@ class PgBouncerK8sCharm(TypedCharmBase):
         pebble_layer = self._pgbouncer_layer()
         container.add_layer(PGB, pebble_layer, combine=True)
         # Initial start will fail because transient files are not rendered yet
-        with contextlib.suppress(ChangeError):
-            container.replan()
-        self.render_pgb_config(True)
+        self.render_pgb_config()
+        container.replan()
 
         self.update_status()
 
@@ -1069,10 +1067,12 @@ class PgBouncerK8sCharm(TypedCharmBase):
                 )
         logger.info("pushed new pgbouncer.ini config files to pgbouncer container")
 
-        logger.info(f"{'restarting' if restart else 'reloading'} pgbouncer application")
-
         pgb_container = self.unit.get_container(PGB)
         pebble_services = pgb_container.get_services()
+        if not pebble_services:
+            return
+
+        logger.info(f"{'restarting' if restart else 'reloading'} pgbouncer application")
         for service in self._services:
             if service["name"] not in pebble_services:
                 # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
@@ -1084,7 +1084,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         self.check_pgb_running()
 
-    def render_auth_file(self):
+    def render_auth_file(self) -> None:
         """Renders the given auth_file to the correct location."""
         if auth_file := self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
             self.push_file(self.auth_file, auth_file, 0o400)
