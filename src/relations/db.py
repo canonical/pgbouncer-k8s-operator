@@ -63,6 +63,7 @@ from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import (
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
+    PostgreSQLEnableDisableExtensionError,
 )
 from ops.charm import (
     CharmBase,
@@ -281,7 +282,11 @@ class DbProvides(Object):
             self.charm.unit.status = initial_status
             self.charm.update_status()
             logger.info(created_msg)
-        except (PostgreSQLCreateDatabaseError, PostgreSQLCreateUserError):
+        except (
+            PostgreSQLCreateDatabaseError,
+            PostgreSQLCreateUserError,
+            PostgreSQLEnableDisableExtensionError,
+        ):
             err_msg = f"failed to create database or user for {self.relation_name}"
             logger.error(err_msg)
             self.charm.unit.status = BlockedStatus(err_msg)

@@ -43,6 +43,7 @@ from charms.postgresql_k8s.v0.postgresql import (
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
     PostgreSQLDeleteUserError,
+    PostgreSQLEnableDisableExtensionError,
     PostgreSQLGetPostgreSQLVersionError,
 )
 from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
@@ -168,6 +169,7 @@ class PgBouncerProvider(Object):
             PostgreSQLCreateDatabaseError,
             PostgreSQLCreateUserError,
             PostgreSQLGetPostgreSQLVersionError,
+            PostgreSQLEnableDisableExtensionError,
         ) as e:
             logger.exception(e)
             self.charm.unit.status = BlockedStatus(
