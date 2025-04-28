@@ -4,6 +4,7 @@
 import unittest
 from unittest.mock import MagicMock, PropertyMock, patch
 
+from charms.pgbouncer_k8s.v0.pgb import get_hashed_password
 from ops import ModelError, WaitingStatus
 from ops.pebble import ConnectionError as PebbleConnectionError
 from ops.testing import Harness
@@ -59,10 +60,12 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
     @patch("relations.backend_database.BackendDatabaseRequires.initialise_auth_function")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
+    @patch("charm.PgBouncerK8sCharm.render_auth_file")
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     def test_on_database_created(
         self,
         _check_running,
+        _render_auth_file,
         _render_cfg_file,
         _init_auth,
         _gen_pw,
@@ -74,6 +77,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         _,
     ):
         self.harness.set_leader(True)
+        pw = _gen_pw.return_value
         postgres = _postgres.return_value
         _relation.return_value.data = {}
         _relation.return_value.data[self.charm.app] = {"database": "database"}
@@ -82,8 +86,9 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         mock_event.username = "mock_user"
 
         self.backend._on_database_created(mock_event)
+        hash_pw = get_hashed_password(self.backend.auth_user, pw)
 
-        postgres.create_user.assert_called_with(self.backend.auth_user, "pw", admin=True)
+        postgres.create_user.assert_called_with(self.backend.auth_user, hash_pw, admin=True)
         _init_auth.assert_any_call([self.backend.database.database, "postgres"])
 
         self.toggle_monitoring_layer.assert_called_with(True)

@@ -339,6 +339,13 @@ class PgBouncerK8sCharm(TypedCharmBase):
         )
         return True
 
+    @property
+    def auth_file(self) -> str:
+        """Auth file location."""
+        if nonce := self.peers.unit_databag.get("userlist_nonce"):
+            return f"/dev/shm/{self.app.name}_{nonce}"  # noqa: S108
+        return ""
+
     def _on_pgbouncer_pebble_ready(self, event: PebbleReadyEvent) -> None:
         """Define and start pgbouncer workload.
 
@@ -352,6 +359,9 @@ class PgBouncerK8sCharm(TypedCharmBase):
         if not self.peers.relation or not self._init_config(container):
             event.defer()
             return
+        self.peers.unit_databag["userlist_nonce"] = pgb.generate_password()
+
+        self.render_auth_file()
 
         # in case of pod restart
         if all(self.tls.get_tls_files()):
@@ -447,7 +457,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
                 "group": PG_GROUP,
                 # -R flag reuses sockets on restart
                 "command": f"pgbouncer {service['ini_path']}",
-                "startup": "disabled",
+                "startup": "enabled",
                 "override": "replace",
             }
         return Layer({
@@ -647,9 +657,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
         try:
             if self.check_pgb_running():
                 self.unit.status = ActiveStatus()
-            else:
-                # Try to restart
-                self.render_pgb_config(True)
         except PebbleConnectionError:
             not_running = "pgbouncer not running"
             logger.error(not_running)
@@ -1012,7 +1019,6 @@ class PgBouncerK8sCharm(TypedCharmBase):
             return
 
         # Transient file
-        auth_file = f"/dev/shm/{self.app.name}_{pgb.generate_password()}"  # noqa: S108
         userlist = self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
         if not userlist:
             userlist = ""
@@ -1054,7 +1060,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
                         stats_user=self.backend.stats_user,
                         auth_type=auth_type,
                         auth_query=self.backend.auth_query,
-                        auth_file=auth_file,
+                        auth_file=self.auth_file,
                         enable_tls=enable_tls,
                         key_file=f"{PGB_DIR}/{TLS_KEY_FILE}",
                         ca_file=f"{PGB_DIR}/{TLS_CA_FILE}",
@@ -1066,21 +1072,24 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         logger.info(f"{'restarting' if restart else 'reloading'} pgbouncer application")
 
+        pgb_container = self.unit.get_container(PGB)
         pebble_services = pgb_container.get_services()
-        try:
-            self.push_file(auth_file, userlist, 0o400)
-            for service in self._services:
-                if service["name"] not in pebble_services:
-                    # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
-                    raise PebbleConnectionError
-                if restart or pebble_services[service["name"]].current != ServiceStatus.ACTIVE:
-                    pgb_container.restart(service["name"])
-                else:
-                    pgb_container.send_signal(SIGHUP, service["name"])
-        finally:
-            self.delete_file(auth_file)
+        for service in self._services:
+            if service["name"] not in pebble_services:
+                # pebble_ready event hasn't fired so pgbouncer has not been added to pebble config
+                raise PebbleConnectionError
+            if restart or pebble_services[service["name"]].current != ServiceStatus.ACTIVE:
+                pgb_container.restart(service["name"])
+            else:
+                pgb_container.send_signal(SIGHUP, service["name"])
 
         self.check_pgb_running()
+
+    def render_auth_file(self):
+        """Renders the given auth_file to the correct location."""
+        if auth_file := self.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY):
+            self.push_file(self.auth_file, auth_file, 0o400)
+            logger.info("pushed new auth file to pgbouncer container")
 
     # =====================
     #  Relation Utilities

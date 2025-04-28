@@ -23,6 +23,7 @@ default config for pgbouncer.
 import logging
 import secrets
 import string
+from hashlib import md5
 from typing import Dict
 
 # The unique Charmhub library identifier, never change it
@@ -31,7 +32,7 @@ LIBID = "113f4a7480c04631bfdf5fe776f760cd"
 LIBAPI = 0
 # Increment this PATCH version before using `charmcraft publish-lib` or reset
 # to 0 if you are raising the major API version
-LIBPATCH = 11
+LIBPATCH = 10
 
 logger = logging.getLogger(__name__)
 
@@ -82,3 +83,10 @@ def generate_password() -> str:
     """
     choices = string.ascii_letters + string.digits
     return "".join([secrets.choice(choices) for _ in range(24)])
+
+
+def get_hashed_password(username: str, password: str) -> str:
+    """Creates an md5 hashed password for the given user, in the format postgresql expects."""
+    # Should be handled in DPE-1430
+    hash_password = md5((password + username).encode()).hexdigest()  # noqa: S324
+    return f"md5{hash_password}"

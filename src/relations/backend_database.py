@@ -57,6 +57,7 @@ from ops.model import (
     WaitingStatus,
 )
 from ops.pebble import ConnectionError as PebbleConnectionError
+from ops.pebble import PathError
 
 from constants import (
     APP_SCOPE,
@@ -263,6 +264,7 @@ class BackendDatabaseRequires(Object):
                 event.defer()
                 logger.error("deferring database-created hook - cannot access secrets")
                 return
+            self.charm.render_auth_file()
             self.charm.render_pgb_config()
             self.charm.toggle_monitoring_layer(True)
             self.charm.update_status()
@@ -288,18 +290,21 @@ class BackendDatabaseRequires(Object):
             return
 
         plaintext_password = pgb.generate_password()
+        hashed_password = pgb.get_hashed_password(self.auth_user, plaintext_password)
         # create authentication user on postgres database, so we can authenticate other users
         # later on
-        self.postgres.create_user(self.auth_user, plaintext_password, admin=True)
+        self.postgres.create_user(self.auth_user, hashed_password, admin=True)
         self.initialise_auth_function(self.collect_databases())
 
         # Add the monitoring user.
         if not (monitoring_password := self.charm.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)):
             monitoring_password = pgb.generate_password()
             self.charm.set_secret(APP_SCOPE, MONITORING_PASSWORD_KEY, monitoring_password)
+        hashed_monitoring_password = pgb.get_hashed_password(self.stats_user, monitoring_password)
 
-        auth_file = f'"{self.auth_user}" "{plaintext_password}"\n"{self.stats_user}" "{monitoring_password}"'
+        auth_file = f'"{self.auth_user}" "{hashed_password}"\n"{self.stats_user}" "{hashed_monitoring_password}"'
         self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, auth_file)
+        self.charm.render_auth_file()
 
         self.charm.render_pgb_config()
         self.charm.toggle_monitoring_layer(True)
@@ -382,6 +387,10 @@ class BackendDatabaseRequires(Object):
             return
 
         self.charm.toggle_monitoring_layer(False)
+        try:
+            self.charm.delete_file(self.charm.auth_file)
+        except PathError:
+            logger.warning("Cannot delete userlist.txt")
         if self.charm.unit.is_leader():
             self.charm.remove_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
 

@@ -137,7 +137,11 @@ class TestCharm(unittest.TestCase):
 
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     @patch("ops.model.Container.send_signal")
-    @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="test")
+    @patch(
+        "charm.PgBouncerK8sCharm.auth_file",
+        new_callable=PropertyMock,
+        return_value="/dev/shm/pgbouncer-k8s_test",
+    )
     @patch(
         "relations.backend_database.DatabaseRequires.fetch_relation_field",
         return_value="BACKNEND_USER",
@@ -151,12 +155,10 @@ class TestCharm(unittest.TestCase):
         return_value={"endpoints": "HOST:PORT", "read-only-endpoints": "HOST2:PORT"},
     )
     @patch("charm.PgBouncerK8sCharm.get_relation_databases")
-    @patch("charm.PgBouncerK8sCharm.delete_file")
     @patch("charm.PgBouncerK8sCharm.push_file")
     def test_render_pgb_config(
         self,
         _push_file,
-        _delete_file,
         _get_dbs,
         _postgres_databag,
         _backend_rel,
