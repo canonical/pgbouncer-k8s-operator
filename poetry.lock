@@ -2,18 +2,18 @@
 
 [[package]]
 name = "allure-pytest"
-version = "2.14.0"
+version = "2.14.1"
 description = "Allure pytest integration"
 optional = false
 python-versions = "*"
 groups = ["integration"]
 files = [
-    {file = "allure_pytest-2.14.0-py3-none-any.whl", hash = "sha256:6ddb68ef42bd5a2dfbcc136a184bf3e78e631ede7b8c54750026ffd407bda9af"},
-    {file = "allure_pytest-2.14.0.tar.gz", hash = "sha256:2b485dc307755f8f3207783a69558ca1cc72f1e2c97bedc65c93fdb77adf328f"},
+    {file = "allure_pytest-2.14.1-py3-none-any.whl", hash = "sha256:2d35bee7118b6478acac264cf8e9b401ca9a8b1929cae2afa56c9c79193be3a2"},
+    {file = "allure_pytest-2.14.1.tar.gz", hash = "sha256:f5a7469608044869243355ac1c1a97d373501a961076ac876ae29dbc6548920d"},
 ]
 
 [package.dependencies]
-allure-python-commons = "2.14.0"
+allure-python-commons = "2.14.1"
 pytest = ">=4.5.0"
 
 [[package]]
@@ -34,14 +34,14 @@ pytest = "*"
 
 [[package]]
 name = "allure-python-commons"
-version = "2.14.0"
+version = "2.14.1"
 description = "Contains the API for end users as well as helper functions and classes to build Allure adapters for Python test frameworks"
 optional = false
 python-versions = ">=3.6"
 groups = ["integration"]
 files = [
-    {file = "allure_python_commons-2.14.0-py3-none-any.whl", hash = "sha256:9200f40abee697133e9ed9f68887cde996a24b9eb33fcf528da8fe50fae88e43"},
-    {file = "allure_python_commons-2.14.0.tar.gz", hash = "sha256:9b217e2f6c74cdbd0e253f89059d4165346e95fcb28228fae333ff4dccea0bd5"},
+    {file = "allure_python_commons-2.14.1-py3-none-any.whl", hash = "sha256:cf2bc5fef2c392b1782ee6956fce6641645517b453ff72a901acf20db3d37d36"},
+    {file = "allure_python_commons-2.14.1.tar.gz", hash = "sha256:2a18f987c722810ff1cfc1509fad85fbdaabd695770804a1b4c93cf95d3cdd4e"},
 ]
 
 [package.dependencies]
@@ -268,14 +268,14 @@ files = [
 
 [[package]]
 name = "certifi"
-version = "2025.1.31"
+version = "2025.4.26"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.6"
 groups = ["main", "charm-libs", "integration"]
 files = [
-    {file = "certifi-2025.1.31-py3-none-any.whl", hash = "sha256:ca78db4565a652026a4db2bcdf68f2fb589ea80d0be70e03929ed730746b84fe"},
-    {file = "certifi-2025.1.31.tar.gz", hash = "sha256:3d5da6925056f6f18f119200434a4780a94263f10d1c21d032a6f6b2baa20651"},
+    {file = "certifi-2025.4.26-py3-none-any.whl", hash = "sha256:30350364dfe371162649852c63336a15c70c6510c2ad5015b21c2345311805f3"},
+    {file = "certifi-2025.4.26.tar.gz", hash = "sha256:0a816057ea3cdefcef70270d2c515e4506bbc954f417fa5ade2021213bb8f0c6"},
 ]
 
 [[package]]
@@ -898,14 +898,14 @@ tomli = {version = "*", markers = "python_version > \"3.6\" and python_version <
 
 [[package]]
 name = "ipython"
-version = "8.35.0"
+version = "8.36.0"
 description = "IPython: Productive Interactive Computing"
 optional = false
 python-versions = ">=3.10"
 groups = ["integration"]
 files = [
-    {file = "ipython-8.35.0-py3-none-any.whl", hash = "sha256:e6b7470468ba6f1f0a7b116bb688a3ece2f13e2f94138e508201fad677a788ba"},
-    {file = "ipython-8.35.0.tar.gz", hash = "sha256:d200b7d93c3f5883fc36ab9ce28a18249c7706e51347681f80a0aef9895f2520"},
+    {file = "ipython-8.36.0-py3-none-any.whl", hash = "sha256:12b913914d010dcffa2711505ec8be4bf0180742d97f1e5175e51f22086428c1"},
+    {file = "ipython-8.36.0.tar.gz", hash = "sha256:24658e9fe5c5c819455043235ba59cfffded4a35936eefceceab6b192f7092ff"},
 ]
 
 [package.dependencies]
@@ -2631,4 +2631,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "b4e2508cdfc348f711dee080a455fbd614d455a9187e8e568299bec1fee1708f"
+content-hash = "74d60e78f6ac58d6ad2000a91c81e1d4f5ed5abc820e69e4dcc48cc696d3a8b0"
