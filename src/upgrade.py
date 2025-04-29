@@ -6,6 +6,7 @@
 import json
 import logging
 
+import psycopg2
 from charms.data_platform_libs.v0.upgrade import (
     ClusterNotReadyError,
     DataUpgrade,
@@ -20,7 +21,13 @@ from ops.pebble import ConnectionError as PebbleConnectionError
 from pydantic import BaseModel
 from typing_extensions import override
 
-from constants import CLIENT_RELATION_NAME
+from constants import (
+    APP_SCOPE,
+    AUTH_FILE_DATABAG_KEY,
+    CLIENT_RELATION_NAME,
+    MONITORING_PASSWORD_KEY,
+    PGB,
+)
 
 DEFAULT_MESSAGE = "Pre-upgrade check failed and cannot safely upgrade"
 
@@ -84,9 +91,44 @@ class PgbouncerUpgrade(DataUpgrade):
         except KubernetesClientError as e:
             raise ClusterNotReadyError(e.message, e.cause) from e
 
+    def _handle_md5_monitoring_auth(self) -> None:
+        if not self.charm.unit.is_leader() or not (
+            auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
+        ):
+            return
+
+        monitoring_prefix = f'"{self.charm.backend.stats_user}" "md5'
+        # Regenerate monitoring user if it is still md5
+        new_auth = []
+        for line in auth_file.split("\n"):
+            if line.startswith(monitoring_prefix):
+                stats_password = self.charm.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)
+                try:
+                    hashed_monitoring_password = self.charm.backend.generate_monitoring_hash(
+                        stats_password
+                    )
+                except psycopg2.Error:
+                    logger.error(
+                        "Cannot generate SCRAM monitoring password. Keeping existing MD5 hash"
+                    )
+                    return
+                new_auth.append(
+                    f'"{self.charm.backend.stats_user}" "{hashed_monitoring_password}"'
+                )
+            else:
+                new_auth.append(line)
+        new_auth_file = "\n".join(new_auth)
+        if new_auth_file != auth_file:
+            self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, new_auth_file)
+
     def _on_pgbouncer_pebble_ready(self, event: WorkloadEvent) -> None:
-        if not self.peer_relation:
-            logger.debug("Deferring on_pebble_ready: no upgrade peer relation yet")
+        pgb_container = self.charm.unit.get_container(PGB)
+        if (
+            not self.peer_relation
+            or not self.charm.peers.relation
+            or not pgb_container.get_services()
+        ):
+            logger.debug("Deferring upgrade on_pebble_ready: no unit not yet")
             event.defer()
             return
 
@@ -97,6 +139,7 @@ class PgbouncerUpgrade(DataUpgrade):
             self.charm.reconcile_k8s_service()
             for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
                 self.charm.client_relation.update_connection_info(relation)
+        self._handle_md5_monitoring_auth()
 
         try:
             self._cluster_checks()

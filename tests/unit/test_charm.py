@@ -21,7 +21,6 @@ from parameterized import parameterized
 
 from charm import PgBouncerK8sCharm
 from constants import (
-    AUTH_FILE_PATH,
     BACKEND_RELATION_NAME,
     PEER_RELATION_NAME,
     PGB,
@@ -59,12 +58,8 @@ class TestCharm(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.reconcile_k8s_service")
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
-    @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
-    @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     def test_on_config_changed(
         self,
-        _check_pgb_running,
-        _reload,
         _render,
         _update_connection_info,
         _,
@@ -73,7 +68,7 @@ class TestCharm(unittest.TestCase):
         self.harness.set_leader(True)
         container = self.harness.model.unit.get_container(PGB)
         self.charm.on.pgbouncer_pebble_ready.emit(container)
-        _reload.reset_mock()
+        _render.reset_mock()
 
         mock_cores = 1
         self.charm._cores = mock_cores
@@ -84,9 +79,8 @@ class TestCharm(unittest.TestCase):
             "max_db_connections": max_db_connections,
             "listen_port": 6464,
         })
-        _reload.assert_called_once_with(restart=True)
+        _render.assert_called_once_with(restart=True)
         _update_connection_info.assert_called_with()
-        _check_pgb_running.assert_called_once_with()
 
     @patch(
         "charm.PgBouncerK8sCharm.is_container_ready", new_callable=PropertyMock, return_value=False
@@ -141,7 +135,13 @@ class TestCharm(unittest.TestCase):
         _update_status.assert_called_once_with()
         _render.assert_called_once_with()
 
-    @patch("ops.model.Container.can_connect", return_value=False)
+    @patch("charm.PgBouncerK8sCharm.check_pgb_running")
+    @patch("ops.model.Container.send_signal")
+    @patch(
+        "charm.PgBouncerK8sCharm.auth_file",
+        new_callable=PropertyMock,
+        return_value="/dev/shm/pgbouncer-k8s_test",
+    )
     @patch(
         "relations.backend_database.DatabaseRequires.fetch_relation_field",
         return_value="BACKNEND_USER",
@@ -156,16 +156,16 @@ class TestCharm(unittest.TestCase):
     )
     @patch("charm.PgBouncerK8sCharm.get_relation_databases")
     @patch("charm.PgBouncerK8sCharm.push_file")
-    @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
     def test_render_pgb_config(
         self,
-        _reload_pgbouncer,
         _push_file,
         _get_dbs,
         _postgres_databag,
         _backend_rel,
         _,
-        _can_connect,
+        __,
+        _send_signal,
+        _check_pgb_running,
     ):
         _get_dbs.return_value = {
             "1": {"name": "first_test", "legacy": True},
@@ -173,15 +173,14 @@ class TestCharm(unittest.TestCase):
         }
 
         # Assert we exit early if _can_connect returns false
-        _can_connect.return_value = False
-        self.charm.render_pgb_config(reload_pgbouncer=False)
-        _reload_pgbouncer.assert_not_called()
+        self.harness.set_can_connect(PGB, False)
+        self.charm.render_pgb_config()
+        assert not _send_signal.called
 
         with open("templates/pgb_config.j2") as file:
             template = Template(file.read())
-        _can_connect.return_value = True
-        self.charm.render_pgb_config(reload_pgbouncer=True)
-        _reload_pgbouncer.assert_called()
+        self.harness.set_can_connect(PGB, True)
+        self.charm.render_pgb_config()
         effective_db_connections = 100 / self.charm._cores
         default_pool_size = math.ceil(effective_db_connections / 2)
         min_pool_size = math.ceil(effective_db_connections / 4)
@@ -234,15 +233,19 @@ class TestCharm(unittest.TestCase):
                 min_pool_size=min_pool_size,
                 reserve_pool_size=reserve_pool_size,
                 stats_user="pgbouncer_stats_pgbouncer_k8s",
+                auth_type="scram-sha-256",
                 auth_query="SELECT username, password FROM pgbouncer_auth_BACKNEND_USER.get_auth($1)",
-                auth_file=AUTH_FILE_PATH,
+                auth_file="/dev/shm/pgbouncer-k8s_test",
                 enable_tls=False,
             )
             _push_file.assert_any_call(
                 f"/var/lib/pgbouncer/instance_{i}/pgbouncer.ini", expected_content, 0o400
             )
+        _check_pgb_running.assert_called_once_with()
+        _send_signal.assert_has_calls([
+            call(SIGHUP, service["name"]) for service in self.charm._services
+        ])
         _push_file.reset_mock()
-        _reload_pgbouncer.reset_mock()
 
         # test constant pool sizes with unlimited connections and no ro endpoints
         with self.harness.hooks_disabled():
@@ -264,7 +267,6 @@ class TestCharm(unittest.TestCase):
 
         self.charm.render_pgb_config()
 
-        assert not _reload_pgbouncer.called
         for i in range(self.charm._cores):
             expected_content = template.render(
                 databases=expected_databases,
@@ -281,26 +283,21 @@ class TestCharm(unittest.TestCase):
                 min_pool_size=10,
                 reserve_pool_size=10,
                 stats_user="pgbouncer_stats_pgbouncer_k8s",
+                auth_type="scram-sha-256",
                 auth_query="SELECT username, password FROM pgbouncer_auth_BACKNEND_USER.get_auth($1)",
-                auth_file=AUTH_FILE_PATH,
+                auth_file="/dev/shm/pgbouncer-k8s_test",
                 enable_tls=False,
             )
             _push_file.assert_any_call(
                 f"/var/lib/pgbouncer/instance_{i}/pgbouncer.ini", expected_content, 0o400
             )
 
+    @patch("charm.PgBouncerK8sCharm.get_secret", return_value="test")
     @patch("charm.PgBouncerK8sCharm.push_file")
-    @patch("charm.PgBouncerK8sCharm.reload_pgbouncer")
-    def test_render_auth_file(self, _reload_pgbouncer, _push_file):
-        self.charm.render_auth_file("test", reload_pgbouncer=False)
+    def test_render_auth_file(self, _push_file, get_secret):
+        self.charm.render_auth_file()
 
-        _reload_pgbouncer.assert_not_called()
-        _push_file.assert_called_once_with(AUTH_FILE_PATH, "test", 0o400)
-        _reload_pgbouncer.reset_mock()
-
-        # Test reload
-        self.charm.render_auth_file("test", reload_pgbouncer=True)
-        _reload_pgbouncer.assert_called_once_with()
+        _push_file.assert_called_once_with(self.charm.auth_file, "test", 0o400)
 
     @patch("charm.Peers.app_databag", new_callable=PropertyMock, return_value={})
     @patch("charm.PgBouncerK8sCharm.get_secret")
@@ -342,22 +339,6 @@ class TestCharm(unittest.TestCase):
         self.harness.set_leader(False)
 
         assert self.charm.generate_relation_databases() == {}
-
-    @patch("charm.PgBouncerK8sCharm.check_pgb_running")
-    @patch("charm.PgBouncerK8sCharm.render_pgb_config")
-    @patch("ops.model.Container.send_signal")
-    def test_reload_pgbouncer(self, _send_signal, _check_pgb_running, _):
-        self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
-        self.harness.set_leader(True)
-        # necessary hooks before we can check reloads
-        self.charm.on.start.emit()
-        container = self.harness.model.unit.get_container(PGB)
-        self.charm.on.pgbouncer_pebble_ready.emit(container)
-
-        self.charm.reload_pgbouncer()
-        _check_pgb_running.assert_called_once_with()
-        calls = [call(SIGHUP, service["name"]) for service in self.charm._services]
-        _send_signal.assert_has_calls(calls)
 
     @patch("charm.PgBouncerK8sCharm.push_file")
     @patch("charm.PgBouncerK8sCharm.update_config")

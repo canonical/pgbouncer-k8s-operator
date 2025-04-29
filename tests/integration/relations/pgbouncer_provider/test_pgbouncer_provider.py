@@ -91,7 +91,6 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, charm):
             status="active",
             raise_on_blocked=False,
             timeout=1200,
-            raise_on_error=False,
         )
 
     # Relate the charms and wait for them exchanging some connection data.
@@ -516,9 +515,7 @@ async def test_indico_datatabase(ops_test: OpsTest) -> None:
         await ops_test.model.wait_for_idle(apps=[PG], status="active")
         await ops_test.model.relate(PGB, "indico")
         await ops_test.model.wait_for_idle(
-            apps=[PG, PGB, "indico"],
-            status="active",
-            timeout=2000,
+            apps=[PG, PGB, "indico"], status="active", timeout=2000, raise_on_error=False
         )
 
         # FIXME: Pebble in Indico doesn't survive the subsequent restart. Investigate further

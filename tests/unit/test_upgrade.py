@@ -161,3 +161,36 @@ class TestUpgrade(unittest.TestCase):
 
         with pytest.raises(KubernetesClientError):
             self.charm.upgrade._set_rolling_update_partition(1)
+
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.stats_user",
+        new_callable=PropertyMock,
+        return_value="stats_user",
+    )
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.generate_monitoring_hash",
+        return_value="scram-hash",
+    )
+    @patch("charm.PgBouncerK8sCharm.set_secret")
+    @patch("charm.PgBouncerK8sCharm.get_secret", return_value=None)
+    def test_handle_md5_monitoring_auth(self, _get_secret, _set_secret, _generate_hash, _):
+        self.harness.set_leader(True)
+
+        # Early exit if no secret
+        self.charm.upgrade._handle_md5_monitoring_auth()
+        _set_secret.assert_not_called()
+        _generate_hash.assert_not_called()
+
+        # Up to date
+        _get_secret.return_value = '"auth_user" "cred"\n"stats_user" "other cred"'
+        self.charm.upgrade._handle_md5_monitoring_auth()
+        _set_secret.assert_not_called()
+        _generate_hash.assert_not_called()
+
+        # Remove md5 hash
+        _get_secret.side_effect = ['"auth_user" "cred"\n"stats_user" "md5aabb"', "other cred"]
+        self.charm.upgrade._handle_md5_monitoring_auth()
+        _set_secret.assert_called_once_with(
+            "app", "auth_file", '"auth_user" "cred"\n"stats_user" "scram-hash"'
+        )
+        _generate_hash.assert_called_once_with("other cred")

@@ -38,7 +38,7 @@ class TestPeers(unittest.TestCase):
     ):
         self.harness.add_relation(BACKEND_RELATION_NAME, "postgres")
         self.charm.peers._on_changed(Mock())
-        render_pgb_config.assert_called_once_with(reload_pgbouncer=True)
+        render_pgb_config.assert_called_once_with()
         toggle_monitoring_layer.assert_called_once_with(False)
         render_pgb_config.reset_mock()
         toggle_monitoring_layer.reset_mock()

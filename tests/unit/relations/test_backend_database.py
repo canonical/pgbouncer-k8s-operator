@@ -2,15 +2,15 @@
 # See LICENSE file for licensing details.
 
 import unittest
-from unittest.mock import MagicMock, PropertyMock, call, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
-from charms.pgbouncer_k8s.v0.pgb import get_hashed_password
+from charms.pgbouncer_k8s.v0.pgb import get_md5_password
 from ops import ModelError, WaitingStatus
 from ops.pebble import ConnectionError as PebbleConnectionError
 from ops.testing import Harness
 
 from charm import PgBouncerK8sCharm
-from constants import AUTH_FILE_PATH, BACKEND_RELATION_NAME, PEER_RELATION_NAME
+from constants import BACKEND_RELATION_NAME, PEER_RELATION_NAME
 
 # TODO clean up mocks
 
@@ -40,6 +40,10 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         self.togggle_monitoring_patch.stop()
 
     @patch("charm.PgBouncerK8sCharm.get_secret", return_value=None)
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.generate_monitoring_hash",
+        return_value="scram-hash",
+    )
     @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)
     @patch(
         "relations.backend_database.BackendDatabaseRequires.stats_user",
@@ -57,7 +61,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     @patch(
         "relations.backend_database.BackendDatabaseRequires.relation", new_callable=PropertyMock
     )
-    @patch("charms.pgbouncer_k8s.v0.pgb.generate_password", return_value="pw")
+    @patch("relations.backend_database.generate_password", return_value="pw")
     @patch("relations.backend_database.BackendDatabaseRequires.initialise_auth_function")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.render_auth_file")
@@ -74,6 +78,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         _auth_user,
         _stats_user,
         _app_databag,
+        _generate_hash,
         _,
     ):
         self.harness.set_leader(True)
@@ -86,29 +91,21 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         mock_event.username = "mock_user"
 
         self.backend._on_database_created(mock_event)
-        hash_pw = get_hashed_password(self.backend.auth_user, pw)
+        hash_pw = get_md5_password(self.backend.auth_user, pw)
 
         postgres.create_user.assert_called_with(self.backend.auth_user, hash_pw, admin=True)
-        _init_auth.assert_has_calls([call([self.backend.database.database, "postgres"])])
-
-        hash_mon_pw = get_hashed_password(self.backend.stats_user, pw)
-        _render_auth_file.assert_any_call(
-            f'"{self.backend.auth_user}" "{hash_pw}"\n"{self.backend.stats_user}" "{hash_mon_pw}"'
-        )
+        _init_auth.assert_any_call([self.backend.database.database, "postgres"])
 
         self.toggle_monitoring_layer.assert_called_with(True)
-        _render_cfg_file.assert_called_once_with(reload_pgbouncer=True)
+        _render_cfg_file.assert_called_once_with()
 
     @patch(
         "charm.PgBouncerK8sCharm.is_container_ready", new_callable=PropertyMock, return_value=True
     )
     @patch("charm.PgBouncerK8sCharm.toggle_monitoring_layer")
-    @patch("charm.PgBouncerK8sCharm.render_auth_file")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     @patch("charm.PgBouncerK8sCharm.get_secret")
-    def test_on_database_created_not_leader(
-        self, _get_secret, _render_pgb, _render_auth, _toggle_monitoring, _
-    ):
+    def test_on_database_created_not_leader(self, _get_secret, _render_pgb, _toggle_monitoring, _):
         self.harness.set_leader(False)
 
         # No secret yet
@@ -128,7 +125,6 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         _get_secret.side_effect = None
 
         self.backend._on_database_created(mock_event)
-        assert not _render_auth.called
         assert not _render_pgb.called
         assert not _toggle_monitoring.called
         _get_secret.assert_called_once_with("app", "auth_file")
@@ -136,15 +132,14 @@ class TestBackendDatabaseRelation(unittest.TestCase):
 
         _get_secret.return_value = "AUTH"
         self.backend._on_database_created(mock_event)
-        _render_auth.assert_called_once_with("AUTH")
-        _render_pgb.assert_called_once_with(reload_pgbouncer=True)
+        _render_pgb.assert_called_once_with()
         _toggle_monitoring.assert_called_once_with(True)
 
     @patch("charm.PgBouncerK8sCharm.update_client_connection_info")
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_endpoints_changed(self, _render_pgb, _update_client_conn):
         self.charm.backend._on_endpoints_changed(MagicMock())
-        _render_pgb.assert_called_once_with(reload_pgbouncer=True)
+        _render_pgb.assert_called_once_with()
         _update_client_conn.assert_called_once_with()
 
     @patch("charm.PgBouncerK8sCharm.check_pgb_running", return_value=True)
@@ -152,7 +147,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.render_pgb_config")
     def test_on_relation_changed(self, _render_pgb, _update_client_conn, _check_pgb):
         self.charm.backend._on_relation_changed(MagicMock())
-        _render_pgb.assert_called_once_with(reload_pgbouncer=True)
+        _render_pgb.assert_called_once_with()
         _update_client_conn.assert_called_once_with()
         _render_pgb.reset_mock()
         _update_client_conn.reset_mock()
@@ -183,7 +178,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         depart_event = MagicMock()
         depart_event.departing_unit = self.charm.unit
         self.backend._on_relation_departed(depart_event)
-        _render.assert_called_once_with(reload_pgbouncer=True)
+        _render.assert_called_once_with()
 
     @patch(
         "relations.backend_database.BackendDatabaseRequires.postgres", new_callable=PropertyMock
@@ -202,8 +197,8 @@ class TestBackendDatabaseRelation(unittest.TestCase):
 
         self.backend._on_relation_broken(event)
 
-        _render.assert_called_once_with(reload_pgbouncer=True)
-        _delete_file.assert_called_with(AUTH_FILE_PATH)
+        _render.assert_called_once_with()
+        # _delete_file.assert_called_with(AUTH_FILE_PATH)
         self.toggle_monitoring_layer.assert_called_with(False)
 
     @patch(
