@@ -1,0 +1,74 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"Tests that the connection is possible after the pod is deleted.","116855","test_connection_is_possible_after_pod_deletion","tests.integration.relations.pgbouncer_provider","Wed Jun 04 02:10:58 UTC 2025","passed","Wed Jun 04 02:12:55 UTC 2025","","test_pgbouncer_provider","",""
+"","473513","test_tls_encrypted_connection_to_postgres","tests.integration.relations","Wed Jun 04 01:48:23 UTC 2025","passed","Wed Jun 04 01:56:16 UTC 2025","","test_backend_database","",""
+"Build and deploy pgbouncer charm.","50222","test_build_and_deploy","tests.integration","Wed Jun 04 01:42:45 UTC 2025","passed","Wed Jun 04 01:43:35 UTC 2025","","test_charm","",""
+"Test data is replicated to new units after a scale up.","90311","test_scaling","tests.integration.relations","Wed Jun 04 01:53:28 UTC 2025","passed","Wed Jun 04 01:54:58 UTC 2025","","test_peers","",""
+"Test that there is a read-only endpoint in a standalone cluster.","92323","test_no_read_only_endpoint_in_standalone_cluster","tests.integration.relations.pgbouncer_provider","Wed Jun 04 01:51:24 UTC 2025","passed","Wed Jun 04 01:52:56 UTC 2025","","test_pgbouncer_provider","",""
+"Test that the user is removed when the relation is broken.","61573","test_relation_broken","tests.integration.relations.pgbouncer_provider","Wed Jun 04 02:04:30 UTC 2025","passed","Wed Jun 04 02:05:32 UTC 2025","","test_pgbouncer_provider","",""
+"Test the deployment of the charm.","229648","test_trust","tests.integration","Wed Jun 04 01:41:12 UTC 2025","passed","Wed Jun 04 01:45:02 UTC 2025","","test_trust","",""
+"Test admin permissions.","2039","test_database_admin_permissions","tests.integration.relations.pgbouncer_provider","Wed Jun 04 01:51:22 UTC 2025","passed","Wed Jun 04 01:51:24 UTC 2025","","test_pgbouncer_provider","",""
+"Simple test to ensure that the PostgreSQL and application charms get deployed.","527713","test_deploy_stable","tests.integration","Wed Jun 04 01:42:14 UTC 2025","passed","Wed Jun 04 01:51:02 UTC 2025","","test_upgrade_from_stable","",""
+"Test that the pre-upgrade-check action runs successfully.","2263","test_pre_upgrade_check","tests.integration","Wed Jun 04 01:51:50 UTC 2025","passed","Wed Jun 04 01:51:52 UTC 2025","","test_upgrade","",""
+"Test that the pgbouncer and postgres charms can relate to one another.","532432","test_scaled_relations","tests.integration.relations","Wed Jun 04 01:44:36 UTC 2025","passed","Wed Jun 04 01:53:28 UTC 2025","","test_peers","",""
+"","67229","test_deploy_at_scale","tests.integration.relations","Wed Jun 04 01:43:28 UTC 2025","passed","Wed Jun 04 01:44:36 UTC 2025","","test_peers","",""
+"Test that there is read-only endpoint in a scaled up cluster.","88041","test_read_only_endpoint_in_scaled_up_cluster","tests.integration.relations.pgbouncer_provider","Wed Jun 04 01:52:56 UTC 2025","passed","Wed Jun 04 01:54:24 UTC 2025","","test_pgbouncer_provider","",""
+"Removes the TLS relation and check through the test app the it is off.
+
+    Args:
+        ops_test: The ops test framework
+    ","0","test_remove_tls","tests.integration","Wed Jun 04 01:53:20 UTC 2025","skipped","Wed Jun 04 01:53:20 UTC 2025","","test_tls","",""
+"Check version is accurate.","1207","test_database_version","tests.integration.relations.pgbouncer_provider","Wed Jun 04 01:51:18 UTC 2025","passed","Wed Jun 04 01:51:20 UTC 2025","","test_pgbouncer_provider","",""
+"Test that the charm can be related to the data integrator without extra user roles.","78454","test_relation_with_data_integrator","tests.integration.relations.pgbouncer_provider","Wed Jun 04 02:05:32 UTC 2025","passed","Wed Jun 04 02:06:50 UTC 2025","","test_pgbouncer_provider","",""
+"Test that the pgbouncer and postgres charms can relate to one another.","439671","test_relate_pgbouncer_to_postgres","tests.integration.relations","Wed Jun 04 01:41:03 UTC 2025","passed","Wed Jun 04 01:48:23 UTC 2025","","test_backend_database","",""
+"Check we can read things in readonly.","1021","test_readonly_reads","tests.integration.relations.pgbouncer_provider","Wed Jun 04 01:51:20 UTC 2025","broken","Wed Jun 04 01:51:21 UTC 2025","","test_pgbouncer_provider","",""
+"Test basic functionality of database relation interface.","463346","test_database_relation_with_charm_libraries","tests.integration.relations.pgbouncer_provider","Wed Jun 04 01:43:34 UTC 2025","passed","Wed Jun 04 01:51:17 UTC 2025","","test_pgbouncer_provider","",""
+"Check these relations all work when scaling pgbouncer.","170459","test_scaling","tests.integration.relations.pgbouncer_provider","Wed Jun 04 02:01:40 UTC 2025","passed","Wed Jun 04 02:04:30 UTC 2025","","test_pgbouncer_provider","",""
+"Build and deploy one unit of PostgreSQL and then test config with wrong parameters.","233504","test_config_parameters","tests.integration","Wed Jun 04 01:39:44 UTC 2025","passed","Wed Jun 04 01:43:37 UTC 2025","","test_config","",""
+"Test that we can exit relations with multiple units without breaking anything.","85835","test_exit_relations","tests.integration.relations","Wed Jun 04 01:54:58 UTC 2025","passed","Wed Jun 04 01:56:24 UTC 2025","","test_peers","",""
+"","243005","test_multiple_pgb_can_connect_to_one_backend","tests.integration.relations.pgbouncer_provider","Wed Jun 04 01:57:37 UTC 2025","passed","Wed Jun 04 02:01:40 UTC 2025","","test_pgbouncer_provider","",""
+"Scale up PGB while TLS is enabled.
+
+    Args:
+        ops_test: The ops test framework
+    ","0","test_scale_up_pgb","tests.integration","Wed Jun 04 01:53:20 UTC 2025","skipped","Wed Jun 04 01:53:20 UTC 2025","","test_tls","",""
+"Test that two different applications connect to the database with different credentials.","60099","test_each_relation_has_unique_credentials","tests.integration.relations.pgbouncer_provider","Wed Jun 04 01:54:24 UTC 2025","passed","Wed Jun 04 01:55:24 UTC 2025","","test_pgbouncer_provider","",""
+"","293794","test_upgrade_from_stable","tests.integration","Wed Jun 04 01:51:05 UTC 2025","passed","Wed Jun 04 01:55:59 UTC 2025","","test_upgrade_from_stable","",""
+"Simple test to ensure that the PostgreSQL and application charms get deployed.","593107","test_deploy_latest","tests.integration","Wed Jun 04 01:41:57 UTC 2025","passed","Wed Jun 04 01:51:50 UTC 2025","","test_upgrade","",""
+"Rejoins the TLS relation and check through the test app the it is on.
+
+    Args:
+        ops_test: The ops test framework
+    ","0","test_add_tls","tests.integration","Wed Jun 04 01:53:20 UTC 2025","skipped","Wed Jun 04 01:53:20 UTC 2025","","test_tls","",""
+"Test updating charm config updates pgbouncer config & relation data.","22418","test_config_updates","tests.integration","Wed Jun 04 01:43:35 UTC 2025","passed","Wed Jun 04 01:43:57 UTC 2025","","test_charm","",""
+"","198747","test_pgbouncer_stable_when_deleting_postgres","tests.integration.relations","Wed Jun 04 01:56:16 UTC 2025","passed","Wed Jun 04 01:59:35 UTC 2025","","test_backend_database","",""
+"Deploy Mattermost to test the 'db' relation.
+
+    Mattermost needs TLS enabled on PgBouncer to correctly connect to it.
+
+    Args:
+        ops_test: The ops test framework
+    ","0","test_mattermost_db","tests.integration","Wed Jun 04 01:53:20 UTC 2025","skipped","Wed Jun 04 01:53:20 UTC 2025","","test_tls","",""
+"Test that the pgbouncer and postgres charms can relate to one another.","747809","test_create_db_legacy_relation","tests.integration.relations","Wed Jun 04 01:40:08 UTC 2025","passed","Wed Jun 04 01:52:36 UTC 2025","","test_db","",""
+"Test endpoints when pgbouncer-k8s is related to a TLS operator.","136330","test_expose_external_with_tls","tests.integration","Wed Jun 04 01:44:28 UTC 2025","passed","Wed Jun 04 01:46:44 UTC 2025","","test_expose_external","",""
+"Test the expose-external config option.","270936","test_expose_external","tests.integration","Wed Jun 04 01:39:57 UTC 2025","passed","Wed Jun 04 01:44:28 UTC 2025","","test_expose_external","",""
+"Simple test to ensure that the PostgreSQL and application charms get deployed.","452698","test_deploy_stable","tests.integration","Wed Jun 04 01:42:44 UTC 2025","passed","Wed Jun 04 01:50:16 UTC 2025","","test_upgrade_data_integrator","",""
+"Test that an application can request additional databases using the same interface.","31736","test_an_application_can_request_multiple_databases","tests.integration.relations.pgbouncer_provider","Wed Jun 04 01:55:24 UTC 2025","passed","Wed Jun 04 01:55:56 UTC 2025","","test_pgbouncer_provider","",""
+"Test the relation blocks with extensions.","128660","test_extensions_blocking","tests.integration.relations","Wed Jun 04 01:52:36 UTC 2025","passed","Wed Jun 04 01:54:45 UTC 2025","","test_db","",""
+"Test that the pre-upgrade-check action runs successfully.","3406","test_pre_upgrade_check","tests.integration","Wed Jun 04 01:51:02 UTC 2025","passed","Wed Jun 04 01:51:05 UTC 2025","","test_upgrade_from_stable","",""
+"","626582","test_create_db_admin_legacy_relation","tests.integration.relations","Wed Jun 04 01:39:27 UTC 2025","passed","Wed Jun 04 01:49:54 UTC 2025","","test_db_admin","",""
+"Test updating from stable channel.","174881","test_upgrade_from_stable","tests.integration","Wed Jun 04 01:50:18 UTC 2025","passed","Wed Jun 04 01:53:13 UTC 2025","","test_upgrade_data_integrator","",""
+"Test we have the correct pebble services.","504","test_multiple_pebble_services","tests.integration","Wed Jun 04 01:43:57 UTC 2025","passed","Wed Jun 04 01:43:58 UTC 2025","","test_charm","",""
+"Check we can update and delete things.","1019","test_database_usage","tests.integration.relations.pgbouncer_provider","Wed Jun 04 01:51:17 UTC 2025","passed","Wed Jun 04 01:51:18 UTC 2025","","test_pgbouncer_provider","",""
+"","241537","test_fail_and_rollback","tests.integration","Wed Jun 04 01:55:08 UTC 2025","passed","Wed Jun 04 01:59:10 UTC 2025","","test_upgrade","",""
+"Check we can't write in readonly.","1021","test_cant_write_in_readonly","tests.integration.relations.pgbouncer_provider","Wed Jun 04 01:51:21 UTC 2025","passed","Wed Jun 04 01:51:22 UTC 2025","","test_pgbouncer_provider","",""
+"Scale down PGB while TLS is enabled.
+
+    Args:
+        ops_test: The ops test framework
+    ","0","test_scale_down_pgb","tests.integration","Wed Jun 04 01:53:20 UTC 2025","skipped","Wed Jun 04 01:53:20 UTC 2025","","test_tls","",""
+"","194752","test_upgrade_from_edge","tests.integration","Wed Jun 04 01:51:52 UTC 2025","passed","Wed Jun 04 01:55:07 UTC 2025","","test_upgrade","",""
+"Test that the pre-upgrade-check action runs successfully.","2138","test_pre_upgrade_check","tests.integration","Wed Jun 04 01:50:16 UTC 2025","passed","Wed Jun 04 01:50:18 UTC 2025","","test_upgrade_data_integrator","",""
+"Build and deploy pgbouncer charm.","682572","test_build_and_deploy","tests.integration","Wed Jun 04 01:41:58 UTC 2025","failed","Wed Jun 04 01:53:20 UTC 2025","","test_tls","",""
+"Tests deploying and relating to the Indico charm.","247966","test_indico_datatabase","tests.integration.relations.pgbouncer_provider","Wed Jun 04 02:06:50 UTC 2025","passed","Wed Jun 04 02:10:58 UTC 2025","","test_pgbouncer_provider","",""
+"Verify that logs will be rotated.","815","test_logrotate","tests.integration","Wed Jun 04 01:43:58 UTC 2025","passed","Wed Jun 04 01:43:59 UTC 2025","","test_charm","",""
+"","100833","test_legacy_relation_compatibility","tests.integration.relations.pgbouncer_provider","Wed Jun 04 01:55:56 UTC 2025","passed","Wed Jun 04 01:57:37 UTC 2025","","test_pgbouncer_provider","",""
