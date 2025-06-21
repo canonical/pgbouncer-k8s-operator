@@ -6,7 +6,6 @@ import json
 from configparser import ConfigParser
 from multiprocessing import ProcessError
 from pathlib import Path
-from typing import Optional
 
 import yaml
 from juju.unit import Unit
@@ -309,7 +308,7 @@ async def deploy_and_relate_application_with_pgbouncer(
     return relation.id
 
 
-async def app_name(ops_test: OpsTest, application_name: str = "pgbouncer") -> Optional[str]:
+async def app_name(ops_test: OpsTest, application_name: str = "pgbouncer") -> str | None:
     """Returns the name of the cluster running PgBouncer.
 
     This is important since not all deployments of the PgBouncer charm have the application name
@@ -355,7 +354,7 @@ async def check_tls(ops_test: OpsTest, enabled: bool) -> bool:
         return False
 
 
-async def get_leader_unit(ops_test: OpsTest, app: str) -> Optional[Unit]:
+async def get_leader_unit(ops_test: OpsTest, app: str) -> Unit | None:
     leader_unit = None
     for unit in ops_test.model.applications[app].units:
         if await unit.is_leader_from_status():

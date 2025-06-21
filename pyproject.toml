@@ -36,7 +36,7 @@ jsonschema = "*"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.11.13"
+ruff = "^0.12.0"
 
 [tool.poetry.group.lint]
 optional = true
@@ -48,8 +48,8 @@ codespell = "^2.4.1"
 optional = true
 
 [tool.poetry.group.unit.dependencies]
-coverage = {extras = ["toml"], version = "^7.8.2"}
-pytest = "^8.4.0"
+coverage = {extras = ["toml"], version = "^7.9.1"}
+pytest = "^8.4.1"
 parameterized = "^0.9.0"
 
 [tool.poetry.group.integration]
@@ -57,7 +57,7 @@ optional = true
 
 [tool.poetry.group.integration.dependencies]
 lightkube = "*"
-pytest = "^8.4.0"
+pytest = "^8.4.1"
 pytest-operator = "^0.42.0"
 allure-pytest-default-results = "^0.1.3"
 # renovate caret doesn't work: https://github.com/renovatebot/renovate/issues/26940

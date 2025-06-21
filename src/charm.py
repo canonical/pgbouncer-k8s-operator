@@ -12,7 +12,7 @@ import os
 import socket
 from configparser import ConfigParser
 from signal import SIGHUP
-from typing import Optional, get_args
+from typing import get_args
 
 import lightkube
 import psycopg2
@@ -208,12 +208,12 @@ class PgBouncerK8sCharm(TypedCharmBase):
         )
 
     @property
-    def tracing_endpoint(self) -> Optional[str]:
+    def tracing_endpoint(self) -> str | None:
         """Otlp http endpoint for charm instrumentation."""
         if self.tracing.is_ready():
             return self.tracing.get_endpoint(TRACING_PROTOCOL)
 
-    def get_service(self) -> Optional[lightkube.resources.core_v1.Service]:
+    def get_service(self) -> lightkube.resources.core_v1.Service | None:
         """Get the managed k8s service."""
         try:
             service = self.lightkube_client.get(
@@ -760,7 +760,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         new_key = key.replace("_", "-")
         return new_key.strip("-")
 
-    def get_secret(self, scope: Scopes, key: str) -> Optional[str]:
+    def get_secret(self, scope: Scopes, key: str) -> str | None:
         """Get secret from the secret storage."""
         if scope not in get_args(Scopes):
             raise RuntimeError("Unknown secret scope.")
@@ -776,7 +776,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
         return self.peer_relation_data(scope).get_secret(peers.id, secret_key)
 
-    def set_secret(self, scope: Scopes, key: str, value: Optional[str]) -> Optional[str]:
+    def set_secret(self, scope: Scopes, key: str, value: str | None) -> str | None:
         """Set secret from the secret storage."""
         if scope not in get_args(Scopes):
             raise RuntimeError("Unknown secret scope.")
