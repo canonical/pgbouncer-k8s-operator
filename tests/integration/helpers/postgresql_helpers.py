@@ -3,7 +3,6 @@
 # See LICENSE file for licensing details.
 import itertools
 from pathlib import Path
-from typing import Optional
 
 import psycopg2
 import yaml
@@ -171,7 +170,7 @@ async def run_command_on_unit(ops_test: OpsTest, unit_name: str, command: str) -
     return stdout
 
 
-def get_unit_by_index(app: str, units: list, index: int) -> Optional[Unit]:
+def get_unit_by_index(app: str, units: list, index: int) -> Unit | None:
     """Get unit by index.
 
     Args:
@@ -184,7 +183,7 @@ def get_unit_by_index(app: str, units: list, index: int) -> Optional[Unit]:
             return unit
 
 
-async def get_leader_unit(ops_test: OpsTest, app: str) -> Optional[Unit]:
+async def get_leader_unit(ops_test: OpsTest, app: str) -> Unit | None:
     leader_unit = None
     for unit in ops_test.model.applications[app].units:
         if await unit.is_leader_from_status():
