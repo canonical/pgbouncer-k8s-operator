@@ -1,0 +1,24 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:937 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.7    unsupported  01:38:58Z
+
+App                       Version  Status   Scale  Charm                     Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   blocked      2  pgbouncer-k8s                              0  10.152.183.254  no       waiting for backend database relation to initialise
+postgresql-k8s                     error      1/3  postgresql-k8s            14/edge        616  10.152.183.178  no       create Pod postgresql-k8s-2 in StatefulSet postgresql-k8s failed error: failed to create PVC postgresql-k8s-pgdata-19...
+postgresql-test-app                active       1  postgresql-test-app       latest/edge    388  10.152.183.185  no       
+self-signed-certificates           active       1  self-signed-certificates  latest/stable  264  10.152.183.240  no       
+
+Unit                         Workload  Agent       Address     Ports  Message
+pgbouncer-k8s/0              blocked   executing   10.1.32.73         waiting for backend database relation to initialise
+pgbouncer-k8s/1*             blocked   executing   10.1.32.74         (start) waiting for backend database relation to initialise
+postgresql-k8s/0*            waiting   allocating                     agent initialising
+postgresql-k8s/1             waiting   allocating                     agent initialising
+postgresql-k8s/2             blocked   idle                           0/1 nodes are available: persistentvolumeclaim "postgresql-k8s-pgdata-191bf1a6-postgresql-k8s-2" not found. preemptio...
+postgresql-test-app/0*       active    idle        10.1.32.75         
+self-signed-certificates/0*  active    executing   10.1.32.78         (start) 
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:943 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1025 Forgetting model main...
