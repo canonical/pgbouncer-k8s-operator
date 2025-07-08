@@ -1345,14 +1345,14 @@ files = [
 
 [[package]]
 name = "ops"
-version = "2.22.0"
+version = "3.0.0"
 description = "The Python library behind great charms"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.10"
 groups = ["main", "charm-libs"]
 files = [
-    {file = "ops-2.22.0-py3-none-any.whl", hash = "sha256:ad44326bc065e33357b47e1cf4c73e811b2fdb3c89dd0c9bdf421a7a028bdcf7"},
-    {file = "ops-2.22.0.tar.gz", hash = "sha256:bd1cd1229e83efb8ae2d97d8878c7db3deceb6819eb5a38fb6e235a959528ec2"},
+    {file = "ops-3.0.0-py3-none-any.whl", hash = "sha256:f71d62c1d5ae58c01acc37fb330c6aa13aa1e2913fc44519b5ac31b93b9181ec"},
+    {file = "ops-3.0.0.tar.gz", hash = "sha256:f4709f7699a2b8b0aaa3a6ad891fb8e4925792121fcb762ef264d24f87675680"},
 ]
 
 [package.dependencies]
@@ -1362,9 +1362,8 @@ PyYAML = "==6.*"
 websocket-client = "==1.*"
 
 [package.extras]
-docs = ["canonical-sphinx-extensions", "furo", "linkify-it-py", "myst-parser", "pyspelling", "sphinx (>=8.0.0,<8.1.0)", "sphinx-autobuild", "sphinx-copybutton", "sphinx-design", "sphinx-notfound-page", "sphinx-tabs", "sphinxcontrib-jquery", "sphinxext-opengraph"]
-testing = ["ops-scenario (==7.22.0)"]
-tracing = ["ops-tracing (==2.22.0)"]
+testing = ["ops-scenario (==8.0.0)"]
+tracing = ["ops-tracing (==3.0.0)"]
 
 [[package]]
 name = "packaging"
@@ -2646,4 +2645,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "3dd0c0ea2dc614b01a5c2d82204c8a0fd12c648cafb69ec57a57e216c877af7e"
+content-hash = "5cc2f000042e4374d8916040f950abdb00576008966735d26381be061f94c586"
