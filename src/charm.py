@@ -31,7 +31,6 @@ from ops import (
     ActiveStatus,
     BlockedStatus,
     ConfigChangedEvent,
-    JujuVersion,
     MaintenanceStatus,
     PebbleReadyEvent,
     Relation,
@@ -754,7 +753,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
     def _translate_field_to_secret_key(self, key: str) -> str:
         """Change 'key' to secrets-compatible key field."""
-        if not JujuVersion.from_environ().has_secrets:
+        if not self.model.juju_version.has_secrets:
             return key
         key = SECRET_KEY_OVERRIDES.get(key, key)
         new_key = key.replace("_", "-")
