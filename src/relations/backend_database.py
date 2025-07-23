@@ -58,6 +58,7 @@ from ops.model import (
 )
 from ops.pebble import ConnectionError as PebbleConnectionError
 from ops.pebble import PathError
+from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from constants import (
     APP_SCOPE,
@@ -476,3 +477,14 @@ class BackendDatabaseRequires(Object):
             self.charm.unit.status = WaitingStatus(wait_str)
             return False
         return True
+
+    def sync_hba(self, user: str) -> None:
+        """Wait for user to appear in pg_hba table."""
+        # TODO check backend db version to know if we need to wait
+        try:
+            for attempt in Retrying(stop=stop_after_delay(90), wait=wait_fixed(15)):
+                with attempt:
+                    if not self.postgres.is_user_in_hba(user):
+                        raise Exception("pg_hba not ready")
+        except RetryError:
+            logger.warning("database requested: Unable to check pg_hba rule update")

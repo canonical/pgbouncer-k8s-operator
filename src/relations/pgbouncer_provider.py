@@ -52,7 +52,6 @@ from ops.model import (
     Application,
     BlockedStatus,
 )
-from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from constants import CLIENT_RELATION_NAME
 
@@ -180,14 +179,7 @@ class PgBouncerProvider(Object):
 
         self.charm.render_pgb_config()
 
-        # TODO check backend db version to know if we need to wait
-        try:
-            for attempt in Retrying(stop=stop_after_delay(90), wait=wait_fixed(15)):
-                with attempt:
-                    if not self.charm.backend.postgres.is_user_in_hba(user):
-                        raise Exception("pg_hba not ready")
-        except RetryError:
-            logger.warning("database requested: Unable to check pg_hba rule update")
+        self.charm.backend.sync_hba(user)
 
         # Share the credentials and updated connection info with the client application.
         self.database_provides.set_credentials(rel_id, user, password)
