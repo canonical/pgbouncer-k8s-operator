@@ -141,6 +141,16 @@ class BackendDatabaseRequires(Object):
         )
 
     @property
+    def backend_version(self) -> str:
+        """Backend Oostgresql version."""
+        if not self.relation:
+            return ""
+
+        if version := self.database.fetch_relation_field(self.relation.id, "version"):
+            return version
+        return ""
+
+    @property
     def auth_user(self) -> str | None:
         """Username for auth_user."""
         if not self.relation or not (
@@ -480,7 +490,10 @@ class BackendDatabaseRequires(Object):
 
     def sync_hba(self, user: str) -> None:
         """Wait for user to appear in pg_hba table."""
-        # TODO check backend db version to know if we need to wait
+        # Check for version supporting hardening
+        if self.backend_version < "14.16":
+            return
+
         try:
             for attempt in Retrying(stop=stop_after_delay(90), wait=wait_fixed(15)):
                 with attempt:
