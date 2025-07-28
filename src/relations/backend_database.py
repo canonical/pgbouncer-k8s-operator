@@ -491,7 +491,7 @@ class BackendDatabaseRequires(Object):
     def sync_hba(self, user: str) -> None:
         """Wait for user to appear in pg_hba table."""
         # Check for version supporting hardening
-        if self.backend_version < "14.16":
+        if self.backend_version and self.backend_version < "14.16":
             return
 
         try:
