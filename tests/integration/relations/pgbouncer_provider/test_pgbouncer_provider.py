@@ -291,7 +291,7 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest):
         series=CHARM_SERIES,
         channel="edge",
     )
-    await ops_test.model.wait_for_idle(status="active", apps=all_app_names)
+    await ops_test.model.wait_for_idle(status="blocked", apps=[SECONDARY_CLIENT_APP_NAME])
 
     # Relate the new application with the database
     # and wait for them exchanging some connection data.
