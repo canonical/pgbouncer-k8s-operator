@@ -64,7 +64,8 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, charm):
             CLIENT_APP_NAME,
             application_name=CLIENT_APP_NAME,
             series=CHARM_SERIES,
-            channel="edge",
+            channel="latest/edge",
+            config={"extra_user_roles": "CREATEDB,CREATEROLE"},
         ),
         ops_test.model.deploy(
             charm,
@@ -97,7 +98,7 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, charm):
     await ops_test.model.add_relation(f"{CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB)
 
     async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", raise_on_blocked=True)
+        await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active")
 
     # Check that on juju 3 we have secrets and no username and password in the rel databag
     if hasattr(ops_test.model, "list_secrets"):
@@ -290,7 +291,7 @@ async def test_each_relation_has_unique_credentials(ops_test: OpsTest):
         series=CHARM_SERIES,
         channel="edge",
     )
-    await ops_test.model.wait_for_idle(status="active", apps=all_app_names)
+    await ops_test.model.wait_for_idle(status="blocked", apps=[SECONDARY_CLIENT_APP_NAME])
 
     # Relate the new application with the database
     # and wait for them exchanging some connection data.

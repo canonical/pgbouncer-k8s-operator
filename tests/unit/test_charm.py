@@ -711,7 +711,7 @@ class TestCharm(unittest.TestCase):
         assert self.charm.get_secret("unit", "password") == "test-password"
 
     @parameterized.expand([("app", "monitoring-password"), ("unit", "csr")])
-    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
+    @patch("ops.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
     def test_get_secret_secrets(self, scope, field, _):
         with self.harness.hooks_disabled():
             self.harness.set_leader()
@@ -748,7 +748,7 @@ class TestCharm(unittest.TestCase):
             self.charm.set_secret("test", "password", "test")
 
     @parameterized.expand([("app", True), ("unit", True), ("unit", False)])
-    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
+    @patch("ops.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
     def test_set_reset_new_secret(self, scope, is_leader, _):
         """NOTE: currently ops.testing seems to allow for non-leader to set secrets too!"""
         # App has to be leader, unit can be either
@@ -768,7 +768,7 @@ class TestCharm(unittest.TestCase):
         assert self.harness.charm.get_secret(scope, "new-secret2") == "blablabla"
 
     @parameterized.expand([("app", True), ("unit", True), ("unit", False)])
-    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
+    @patch("ops.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
     def test_invalid_secret(self, scope, is_leader, _):
         # App has to be leader, unit can be either
         with self.harness.hooks_disabled():
@@ -823,7 +823,7 @@ class TestCharm(unittest.TestCase):
             )
 
     @pytest.mark.usefixtures("use_caplog")
-    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
+    @patch("ops.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
     def test_delete_existing_password_secrets(self, _):
         """NOTE: currently ops.testing seems to allow for non-leader to remove secrets too!"""
         with self.harness.hooks_disabled():
@@ -863,7 +863,7 @@ class TestCharm(unittest.TestCase):
             )
 
     @parameterized.expand([("app", True), ("unit", True), ("unit", False)])
-    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
+    @patch("ops.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
     def test_migration_from_databag(self, scope, is_leader, _):
         """Check if we're moving on to use secrets when live upgrade from databag to Secrets usage."""
         # App has to be leader, unit can be either
@@ -886,7 +886,7 @@ class TestCharm(unittest.TestCase):
         )
 
     @parameterized.expand([("app", True), ("unit", True), ("unit", False)])
-    @patch("charm.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
+    @patch("ops.JujuVersion.has_secrets", new_callable=PropertyMock, return_value=True)
     def test_migration_from_single_secret(self, scope, is_leader, _):
         """Check if we're moving on to use secrets when live upgrade from databag to Secrets usage."""
         # App has to be leader, unit can be either

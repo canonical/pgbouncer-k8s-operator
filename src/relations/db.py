@@ -296,6 +296,8 @@ class DbProvides(Object):
         self.charm.backend.remove_auth_function(dbs=[database])
         self.charm.backend.initialise_auth_function([database])
 
+        self.charm.backend.sync_hba(user)
+
     def _on_relation_changed(self, change_event: RelationChangedEvent):
         """Handle db-relation-changed event.
 

@@ -41,29 +41,25 @@ async def test_build_and_deploy(ops_test: OpsTest, charm):
 
     if not await app_name(ops_test):
         wait_for_apps = True
-        async with ops_test.fast_forward():
-            await ops_test.model.deploy(
-                charm,
-                resources={
-                    "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"][
-                        "upstream-source"
-                    ]
-                },
-                application_name=PGB,
-                num_units=APPLICATION_UNITS,
-                series=CHARM_SERIES,
-                trust=True,
-            )
+        await ops_test.model.deploy(
+            charm,
+            resources={
+                "pgbouncer-image": PGB_METADATA["resources"]["pgbouncer-image"]["upstream-source"]
+            },
+            application_name=PGB,
+            num_units=APPLICATION_UNITS,
+            series=CHARM_SERIES,
+            trust=True,
+        )
 
     if not await app_name(ops_test, CLIENT_APP_NAME):
         wait_for_apps = True
-        async with ops_test.fast_forward():
-            await ops_test.model.deploy(
-                CLIENT_APP_NAME,
-                application_name=CLIENT_APP_NAME,
-                series=CHARM_SERIES,
-                channel="edge",
-            )
+        await ops_test.model.deploy(
+            CLIENT_APP_NAME,
+            application_name=CLIENT_APP_NAME,
+            series=CHARM_SERIES,
+            channel="latest/edge",
+        )
     await ops_test.model.relate(PGB, f"{CLIENT_APP_NAME}:database")
 
     if not await app_name(ops_test, POSTGRESQL_APP_NAME):

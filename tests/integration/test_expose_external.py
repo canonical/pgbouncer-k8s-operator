@@ -134,9 +134,7 @@ async def test_expose_external(ops_test, charm) -> None:
         await ops_test.model.relate(f"{PGB}:database", f"{DATA_INTEGRATOR}:postgresql")
 
         await ops_test.model.wait_for_idle(
-            apps=[PG, PGB, DATA_INTEGRATOR],
-            status="active",
-            timeout=SLOW_TIMEOUT,
+            apps=[PG, PGB, DATA_INTEGRATOR], status="active", timeout=SLOW_TIMEOUT, idle_period=30
         )
 
         logger.info("Testing endpoint when expose-external=false (default)")
