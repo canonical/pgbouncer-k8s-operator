@@ -1,0 +1,45 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.8    unsupported  01:45:28Z
+
+App             Version  Status   Scale  Charm            Channel      Rev  Address         Exposed  Message
+finos-waltz              blocked      1  finos-waltz-k8s  latest/edge   33  10.152.183.124  no       Waiting for database configuration.
+pgbouncer-k8s   1.21.0   error        3  pgbouncer-k8s                   0  10.152.183.160  no       hook failed: "backend-database-relation-changed"
+postgresql-k8s  14.18    active       3  postgresql-k8s   14/edge      641  10.152.183.72   no       
+
+Unit               Workload  Agent      Address      Ports  Message
+finos-waltz/0*     blocked   idle       10.1.52.201         Waiting for database configuration.
+pgbouncer-k8s/0    blocked   idle       10.1.52.202         waiting for backend database relation to initialise
+pgbouncer-k8s/1*   active    executing  10.1.52.203         
+pgbouncer-k8s/2    error     idle       10.1.52.204         hook failed: "backend-database-relation-changed"
+postgresql-k8s/0   active    executing  10.1.52.208         
+postgresql-k8s/1*  active    idle       10.1.52.209         Primary
+postgresql-k8s/2   active    executing  10.1.52.210         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-pgbouncer-k8s-1: 01:41:48 ERROR unit.pgbouncer-k8s/1.juju-log backend-database:5: deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:41:51 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:42:02 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:42:10 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:42:22 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:42:32 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:42:42 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:42:51 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:00 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:10 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:18 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:30 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:39 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:49 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:59 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:44:11 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:44:22 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:44:32 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:44:44 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:44:54 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:45:04 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:45:15 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
