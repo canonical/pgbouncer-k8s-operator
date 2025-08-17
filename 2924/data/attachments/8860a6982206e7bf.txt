@@ -1,0 +1,71 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.8    unsupported  01:52:30Z
+
+App              Version  Status   Scale  Charm            Channel      Rev  Address         Exposed  Message
+data-integrator           waiting    0/2  data-integrator  latest/edge  218                  no       installing agent
+pgbouncer-k8s    1.21.0   blocked      2  pgbouncer-k8s    1/stable     408  10.152.183.169  no       waiting for backend database relation to initialise
+postgresql-k8s            waiting    0/3  postgresql-k8s   14/edge      643                  no       installing agent
+
+Unit               Workload  Agent       Address       Ports  Message
+data-integrator/0  waiting   allocating                       installing agent
+data-integrator/1  waiting   allocating                       installing agent
+pgbouncer-k8s/0*   blocked   idle        10.1.130.137         waiting for backend database relation to initialise
+pgbouncer-k8s/1    blocked   idle        10.1.130.138         waiting for backend database relation to initialise
+postgresql-k8s/0   waiting   allocating                       installing agent
+postgresql-k8s/1   waiting   allocating                       installing agent
+postgresql-k8s/2   waiting   allocating                       installing agent
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+controller-0: 01:33:29 ERROR juju.worker.caasapplicationprovisioner.runner exited "pgbouncer-k8s": more than 20 retries ensuring scale: setting scale to 2 for "pgbouncer-k8s": statefulset "pgbouncer-k8s" not found
+controller-0: 01:33:30 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:33:33 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring trust: updating application "data-integrator" to desired trust false: getting service account role "data-integrator": k8s: roles.rbac.authorization.k8s.io "data-integrator" not found
+controller-0: 01:34:31 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:34:33 ERROR juju.worker.caasapplicationprovisioner.runner exited "pgbouncer-k8s": more than 20 retries ensuring trust: updating application "pgbouncer-k8s" to desired trust true: getting service account role "pgbouncer-k8s": k8s: roles.rbac.authorization.k8s.io "pgbouncer-k8s" not found
+controller-0: 01:34:36 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring trust: updating application "data-integrator" to desired trust false: getting service account role "data-integrator": k8s: roles.rbac.authorization.k8s.io "data-integrator" not found
+controller-0: 01:35:33 ERROR juju.worker.caasapplicationprovisioner.runner exited "pgbouncer-k8s": more than 20 retries ensuring scale: setting scale to 2 for "pgbouncer-k8s": statefulset "pgbouncer-k8s" not found
+controller-0: 01:35:34 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:35:39 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring trust: updating application "data-integrator" to desired trust false: getting service account role "data-integrator": k8s: roles.rbac.authorization.k8s.io "data-integrator" not found
+controller-0: 01:36:36 ERROR juju.worker.caasapplicationprovisioner.runner exited "pgbouncer-k8s": more than 20 retries ensuring scale: setting scale to 2 for "pgbouncer-k8s": statefulset "pgbouncer-k8s" not found
+controller-0: 01:36:38 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:36:42 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring trust: updating application "data-integrator" to desired trust false: getting service account role "data-integrator": k8s: roles.rbac.authorization.k8s.io "data-integrator" not found
+controller-0: 01:37:38 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:37:39 ERROR juju.worker.caasapplicationprovisioner.runner exited "pgbouncer-k8s": more than 20 retries ensuring scale: setting scale to 2 for "pgbouncer-k8s": statefulset "pgbouncer-k8s" not found
+controller-0: 01:37:45 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring trust: updating application "data-integrator" to desired trust false: getting service account role "data-integrator": k8s: roles.rbac.authorization.k8s.io "data-integrator" not found
+controller-0: 01:38:41 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:38:43 ERROR juju.worker.caasapplicationprovisioner.runner exited "pgbouncer-k8s": more than 20 retries ensuring scale: setting scale to 2 for "pgbouncer-k8s": statefulset "pgbouncer-k8s" not found
+controller-0: 01:38:48 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring trust: updating application "data-integrator" to desired trust false: getting service account role "data-integrator": k8s: roles.rbac.authorization.k8s.io "data-integrator" not found
+controller-0: 01:39:45 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:39:46 ERROR juju.worker.caasapplicationprovisioner.runner exited "pgbouncer-k8s": more than 20 retries ensuring trust: updating application "pgbouncer-k8s" to desired trust true: getting service account role "pgbouncer-k8s": k8s: roles.rbac.authorization.k8s.io "pgbouncer-k8s" not found
+controller-0: 01:39:49 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring scale: setting scale to 2 for "data-integrator": statefulset "data-integrator" not found
+controller-0: 01:40:48 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring trust: updating application "postgresql-k8s" to desired trust true: getting service account role "postgresql-k8s": k8s: roles.rbac.authorization.k8s.io "postgresql-k8s" not found
+controller-0: 01:40:50 ERROR juju.worker.caasapplicationprovisioner.runner exited "pgbouncer-k8s": more than 20 retries ensuring trust: updating application "pgbouncer-k8s" to desired trust true: getting service account role "pgbouncer-k8s": k8s: roles.rbac.authorization.k8s.io "pgbouncer-k8s" not found
+controller-0: 01:40:52 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring trust: updating application "data-integrator" to desired trust false: getting service account role "data-integrator": k8s: roles.rbac.authorization.k8s.io "data-integrator" not found
+controller-0: 01:41:49 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:41:53 ERROR juju.worker.caasapplicationprovisioner.runner exited "pgbouncer-k8s": more than 20 retries ensuring trust: updating application "pgbouncer-k8s" to desired trust true: getting service account role "pgbouncer-k8s": k8s: roles.rbac.authorization.k8s.io "pgbouncer-k8s" not found
+controller-0: 01:41:56 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring trust: updating application "data-integrator" to desired trust false: getting service account role "data-integrator": k8s: roles.rbac.authorization.k8s.io "data-integrator" not found
+controller-0: 01:42:49 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:42:56 ERROR juju.worker.caasapplicationprovisioner.runner exited "pgbouncer-k8s": more than 20 retries ensuring trust: updating application "pgbouncer-k8s" to desired trust true: getting service account role "pgbouncer-k8s": k8s: roles.rbac.authorization.k8s.io "pgbouncer-k8s" not found
+controller-0: 01:42:56 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring scale: setting scale to 2 for "data-integrator": statefulset "data-integrator" not found
+controller-0: 01:43:52 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:44:01 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring scale: setting scale to 2 for "data-integrator": statefulset "data-integrator" not found
+controller-0: 01:44:53 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:45:04 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring scale: setting scale to 2 for "data-integrator": statefulset "data-integrator" not found
+controller-0: 01:45:56 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring trust: updating application "postgresql-k8s" to desired trust true: getting service account role "postgresql-k8s": k8s: roles.rbac.authorization.k8s.io "postgresql-k8s" not found
+controller-0: 01:46:07 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring trust: updating application "data-integrator" to desired trust false: getting service account role "data-integrator": k8s: roles.rbac.authorization.k8s.io "data-integrator" not found
+controller-0: 01:46:59 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring trust: updating application "postgresql-k8s" to desired trust true: getting service account role "postgresql-k8s": k8s: roles.rbac.authorization.k8s.io "postgresql-k8s" not found
+controller-0: 01:47:07 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring scale: setting scale to 2 for "data-integrator": statefulset "data-integrator" not found
+controller-0: 01:48:02 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring trust: updating application "postgresql-k8s" to desired trust true: getting service account role "postgresql-k8s": k8s: roles.rbac.authorization.k8s.io "postgresql-k8s" not found
+controller-0: 01:48:10 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring scale: setting scale to 2 for "data-integrator": statefulset "data-integrator" not found
+controller-0: 01:49:06 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:49:11 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring scale: setting scale to 2 for "data-integrator": statefulset "data-integrator" not found
+controller-0: 01:50:06 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:50:11 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring scale: setting scale to 2 for "data-integrator": statefulset "data-integrator" not found
+controller-0: 01:51:09 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring trust: updating application "postgresql-k8s" to desired trust true: getting service account role "postgresql-k8s": k8s: roles.rbac.authorization.k8s.io "postgresql-k8s" not found
+controller-0: 01:51:11 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring scale: setting scale to 2 for "data-integrator": statefulset "data-integrator" not found
+controller-0: 01:52:12 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:52:14 ERROR juju.worker.caasapplicationprovisioner.runner exited "data-integrator": more than 20 retries ensuring scale: setting scale to 2 for "data-integrator": statefulset "data-integrator" not found
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...

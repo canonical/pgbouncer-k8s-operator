@@ -1,0 +1,40 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.8    unsupported  01:53:02Z
+
+App                  Version  Status   Scale  Charm                Channel      Rev  Address         Exposed  Message
+pgbouncer-k8s        1.21.0   blocked      2  pgbouncer-k8s                       0  10.152.183.249  no       waiting for backend database relation to initialise
+postgresql-k8s                waiting    0/2  postgresql-k8s       14/edge      643                  no       installing agent
+postgresql-test-app           blocked      1  postgresql-test-app  latest/edge  398  10.152.183.32   no       No database integration available
+
+Unit                    Workload  Agent       Address       Ports  Message
+pgbouncer-k8s/0         blocked   idle        10.1.130.138         waiting for backend database relation to initialise
+pgbouncer-k8s/1*        blocked   idle        10.1.130.139         waiting for backend database relation to initialise
+postgresql-k8s/0        waiting   allocating                       installing agent
+postgresql-k8s/1        waiting   allocating                       installing agent
+postgresql-test-app/0*  blocked   idle        10.1.130.137         No database integration available
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+controller-0: 01:34:00 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:35:03 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:36:04 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:37:07 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:38:10 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring trust: updating application "postgresql-k8s" to desired trust true: getting service account role "postgresql-k8s": k8s: roles.rbac.authorization.k8s.io "postgresql-k8s" not found
+controller-0: 01:39:13 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring trust: updating application "postgresql-k8s" to desired trust true: getting service account role "postgresql-k8s": k8s: roles.rbac.authorization.k8s.io "postgresql-k8s" not found
+controller-0: 01:40:16 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring trust: updating application "postgresql-k8s" to desired trust true: getting service account role "postgresql-k8s": k8s: roles.rbac.authorization.k8s.io "postgresql-k8s" not found
+controller-0: 01:41:16 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:42:20 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:43:20 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:44:23 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:45:26 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:46:29 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:47:30 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:48:33 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring trust: updating application "postgresql-k8s" to desired trust true: getting service account role "postgresql-k8s": k8s: roles.rbac.authorization.k8s.io "postgresql-k8s" not found
+controller-0: 01:49:33 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:50:34 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:51:37 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring trust: updating application "postgresql-k8s" to desired trust true: getting service account role "postgresql-k8s": k8s: roles.rbac.authorization.k8s.io "postgresql-k8s" not found
+controller-0: 01:52:40 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 2 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
