@@ -35,6 +35,7 @@ K8S_SERVICE_CONNECT_TIMEOUT = 3
 
 # Labels are not confidential
 SECRET_LABEL = "secret"  # noqa: S105
+ADMIN_PASSWORD_KEY = "admin_password"  # noqa: S105
 MONITORING_PASSWORD_KEY = "monitoring_password"  # noqa: S105
 SECRET_INTERNAL_LABEL = "internal-secret"  # noqa: S105
 SECRET_DELETED_LABEL = "None"  # noqa: S105

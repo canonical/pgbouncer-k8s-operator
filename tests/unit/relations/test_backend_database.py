@@ -41,7 +41,7 @@ class TestBackendDatabaseRelation(unittest.TestCase):
 
     @patch("charm.PgBouncerK8sCharm.get_secret", return_value=None)
     @patch(
-        "relations.backend_database.BackendDatabaseRequires.generate_monitoring_hash",
+        "relations.backend_database.BackendDatabaseRequires.generate_system_user",
         return_value="scram-hash",
     )
     @patch("relations.peers.Peers.app_databag", new_callable=PropertyMock)

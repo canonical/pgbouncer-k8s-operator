@@ -22,6 +22,7 @@ from pydantic import BaseModel
 from typing_extensions import override
 
 from constants import (
+    ADMIN_PASSWORD_KEY,
     APP_SCOPE,
     AUTH_FILE_DATABAG_KEY,
     CLIENT_RELATION_NAME,
@@ -91,6 +92,24 @@ class PgbouncerUpgrade(DataUpgrade):
         except KubernetesClientError as e:
             raise ClusterNotReadyError(e.message, e.cause) from e
 
+    def _generate_admin_console_user(self) -> None:
+        if self.charm.get_secret(APP_SCOPE, ADMIN_PASSWORD_KEY):
+            return
+
+        auth_file = self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
+        if not (
+            hashed_password := self.charm.backend.generate_system_user(
+                self.charm.backend.admin_user, ADMIN_PASSWORD_KEY
+            )
+        ):
+            logger.error("Failed to generate admin console user")
+            return
+        self.charm.set_secret(
+            APP_SCOPE,
+            AUTH_FILE_DATABAG_KEY,
+            f'{auth_file}\n"{self.charm.backend.admin_user}" "{hashed_password}"',
+        )
+
     def _handle_md5_monitoring_auth(self) -> None:
         if not self.charm.unit.is_leader() or not (
             auth_file := self.charm.get_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY)
@@ -104,8 +123,8 @@ class PgbouncerUpgrade(DataUpgrade):
             if line.startswith(monitoring_prefix):
                 stats_password = self.charm.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)
                 try:
-                    hashed_monitoring_password = self.charm.backend.generate_monitoring_hash(
-                        stats_password
+                    hashed_monitoring_password = self.charm.backend.generate_scram_hash(
+                        self.charm.backend.stats_user, stats_password
                     )
                 except psycopg2.Error:
                     logger.error(
@@ -139,6 +158,7 @@ class PgbouncerUpgrade(DataUpgrade):
             self.charm.reconcile_k8s_service()
             for relation in self.model.relations.get(CLIENT_RELATION_NAME, []):
                 self.charm.client_relation.update_connection_info(relation)
+            self._generate_admin_console_user()
         self._handle_md5_monitoring_auth()
 
         try:

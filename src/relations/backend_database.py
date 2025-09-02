@@ -38,6 +38,7 @@ Example:
 """
 
 import logging
+from functools import cached_property
 
 import psycopg2
 from charms.data_platform_libs.v0.data_interfaces import (
@@ -61,6 +62,7 @@ from ops.pebble import PathError
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
 from constants import (
+    ADMIN_PASSWORD_KEY,
     APP_SCOPE,
     AUTH_FILE_DATABAG_KEY,
     BACKEND_RELATION_NAME,
@@ -159,14 +161,21 @@ class BackendDatabaseRequires(Object):
             return None
         return f"pgbouncer_auth_{username}".replace("-", "_")
 
-    @property
+    @cached_property
     def stats_user(self) -> str:
         """Username for stats."""
         if not self.relation:
             return ""
         return f"pgbouncer_stats_{self.charm.app.name}".replace("-", "_")
 
-    @property
+    @cached_property
+    def admin_user(self) -> str:
+        """Username for stats."""
+        if not self.relation:
+            return ""
+        return f"pgbouncer_admin_{self.charm.app.name}".replace("-", "_")
+
+    @cached_property
     def auth_query(self) -> str:
         """Generate auth query."""
         if not self.relation:
@@ -256,15 +265,27 @@ class BackendDatabaseRequires(Object):
 
         return databases
 
-    def generate_monitoring_hash(self, monitoring_password: str) -> str:
-        """Generate monitoring SCRAM hash against the current backend."""
+    def generate_scram_hash(self, user: str, password: str) -> str:
+        """Generate SCRAM hash against the current backend."""
         conn = None
         try:
             with self.postgres._connect_to_database() as conn:
-                return get_scram_password(self.stats_user, monitoring_password, conn)
+                return get_scram_password(user, password, conn)
         finally:
             if conn:
                 conn.close()
+
+    def generate_system_user(self, user: str, password_key: str) -> str | None:
+        """Generate credentials for an internal PGB user and return the SCRAM password."""
+        if not (password := self.charm.get_secret(APP_SCOPE, password_key)):
+            password = generate_password()
+        try:
+            hashed_password = self.generate_scram_hash(user, password)
+        except psycopg2.Error:
+            return
+
+        self.charm.set_secret(APP_SCOPE, password_key, password)
+        return hashed_password
 
     def _on_database_created(self, event: DatabaseCreatedEvent) -> None:
         """Handle backend-database-database-created event.
@@ -313,21 +334,31 @@ class BackendDatabaseRequires(Object):
         plaintext_password = generate_password()
         hashed_password = get_md5_password(self.auth_user, plaintext_password)
         # Add the monitoring user.
-        if not (monitoring_password := self.charm.get_secret(APP_SCOPE, MONITORING_PASSWORD_KEY)):
-            monitoring_password = generate_password()
-        try:
-            hashed_monitoring_password = self.generate_monitoring_hash(monitoring_password)
-        except psycopg2.Error:
+        if not (
+            hashed_monitoring_password := self.generate_system_user(
+                self.stats_user, MONITORING_PASSWORD_KEY
+            )
+        ):
             event.defer()
             logger.error("deferring database-created hook - cannot hash password")
             return
-        self.charm.set_secret(APP_SCOPE, MONITORING_PASSWORD_KEY, monitoring_password)
+        # Add the admin console user.
+        if not (
+            hashed_admin_password := self.generate_system_user(self.admin_user, ADMIN_PASSWORD_KEY)
+        ):
+            event.defer()
+            logger.error("deferring database-created hook - cannot admin hash password")
+            return
         # create authentication user on postgres database, so we can authenticate other users
         # later on
         self.postgres.create_user(self.auth_user, hashed_password, admin=True)
         self.initialise_auth_function(self.collect_databases())
 
-        auth_file = f'"{self.auth_user}" "{hashed_password}"\n"{self.stats_user}" "{hashed_monitoring_password}"'
+        auth_file = (
+            f'"{self.auth_user}" "{hashed_password}"\n'
+            f'"{self.stats_user}" "{hashed_monitoring_password}"\n'
+            f'"{self.admin_user}" "{hashed_admin_password}"'
+        )
         self.charm.set_secret(APP_SCOPE, AUTH_FILE_DATABAG_KEY, auth_file)
         self.charm.render_auth_file()
 

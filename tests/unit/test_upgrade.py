@@ -64,6 +64,10 @@ class TestUpgrade(unittest.TestCase):
 
         _set_partition.assert_called_once_with(2)
 
+    @patch(
+        "relations.backend_database.BackendDatabaseRequires.generate_scram_hash",
+        return_value="scram-hash",
+    )
     @patch("charm.PgBouncerK8sCharm.reconcile_k8s_service")
     @patch("charm.PgbouncerUpgrade.set_unit_completed")
     @patch("charm.PgbouncerUpgrade._cluster_checks")
@@ -74,6 +78,7 @@ class TestUpgrade(unittest.TestCase):
         _cluster_checks: Mock,
         _set_unit_completed: Mock,
         _reconcile_k8s_service: Mock,
+        _,
     ):
         event = Mock()
 
@@ -168,7 +173,7 @@ class TestUpgrade(unittest.TestCase):
         return_value="stats_user",
     )
     @patch(
-        "relations.backend_database.BackendDatabaseRequires.generate_monitoring_hash",
+        "relations.backend_database.BackendDatabaseRequires.generate_scram_hash",
         return_value="scram-hash",
     )
     @patch("charm.PgBouncerK8sCharm.set_secret")
@@ -193,4 +198,4 @@ class TestUpgrade(unittest.TestCase):
         _set_secret.assert_called_once_with(
             "app", "auth_file", '"auth_user" "cred"\n"stats_user" "scram-hash"'
         )
-        _generate_hash.assert_called_once_with("other cred")
+        _generate_hash.assert_called_once_with("stats_user", "other cred")
