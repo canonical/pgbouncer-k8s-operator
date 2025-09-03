@@ -170,7 +170,7 @@ class BackendDatabaseRequires(Object):
 
     @cached_property
     def admin_user(self) -> str:
-        """Username for stats."""
+        """Username for admin console."""
         if not self.relation:
             return ""
         return f"pgbouncer_admin_{self.charm.app.name}".replace("-", "_")
