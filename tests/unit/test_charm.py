@@ -177,6 +177,10 @@ class TestCharm(unittest.TestCase):
         self.charm.render_pgb_config()
         assert not _send_signal.called
 
+        del self.charm.backend.stats_user
+        del self.charm.backend.admin_user
+        del self.charm.backend.auth_query
+
         with open("templates/pgb_config.j2") as file:
             template = Template(file.read())
         self.harness.set_can_connect(PGB, True)
@@ -232,6 +236,7 @@ class TestCharm(unittest.TestCase):
                 default_pool_size=default_pool_size,
                 min_pool_size=min_pool_size,
                 reserve_pool_size=reserve_pool_size,
+                admin_user="pgbouncer_admin_pgbouncer_k8s",
                 stats_user="pgbouncer_stats_pgbouncer_k8s",
                 auth_type="scram-sha-256",
                 auth_query="SELECT username, password FROM pgbouncer_auth_BACKNEND_USER.get_auth($1)",
@@ -282,6 +287,7 @@ class TestCharm(unittest.TestCase):
                 default_pool_size=20,
                 min_pool_size=10,
                 reserve_pool_size=10,
+                admin_user="pgbouncer_admin_pgbouncer_k8s",
                 stats_user="pgbouncer_stats_pgbouncer_k8s",
                 auth_type="scram-sha-256",
                 auth_query="SELECT username, password FROM pgbouncer_auth_BACKNEND_USER.get_auth($1)",
