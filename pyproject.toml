@@ -13,7 +13,7 @@ lightkube = "^0.17.2"
 lightkube-models = "^1.29.0.6"
 pydantic = "^1.10.22"
 psycopg2 = "^2.9.10"
-psycopg = {extras = ["c"], version = "^3.2.9"}  # Used by data_interfaces.py
+psycopg = {extras = ["c"], version = "^3.2.10"}  # Used by data_interfaces.py
 jinja2 = "^3.1.6"
 
 [tool.poetry.group.charm-libs.dependencies]
@@ -36,7 +36,7 @@ jsonschema = "*"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.12.11"
+ruff = "^0.12.12"
 
 [tool.poetry.group.lint]
 optional = true
@@ -49,7 +49,7 @@ optional = true
 
 [tool.poetry.group.unit.dependencies]
 coverage = {extras = ["toml"], version = "^7.10.6"}
-pytest = "^8.4.1"
+pytest = "^8.4.2"
 parameterized = "^0.9.0"
 
 [tool.poetry.group.integration]
@@ -57,7 +57,7 @@ optional = true
 
 [tool.poetry.group.integration.dependencies]
 lightkube = "*"
-pytest = "^8.4.1"
+pytest = "^8.4.2"
 pytest-operator = "^0.43.1"
 allure-pytest-default-results = "^0.1.3"
 # renovate caret doesn't work: https://github.com/renovatebot/renovate/issues/26940
