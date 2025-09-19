@@ -1,0 +1,36 @@
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/focal/indico-233
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/focal/redis-k8s-7
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/focal/redis-k8s-7
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  indico/0 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  indico/0 [executing] maintenance: installing charm software
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  indico/0 [idle] waiting: Waiting for database availability
+[32mINFO    [0m integration.relations.pgbouncer_provider.test_pgbouncer_provider:test_pgbouncer_provider.py:513 Verifying that the charm doesn't block when the extensions are enabled
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] active: Primary
+  postgresql-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  postgresql-k8s/1 [idle] active: 
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  postgresql-k8s/1 [idle] active: 
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  indico/0 [executing] waiting: Waiting for database availability
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] active: Primary
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  indico/0 [idle] waiting: Waiting for database availability
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  indico/0 [idle] waiting: Waiting for pebble
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  indico/0 [idle] active:
