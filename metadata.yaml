@@ -28,7 +28,7 @@ resources:
   pgbouncer-image:
     type: oci-image
     description: OCI image for pgbouncer
-    upstream-source: ghcr.io/canonical/charmed-pgbouncer@sha256:435496e8c34a804d3af08b6c3e1fba8c9c35f9968001a5b14b1e68c64f671a2b # renovate: oci-image tag: 1.21-22.04_edge
+    upstream-source: ghcr.io/canonical/charmed-pgbouncer@sha256:872d99798edabdf67983789e5ae8d100e1e502f635767a307a14047768f35088 # renovate: oci-image tag: 1.21-22.04_edge
 
 provides:
   database:
