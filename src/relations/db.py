@@ -82,6 +82,7 @@ from ops.model import (
     Relation,
     Unit,
 )
+from single_kernel_postgresql.utils.postgresql import PostgreSQL as PostgreSQLv1
 
 from constants import EXTENSIONS_BLOCKING_MESSAGE
 
@@ -274,10 +275,16 @@ class DbProvides(Object):
             self.charm.unit.status = MaintenanceStatus(init_msg)
             logger.info(init_msg)
 
-            self.charm.backend.postgres.create_user(user, password, admin=self.admin)
-            self.charm.backend.postgres.create_database(
-                database, user, client_relations=self.charm.client_relations
-            )
+            if isinstance(self.charm.backend.postgres, PostgreSQLv1):
+                self.charm.backend.postgres.create_database(database)
+                self.charm.backend.postgres.create_user(
+                    user, password, admin=self.admin, in_role=f"{database}_admin"
+                )
+            else:
+                self.charm.backend.postgres.create_user(user, password, admin=self.admin)
+                self.charm.backend.postgres.create_database(
+                    database, user, client_relations=self.charm.client_relations
+                )
             created_msg = f"database and user for {self.relation_name} relation created"
             self.charm.unit.status = initial_status
             self.charm.update_status()
