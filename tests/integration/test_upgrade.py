@@ -4,6 +4,7 @@
 import asyncio
 import json
 import logging
+import os
 import shutil
 import zipfile
 from pathlib import Path
@@ -64,7 +65,7 @@ async def test_deploy_latest(ops_test: OpsTest, charm) -> None:
             PG,
             application_name=PG,
             num_units=3,
-            channel="14/edge",
+            channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
             trust=True,
             config={"profile": "testing"},
         ),

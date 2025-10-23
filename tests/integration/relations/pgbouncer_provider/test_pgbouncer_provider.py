@@ -4,6 +4,7 @@
 import asyncio
 import json
 import logging
+import os
 
 import psycopg2
 import pytest
@@ -79,7 +80,7 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, charm):
             PG,
             application_name=PG,
             num_units=2,
-            channel="14/edge",
+            channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
             trust=True,
             config={"profile": "testing"},
         ),
@@ -482,7 +483,7 @@ async def test_relation_with_data_integrator(ops_test: OpsTest):
 
 
 @markers.amd64_only  # indico charm not available for arm64
-async def test_indico_datatabase(ops_test: OpsTest) -> None:
+async def test_indico_database(ops_test: OpsTest) -> None:
     """Tests deploying and relating to the Indico charm."""
     async with ops_test.fast_forward(fast_interval="30s"):
         await ops_test.model.deploy(
@@ -492,10 +493,10 @@ async def test_indico_datatabase(ops_test: OpsTest) -> None:
             num_units=1,
         )
         await ops_test.model.deploy(
-            "redis-k8s", channel="latest/stable", application_name="redis-broker"
+            "redis-k8s", channel="latest/edge", application_name="redis-broker"
         )
         await ops_test.model.deploy(
-            "redis-k8s", channel="latest/stable", application_name="redis-cache"
+            "redis-k8s", channel="latest/edge", application_name="redis-cache"
         )
         await asyncio.gather(
             ops_test.model.relate("redis-broker", "indico:redis-broker"),

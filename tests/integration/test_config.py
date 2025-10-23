@@ -2,6 +2,7 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 import logging
+import os
 from asyncio import gather
 
 import pytest as pytest
@@ -36,7 +37,7 @@ async def test_config_parameters(ops_test: OpsTest, charm) -> None:
                 PG,
                 application_name=PG,
                 num_units=1,
-                channel="14/edge",
+                channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
                 config={"profile": "testing"},
                 trust=True,
             ),

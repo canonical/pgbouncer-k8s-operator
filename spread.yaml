@@ -86,6 +86,8 @@ backends:
     # Manually pass specific environment variables
     environment:
       CI: '$(HOST: echo $CI)'
+      POSTGRESQL_CHARM_CHANNEL: 14/edge
+      POSTGRESQL_CHARM_CHANNEL/juju36_pg16: 16/edge
     systems:
       - ubuntu-24.04:
           username: runner
