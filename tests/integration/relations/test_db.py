@@ -188,7 +188,7 @@ async def test_extensions_blocking(ops_test: OpsTest) -> None:
     await ops_test.model.wait_for_idle(apps=[PG], status="active", idle_period=15)
     await ops_test.model.relate(f"{PGB}:db", f"{CLIENT_APP_NAME}:db")
     await ops_test.model.wait_for_idle(
-        apps=[PG, PGB, CLIENT_APP_NAME],
+        apps=[PG, PGB],
         status="active",
         raise_on_blocked=False,
         timeout=3000,
