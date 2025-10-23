@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
+import os
 
 import pytest as pytest
 from pytest_operator.plugin import OpsTest
@@ -67,7 +68,7 @@ async def test_build_and_deploy(ops_test: OpsTest, charm):
         # Deploy Postgresql operator
         await ops_test.model.deploy(
             POSTGRESQL_APP_NAME,
-            channel="14/edge",
+            channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
             trust=True,
             num_units=DATABASE_UNITS,
             config={"profile": "testing"},

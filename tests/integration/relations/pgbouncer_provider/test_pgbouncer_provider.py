@@ -4,6 +4,7 @@
 import asyncio
 import json
 import logging
+import os
 
 import psycopg2
 import pytest
@@ -79,7 +80,7 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, charm):
             PG,
             application_name=PG,
             num_units=2,
-            channel="14/edge",
+            channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
             trust=True,
             config={"profile": "testing"},
         ),

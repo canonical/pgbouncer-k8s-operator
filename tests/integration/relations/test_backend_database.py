@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import os
 
 import pytest
 from pytest_operator.plugin import OpsTest
@@ -60,7 +61,11 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, charm):
             ),
             # Edge 5 is the new postgres charm
             ops_test.model.deploy(
-                PG, channel="14/edge", trust=True, num_units=3, config={"profile": "testing"}
+                PG,
+                channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
+                trust=True,
+                num_units=3,
+                config={"profile": "testing"},
             ),
         )
         await asyncio.gather(

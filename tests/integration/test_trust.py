@@ -4,6 +4,7 @@
 
 import asyncio
 import logging
+import os
 
 import pytest
 import tenacity
@@ -51,7 +52,7 @@ async def test_trust(ops_test: OpsTest, charm):
             ),
             ops_test.model.deploy(
                 PG,
-                channel="14/edge",
+                channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
                 trust=True,
                 num_units=1,
                 config={"profile": "testing"},
