@@ -49,7 +49,12 @@ async def test_create_db_admin_legacy_relation(ops_test: OpsTest, charm):
             ops_test.model.deploy(
                 PG, trust=True, num_units=3, channel="14/edge", config={"profile": "testing"}
             ),
-            ops_test.model.deploy(REDIS_APP_NAME, application_name=REDIS_APP_NAME),
+            ops_test.model.deploy(
+                REDIS_APP_NAME,
+                application_name=REDIS_APP_NAME,
+                channel="latest/edge",
+                series="jammy",
+            ),
         )
 
         # update pgbouncer port because discourse only likes 5432
