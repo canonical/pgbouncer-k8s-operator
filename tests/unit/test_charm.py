@@ -14,7 +14,7 @@ import lightkube
 import psycopg2
 import pytest
 from jinja2 import Template
-from ops import BlockedStatus
+from ops import BlockedStatus, JujuVersion
 from ops.model import RelationDataTypeError
 from ops.testing import Harness
 from parameterized import parameterized
@@ -922,3 +922,27 @@ class TestCharm(unittest.TestCase):
         assert SECRET_INTERNAL_LABEL not in self.harness.get_relation_data(
             self.rel_id, getattr(self.charm, scope).name
         )
+
+    def test_on_secret_remove(self):
+        with (
+            patch("ops.model.Model.juju_version", new_callable=PropertyMock) as _juju_version,
+        ):
+            event = Mock()
+
+            # New juju
+            _juju_version.return_value = JujuVersion("3.6.11")
+            self.harness.charm._on_secret_remove(event)
+            event.remove_revision.assert_called_once_with()
+            event.reset_mock()
+
+            # Old juju
+            _juju_version.return_value = JujuVersion("3.6.9")
+            self.harness.charm._on_secret_remove(event)
+            assert not event.remove_revision.called
+            event.reset_mock()
+
+            # No secret
+            event.secret.label = None
+            self.harness.charm._on_secret_remove(event)
+            assert not event.remove_revision.called
+            event = Mock()
