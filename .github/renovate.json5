@@ -30,8 +30,8 @@
   customManagers: [
     {
       customType: 'regex',
-      fileMatch: [
-        '^\\.github/workflows/[^/]+\\.ya?ml$',
+      managerFilePatterns: [
+        '/^\\.github/workflows/[^/]+\\.ya?ml$/',
       ],
       matchStrings: [
         '(libjuju: )==(?<currentValue>.*?) +# renovate: latest libjuju 2',
