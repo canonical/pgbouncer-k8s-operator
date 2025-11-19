@@ -1,0 +1,77 @@
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[32mINFO    [0m pytest_operator.plugin:plugin.py:806 Connecting to existing model concierge-microk8s:testing on unspecified cloud
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHSession received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHTunneler received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/jammy/postgresql-k8s-684
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying local:jammy/pgbouncer-k8s-0
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  postgresql-k8s/1 [allocating] waiting: installing agent
+  postgresql-k8s/2 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  postgresql-k8s/1 [executing] maintenance: installing charm software
+  postgresql-k8s/2 [executing] maintenance: installing charm software
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+  postgresql-k8s/1 [executing] waiting: awaiting for primary endpoint to be ready
+  postgresql-k8s/2 [executing] unknown: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+  postgresql-k8s/1 [executing] waiting: awaiting for primary endpoint to be ready
+  postgresql-k8s/2 [executing] unknown: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] unknown: 
+  postgresql-k8s/1 [executing] waiting: awaiting for primary endpoint to be ready
+  postgresql-k8s/2 [idle] unknown: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+  postgresql-k8s/1 [executing] waiting: awaiting for primary endpoint to be ready
+  postgresql-k8s/2 [executing] unknown: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] unknown: 
+  postgresql-k8s/1 [executing] waiting: awaiting for primary endpoint to be ready
+  postgresql-k8s/2 [idle] unknown: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] unknown: 
+  postgresql-k8s/1 [executing] waiting: awaiting for cluster to start
+  postgresql-k8s/2 [idle] unknown: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] unknown: 
+  postgresql-k8s/1 [executing] maintenance: reconfiguring cluster
+  postgresql-k8s/2 [idle] unknown: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] maintenance: Initialising backend-database relation
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [executing] active: Primary
+  postgresql-k8s/2 [idle] active: 
+[32mINFO    [0m root:test_backend_database.py:81 {'databases': {}, 'peers': {'1': 'host=0 port=6432', '2': 'host=1 port=6432', '3': 'host=2 port=6432', '4': 'host=3 port=6432'}, 'pgbouncer': {'peer_id': '1', 'listen_addr': '*', 'listen_port': '6432', 'logfile': '/var/log/pgbouncer/instance_0/pgbouncer.log', 'pidfile': '/var/lib/pgbouncer/instance_0/pgbouncer.pid', 'admin_users': 'pgbouncer_admin_pgbouncer_k8s', 'stats_users': 'pgbouncer_stats_pgbouncer_k8s', 'auth_type': 'scram-sha-256', 'user': 'postgres', 'max_client_conn': '10000', 'ignore_startup_parameters': 'extra_float_digits,options', 'server_tls_sslmode': 'prefer', 'so_reuseport': '1', 'unix_socket_dir': '/var/lib/pgbouncer/instance_0', 'pool_mode': 'session', 'max_db_connections': '100', 'default_pool_size': '13', 'min_pool_size': '7', 'reserve_pool_size': '7', 'auth_query': 'SELECT username, password FROM pgbouncer_auth_relation_id_5.get_auth($1)', 'auth_file': '/dev/shm/pgbouncer-k8s_vUqLIjj4uju29gwqTFc4jFIR'}}
+[32mINFO    [0m root:test_backend_database.py:92 {'data': '{"database": "pgbouncer", "extra-user-roles": "SUPERUSER", "provided-secrets": "[\\"mtls-cert\\"]", "requested-secrets": "[\\"username\\", \\"password\\", \\"tls\\", \\"tls-ca\\", \\"uris\\", \\"read-only-uris\\", \\"entity-name\\", \\"entity-password\\"]"}', 'database': 'pgbouncer', 'endpoints': 'postgresql-k8s-primary.testing.svc.cluster.local:5432', 'read-only-endpoints': 'postgresql-k8s-replicas.testing.svc.cluster.local:5432', 'secret-tls': 'secret://97a9a694-9986-42d0-84e5-9fb91b23ca29/d4ehvgmei9ds7bkcikt0', 'secret-user': 'secret://97a9a694-9986-42d0-84e5-9fb91b23ca29/d4ehvm6ei9ds7bkciktg', 'version': '14.19'}
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] active: 
+  postgresql-k8s/1 [executing] active: Primary
+  postgresql-k8s/2 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+[32mINFO    [0m root:test_backend_database.py:112 {'databases': {}, 'peers': {'1': 'host=0 port=6432', '2': 'host=1 port=6432', '3': 'host=2 port=6432', '4': 'host=3 port=6432'}, 'pgbouncer': {'peer_id': '1', 'listen_addr': '*', 'listen_port': '6432', 'logfile': '/var/log/pgbouncer/instance_0/pgbouncer.log', 'pidfile': '/var/lib/pgbouncer/instance_0/pgbouncer.pid', 'admin_users': '', 'stats_users': '', 'auth_type': 'scram-sha-256', 'user': 'postgres', 'max_client_conn': '10000', 'ignore_startup_parameters': 'extra_float_digits,options', 'server_tls_sslmode': 'prefer', 'so_reuseport': '1', 'unix_socket_dir': '/var/lib/pgbouncer/instance_0', 'pool_mode': 'session', 'max_db_connections': '100', 'default_pool_size': '13', 'min_pool_size': '7', 'reserve_pool_size': '7', 'auth_query': '', 'auth_file': '/dev/shm/pgbouncer-k8s_vUqLIjj4uju29gwqTFc4jFIR'}}
