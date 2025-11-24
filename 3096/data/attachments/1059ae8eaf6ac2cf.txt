@@ -1,0 +1,105 @@
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: DELETE https://10.1.0.11:16443/api/v1/namespaces/testing/pods/pgbouncer-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-test-app/0 [idle] active: received database credentials of the second database
+  pgbouncer-k8s/0 [executing] maintenance: stopping charm software
+  pgbouncer-k8s/1 [idle] active: 
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  secondary-application/0 [idle] active: received database credentials of the second database
+  finos-waltz-k8s/0 [idle] active: 
+  pgbouncer-k8s-secondary/0 [idle] active: 
+  data-integrator/0 [idle] active: 
+  redis-broker/0 [idle] active: 
+  redis-cache/0 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] blocked: PgBouncer service metrics_server not running: service status = ServiceStatus.INACTIVE
+  pgbouncer-k8s/1 [idle] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.11   unsupported  02:01:54Z
+
+App                      Version  Status  Scale  Charm                Channel      Rev  Address         Exposed  Message
+data-integrator                   active      1  data-integrator      latest/edge  301  10.152.183.225  no       
+finos-waltz-k8s                   active      1  finos-waltz-k8s      latest/edge   33  10.152.183.166  no       
+pgbouncer-k8s            1.21.0   active      2  pgbouncer-k8s                       0  10.152.183.129  no       
+pgbouncer-k8s-secondary  1.21.0   active      1  pgbouncer-k8s                       1  10.152.183.110  no       
+postgresql-k8s           14.19    active      2  postgresql-k8s       14/edge      684  10.152.183.206  no       
+postgresql-test-app               active      1  postgresql-test-app  latest/edge  418  10.152.183.238  no       received database credentials of the second database
+redis-broker             7.2.5    active      1  redis-k8s            latest/edge   42  10.152.183.204  no       
+redis-cache              7.2.5    active      1  redis-k8s            latest/edge   42  10.152.183.58   no       
+secondary-application             active      1  postgresql-test-app  latest/edge  418  10.152.183.221  no       received database credentials of the second database
+
+Unit                        Workload  Agent  Address       Ports  Message
+data-integrator/0*          active    idle   10.1.243.149         
+finos-waltz-k8s/0*          active    idle   10.1.243.146         
+pgbouncer-k8s-secondary/0*  active    idle   10.1.243.147         
+pgbouncer-k8s/0*            active    idle   10.1.243.156         
+pgbouncer-k8s/1             active    idle   10.1.243.148         
+postgresql-k8s/0            active    idle   10.1.243.142         
+postgresql-k8s/1*           active    idle   10.1.243.143         Primary
+postgresql-test-app/0*      active    idle   10.1.243.137         received database credentials of the second database
+redis-broker/0*             active    idle   10.1.243.153         
+redis-cache/0*              active    idle   10.1.243.155         
+secondary-application/0*    active    idle   10.1.243.145         received database credentials of the second database
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-postgresql-test-app-0: 01:40:10 ERROR unit.postgresql-test-app/0.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/src/charm.py", line 579, in <module>
+    main(ApplicationCharm)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 360, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 504, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 488, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 423, in _emit
+    self._emit_charm_event(self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 467, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 351, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 924, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 1036, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/src/charm.py", line 508, in _on_run_sql_action
+    cursor.execute(query)
+psycopg2.errors.ReadOnlySqlTransaction: cannot execute DROP TABLE in a read-only transaction
+
+unit-pgbouncer-k8s-0: 01:42:00 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-1: 01:42:14 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-0: 01:42:14 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-test-app-0: 01:43:00 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 01:45:23 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-1: 01:49:03 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-0: 01:49:05 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 01:49:46 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-finos-waltz-k8s-0: 01:49:49 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-secondary-0: 01:50:05 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-1: 01:50:45 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 01:51:43 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-finos-waltz-k8s-0: 01:53:11 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-test-app-0: 01:53:15 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-secondary-application-0: 01:53:23 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 01:54:05 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-secondary-0: 01:54:52 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 01:55:59 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-1: 01:58:28 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-1: 01:59:03 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-0: 01:59:26 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 01:59:30 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-redis-cache-0: 01:59:32 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-redis-broker-0: 01:59:48 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 02:00:13 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 02:01:08 ERROR unit.pgbouncer-k8s/0.juju-log Cluster upgrade failed, ensure pre-upgrade checks are ran first.
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
