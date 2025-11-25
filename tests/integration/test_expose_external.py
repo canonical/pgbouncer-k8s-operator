@@ -24,7 +24,7 @@ TEST_DATABASE_NAME = "testdatabase"
 TLS_SETUP_SLEEP_TIME = 30
 if juju_major_version >= 3:
     TLS_APP_NAME = "self-signed-certificates"
-    TLS_CHANNEL = "latest/stable"
+    TLS_CHANNEL = "1/stable"
     TLS_CONFIG = {"ca-common-name": "Test CA"}
 else:
     TLS_APP_NAME = "tls-certificates-operator"
