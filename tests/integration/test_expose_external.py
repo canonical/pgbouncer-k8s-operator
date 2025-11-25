@@ -25,10 +25,12 @@ TLS_SETUP_SLEEP_TIME = 30
 if juju_major_version >= 3:
     TLS_APP_NAME = "self-signed-certificates"
     TLS_CHANNEL = "1/stable"
+    TLS_BASE = "ubuntu@24.04"
     TLS_CONFIG = {"ca-common-name": "Test CA"}
 else:
     TLS_APP_NAME = "tls-certificates-operator"
     TLS_CHANNEL = "legacy/stable"
+    TLS_BASE = "ubuntu@22.04"
     TLS_CONFIG = {"generate-self-signed-certificates": "true", "ca-common-name": "Test CA"}
 
 
@@ -185,7 +187,7 @@ async def test_expose_external_with_tls(ops_test: OpsTest) -> None:
         TLS_APP_NAME,
         channel=TLS_CHANNEL,
         config=TLS_CONFIG,
-        base="ubuntu@22.04",
+        base=TLS_BASE,
     )
     async with ops_test.fast_forward("60s"):
         await ops_test.model.wait_for_idle(
