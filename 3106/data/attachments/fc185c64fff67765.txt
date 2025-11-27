@@ -1,0 +1,86 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.12   unsupported  01:37:19Z
+
+App              Version  Status   Scale  Charm            Channel      Rev  Address         Exposed  Message
+data-integrator           blocked      2  data-integrator  latest/edge  301  10.152.183.234  no       Please relate the data-integrator with the desired product
+pgbouncer-k8s    1.21.0   blocked      2  pgbouncer-k8s    1/stable     408  10.152.183.90   no       waiting for backend database relation to initialise
+postgresql-k8s   14.19    error        3  postgresql-k8s   14/edge      701  10.152.183.33   no       hook failed: "update-status"
+
+Unit                Workload  Agent      Address       Ports  Message
+data-integrator/0   blocked   idle       10.1.243.139         Please relate the data-integrator with the desired product
+data-integrator/1*  blocked   idle       10.1.243.140         Please relate the data-integrator with the desired product
+pgbouncer-k8s/0*    blocked   idle       10.1.243.137         waiting for backend database relation to initialise
+pgbouncer-k8s/1     blocked   idle       10.1.243.138         waiting for backend database relation to initialise
+postgresql-k8s/0*   waiting   executing  10.1.243.144         awaiting for primary endpoint to be ready
+postgresql-k8s/1    error     idle       10.1.243.146         hook failed: "update-status"
+postgresql-k8s/2    unknown   idle       10.1.243.145         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-postgresql-k8s-1: 01:37:18 ERROR unit.postgresql-k8s/1.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/websocket/_socket.py", line 127, in recv
+    bytes_ = _recv()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/websocket/_socket.py", line 99, in _recv
+    return sock.recv(bufsize)
+TimeoutError: timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 3132, in exec
+    control_ws = self._connect_websocket(task_id, 'control')
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 3224, in _connect_websocket
+    ws.connect(url, socket=sock)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/websocket/_core.py", line 268, in connect
+    self.handshake_response = handshake(self.sock, url, *addrs, **options)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/websocket/_handshake.py", line 66, in handshake
+    status, resp = _get_resp_headers(sock)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/websocket/_handshake.py", line 142, in _get_resp_headers
+    status, resp_headers, status_message = read_headers(sock)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/websocket/_http.py", line 385, in read_headers
+    line = recv_line(sock)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/websocket/_socket.py", line 151, in recv_line
+    c = recv(sock, 1)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/websocket/_socket.py", line 129, in recv
+    raise WebSocketTimeoutException("Connection timed out")
+websocket._exceptions.WebSocketTimeoutException: Connection timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/src/charm.py", line 2551, in <module>
+    main(PostgresqlOperatorCharm, use_juju_for_storage=True)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 356, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 502, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 486, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 418, in _emit
+    self.framework.reemit()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 934, in reemit
+    self._reemit()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 1030, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 1153, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/src/charm.py", line 989, in _on_postgresql_pebble_ready
+    self._create_pgdata(container)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 1153, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/src/charm.py", line 965, in _create_pgdata
+    container.exec([
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3289, in exec
+    return self._pebble.exec(
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 3141, in exec
+    raise ChangeError(change.err, change) from e
+ops.pebble.ChangeError: cannot perform the following tasks:
+- Execute command "chown" (exec 3: timeout waiting for websocket connections: context deadline exceeded)
+----- Logs from task 0 -----
+2025-11-27T01:37:18Z ERROR exec 3: timeout waiting for websocket connections: context deadline exceeded
+-----
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
