@@ -13,7 +13,7 @@ lightkube = "^0.18.0"
 lightkube-models = "^1.29.0.6"
 pydantic = "^1.10.24"
 psycopg2 = "^2.9.11"
-psycopg = {extras = ["c"], version = "^3.3.0"}  # Used by data_interfaces.py
+psycopg = {extras = ["c"], version = "^3.3.2"}  # Used by data_interfaces.py
 jinja2 = "^3.1.6"
 
 [tool.poetry.group.charm-libs.dependencies]
@@ -36,7 +36,7 @@ jsonschema = "*"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.14.7"
+ruff = "^0.14.8"
 
 [tool.poetry.group.lint]
 optional = true
@@ -48,7 +48,7 @@ codespell = "^2.4.1"
 optional = true
 
 [tool.poetry.group.unit.dependencies]
-coverage = {extras = ["toml"], version = "^7.12.0"}
+coverage = {extras = ["toml"], version = "^7.13.0"}
 pytest = "^8.4.2"
 parameterized = "^0.9.0"
 
