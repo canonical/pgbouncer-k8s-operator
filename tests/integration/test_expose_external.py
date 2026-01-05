@@ -109,7 +109,6 @@ async def test_expose_external(ops_test, charm) -> None:
             channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
             application_name=PG,
             config={"profile": "testing"},
-            series=CHARM_SERIES,
             num_units=1,
             trust=True,
         ),
