@@ -135,7 +135,10 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
         )
 
         # Relate it to the PostgreSQL to enable TLS.
-        await ops_test.model.relate(f"{PG}:certificates", tls_certificates_app_name)
+        if os.environ["POSTGRESQL_CHARM_CHANNEL"].startswith("16"):
+            await ops_test.model.relate(tls_certificates_app_name, f"{PG}:client-certificates")
+        else:
+            await ops_test.model.relate(tls_certificates_app_name, f"{PG}:certificates")
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
 
         await ops_test.model.applications[PG].set_config({"logging_log_connections": "True"})

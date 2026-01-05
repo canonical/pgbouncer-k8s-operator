@@ -99,7 +99,7 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, charm):
     await ops_test.model.add_relation(f"{CLIENT_APP_NAME}:{FIRST_DATABASE_RELATION_NAME}", PGB)
 
     async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active")
+        await ops_test.model.wait_for_idle(apps=APP_NAMES, status="active", timeout=600)
 
     # Check that on juju 3 we have secrets and no username and password in the rel databag
     if hasattr(ops_test.model, "list_secrets"):
