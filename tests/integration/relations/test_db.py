@@ -171,7 +171,7 @@ async def test_create_db_legacy_relation(ops_test: OpsTest, charm):
 async def test_extensions_blocking(ops_test: OpsTest) -> None:
     """Test the relation blocks with extensions."""
     logger.info("Deploying test app")
-    await ops_test.model.deploy(CLIENT_APP_NAME)
+    await ops_test.model.deploy(CLIENT_APP_NAME, channel="latest/edge")
     await ops_test.model.add_relation(f"{PGB}:db", f"{CLIENT_APP_NAME}:db")
 
     logger.info("Wait for PGB to block due to extensions")

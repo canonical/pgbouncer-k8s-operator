@@ -31,9 +31,11 @@ from ops import (
     ActiveStatus,
     BlockedStatus,
     ConfigChangedEvent,
+    JujuVersion,
     MaintenanceStatus,
     PebbleReadyEvent,
     Relation,
+    SecretRemoveEvent,
     WaitingStatus,
     main,
 )
@@ -139,6 +141,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.pgbouncer_pebble_ready, self._on_pgbouncer_pebble_ready)
         self.framework.observe(self.on.update_status, self._on_update_status)
+        self.framework.observe(self.on.secret_remove, self._on_secret_remove)
 
         self.peers = Peers(self)
         self.backend = BackendDatabaseRequires(self)
@@ -419,6 +422,23 @@ class PgBouncerK8sCharm(TypedCharmBase):
         self.update_status()
         if self.unit.is_leader() and self.backend.postgres and self.check_service_connectivity():
             self.update_client_connection_info()
+
+    def _on_secret_remove(self, event: SecretRemoveEvent) -> None:
+        if self.model.juju_version < JujuVersion("3.6.11"):
+            logger.warning(
+                "Skipping secret revision removal due to https://github.com/juju/juju/issues/20782"
+            )
+            return
+
+        # A secret removal (entire removal, not just a revision removal) causes
+        # https://github.com/juju/juju/issues/20794. This check is to avoid the
+        # errors that would happen if we tried to remove the revision in that case
+        # (in the revision removal, the label is present).
+        if event.secret.label is None:
+            logger.debug("Secret with no label cannot be removed")
+            return
+        logger.debug(f"Removing secret with label {event.secret.label} revision {event.revision}")
+        event.remove_revision()
 
     def _pgbouncer_layer(self) -> Layer:
         """Returns a default pebble config layer for the pgbouncer container.
