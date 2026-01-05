@@ -278,7 +278,7 @@ class DbProvides(Object):
             if isinstance(self.charm.backend.postgres, PostgreSQLv1):
                 self.charm.backend.postgres.create_database(database)
                 self.charm.backend.postgres.create_user(
-                    user, password, admin=self.admin, in_role=f"{database}_admin"
+                    user, password, admin=self.admin, database=database
                 )
             else:
                 self.charm.backend.postgres.create_user(user, password, admin=self.admin)

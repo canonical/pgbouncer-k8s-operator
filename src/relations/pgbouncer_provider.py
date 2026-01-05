@@ -177,7 +177,7 @@ class PgBouncerProvider(Object):
                 logger.debug("creating database")
                 self.charm.backend.postgres.create_database(database)
                 self.charm.backend.postgres.create_user(
-                    user, password, extra_user_roles=extra_user_roles, in_role=f"{database}_admin"
+                    user, password, extra_user_roles=extra_user_roles, database=database
                 )
             # set up auth function
             self.charm.backend.remove_auth_function(dbs=[database])

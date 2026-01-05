@@ -83,7 +83,7 @@ async def test_build_and_deploy(ops_test: OpsTest, charm):
         )
         # Relate it to the PgBouncer to enable TLS.
         await ops_test.model.relate(PGB, tls_certificates_app_name)
-        if os.environ["POSTGRESQL_CHARM_CHANNEL"] == "16/stable":
+        if os.environ["POSTGRESQL_CHARM_CHANNEL"].startswith("16"):
             await ops_test.model.relate(
                 tls_certificates_app_name, f"{POSTGRESQL_APP_NAME}:client-certificates"
             )
