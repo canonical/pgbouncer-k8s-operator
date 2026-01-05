@@ -141,7 +141,10 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
             await ops_test.model.relate(tls_certificates_app_name, f"{PG}:certificates")
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
 
-        await ops_test.model.applications[PG].set_config({"logging_log_connections": "True"})
+        if os.environ["POSTGRESQL_CHARM_CHANNEL"].startswith("16"):
+            await ops_test.model.applications[PG].set_config({"logging-log-connections": "True"})
+        else:
+            await ops_test.model.applications[PG].set_config({"logging_log_connections": "True"})
         await ops_test.model.wait_for_idle(apps=[PG], status="active", idle_period=30)
 
         # Deploy an app and relate it to PgBouncer to open a connection
