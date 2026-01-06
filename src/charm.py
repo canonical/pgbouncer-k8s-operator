@@ -41,6 +41,10 @@ from ops import (
 )
 from ops.pebble import ChangeError, Layer, ServiceStatus
 from ops.pebble import ConnectionError as PebbleConnectionError
+from single_kernel_postgresql.utils.postgresql import (
+    INVALID_DATABASE_NAME_BLOCKING_MESSAGE,
+    INVALID_EXTRA_USER_ROLE_BLOCKING_MESSAGE,
+)
 
 from config import CharmConfig, ServiceType
 from constants import (
@@ -651,7 +655,11 @@ class PgBouncerK8sCharm(TypedCharmBase):
 
     def update_status(self):
         """Health check to update pgbouncer status based on charm state."""
-        if self.unit.status.message == EXTENSIONS_BLOCKING_MESSAGE:
+        if self.unit.status.message in [
+            EXTENSIONS_BLOCKING_MESSAGE,
+            INVALID_DATABASE_NAME_BLOCKING_MESSAGE,
+            INVALID_EXTRA_USER_ROLE_BLOCKING_MESSAGE,
+        ]:
             return
 
         if not self.configuration_check():

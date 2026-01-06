@@ -41,16 +41,12 @@ from charms.pgbouncer_k8s.v0 import pgb
 from charms.postgresql_k8s.v0.postgresql import (
     PERMISSIONS_GROUP_ADMIN,
 )
-from charms.postgresql_k8s.v0.postgresql import (
-    PostgreSQL as PostgreSQLv0,
-)
+from charms.postgresql_k8s.v0.postgresql import PostgreSQL as PostgreSQLv0
 from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
-from ops.model import (
-    Application,
-    BlockedStatus,
-)
+from ops.model import Application, BlockedStatus
 from single_kernel_postgresql.utils.postgresql import (
+    ACCESS_GROUP_RELATION,
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
     PostgreSQLDeleteUserError,
@@ -129,6 +125,7 @@ class PgBouncerProvider(Object):
 
         # Make sure that certain groups are not in the list
         extra_user_roles = self.sanitize_extra_roles(event.extra_user_roles)
+        extra_user_roles.append(ACCESS_GROUP_RELATION)
 
         dbs = self.charm.generate_relation_databases()
         dbs[str(rel_id)] = {"name": database, "legacy": False}
@@ -136,6 +133,8 @@ class PgBouncerProvider(Object):
             PERMISSIONS_GROUP_ADMIN in extra_user_roles
             or "superuser" in extra_user_roles
             or "createdb" in extra_user_roles
+            or "charmed_admin" in extra_user_roles
+            or "charmed_backup" in extra_user_roles
             or "charmed_databases_owner" in extra_user_roles
             or "charmed_dba" in extra_user_roles
             or "charmed_dml" in extra_user_roles
@@ -149,12 +148,12 @@ class PgBouncerProvider(Object):
         pgb_dbs_hash = shake_128(
             self.charm.peers.app_databag["pgb_dbs_config"].encode()
         ).hexdigest(16)
-        for key, data in self.charm.peers.relation.data.items():
+        for key in self.charm.peers.relation.data:
             # We skip the leader so we don't have to wait on the defer
             if (
                 key != self.charm.app
                 and key != self.charm.unit
-                and data.get("pgb_dbs", "") != pgb_dbs_hash
+                and self.charm.peers.relation.data[key].get("pgb_dbs", "") != pgb_dbs_hash
             ):
                 logger.debug("Not all units have synced configuration")
                 event.defer()
@@ -188,9 +187,14 @@ class PgBouncerProvider(Object):
             PostgreSQLGetPostgreSQLVersionError,
             PostgreSQLEnableDisableExtensionError,
         ) as e:
-            logger.exception(e)
             self.charm.unit.status = BlockedStatus(
-                f"Failed to initialize {self.relation_name} relation"
+                e.message
+                if (
+                    issubclass(type(e), PostgreSQLCreateDatabaseError)
+                    or issubclass(type(e), PostgreSQLCreateUserError)
+                )
+                and e.message is not None
+                else f"Failed to initialize relation {self.relation_name}"
             )
             return
 
@@ -202,7 +206,6 @@ class PgBouncerProvider(Object):
         self.database_provides.set_credentials(rel_id, user, password)
         # Set the database name
         self.database_provides.set_database(rel_id, database)
-
         self.update_connection_info(event.relation)
 
     def _on_relation_departed(self, event: RelationDepartedEvent) -> None:
