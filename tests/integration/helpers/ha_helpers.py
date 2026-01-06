@@ -126,7 +126,8 @@ async def start_continuous_writes(
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
     else:
         action = (
-            await ops_test.model.applications[test_app]
+            await ops_test.model
+            .applications[test_app]
             .units[0]
             .run_action("start-continuous-writes")
         )
@@ -134,7 +135,8 @@ async def start_continuous_writes(
     for attempt in Retrying(stop=stop_after_delay(60 * 5), wait=wait_fixed(3), reraise=True):
         with attempt:
             action = (
-                await ops_test.model.applications[test_app]
+                await ops_test.model
+                .applications[test_app]
                 .units[0]
                 .run_action("start-continuous-writes")
             )
