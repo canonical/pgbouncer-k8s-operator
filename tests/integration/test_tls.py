@@ -3,7 +3,7 @@
 # See LICENSE file for licensing details.
 import os
 
-import pytest as pytest
+import pytest
 from pytest_operator.plugin import OpsTest
 
 from . import markers
@@ -181,6 +181,10 @@ async def test_mattermost_db(ops_test: OpsTest) -> None:
     Args:
         ops_test: The ops test framework
     """
+    if os.environ["POSTGRESQL_CHARM_CHANNEL"].startswith("16"):
+        pytest.skip(
+            "Mattermost rev. 27 requires access to the public schema, which is disabled by default in PG 16."
+        )
     async with ops_test.fast_forward():
         # Deploy Mattermost
         await deploy_and_relate_application_with_pgbouncer(
