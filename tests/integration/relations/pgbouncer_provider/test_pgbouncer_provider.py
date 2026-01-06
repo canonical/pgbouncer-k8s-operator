@@ -211,6 +211,10 @@ async def test_cant_write_in_readonly(ops_test: OpsTest):
 
 async def test_database_admin_permissions(ops_test: OpsTest):
     """Test admin permissions."""
+    if os.environ["POSTGRESQL_CHARM_CHANNEL"].split("/")[0] != "14":
+        pytest.skip(
+            "Skipping check for database and user creation permissions on PostgreSQL above 14, as they are not supported."
+        )
     create_database_query = "CREATE DATABASE another_database;"
     run_create_database_query = await run_sql_on_application_charm(
         ops_test,
