@@ -1643,15 +1643,18 @@ files = [
 
 [[package]]
 name = "postgresql-charms-single-kernel"
-version = "16.1.5"
+version = "16.1.6"
 description = "Shared and reusable code for PostgreSQL-related charms"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = ">=3.8,<4.0"
 groups = ["main"]
 files = [
-    {file = "postgresql_charms_single_kernel-16.1.5-py3-none-any.whl", hash = "sha256:fdf024d343460b6571c089ac7196b49b9f8cb7e36f15392a39d61d00b37ca53c"},
-    {file = "postgresql_charms_single_kernel-16.1.5.tar.gz", hash = "sha256:5e58aec7da64c06c05b0b16ac1052c756b0d28222cbb43477ee0bdf06f8d9595"},
+    {file = "0994617e62a1dc9a99ac0b09038a9fb714c251af.zip", hash = "sha256:0a2efba949454f5c5066abbfde28dedf5f2dd37e20ecd8d0961782c061ac9046"},
 ]
+
+[package.source]
+type = "url"
+url = "https://github.com/canonical/postgresql-single-kernel-library/archive/0994617e62a1dc9a99ac0b09038a9fb714c251af.zip"
 
 [[package]]
 name = "prompt-toolkit"
@@ -2858,4 +2861,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "ca8523cf939c10299094c0ce6c4aa9bfc74736a7c5c6c56ea32a6035884ba728"
+content-hash = "1e62e93d67d8b086b5e8fd7cc4ef64326a09b395f4f20306f9383d939b957d64"
