@@ -190,8 +190,8 @@ class PgBouncerProvider(Object):
             self.charm.unit.status = BlockedStatus(
                 e.message
                 if (
-                    issubclass(type(e), PostgreSQLCreateDatabaseError)
-                    or issubclass(type(e), PostgreSQLCreateUserError)
+                    isinstance(e, PostgreSQLCreateDatabaseError)
+                    or isinstance(e, PostgreSQLCreateUserError)
                 )
                 and e.message is not None
                 else f"Failed to initialize relation {self.relation_name}"
