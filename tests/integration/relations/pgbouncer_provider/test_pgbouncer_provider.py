@@ -520,7 +520,11 @@ async def test_indico_database(ops_test: OpsTest) -> None:
 
         # Verify that the charm doesn't block when the extensions are enabled.
         logger.info("Verifying that the charm doesn't block when the extensions are enabled")
-        config = {"plugin_pg_trgm_enable": "True", "plugin_unaccent_enable": "True"}
+        if os.environ["POSTGRESQL_CHARM_CHANNEL"].startswith("16"):
+            config = {"plugin-pg-trgm-enable": "True", "plugin-unaccent-enable": "True"}
+        else:
+            config = {"plugin_pg_trgm_enable": "True", "plugin_unaccent_enable": "True"}
+
         await ops_test.model.applications[PG].set_config(config)
         await ops_test.model.wait_for_idle(apps=[PG], status="active")
         await ops_test.model.relate(PGB, "indico")
