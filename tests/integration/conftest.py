@@ -26,7 +26,8 @@ async def continuous_writes(ops_test: OpsTest) -> None:
     for attempt in Retrying(stop=stop_after_delay(60 * 5), wait=wait_fixed(3), reraise=True):
         with attempt:
             action = (
-                await ops_test.model.applications[CLIENT_APP_NAME]
+                await ops_test.model
+                .applications[CLIENT_APP_NAME]
                 .units[0]
                 .run_action("clear-continuous-writes")
             )
