@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
+import os
 
-import pytest as pytest
+import pytest
 from pytest_operator.plugin import OpsTest
 
 from . import markers
@@ -67,7 +68,7 @@ async def test_build_and_deploy(ops_test: OpsTest, charm):
         # Deploy Postgresql operator
         await ops_test.model.deploy(
             POSTGRESQL_APP_NAME,
-            channel="14/edge",
+            channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
             trust=True,
             num_units=DATABASE_UNITS,
             config={"profile": "testing"},
@@ -82,9 +83,14 @@ async def test_build_and_deploy(ops_test: OpsTest, charm):
         )
         # Relate it to the PgBouncer to enable TLS.
         await ops_test.model.relate(PGB, tls_certificates_app_name)
-        await ops_test.model.relate(
-            tls_certificates_app_name, f"{POSTGRESQL_APP_NAME}:certificates"
-        )
+        if os.environ["POSTGRESQL_CHARM_CHANNEL"].startswith("16"):
+            await ops_test.model.relate(
+                tls_certificates_app_name, f"{POSTGRESQL_APP_NAME}:client-certificates"
+            )
+        else:
+            await ops_test.model.relate(
+                tls_certificates_app_name, f"{POSTGRESQL_APP_NAME}:certificates"
+            )
 
     if wait_for_apps:
         async with ops_test.fast_forward():
@@ -175,6 +181,10 @@ async def test_mattermost_db(ops_test: OpsTest) -> None:
     Args:
         ops_test: The ops test framework
     """
+    if os.environ["POSTGRESQL_CHARM_CHANNEL"].startswith("16"):
+        pytest.skip(
+            "Mattermost rev. 27 requires access to the public schema, which is disabled by default in PG 16."
+        )
     async with ops_test.fast_forward():
         # Deploy Mattermost
         await deploy_and_relate_application_with_pgbouncer(

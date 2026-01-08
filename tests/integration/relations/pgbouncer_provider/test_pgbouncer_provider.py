@@ -4,6 +4,7 @@
 import asyncio
 import json
 import logging
+import os
 
 import psycopg2
 import pytest
@@ -65,7 +66,11 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, charm):
             application_name=CLIENT_APP_NAME,
             series=CHARM_SERIES,
             channel="latest/edge",
-            config={"extra_user_roles": "CREATEDB,CREATEROLE"},
+            config=(
+                {"extra_user_roles": "CREATEDB,CREATEROLE"}
+                if os.environ["POSTGRESQL_CHARM_CHANNEL"].split("/")[0] == "14"
+                else None
+            ),
         ),
         ops_test.model.deploy(
             charm,
@@ -79,7 +84,7 @@ async def test_database_relation_with_charm_libraries(ops_test: OpsTest, charm):
             PG,
             application_name=PG,
             num_units=2,
-            channel="14/edge",
+            channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
             trust=True,
             config={"profile": "testing"},
         ),
@@ -206,6 +211,10 @@ async def test_cant_write_in_readonly(ops_test: OpsTest):
 
 async def test_database_admin_permissions(ops_test: OpsTest):
     """Test admin permissions."""
+    if os.environ["POSTGRESQL_CHARM_CHANNEL"].split("/")[0] != "14":
+        pytest.skip(
+            "Skipping check for database and user creation permissions on PostgreSQL above 14, as they are not supported."
+        )
     create_database_query = "CREATE DATABASE another_database;"
     run_create_database_query = await run_sql_on_application_charm(
         ops_test,
@@ -482,7 +491,7 @@ async def test_relation_with_data_integrator(ops_test: OpsTest):
 
 
 @markers.amd64_only  # indico charm not available for arm64
-async def test_indico_datatabase(ops_test: OpsTest) -> None:
+async def test_indico_database(ops_test: OpsTest) -> None:
     """Tests deploying and relating to the Indico charm."""
     async with ops_test.fast_forward(fast_interval="30s"):
         await ops_test.model.deploy(
@@ -492,10 +501,10 @@ async def test_indico_datatabase(ops_test: OpsTest) -> None:
             num_units=1,
         )
         await ops_test.model.deploy(
-            "redis-k8s", channel="latest/edge", series="jammy", application_name="redis-broker"
+            "redis-k8s", channel="latest/edge", application_name="redis-broker"
         )
         await ops_test.model.deploy(
-            "redis-k8s", channel="latest/edge", series="jammy", application_name="redis-cache"
+            "redis-k8s", channel="latest/edge", application_name="redis-cache"
         )
         await asyncio.gather(
             ops_test.model.relate("redis-broker", "indico:redis-broker"),
@@ -511,7 +520,11 @@ async def test_indico_datatabase(ops_test: OpsTest) -> None:
 
         # Verify that the charm doesn't block when the extensions are enabled.
         logger.info("Verifying that the charm doesn't block when the extensions are enabled")
-        config = {"plugin_pg_trgm_enable": "True", "plugin_unaccent_enable": "True"}
+        if os.environ["POSTGRESQL_CHARM_CHANNEL"].startswith("16"):
+            config = {"plugin-pg-trgm-enable": "True", "plugin-unaccent-enable": "True"}
+        else:
+            config = {"plugin_pg_trgm_enable": "True", "plugin_unaccent_enable": "True"}
+
         await ops_test.model.applications[PG].set_config(config)
         await ops_test.model.wait_for_idle(apps=[PG], status="active")
         await ops_test.model.relate(PGB, "indico")

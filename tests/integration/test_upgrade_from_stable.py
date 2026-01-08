@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import os
 
 import pytest
 from lightkube import Client
@@ -59,7 +60,7 @@ async def test_deploy_stable(ops_test: OpsTest, charm) -> None:
             PG,
             application_name=PG,
             num_units=3,
-            channel="14/edge",
+            channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
             trust=True,
             config={"profile": "testing"},
         ),

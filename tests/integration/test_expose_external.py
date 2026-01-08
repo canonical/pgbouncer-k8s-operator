@@ -4,6 +4,7 @@
 
 import asyncio
 import logging
+import os
 import time
 
 import psycopg2
@@ -105,10 +106,9 @@ async def test_expose_external(ops_test, charm) -> None:
     await asyncio.gather(
         ops_test.model.deploy(
             PG,
-            channel="14/edge",
+            channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
             application_name=PG,
             config={"profile": "testing"},
-            series=CHARM_SERIES,
             num_units=1,
             trust=True,
         ),

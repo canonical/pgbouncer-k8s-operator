@@ -3,6 +3,7 @@
 # See LICENSE file for licensing details.
 import asyncio
 import logging
+import os
 
 import pytest
 from pytest_operator.plugin import OpsTest
@@ -38,7 +39,7 @@ async def test_deploy_stable(ops_test: OpsTest, charm) -> None:
         ops_test.model.deploy(
             PG,
             num_units=3,
-            channel="14/edge",
+            channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
             trust=True,
             config={"profile": "testing"},
         ),

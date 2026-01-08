@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import os
 
 import pytest
 from pytest_operator.plugin import OpsTest
@@ -60,7 +61,11 @@ async def test_relate_pgbouncer_to_postgres(ops_test: OpsTest, charm):
             ),
             # Edge 5 is the new postgres charm
             ops_test.model.deploy(
-                PG, channel="14/edge", trust=True, num_units=3, config={"profile": "testing"}
+                PG,
+                channel=os.environ["POSTGRESQL_CHARM_CHANNEL"],
+                trust=True,
+                num_units=3,
+                config={"profile": "testing"},
             ),
         )
         await asyncio.gather(
@@ -130,10 +135,16 @@ async def test_tls_encrypted_connection_to_postgres(ops_test: OpsTest):
         )
 
         # Relate it to the PostgreSQL to enable TLS.
-        await ops_test.model.relate(f"{PG}:certificates", tls_certificates_app_name)
+        if os.environ["POSTGRESQL_CHARM_CHANNEL"].startswith("16"):
+            await ops_test.model.relate(tls_certificates_app_name, f"{PG}:client-certificates")
+        else:
+            await ops_test.model.relate(tls_certificates_app_name, f"{PG}:certificates")
         await ops_test.model.wait_for_idle(status="active", timeout=1000)
 
-        await ops_test.model.applications[PG].set_config({"logging_log_connections": "True"})
+        if os.environ["POSTGRESQL_CHARM_CHANNEL"].startswith("16"):
+            await ops_test.model.applications[PG].set_config({"logging-log-connections": "True"})
+        else:
+            await ops_test.model.applications[PG].set_config({"logging_log_connections": "True"})
         await ops_test.model.wait_for_idle(apps=[PG], status="active", idle_period=30)
 
         # Deploy an app and relate it to PgBouncer to open a connection

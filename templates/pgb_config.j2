@@ -39,3 +39,5 @@ client_tls_ca_file = {{ ca_file }}
 client_tls_cert_file = {{ cert_file }}
 client_tls_sslmode = prefer
 {% endif %}
+server_reset_query = DISCARD ALL; LOAD 'login_hook';
+server_reset_query_always = 1
