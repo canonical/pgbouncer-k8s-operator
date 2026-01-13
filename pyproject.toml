@@ -9,7 +9,7 @@ requires-poetry = ">=2.0.0"
 python = "^3.10"
 ops = "^2.23.1"
 tenacity = "^9.1.2"
-lightkube = "^0.19.0"
+lightkube = "^0.19.1"
 lightkube-models = "^1.29.0.6"
 pydantic = "^1.10.26"
 psycopg2 = "^2.9.11"
@@ -37,7 +37,7 @@ jsonschema = "*"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.14.10"
+ruff = "^0.14.11"
 
 [tool.poetry.group.lint]
 optional = true
