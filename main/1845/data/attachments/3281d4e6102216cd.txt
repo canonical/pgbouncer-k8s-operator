@@ -1,0 +1,24 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:862 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.8    unsupported  01:42:11Z
+
+App                       Version  Status       Scale  Charm                     Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   active           2  pgbouncer-k8s                              0  10.152.183.123  no       
+postgresql-k8s            14.11    maintenance      3  postgresql-k8s            14/edge        274  10.152.183.174  no       Beginning rolling restart
+postgresql-test-app                active           1  postgresql-test-app       edge           144  10.152.183.251  no       received database credentials of the first database
+self-signed-certificates           active           1  self-signed-certificates  latest/stable   72  10.152.183.75   no       
+
+Unit                         Workload     Agent  Address      Ports  Message
+pgbouncer-k8s/0*             active       idle   10.1.14.136         
+pgbouncer-k8s/1              active       idle   10.1.14.137         
+postgresql-k8s/0*            waiting      idle   10.1.14.143         Awaiting restart operation
+postgresql-k8s/1             maintenance  idle   10.1.14.144         Executing restart operation
+postgresql-k8s/2             waiting      idle   10.1.14.145         Awaiting restart operation
+postgresql-test-app/0*       active       idle   10.1.14.138         received database credentials of the first database
+self-signed-certificates/0*  active       idle   10.1.14.142         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:868 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:947 Forgetting model main...

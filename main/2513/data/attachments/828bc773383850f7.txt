@@ -1,0 +1,85 @@
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m pytest_operator.plugin:plugin.py:929 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.6.2    unsupported  01:39:37Z
+
+App            Version  Status   Scale  Charm          Channel  Rev  Address         Exposed  Message
+pgbouncer-k8s  1.21.0   blocked      2  pgbouncer-k8s             0  10.152.183.187  no       waiting for backend database relation to initialise
+
+Unit              Workload  Agent  Address      Ports  Message
+pgbouncer-k8s/0   blocked   idle   10.1.133.9          waiting for backend database relation to initialise
+pgbouncer-k8s/1*  blocked   idle   10.1.133.10         waiting for backend database relation to initialise
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:935 Juju error logs:
+
+unit-postgresql-k8s-2: 01:33:30 ERROR unit.postgresql-k8s/2.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-1: 01:33:30 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+controller-0: 01:38:21 ERROR juju.worker.caasapplicationprovisioner.runner exited "finos-waltz": getting OCI image resources: unable to fetch OCI image resources for finos-waltz: application "finos-waltz" dying or dead
+unit-pgbouncer-k8s-0: 01:39:05 ERROR juju.worker.dependency "uniter" manifold worker returned unexpected error: relation scope id "9bd4e73c-0708-4478-8f50-01a90ebdf3fc:r#5#postgresql-k8s": settings 9bd4e73c-0708-4478-8f50-01a90ebdf3fc:r#5#postgresql-k8s not found (not found)
+unit-pgbouncer-k8s-0: 01:39:16 ERROR unit.pgbouncer-k8s/0.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/src/charm.py", line 1138, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 343, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 558, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 543, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 502, in _emit
+    self._emit_charm_event(self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 530, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 347, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 906, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 996, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 1065, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/src/charm.py", line 365, in _on_pgbouncer_pebble_ready
+    container.replan()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 2381, in replan
+    self._pebble.replan_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2144, in replan_services
+    return self._services_action('replan', [], timeout, delay)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2244, in _services_action
+    raise ChangeError(change.err, change)
+ops.pebble.ChangeError: cannot perform the following tasks:
+- Start service "metrics_server" (service start attempt: exited quickly with code 0, will restart)
+----- Logs from task 0 -----
+2025-02-07T01:39:15Z INFO Service "metrics_server" already stopped.
+----- Logs from task 1 -----
+2025-02-07T01:39:15Z INFO Service "pgbouncer_0" already started.
+----- Logs from task 2 -----
+2025-02-07T01:39:15Z INFO Service "pgbouncer_1" already started.
+----- Logs from task 3 -----
+2025-02-07T01:39:15Z INFO Service "pgbouncer_2" already started.
+----- Logs from task 4 -----
+2025-02-07T01:39:15Z INFO Service "pgbouncer_3" already started.
+----- Logs from task 6 -----
+2025-02-07T01:39:15Z INFO Most recent service output:
+    ts=2025-02-07T01:35:37.890Z caller=collector.go:469 level=info msg="Starting scrape"
+    ts=2025-02-07T01:35:37.895Z caller=pgbouncer_exporter.go:66 level=info msg="Starting pgbouncer_exporter" version="(version=, branch=, revision=)"
+    ts=2025-02-07T01:35:37.895Z caller=pgbouncer_exporter.go:67 level=info msg="Build context" build_context="(go=go1.18.1, user=, date=)"
+    ts=2025-02-07T01:35:37.896Z caller=tls_config.go:274 level=info msg="Listening on" address=[::]:9127
+    ts=2025-02-07T01:35:37.896Z caller=tls_config.go:277 level=info msg="TLS is disabled." http2=false address=[::]:9127
+2025-02-07T01:39:15Z ERROR service start attempt: exited quickly with code 0, will restart
+-----
+unit-pgbouncer-k8s-0: 01:39:16 ERROR juju.worker.uniter.operation hook "pgbouncer-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-0: 01:39:16 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: hook failed
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1017 Forgetting model main...

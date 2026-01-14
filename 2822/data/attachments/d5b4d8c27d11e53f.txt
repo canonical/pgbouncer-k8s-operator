@@ -1,3 +1,0 @@
-[32mINFO    [0m integration.test_upgrade:test_upgrade.py:111 starting continuous writes to the database
-[32mINFO    [0m integration.test_upgrade:test_upgrade.py:115 checking whether writes are increasing
-[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.157:16443/api/v1/namespaces/testing/pods/postgresql-k8s-0 "HTTP/1.1 200 OK"

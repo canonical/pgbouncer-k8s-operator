@@ -1,0 +1,55 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:903 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.4.6    unsupported  02:04:21Z
+
+App                       Version  Status   Scale  Charm                     Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   waiting      2  pgbouncer-k8s                              0  10.152.183.244  no       installing agent
+postgresql-k8s            14.13    active       3  postgresql-k8s            14/edge        419  10.152.183.84   no       
+postgresql-test-app                active       1  postgresql-test-app       latest/edge    263  10.152.183.205  no       received database credentials of the first database
+self-signed-certificates           active       1  self-signed-certificates  latest/stable  155  10.152.183.160  no       
+
+Unit                         Workload  Agent  Address     Ports  Message
+pgbouncer-k8s/0              blocked   idle   10.1.68.72         PgBouncer service metrics_server not running: service status = ServiceStatus.INACTIVE
+pgbouncer-k8s/1*             active    idle   10.1.68.73         
+postgresql-k8s/0*            active    idle   10.1.68.79         Primary
+postgresql-k8s/1             active    idle   10.1.68.81         
+postgresql-k8s/2             active    idle   10.1.68.80         
+postgresql-test-app/0*       active    idle   10.1.68.74         received database credentials of the first database
+self-signed-certificates/0*  active    idle   10.1.68.78         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:909 Juju error logs:
+
+unit-pgbouncer-k8s-1: 01:49:26 ERROR unit.pgbouncer-k8s/1.juju-log pgb-peers:0: Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/./src/charm.py", line 1072, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/__init__.py", line 343, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/_main.py", line 543, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/_main.py", line 529, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/_main.py", line 515, in _emit
+    self.framework.reemit()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/framework.py", line 867, in reemit
+    self._reemit()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/framework.py", line 947, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 735, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/relations/pgbouncer_provider.py", line 169, in _on_database_requested
+    self.charm.backend.remove_auth_function(dbs=[database])
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 735, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/relations/backend_database.py", line 447, in remove_auth_function
+    with self.postgres._connect_to_database(dbname) as conn, conn.cursor() as cursor:
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 150, in _connect_to_database
+    connection = psycopg2.connect(
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "postgresql-k8s-primary.test.svc.cluster.local" (10.152.183.121), port 5432 failed: FATAL:  no pg_hba.conf entry for host "10.1.68.73", user "relation_id_7", database "postgresql_test_app_database", no encryption
+
+unit-pgbouncer-k8s-1: 01:49:27 ERROR juju.worker.uniter.operation hook "pgb-peers-relation-changed" (via hook dispatching script: dispatch) failed: exit status 1
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:991 Forgetting model main...

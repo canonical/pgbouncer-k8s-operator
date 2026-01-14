@@ -1,4 +1,0 @@
-[32mINFO    [0m integration.test_upgrade:test_upgrade.py:91 Get leader unit
-[32mINFO    [0m integration.test_upgrade:test_upgrade.py:97 Run pre-upgrade-check action
-[32mINFO    [0m integration.test_upgrade:test_upgrade.py:101 Assert partition is set to 2
-[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.221:16443/apis/apps/v1/namespaces/testing/statefulsets/pgbouncer-k8s "HTTP/1.1 200 OK"

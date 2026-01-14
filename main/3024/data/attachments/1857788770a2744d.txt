@@ -1,0 +1,66 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.9    unsupported  01:36:22Z
+
+App                  Version  Status   Scale  Charm                Channel      Rev  Address         Exposed  Message
+pgbouncer-k8s        1.21.0   error        3  pgbouncer-k8s        1/stable     408  10.152.183.220  no       hook failed: "backend-database-relation-changed"
+postgresql-k8s       14.19    active       3  postgresql-k8s       14/edge      684  10.152.183.130  no       Primary (degraded)
+postgresql-test-app           blocked      1  postgresql-test-app  latest/edge  414  10.152.183.242  no       No database integration available
+
+Unit                    Workload  Agent  Address       Ports  Message
+pgbouncer-k8s/0         blocked   idle   10.1.113.138         waiting for backend database relation to initialise
+pgbouncer-k8s/1*        error     idle   10.1.113.140         hook failed: "backend-database-relation-changed"
+pgbouncer-k8s/2         blocked   idle   10.1.113.139         waiting for backend database relation to initialise
+postgresql-k8s/0        unknown   idle   10.1.113.146         
+postgresql-k8s/1*       active    idle   10.1.113.144         Primary (degraded)
+postgresql-k8s/2        unknown   idle   10.1.113.145         
+postgresql-test-app/0*  blocked   idle   10.1.113.137         No database integration available
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-pgbouncer-k8s-1: 01:36:21 ERROR unit.pgbouncer-k8s/1.juju-log backend-database:7: Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/charm.py", line 1138, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 343, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 558, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 543, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 502, in _emit
+    self._emit_charm_event(self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 530, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 347, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 906, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 996, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 3141, in _on_relation_changed_event
+    getattr(self.on, "database_created").emit(
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 347, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 906, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 996, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 1065, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/relations/backend_database.py", line 308, in _on_database_created
+    self.initialise_auth_function(self.collect_databases())
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 1065, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/relations/backend_database.py", line 430, in initialise_auth_function
+    with self.postgres._connect_to_database(dbname) as conn, conn.cursor() as cursor:
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 153, in _connect_to_database
+    connection = psycopg2.connect(
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "postgresql-k8s-primary.testing.svc.cluster.local" (10.152.183.48), port 5432 failed: FATAL:  no pg_hba.conf entry for host "10.1.113.140", user "relation_id_7", database "postgres", no encryption
+
+unit-pgbouncer-k8s-1: 01:36:21 ERROR juju.worker.uniter.operation hook "backend-database-relation-changed" (via hook dispatching script: dispatch) failed: exit status 1
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...

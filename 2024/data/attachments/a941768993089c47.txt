@@ -1,4 +1,0 @@
-[32mINFO    [0m root:helpers.py:123 running query: 
- DROP TABLE test;
-[32mINFO    [0m root:helpers.py:124 {'dbname': 'postgresql_test_app_first_database', 'query': 'DROP TABLE test;', 'relation-id': 7, 'relation-name': 'first-database', 'readonly': True}
-[32mINFO    [0m root:helpers.py:127 query results: {'return-code': 1, 'stderr': 'Uncaught ReadOnlySqlTransaction in charm code: cannot execute DROP TABLE in a read-only transaction\n\nUse `juju debug-log` to see the full traceback.\n'}

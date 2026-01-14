@@ -1,0 +1,50 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:784 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.7    unsupported  01:48:00Z
+
+App                       Version  Status   Scale  Charm                     Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   waiting      2  pgbouncer-k8s                              0  10.152.183.106  no       installing agent
+postgresql-k8s            14.10    active       3  postgresql-k8s            14/edge        198  10.152.183.229  no       
+postgresql-test-app                active       1  postgresql-test-app       edge            51  10.152.183.87   no       received database credentials of the first database
+self-signed-certificates           active       1  self-signed-certificates  latest/stable   72  10.152.183.32   no       
+
+Unit                         Workload  Agent  Address      Ports  Message
+pgbouncer-k8s/0              blocked   idle   10.1.239.8          PgBouncer service metrics_server not running: service status = ServiceStatus.INACTIVE
+pgbouncer-k8s/1*             active    idle   10.1.239.9          
+postgresql-k8s/0             active    idle   10.1.239.15         
+postgresql-k8s/1*            active    idle   10.1.239.17         Primary
+postgresql-k8s/2             active    idle   10.1.239.16         
+postgresql-test-app/0*       active    idle   10.1.239.10         received database credentials of the first database
+self-signed-certificates/0*  active    idle   10.1.239.14         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:790 Juju error logs:
+
+unit-pgbouncer-k8s-1: 01:28:11 ERROR unit.pgbouncer-k8s/1.juju-log pgb-peers:1: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:28:12 ERROR unit.pgbouncer-k8s/1.juju-log upgrade:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:28:13 ERROR unit.pgbouncer-k8s/1.juju-log backend-database:7: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:28:14 ERROR unit.pgbouncer-k8s/1.juju-log certificates:8: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:28:16 ERROR unit.pgbouncer-k8s/1.juju-log database:3: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:28:17 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:28:18 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:28:18 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:28:20 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:28:20 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:28:21 ERROR unit.pgbouncer-k8s/1.juju-log upgrade:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:28:21 ERROR unit.pgbouncer-k8s/1.juju-log upgrade:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:28:21 ERROR unit.pgbouncer-k8s/1.juju-log upgrade:0: PgBouncer container currently unavailable
+unit-pgbouncer-k8s-0: 01:28:46 ERROR unit.pgbouncer-k8s/0.juju-log failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-0: 01:28:48 ERROR unit.pgbouncer-k8s/0.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-0: 01:28:50 ERROR unit.pgbouncer-k8s/0.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-0: 01:28:52 ERROR unit.pgbouncer-k8s/0.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-0: 01:28:53 ERROR unit.pgbouncer-k8s/0.juju-log backend-database:7: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-0: 01:28:56 ERROR unit.pgbouncer-k8s/0.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-0: 01:28:58 ERROR unit.pgbouncer-k8s/0.juju-log certificates:8: failed to reload pgbouncer - deferring change_event and waiting for pebble.
+unit-pgbouncer-k8s-0: 01:31:20 ERROR unit.pgbouncer-k8s/0.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-0: 01:31:20 ERROR unit.pgbouncer-k8s/0.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-0: 01:31:20 ERROR unit.pgbouncer-k8s/0.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-1: 01:31:20 ERROR unit.pgbouncer-k8s/1.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-1: 01:31:20 ERROR unit.pgbouncer-k8s/1.juju-log PostgreSQL connection failed
+unit-pgbouncer-k8s-0: 01:31:21 ERROR unit.pgbouncer-k8s/0.juju-log PostgreSQL connection failed
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:856 Forgetting main...

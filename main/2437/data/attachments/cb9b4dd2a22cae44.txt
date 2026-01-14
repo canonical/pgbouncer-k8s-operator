@@ -1,0 +1,161 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:766 Connecting to existing model microk8s-localhost:test on unspecified cloud
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/focal/finos-waltz-k8s-33
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/jammy/postgresql-k8s-484
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying local:jammy/pgbouncer-k8s-0
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  postgresql-k8s/1 [allocating] waiting: installing agent
+  postgresql-k8s/2 [allocating] waiting: installing agent
+  pgbouncer-k8s/0 [allocating] waiting: installing agent
+  pgbouncer-k8s/1 [allocating] waiting: installing agent
+  pgbouncer-k8s/2 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: agent initialising
+  postgresql-k8s/1 [allocating] waiting: agent initialising
+  postgresql-k8s/2 [allocating] waiting: agent initialising
+  pgbouncer-k8s/0 [executing] maintenance: installing charm software
+  pgbouncer-k8s/1 [executing] maintenance: installing charm software
+  pgbouncer-k8s/2 [executing] maintenance: installing charm software
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  postgresql-k8s/1 [executing] maintenance: installing charm software
+  postgresql-k8s/2 [executing] maintenance: installing charm software
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+  postgresql-k8s/1 [executing] waiting: awaiting for cluster to start
+  postgresql-k8s/2 [executing] unknown: 
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+  postgresql-k8s/1 [executing] waiting: awaiting for primary endpoint to be ready
+  postgresql-k8s/2 [executing] unknown: 
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] unknown: 
+  postgresql-k8s/1 [executing] waiting: awaiting for primary endpoint to be ready
+  postgresql-k8s/2 [idle] unknown: 
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] unknown: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] unknown: 
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] waiting: awaiting for cluster to start
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] waiting: awaiting for cluster to start
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  postgresql-k8s/1 [idle] maintenance: reconfiguring cluster
+  postgresql-k8s/2 [idle] waiting: awaiting for cluster to start
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] waiting: awaiting for member to start
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] waiting: awaiting for cluster to start
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] waiting: awaiting for member to start
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+  finos-waltz/0 [executing] blocked: Waiting for database configuration.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+  finos-waltz/0 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/focal/finos-waltz-k8s-33
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  another-finos-waltz/0 [allocating] waiting: installing agent
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+  finos-waltz/0 [idle] active: 
+  another-finos-waltz/0 [executing] blocked: Waiting for database configuration.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+  finos-waltz/0 [executing] active: 
+  another-finos-waltz/0 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  finos-waltz/0 [idle] active: 
+  another-finos-waltz/0 [idle] active: 
+[32mINFO    [0m integration.relations.test_db:test_db.py:117 ['pgbouncer_k8s_user_6_test', 'pgbouncer_k8s_user_7_test']
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+  finos-waltz/0 [idle] active: 
+  another-finos-waltz/0 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+  finos-waltz/0 [idle] active: 
+  another-finos-waltz/0 [idle] active: 
+[32mINFO    [0m integration.relations.test_db:test_db.py:136 {'allowed-subnets': '10.152.183.152/32', 'allowed-units': 'finos-waltz/0', 'database': 'waltz', 'host': 'pgbouncer-k8s-0.pgbouncer-k8s-endpoints.test.svc.cluster.local', 'master': 'host=pgbouncer-k8s-0.pgbouncer-k8s-endpoints.test.svc.cluster.local dbname=waltz port=6464 user=pgbouncer_k8s_user_6_test password=2wpnhpsd6hwHvlSUf6C8eG2I fallback_application_name=finos-waltz', 'password': '2wpnhpsd6hwHvlSUf6C8eG2I', 'port': '6464', 'standbys': 'host=pgbouncer-k8s-2.pgbouncer-k8s-endpoints.test.svc.cluster.local dbname=waltz_standby port=6464 user=pgbouncer_k8s_user_6_test password=2wpnhpsd6hwHvlSUf6C8eG2I fallback_application_name=finos-waltz', 'state': 'master', 'user': 'pgbouncer_k8s_user_6_test', 'version': '14.15'}
+[32mINFO    [0m integration.relations.test_db:test_db.py:143 {'allowed-subnets': '10.152.183.29/32', 'allowed-units': 'another-finos-waltz/0', 'database': 'waltz', 'host': 'pgbouncer-k8s-0.pgbouncer-k8s-endpoints.test.svc.cluster.local', 'master': 'host=pgbouncer-k8s-0.pgbouncer-k8s-endpoints.test.svc.cluster.local dbname=waltz port=6464 user=pgbouncer_k8s_user_7_test password=wR4Oz0BIGnpBMTJsq6VAH7O8 fallback_application_name=another-finos-waltz', 'password': 'wR4Oz0BIGnpBMTJsq6VAH7O8', 'port': '6464', 'standbys': 'host=pgbouncer-k8s-2.pgbouncer-k8s-endpoints.test.svc.cluster.local dbname=waltz_standby port=6464 user=pgbouncer_k8s_user_7_test password=wR4Oz0BIGnpBMTJsq6VAH7O8 fallback_application_name=another-finos-waltz', 'state': 'master', 'user': 'pgbouncer_k8s_user_7_test', 'version': '14.15'}
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+  finos-waltz/0 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  finos-waltz/0 [idle] active: 
+[32mINFO    [0m integration.relations.test_db:test_db.py:160 {'databases': {'waltz': 'host=postgresql-k8s-primary.test.svc.cluster.local dbname=waltz port=5432 auth_user=pgbouncer_auth_relation_id_5', 'waltz_readonly': 'host=postgresql-k8s-replicas.test.svc.cluster.local dbname=waltz port=5432 auth_user=pgbouncer_auth_relation_id_5', 'waltz_standby': 'host=postgresql-k8s-replicas.test.svc.cluster.local dbname=waltz port=5432 auth_user=pgbouncer_auth_relation_id_5'}, 'peers': {'1': 'host=0 port=6464', '2': 'host=1 port=6464', '3': 'host=2 port=6464', '4': 'host=3 port=6464'}, 'pgbouncer': {'peer_id': '1', 'listen_addr': '*', 'listen_port': '6464', 'logfile': '/var/log/pgbouncer/instance_0/pgbouncer.log', 'pidfile': '/var/lib/pgbouncer/instance_0/pgbouncer.pid', 'stats_users': 'pgbouncer_stats_pgbouncer_k8s', 'auth_type': 'md5', 'user': 'postgres', 'max_client_conn': '10000', 'ignore_startup_parameters': 'extra_float_digits,options', 'server_tls_sslmode': 'prefer', 'so_reuseport': '1', 'unix_socket_dir': '/var/lib/pgbouncer/instance_0', 'pool_mode': 'session', 'max_db_connections': '100', 'default_pool_size': '13', 'min_pool_size': '7', 'reserve_pool_size': '7', 'auth_query': 'SELECT username, password FROM pgbouncer_auth_relation_id_5.get_auth($1)', 'auth_file': '/var/lib/pgbouncer/userlist.txt'}}
+[32mINFO    [0m integration.relations.test_db:test_db.py:160 {'databases': {'waltz': 'host=postgresql-k8s-primary.test.svc.cluster.local dbname=waltz port=5432 auth_user=pgbouncer_auth_relation_id_5', 'waltz_readonly': 'host=postgresql-k8s-replicas.test.svc.cluster.local dbname=waltz port=5432 auth_user=pgbouncer_auth_relation_id_5', 'waltz_standby': 'host=postgresql-k8s-replicas.test.svc.cluster.local dbname=waltz port=5432 auth_user=pgbouncer_auth_relation_id_5'}, 'peers': {'1': 'host=0 port=6464', '2': 'host=1 port=6464', '3': 'host=2 port=6464', '4': 'host=3 port=6464'}, 'pgbouncer': {'peer_id': '1', 'listen_addr': '*', 'listen_port': '6464', 'logfile': '/var/log/pgbouncer/instance_0/pgbouncer.log', 'pidfile': '/var/lib/pgbouncer/instance_0/pgbouncer.pid', 'stats_users': 'pgbouncer_stats_pgbouncer_k8s', 'auth_type': 'md5', 'user': 'postgres', 'max_client_conn': '10000', 'ignore_startup_parameters': 'extra_float_digits,options', 'server_tls_sslmode': 'prefer', 'so_reuseport': '1', 'unix_socket_dir': '/var/lib/pgbouncer/instance_0', 'pool_mode': 'session', 'max_db_connections': '100', 'default_pool_size': '13', 'min_pool_size': '7', 'reserve_pool_size': '7', 'auth_query': 'SELECT username, password FROM pgbouncer_auth_relation_id_5.get_auth($1)', 'auth_file': '/var/lib/pgbouncer/userlist.txt'}}
+[32mINFO    [0m integration.relations.test_db:test_db.py:160 {'databases': {'waltz': 'host=postgresql-k8s-primary.test.svc.cluster.local dbname=waltz port=5432 auth_user=pgbouncer_auth_relation_id_5', 'waltz_readonly': 'host=postgresql-k8s-replicas.test.svc.cluster.local dbname=waltz port=5432 auth_user=pgbouncer_auth_relation_id_5', 'waltz_standby': 'host=postgresql-k8s-replicas.test.svc.cluster.local dbname=waltz port=5432 auth_user=pgbouncer_auth_relation_id_5'}, 'peers': {'1': 'host=0 port=6464', '2': 'host=1 port=6464', '3': 'host=2 port=6464', '4': 'host=3 port=6464'}, 'pgbouncer': {'peer_id': '1', 'listen_addr': '*', 'listen_port': '6464', 'logfile': '/var/log/pgbouncer/instance_0/pgbouncer.log', 'pidfile': '/var/lib/pgbouncer/instance_0/pgbouncer.pid', 'stats_users': 'pgbouncer_stats_pgbouncer_k8s', 'auth_type': 'md5', 'user': 'postgres', 'max_client_conn': '10000', 'ignore_startup_parameters': 'extra_float_digits,options', 'server_tls_sslmode': 'prefer', 'so_reuseport': '1', 'unix_socket_dir': '/var/lib/pgbouncer/instance_0', 'pool_mode': 'session', 'max_db_connections': '100', 'default_pool_size': '13', 'min_pool_size': '7', 'reserve_pool_size': '7', 'auth_query': 'SELECT username, password FROM pgbouncer_auth_relation_id_5.get_auth($1)', 'auth_file': '/var/lib/pgbouncer/userlist.txt'}}
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [executing] active: 
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+[32mINFO    [0m integration.relations.test_db:test_db.py:173 {'databases': {}, 'peers': {'1': 'host=0 port=6464', '2': 'host=1 port=6464', '3': 'host=2 port=6464', '4': 'host=3 port=6464'}, 'pgbouncer': {'peer_id': '1', 'listen_addr': '*', 'listen_port': '6464', 'logfile': '/var/log/pgbouncer/instance_0/pgbouncer.log', 'pidfile': '/var/lib/pgbouncer/instance_0/pgbouncer.pid', 'stats_users': 'pgbouncer_stats_pgbouncer_k8s', 'auth_type': 'md5', 'user': 'postgres', 'max_client_conn': '10000', 'ignore_startup_parameters': 'extra_float_digits,options', 'server_tls_sslmode': 'prefer', 'so_reuseport': '1', 'unix_socket_dir': '/var/lib/pgbouncer/instance_0', 'pool_mode': 'session', 'max_db_connections': '100', 'default_pool_size': '13', 'min_pool_size': '7', 'reserve_pool_size': '7', 'auth_query': 'SELECT username, password FROM pgbouncer_auth_relation_id_5.get_auth($1)', 'auth_file': '/var/lib/pgbouncer/userlist.txt'}}
+[32mINFO    [0m integration.relations.test_db:test_db.py:173 {'databases': {}, 'peers': {'1': 'host=0 port=6464', '2': 'host=1 port=6464', '3': 'host=2 port=6464', '4': 'host=3 port=6464'}, 'pgbouncer': {'peer_id': '1', 'listen_addr': '*', 'listen_port': '6464', 'logfile': '/var/log/pgbouncer/instance_0/pgbouncer.log', 'pidfile': '/var/lib/pgbouncer/instance_0/pgbouncer.pid', 'stats_users': 'pgbouncer_stats_pgbouncer_k8s', 'auth_type': 'md5', 'user': 'postgres', 'max_client_conn': '10000', 'ignore_startup_parameters': 'extra_float_digits,options', 'server_tls_sslmode': 'prefer', 'so_reuseport': '1', 'unix_socket_dir': '/var/lib/pgbouncer/instance_0', 'pool_mode': 'session', 'max_db_connections': '100', 'default_pool_size': '13', 'min_pool_size': '7', 'reserve_pool_size': '7', 'auth_query': 'SELECT username, password FROM pgbouncer_auth_relation_id_5.get_auth($1)', 'auth_file': '/var/lib/pgbouncer/userlist.txt'}}
+[32mINFO    [0m integration.relations.test_db:test_db.py:173 {'databases': {}, 'peers': {'1': 'host=0 port=6464', '2': 'host=1 port=6464', '3': 'host=2 port=6464', '4': 'host=3 port=6464'}, 'pgbouncer': {'peer_id': '1', 'listen_addr': '*', 'listen_port': '6464', 'logfile': '/var/log/pgbouncer/instance_0/pgbouncer.log', 'pidfile': '/var/lib/pgbouncer/instance_0/pgbouncer.pid', 'stats_users': 'pgbouncer_stats_pgbouncer_k8s', 'auth_type': 'md5', 'user': 'postgres', 'max_client_conn': '10000', 'ignore_startup_parameters': 'extra_float_digits,options', 'server_tls_sslmode': 'prefer', 'so_reuseport': '1', 'unix_socket_dir': '/var/lib/pgbouncer/instance_0', 'pool_mode': 'session', 'max_db_connections': '100', 'default_pool_size': '13', 'min_pool_size': '7', 'reserve_pool_size': '7', 'auth_query': 'SELECT username, password FROM pgbouncer_auth_relation_id_5.get_auth($1)', 'auth_file': '/var/lib/pgbouncer/userlist.txt'}}

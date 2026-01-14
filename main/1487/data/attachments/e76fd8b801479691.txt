@@ -1,0 +1,40 @@
+[32mINFO    [0m juju.model:model.py:2087 Deploying ch:amd64/focal/openldap-charmers-openldap-7
+[33mWARNING [0m juju.model:model.py:1553 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m pytest_operator.plugin:plugin.py:784 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.7    unsupported  01:45:54Z
+
+App                  Version  Status   Scale  Charm                       Channel        Rev  Address         Exposed  Message
+finos-waltz                   waiting      1  finos-waltz-k8s             edge            32  10.152.183.33   no       installing agent
+openldap                      waiting    0/1  openldap-charmers-openldap  stable           7                  no       installing agent
+pgbouncer-k8s        1.21.0   waiting      3  pgbouncer-k8s                                0  10.152.183.52   no       installing agent
+postgresql-k8s                waiting      3  postgresql-k8s              14/edge        195  10.152.183.193  no       installing agent
+postgresql-test-app           active       1  postgresql-test-app         latest/stable   43  10.152.183.27   no       
+
+Unit                    Workload  Agent       Address      Ports  Message
+finos-waltz/0*          error     idle        10.1.128.8          unknown container reason "ImagePullBackOff": Back-off pulling image "registry.jujucharms.com/charm/6f08bqclho132zsqth...
+openldap/0              waiting   allocating                      installing agent
+pgbouncer-k8s/0         blocked   idle        10.1.128.9          waiting for backend database relation to initialise
+pgbouncer-k8s/1*        blocked   executing   10.1.128.10         waiting for backend database relation to initialise
+pgbouncer-k8s/2         blocked   executing   10.1.128.11         waiting for backend database relation to initialise
+postgresql-k8s/0        error     idle        10.1.128.15         unknown container reason "ImagePullBackOff": Back-off pulling image "registry.jujucharms.com/charm/kotcfrohea62xreenq...
+postgresql-k8s/1*       error     idle        10.1.128.16         unknown container reason "ImagePullBackOff": Back-off pulling image "registry.jujucharms.com/charm/kotcfrohea62xreenq...
+postgresql-k8s/2        error     idle        10.1.128.17         unknown container reason "ImagePullBackOff": Back-off pulling image "registry.jujucharms.com/charm/kotcfrohea62xreenq...
+postgresql-test-app/0*  active    idle        10.1.128.18         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:790 Juju error logs:
+
+unit-pgbouncer-k8s-1: 01:27:13 ERROR unit.pgbouncer-k8s/1.juju-log pgb-peers:4: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:27:14 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:27:15 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:27:16 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:27:18 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:27:18 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:18 ERROR unit.pgbouncer-k8s/0.juju-log upgrade:3: PgBouncer container currently unavailable
+unit-pgbouncer-k8s-2: 01:27:18 ERROR unit.pgbouncer-k8s/2.juju-log upgrade:3: PgBouncer container currently unavailable
+unit-pgbouncer-k8s-1: 01:27:19 ERROR unit.pgbouncer-k8s/1.juju-log pgb-peers:4: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:27:19 ERROR unit.pgbouncer-k8s/1.juju-log pgb-peers:4: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:27:19 ERROR unit.pgbouncer-k8s/1.juju-log pgb-peers:4: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:856 Forgetting main...

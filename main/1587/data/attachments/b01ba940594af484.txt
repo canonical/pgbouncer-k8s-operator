@@ -1,0 +1,53 @@
+[32mINFO    [0m juju.model:model.py:2097 Deploying ch:amd64/focal/mattermost-k8s-27
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  mattermost-k8s/0 [allocating] waiting: installing agent
+  mattermost-k8s/1 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  mattermost-k8s/0 [executing] waiting: Waiting for database relation
+  mattermost-k8s/1 [executing] waiting: Waiting for database relation
+[33mWARNING [0m juju.model:model.py:1563 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+  mattermost-k8s/1 [idle] waiting: Waiting for database relation
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  mattermost-k8s/0 [executing] waiting: Waiting for database relation
+  mattermost-k8s/1 [executing] waiting: Waiting for database relation
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  mattermost-k8s/0 [executing] active: 
+  mattermost-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2957 Waiting for model:
+  mattermost-k8s/0 [idle] active: 
+  mattermost-k8s/1 [idle] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:791 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.7    unsupported  01:55:09Z
+
+App                       Version  Status  Scale  Charm                     Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   active      2  pgbouncer-k8s                              0  10.152.183.24   no       
+postgresql-k8s            14.10    active      3  postgresql-k8s            14/edge        204  10.152.183.142  no       
+postgresql-test-app                active      1  postgresql-test-app       edge            63  10.152.183.245  no       received database credentials of the first database
+self-signed-certificates           active      1  self-signed-certificates  latest/stable   72  10.152.183.64   no       
+
+Unit                         Workload  Agent  Address      Ports  Message
+pgbouncer-k8s/0              active    idle   10.1.63.200         
+pgbouncer-k8s/1*             active    idle   10.1.63.201         
+postgresql-k8s/0             active    idle   10.1.63.207         
+postgresql-k8s/1             active    idle   10.1.63.209         
+postgresql-k8s/2*            active    idle   10.1.63.208         Primary
+postgresql-test-app/0*       active    idle   10.1.63.202         received database credentials of the first database
+self-signed-certificates/0*  active    idle   10.1.63.203         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:797 Juju error logs:
+
+unit-pgbouncer-k8s-2: 01:49:40 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing secret cauth was attempted to be removed.
+unit-pgbouncer-k8s-2: 01:49:40 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Can't update secret for relation 0
+unit-pgbouncer-k8s-2: 01:49:40 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing field 'cauth' was attempted to be removed from the databag (relation ID: 0)
+unit-pgbouncer-k8s-2: 01:49:40 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing secret cert was attempted to be removed.
+unit-pgbouncer-k8s-2: 01:49:40 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Can't update secret for relation 0
+unit-pgbouncer-k8s-2: 01:49:40 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing field 'cert' was attempted to be removed from the databag (relation ID: 0)
+unit-pgbouncer-k8s-2: 01:49:40 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing secret chain was attempted to be removed.
+unit-pgbouncer-k8s-2: 01:49:40 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Can't update secret for relation 0
+unit-pgbouncer-k8s-2: 01:49:40 ERROR unit.pgbouncer-k8s/2.juju-log certificates:8: Non-existing field 'chain' was attempted to be removed from the databag (relation ID: 0)
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:861 Forgetting main...

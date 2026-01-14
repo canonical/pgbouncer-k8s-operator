@@ -1,0 +1,53 @@
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m pytest_operator.plugin:plugin.py:784 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.7    unsupported  01:37:12Z
+
+App            Version  Status   Scale  Charm          Channel  Rev  Address         Exposed  Message
+pgbouncer-k8s  1.21.0   waiting      2  pgbouncer-k8s             0  10.152.183.134  no       installing agent
+
+Unit              Workload  Agent  Address       Ports  Message
+pgbouncer-k8s/0*  blocked   idle   10.1.121.200         waiting for backend database relation to initialise
+pgbouncer-k8s/1   blocked   idle   10.1.121.202         waiting for backend database relation to initialise
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:790 Juju error logs:
+
+unit-pgbouncer-k8s-0: 01:27:44 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:1: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:45 ERROR unit.pgbouncer-k8s/0.juju-log upgrade:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:46 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:47 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:47 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:49 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:49 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-1: 01:27:49 ERROR unit.pgbouncer-k8s/1.juju-log upgrade:0: PgBouncer container currently unavailable
+unit-pgbouncer-k8s-2: 01:27:49 ERROR unit.pgbouncer-k8s/2.juju-log upgrade:0: PgBouncer container currently unavailable
+unit-pgbouncer-k8s-0: 01:27:50 ERROR unit.pgbouncer-k8s/0.juju-log upgrade:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:50 ERROR unit.pgbouncer-k8s/0.juju-log upgrade:0: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:50 ERROR unit.pgbouncer-k8s/0.juju-log upgrade:0: PgBouncer container currently unavailable
+unit-pgbouncer-k8s-0: 01:27:51 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:1: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:51 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:1: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:51 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:1: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-2: 01:27:52 ERROR unit.pgbouncer-k8s/2.juju-log upgrade:0: PgBouncer container currently unavailable
+unit-pgbouncer-k8s-0: 01:27:52 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:1: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:52 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:1: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:52 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:1: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-0: 01:27:52 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:1: pgbouncer container not accessible, cannot find /var/lib/pgbouncer/pgbouncer.ini
+unit-pgbouncer-k8s-2: 01:35:24 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:5: added relation-departing flag to peer databag
+unit-pgbouncer-k8s-2: 01:35:25 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:5: added relation-departing flag to peer databag
+unit-pgbouncer-k8s-2: 01:35:26 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:5: added relation-departing flag to peer databag
+controller-0: 01:36:04 ERROR juju.worker.caasapplicationprovisioner.runner exited "finos-waltz": getting OCI image resources: unable to fetch OCI image resources for finos-waltz: application "finos-waltz" dying or dead
+unit-pgbouncer-k8s-0: 01:36:50 ERROR unit.pgbouncer-k8s/0.juju-log backend-database:5: PostgreSQL connection failed
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:856 Forgetting main...

@@ -1,0 +1,35 @@
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: Primary
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m pytest_operator.plugin:plugin.py:936 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.2    unsupported  02:00:18Z
+
+App             Version  Status   Scale  Charm           Channel  Rev  Address         Exposed  Message
+pgbouncer-k8s   1.21.0   blocked      2  pgbouncer-k8s              0  10.152.183.144  no       waiting for backend database relation to initialise
+postgresql-k8s  14.15    active       0  postgresql-k8s  14/edge  503  10.152.183.79   no       
+
+Unit               Workload    Agent      Address      Ports  Message
+pgbouncer-k8s/0*   blocked     idle       10.1.133.73         waiting for backend database relation to initialise
+pgbouncer-k8s/1    blocked     idle       10.1.133.75         waiting for backend database relation to initialise
+postgresql-k8s/0*  terminated  executing  10.1.133.80         (remove) 
+postgresql-k8s/1   terminated  executing  10.1.133.82         (remove) 
+postgresql-k8s/2   terminated  executing  10.1.133.81         (remove) 
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:942 Juju error logs:
+
+unit-postgresql-k8s-1: 01:54:22 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-0: 01:54:23 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+controller-0: 01:59:23 ERROR juju.worker.caasapplicationprovisioner.runner exited "finos-waltz": getting OCI image resources: unable to fetch OCI image resources for finos-waltz: application "finos-waltz" dying or dead
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1024 Forgetting model main...

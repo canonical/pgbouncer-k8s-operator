@@ -1,4 +1,0 @@
-[32mINFO    [0m root:helpers.py:121 running query: 
- SELECT data FROM test;
-[32mINFO    [0m root:helpers.py:122 {'dbname': 'postgresql_test_app_database', 'query': 'SELECT data FROM test;', 'relation-name': 'database', 'readonly': True}
-[32mINFO    [0m root:helpers.py:125 query results: {'results': '[["some data"]]', 'return-code': 0}

@@ -1,0 +1,73 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:937 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.6    unsupported  01:48:52Z
+
+App                       Version  Status  Scale  Charm                     Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   active      2  pgbouncer-k8s                              0  10.152.183.158  no       
+postgresql-k8s            14.17    active      3  postgresql-k8s            14/edge        608  10.152.183.251  no       
+postgresql-test-app                active      1  postgresql-test-app       latest/edge    383  10.152.183.55   no       
+self-signed-certificates           active      1  self-signed-certificates  latest/stable  264  10.152.183.152  no       
+
+Unit                         Workload  Agent  Address      Ports  Message
+pgbouncer-k8s/0*             active    idle   10.1.249.9          
+pgbouncer-k8s/1              active    idle   10.1.249.10         
+postgresql-k8s/0             active    idle   10.1.249.16         
+postgresql-k8s/1             active    idle   10.1.249.17         
+postgresql-k8s/2*            active    idle   10.1.249.18         Primary
+postgresql-test-app/0*       active    idle   10.1.249.11         
+self-signed-certificates/0*  active    idle   10.1.249.15         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:943 Juju error logs:
+
+unit-pgbouncer-k8s-0: 01:40:58 ERROR unit.pgbouncer-k8s/0.juju-log backend-database:7: deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:41:04 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:41:12 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:41:22 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:41:31 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-postgresql-k8s-1: 01:41:34 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-0: 01:41:34 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-pgbouncer-k8s-0: 01:41:40 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-postgresql-k8s-0: 01:41:42 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-1: 01:41:42 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-pgbouncer-k8s-0: 01:41:50 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-postgresql-k8s-1: 01:41:51 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-0: 01:41:51 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-pgbouncer-k8s-0: 01:41:59 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-postgresql-k8s-1: 01:42:03 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-0: 01:42:03 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-1: 01:42:09 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-0: 01:42:09 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-pgbouncer-k8s-0: 01:42:15 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:0: 
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 442, in enable_disable_extensions
+    with self._connect_to_database(
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 180, in _connect_to_database
+    connection = psycopg2.connect(
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "postgresql-k8s-primary.testing.svc.cluster.local" (10.152.183.125), port 5432 failed: FATAL:  no pg_hba.conf entry for host "10.1.249.9", user "relation_id_7", database "postgresql_test_app_database", no encryption
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/src/relations/pgbouncer_provider.py", line 162, in _on_database_requested
+    self.charm.backend.postgres.create_database(
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 261, in create_database
+    self.enable_disable_extensions(dict.fromkeys(plugins, True), database)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 457, in enable_disable_extensions
+    raise PostgreSQLEnableDisableExtensionError() from e
+charms.postgresql_k8s.v0.postgresql.PostgreSQLEnableDisableExtensionError
+unit-postgresql-k8s-0: 01:42:49 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-1: 01:42:49 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-0: 01:42:58 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-1: 01:42:59 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-1: 01:43:08 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-0: 01:43:08 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-1: 01:43:18 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-0: 01:43:18 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-1: 01:44:30 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-1: 01:45:10 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1025 Forgetting model main...

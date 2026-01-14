@@ -1,0 +1,40 @@
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[32mINFO    [0m pytest_operator.plugin:plugin.py:806 Connecting to existing model concierge-microk8s:testing on unspecified cloud
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHSession received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHTunneler received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[32mINFO    [0m integration.test_trust:test_trust.py:30 Deploying applications
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/jammy/postgresql-test-app-410
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/jammy/postgresql-k8s-674
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying local:jammy/pgbouncer-k8s-0
+[32mINFO    [0m integration.test_trust:test_trust.py:61 Waiting until pgbouncer-k8s blocked due to lack of trust
+[32mINFO    [0m integration.test_trust:test_trust.py:75 Trusting application pgbouncer-k8s
+[32mINFO    [0m integration.test_trust:test_trust.py:78 Relating application pgbouncer-k8s with postgresql-k8s
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.9    unsupported  01:35:50Z
+
+App                  Version  Status   Scale  Charm                Channel      Rev  Address         Exposed  Message
+pgbouncer-k8s        1.21.0   error        1  pgbouncer-k8s                       0  10.152.183.163  no       hook failed: "backend-database-relation-changed"
+postgresql-k8s       14.19    active       1  postgresql-k8s       14/edge      674  10.152.183.246  no       Primary
+postgresql-test-app           blocked      1  postgresql-test-app  latest/edge  410  10.152.183.77   no       No database integration available
+
+Unit                    Workload  Agent  Address       Ports  Message
+pgbouncer-k8s/0*        error     idle   10.1.113.137         hook failed: "backend-database-relation-changed"
+postgresql-k8s/0*       active    idle   10.1.113.140         Primary
+postgresql-test-app/0*  blocked   idle   10.1.113.138         No database integration available
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...

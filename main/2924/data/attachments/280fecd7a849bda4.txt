@@ -1,0 +1,75 @@
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s (waiting for exactly 3 units, current : 1)
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] blocked: PgBouncer service metrics_server not running: service status = backoff
+  pgbouncer-k8s/2 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/2 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s (waiting for exactly 1 units, current : 3)
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.8    unsupported  02:15:05Z
+
+App                       Version  Status  Scale  Charm                     Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   active      1  pgbouncer-k8s                              0  10.152.183.49   no       
+postgresql-k8s            14.18    active      3  postgresql-k8s            14/edge        643  10.152.183.211  no       
+self-signed-certificates           active      1  self-signed-certificates  latest/stable  264  10.152.183.156  no       
+
+Unit                         Workload  Agent  Address       Ports  Message
+pgbouncer-k8s/0*             active    idle   10.1.130.137         
+postgresql-k8s/0             active    idle   10.1.130.141         
+postgresql-k8s/1*            active    idle   10.1.130.143         Primary
+postgresql-k8s/2             active    idle   10.1.130.142         
+self-signed-certificates/0*  active    idle   10.1.130.144         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+controller-0: 01:33:46 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring trust: updating application "postgresql-k8s" to desired trust true: getting service account role "postgresql-k8s": k8s: roles.rbac.authorization.k8s.io "postgresql-k8s" not found
+controller-0: 01:34:46 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:35:46 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:36:46 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+controller-0: 01:37:49 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring trust: updating application "postgresql-k8s" to desired trust true: getting service account role "postgresql-k8s": k8s: roles.rbac.authorization.k8s.io "postgresql-k8s" not found
+controller-0: 01:38:50 ERROR juju.worker.caasapplicationprovisioner.runner exited "postgresql-k8s": more than 20 retries ensuring scale: setting scale to 3 for "postgresql-k8s": statefulset "postgresql-k8s" not found
+unit-postgresql-k8s-0: 01:43:27 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-pgbouncer-k8s-0: 01:47:20 ERROR unit.pgbouncer-k8s/0.juju-log backend-database:5: deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:47:24 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:47:34 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:47:42 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:47:52 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:48:02 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:48:13 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:48:25 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:48:33 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:48:43 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:52:51 ERROR unit.pgbouncer-k8s/0.juju-log backend-database:6: deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:52:58 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:53:08 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:53:17 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:53:28 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:53:37 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:53:47 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:53:58 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-0: 01:54:08 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - postgres database not ready
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...

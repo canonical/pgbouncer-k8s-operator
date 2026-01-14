@@ -1,0 +1,24 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:784 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.7    unsupported  01:47:09Z
+
+App                       Version  Status   Scale  Charm                     Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   waiting      2  pgbouncer-k8s                              0  10.152.183.186  no       installing agent
+postgresql-k8s            14.10    active       3  postgresql-k8s            14/edge        198  10.152.183.141  no       
+postgresql-test-app                active       1  postgresql-test-app       edge            54  10.152.183.36   no       received database credentials of the first database
+self-signed-certificates           active       1  self-signed-certificates  latest/stable   72  10.152.183.57   no       
+
+Unit                         Workload  Agent  Address       Ports  Message
+pgbouncer-k8s/0*             active    idle   10.1.181.136         
+pgbouncer-k8s/1              blocked   idle   10.1.181.137         PgBouncer service metrics_server not running: service status = ServiceStatus.INACTIVE
+postgresql-k8s/0             active    idle   10.1.181.143         
+postgresql-k8s/1             active    idle   10.1.181.145         
+postgresql-k8s/2*            active    idle   10.1.181.144         Primary
+postgresql-test-app/0*       active    idle   10.1.181.138         received database credentials of the first database
+self-signed-certificates/0*  active    idle   10.1.181.142         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:790 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:856 Forgetting main...

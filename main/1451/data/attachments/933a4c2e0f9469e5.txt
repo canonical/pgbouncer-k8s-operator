@@ -1,0 +1,35 @@
+[32mINFO    [0m integration.relations.test_db:test_db.py:176 Deploying test app
+[32mINFO    [0m juju.model:model.py:2087 Deploying ch:amd64/jammy/postgresql-test-app-43
+[33mWARNING [0m juju.model:model.py:1553 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m integration.relations.test_db:test_db.py:180 Wait for PGB to block due to extensions
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  pgbouncer-k8s/0 [idle] blocked: bad relation request - remote app requested extensions, which are unsupported. Please remove this relation.
+  pgbouncer-k8s/1 [idle] blocked: bad relation request - remote app requested extensions, which are unsupported. Please remove this relation.
+  pgbouncer-k8s/2 [idle] blocked: bad relation request - remote app requested extensions, which are unsupported. Please remove this relation.
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  pgbouncer-k8s/0 [idle] blocked: bad relation request - remote app requested extensions, which are unsupported. Please remove this relation.
+  pgbouncer-k8s/1 [idle] blocked: bad relation request - remote app requested extensions, which are unsupported. Please remove this relation.
+  pgbouncer-k8s/2 [idle] blocked: bad relation request - remote app requested extensions, which are unsupported. Please remove this relation.
+[32mINFO    [0m integration.relations.test_db:test_db.py:189 Rerelate with extensions enabled
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: Primary
+[33mWARNING [0m juju.model:model.py:1553 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: Primary
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+  postgresql-test-app/0 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2947 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+  postgresql-test-app/0 [idle] active:

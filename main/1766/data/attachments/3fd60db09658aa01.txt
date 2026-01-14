@@ -1,0 +1,58 @@
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s (waiting for exactly 3 units, current : 1)
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] waiting: waiting for backend-database relation to connect
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: Primary
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s (waiting for exactly 1 units, current : 3)
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: Primary
+[32mINFO    [0m pytest_operator.plugin:plugin.py:834 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.8    unsupported  01:47:48Z
+
+App                       Version  Status  Scale  Charm                     Channel        Rev  Address         Exposed  Message
+finos-waltz                        active      1  finos-waltz-k8s           edge            33  10.152.183.188  no       
+pgbouncer-k8s             1.21.0   active      1  pgbouncer-k8s                              0  10.152.183.28   no       
+postgresql-k8s            14.11    active      3  postgresql-k8s            14/edge        239  10.152.183.26   no       
+self-signed-certificates           active      1  self-signed-certificates  latest/stable   72  10.152.183.102  no       
+
+Unit                         Workload  Agent  Address     Ports  Message
+finos-waltz/0*               active    idle   10.1.88.16         
+pgbouncer-k8s/0*             active    idle   10.1.88.8          
+postgresql-k8s/0             active    idle   10.1.88.12         
+postgresql-k8s/1             active    idle   10.1.88.14         
+postgresql-k8s/2*            active    idle   10.1.88.13         Primary
+self-signed-certificates/0*  active    idle   10.1.88.15         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:840 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:904 Forgetting main...

@@ -1,0 +1,25 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:862 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.8    unsupported  01:32:24Z
+
+App                       Version  Status   Scale  Charm                     Channel        Rev  Address         Exposed  Message
+data-integrator                    waiting      1  data-integrator           latest/edge     27  10.152.183.57   no       installing agent
+pgbouncer-k8s             1.21.0   waiting      1  pgbouncer-k8s                              0  10.152.183.143  no       installing agent
+postgresql-k8s                     error        3  postgresql-k8s            14/edge        290  10.152.183.74   no       create Pod postgresql-k8s-1 in StatefulSet postgresql-k8s failed error: failed to create PVC postgresql-k8s-pgdata-e4...
+postgresql-test-app                active       1  postgresql-test-app       edge           154  10.152.183.183  no       
+self-signed-certificates           active       1  self-signed-certificates  latest/stable   72  10.152.183.123  no       
+
+Unit                         Workload     Agent      Address     Ports  Message
+data-integrator/0*           blocked      idle       10.1.49.73         Please relate the data-integrator with the desired product
+pgbouncer-k8s/0*             waiting      executing  10.1.49.72         waiting for backend-database relation to connect
+postgresql-k8s/0             maintenance  executing  10.1.49.79         installing charm software
+postgresql-k8s/1             maintenance  executing  10.1.49.81         (install) installing charm software
+postgresql-k8s/2*            maintenance  executing  10.1.49.80         installing charm software
+postgresql-test-app/0*       active       idle       10.1.49.74         
+self-signed-certificates/0*  active       executing  10.1.49.78         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:868 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:947 Forgetting model main...

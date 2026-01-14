@@ -1,0 +1,88 @@
+[32mINFO    [0m integration.relations.test_db:test_db.py:173 Deploying test app
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/jammy/postgresql-test-app-388
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m integration.relations.test_db:test_db.py:177 Wait for PGB to block due to extensions
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] blocked: bad relation request - remote app requested extensions, which are unsupported. Please remove this relation.
+  pgbouncer-k8s/2 [executing] active: 
+[32mINFO    [0m integration.relations.test_db:test_db.py:185 Rerelate with extensions enabled
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: 
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+  postgresql-test-app/0 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/1 [executing] active: 
+  postgresql-k8s/2 [executing] active: 
+  pgbouncer-k8s/1 [executing] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.8    unsupported  01:53:39Z
+
+App                  Version  Status  Scale  Charm                Channel        Rev  Address         Exposed  Message
+pgbouncer-k8s        1.21.0   active      3  pgbouncer-k8s                         0  10.152.183.105  no       
+postgresql-k8s       14.18    active      3  postgresql-k8s       14/edge        625  10.152.183.71   no       
+postgresql-test-app           active      1  postgresql-test-app  latest/stable  388  10.152.183.152  no       
+
+Unit                    Workload  Agent  Address       Ports  Message
+pgbouncer-k8s/0         active    idle   10.1.112.202         
+pgbouncer-k8s/1*        active    idle   10.1.112.203         
+pgbouncer-k8s/2         active    idle   10.1.112.204         
+postgresql-k8s/0*       active    idle   10.1.112.208         Primary
+postgresql-k8s/1        active    idle   10.1.112.210         
+postgresql-k8s/2        active    idle   10.1.112.209         
+postgresql-test-app/0*  active    idle   10.1.112.212         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-pgbouncer-k8s-1: 01:41:50 ERROR unit.pgbouncer-k8s/1.juju-log backend-database:5: deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:41:57 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:42:06 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:42:18 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:42:26 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:42:35 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:42:44 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:42:52 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:04 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:14 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:24 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:32 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:40 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:49 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:43:59 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:44:08 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:44:19 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:44:30 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:44:41 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-pgbouncer-k8s-1: 01:44:51 ERROR unit.pgbouncer-k8s/1.juju-log deferring database-created hook - postgres database not ready
+unit-postgresql-k8s-1: 01:50:10 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-2: 01:50:11 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-0: 01:50:11 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-finos-waltz-0: 01:50:16 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-2: 01:50:17 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-1: 01:50:17 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 01:50:17 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-2: 01:51:26 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 01:51:26 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-1: 01:51:27 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-1: 01:51:28 ERROR unit.pgbouncer-k8s/1.juju-log db:9: ERROR - `extensions` (pg_trgm:public, unaccent:public) cannot be requested through relations - Please enable extensions through `juju config` and add the relation again.
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...

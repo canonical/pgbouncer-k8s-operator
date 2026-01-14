@@ -1,8 +1,0 @@
-[32mINFO    [0m root:helpers.py:121 running query: 
- CREATE DATABASE another_database;
-[32mINFO    [0m root:helpers.py:122 {'dbname': 'postgresql_test_app_database', 'query': 'CREATE DATABASE another_database;', 'relation-name': 'database', 'readonly': False}
-[32mINFO    [0m root:helpers.py:125 query results: {'results': '["no results to fetch"]', 'return-code': 0}
-[32mINFO    [0m root:helpers.py:121 running query: 
- CREATE USER another_user WITH ENCRYPTED PASSWORD 'test-password';
-[32mINFO    [0m root:helpers.py:122 {'dbname': 'postgresql_test_app_database', 'query': "CREATE USER another_user WITH ENCRYPTED PASSWORD 'test-password';", 'relation-name': 'database', 'readonly': False}
-[32mINFO    [0m root:helpers.py:125 query results: {'results': '["no results to fetch"]', 'return-code': 0}

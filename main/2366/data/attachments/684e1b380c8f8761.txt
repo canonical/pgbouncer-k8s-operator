@@ -1,0 +1,89 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:766 Connecting to existing model microk8s-localhost:test on unspecified cloud
+[32mINFO    [0m juju.model:model.py:2098 Deploying ch:amd64/jammy/data-integrator-80
+[32mINFO    [0m juju.model:model.py:2098 Deploying ch:amd64/jammy/postgresql-k8s-472
+[32mINFO    [0m juju.model:model.py:2098 Deploying ch:amd64/jammy/pgbouncer-k8s-359
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:56 Wait for applications to become active
+[33mWARNING [0m juju.model:model.py:1564 relate is deprecated and will be removed. Use integrate instead.
+[33mWARNING [0m juju.model:model.py:1564 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  postgresql-k8s/1 [allocating] waiting: installing agent
+  postgresql-k8s/2 [allocating] waiting: installing agent
+  pgbouncer-k8s/0 [allocating] waiting: installing agent
+  pgbouncer-k8s/1 [allocating] waiting: installing agent
+  data-integrator/0 [allocating] waiting: installing agent
+  data-integrator/1 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: agent initialising
+  postgresql-k8s/1 [allocating] waiting: agent initialising
+  postgresql-k8s/2 [allocating] waiting: agent initialising
+  pgbouncer-k8s/0 [executing] maintenance: installing charm software
+  pgbouncer-k8s/1 [executing] maintenance: installing charm software
+  data-integrator/0 [idle] blocked: Please relate the data-integrator with the desired product
+  data-integrator/1 [idle] blocked: Please relate the data-integrator with the desired product
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+  postgresql-k8s/1 [executing] maintenance: installing charm software
+  postgresql-k8s/2 [executing] unknown: 
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [executing] waiting: waiting for backend-database relation to connect
+  data-integrator/0 [idle] blocked: Please relate the data-integrator with the desired product
+  data-integrator/1 [idle] blocked: Please relate the data-integrator with the desired product
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+  postgresql-k8s/1 [executing] waiting: awaiting for primary endpoint to be ready
+  postgresql-k8s/2 [executing] unknown: 
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  data-integrator/0 [idle] blocked: Please relate the data-integrator with the desired product
+  data-integrator/1 [idle] blocked: Please relate the data-integrator with the desired product
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+  postgresql-k8s/1 [executing] waiting: awaiting for primary endpoint to be ready
+  postgresql-k8s/2 [executing] unknown: 
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  data-integrator/0 [idle] blocked: Please relate the data-integrator with the desired product
+  data-integrator/1 [idle] blocked: Please relate the data-integrator with the desired product
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [idle] unknown: 
+  postgresql-k8s/1 [idle] waiting: awaiting for cluster to start
+  postgresql-k8s/2 [idle] unknown: 
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  data-integrator/0 [idle] blocked: Please relate the data-integrator with the desired product
+  data-integrator/1 [idle] blocked: Please relate the data-integrator with the desired product
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [idle] unknown: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] waiting: awaiting for cluster to start
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  data-integrator/0 [idle] blocked: Please relate the data-integrator with the desired product
+  data-integrator/1 [idle] blocked: Please relate the data-integrator with the desired product
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for member to start
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [executing] waiting: awaiting for cluster to start
+  pgbouncer-k8s/0 [executing] blocked: PgBouncer service metrics_server not running: service status = ServiceStatus.INACTIVE
+  pgbouncer-k8s/1 [executing] active: 
+  data-integrator/0 [idle] blocked: Please relate the data-integrator with the desired product
+  data-integrator/1 [idle] blocked: Please relate the data-integrator with the desired product
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [executing] active: Primary
+  postgresql-k8s/2 [idle] waiting: awaiting for cluster to start
+  data-integrator/0 [idle] active: 
+  data-integrator/1 [idle] active: 
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [executing] active: Primary
+  postgresql-k8s/2 [idle] waiting: awaiting for member to start
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [executing] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] waiting: awaiting for member to start
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active:

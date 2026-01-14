@@ -1,0 +1,25 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:834 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.8    unsupported  01:38:18Z
+
+App                       Version  Status   Scale  Charm                     Channel        Rev  Address         Exposed  Message
+data-integrator                    active       1  data-integrator           latest/edge     27  10.152.183.220  no       
+pgbouncer-k8s             1.21.0   active       1  pgbouncer-k8s                              0  10.152.183.183  no       
+postgresql-k8s            14.11    waiting      3  postgresql-k8s            14/edge        236  10.152.183.92   no       installing agent
+postgresql-test-app                active       1  postgresql-test-app       edge           113  10.152.183.173  no       received database credentials of the first database
+self-signed-certificates           active       1  self-signed-certificates  latest/stable   72  10.152.183.148  no       
+
+Unit                         Workload     Agent  Address      Ports  Message
+data-integrator/0*           active       idle   10.1.17.201         
+pgbouncer-k8s/0*             active       idle   10.1.17.200         
+postgresql-k8s/0             maintenance  idle   10.1.17.207         Executing restart operation
+postgresql-k8s/1*            error        idle   10.1.17.209         hook failed: "secret-changed"
+postgresql-k8s/2             waiting      idle   10.1.17.208         Awaiting restart operation
+postgresql-test-app/0*       active       idle   10.1.17.202         received database credentials of the first database
+self-signed-certificates/0*  active       idle   10.1.17.206         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:840 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:904 Forgetting main...

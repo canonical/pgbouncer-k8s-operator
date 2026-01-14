@@ -1,0 +1,31 @@
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [executing] waiting: waiting for backend-database relation to connect
+  pgbouncer-k8s/1 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:model.py:2958 Waiting for model:
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m pytest_operator.plugin:plugin.py:862 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.8    unsupported  01:45:16Z
+
+App            Version  Status   Scale  Charm          Channel  Rev  Address        Exposed  Message
+pgbouncer-k8s  1.21.0   waiting      2  pgbouncer-k8s             0  10.152.183.17  no       installing agent
+
+Unit              Workload  Agent  Address      Ports  Message
+pgbouncer-k8s/0   blocked   idle   10.1.97.201         waiting for backend database relation to initialise
+pgbouncer-k8s/1*  blocked   idle   10.1.97.202         waiting for backend database relation to initialise
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:868 Juju error logs:
+
+controller-0: 01:43:50 ERROR juju.worker.caasapplicationprovisioner.runner exited "finos-waltz": getting OCI image resources: unable to fetch OCI image resources for finos-waltz: application "finos-waltz" dying or dead
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:947 Forgetting model main...

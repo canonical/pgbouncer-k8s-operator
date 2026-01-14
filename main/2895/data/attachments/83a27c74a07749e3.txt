@@ -1,0 +1,23 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:937 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.8    unsupported  01:54:07Z
+
+App             Version  Status   Scale  Charm            Channel      Rev  Address         Exposed  Message
+finos-waltz              blocked      1  finos-waltz-k8s  latest/edge   33  10.152.183.31   no       Waiting for database configuration.
+pgbouncer-k8s   1.21.0   blocked      3  pgbouncer-k8s                   0  10.152.183.187  no       waiting for backend database relation to initialise
+postgresql-k8s           waiting      3  postgresql-k8s   14/edge      625  10.152.183.174  no       awaiting for primary endpoint to be ready
+
+Unit               Workload  Agent      Address     Ports  Message
+finos-waltz/0*     blocked   idle       10.1.98.9          Waiting for database configuration.
+pgbouncer-k8s/0    blocked   idle       10.1.98.14         waiting for backend database relation to initialise
+pgbouncer-k8s/1*   blocked   idle       10.1.98.15         waiting for backend database relation to initialise
+pgbouncer-k8s/2    blocked   idle       10.1.98.13         waiting for backend database relation to initialise
+postgresql-k8s/0   unknown   idle       10.1.98.18         
+postgresql-k8s/1   unknown   idle       10.1.98.17         
+postgresql-k8s/2*  waiting   executing  10.1.98.16         awaiting for primary endpoint to be ready
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:943 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1025 Forgetting model main...

@@ -1,0 +1,107 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:862 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.4.4    unsupported  01:42:47Z
+
+App                  Version  Status   Scale  Charm                Channel      Rev  Address         Exposed  Message
+pgbouncer-k8s                 waiting      3  pgbouncer-k8s        1/stable     144  10.152.183.121  no       installing agent
+postgresql-k8s       14.11    waiting      3  postgresql-k8s       14/edge      304  10.152.183.36   no       installing agent
+postgresql-test-app           active       1  postgresql-test-app  latest/edge  172  10.152.183.164  no       
+
+Unit                    Workload  Agent      Address      Ports  Message
+pgbouncer-k8s/0*        waiting   executing  10.1.161.9          waiting for backend-database relation to connect
+pgbouncer-k8s/1         error     idle       10.1.161.10         hook failed: "backend-database-relation-changed"
+pgbouncer-k8s/2         error     idle       10.1.161.11         hook failed: "backend-database-relation-changed"
+postgresql-k8s/0        waiting   executing  10.1.161.17         awaiting for cluster to start
+postgresql-k8s/1        waiting   idle       10.1.161.15         awaiting for cluster to start
+postgresql-k8s/2*       active    executing  10.1.161.16         Primary
+postgresql-test-app/0*  active    idle       10.1.161.8          
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:868 Juju error logs:
+
+unit-pgbouncer-k8s-1: 01:42:46 ERROR unit.pgbouncer-k8s/1.juju-log backend-database:7: Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/./src/charm.py", line 898, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/main.py", line 544, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/main.py", line 520, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/main.py", line 509, in _emit
+    _emit_charm_event(self.charm, self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/main.py", line 143, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/framework.py", line 352, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/framework.py", line 851, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/framework.py", line 941, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 2888, in _on_relation_changed_event
+    getattr(self.on, "read_only_endpoints_changed").emit(
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/framework.py", line 352, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/framework.py", line 851, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/framework.py", line 941, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/relations/backend_database.py", line 318, in _on_endpoints_changed
+    self.charm.render_pgb_config(reload_pgbouncer=True)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/./src/charm.py", line 846, in render_pgb_config
+    self.reload_pgbouncer()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/./src/charm.py", line 471, in reload_pgbouncer
+    pebble_services = pgb_container.get_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/model.py", line 2195, in get_services
+    services = self._pebble.get_services(names)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/pebble.py", line 2125, in get_services
+    resp = self._request('GET', '/v1/services', query)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/pebble.py", line 1778, in _request
+    response = self._request_raw(method, path, query, headers, data)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/ops/pebble.py", line 1827, in _request_raw
+    raise ConnectionError(
+ops.pebble.ConnectionError: Could not connect to Pebble: socket not found at '/charm/containers/pgbouncer/pebble.socket' (container restarted?)
+unit-pgbouncer-k8s-2: 01:42:46 ERROR unit.pgbouncer-k8s/2.juju-log backend-database:7: Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 898, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 544, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 520, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 509, in _emit
+    _emit_charm_event(self.charm, self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/main.py", line 143, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 352, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 851, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 941, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 2888, in _on_relation_changed_event
+    getattr(self.on, "read_only_endpoints_changed").emit(
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 352, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 851, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/framework.py", line 941, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/src/relations/backend_database.py", line 318, in _on_endpoints_changed
+    self.charm.render_pgb_config(reload_pgbouncer=True)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 846, in render_pgb_config
+    self.reload_pgbouncer()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/./src/charm.py", line 471, in reload_pgbouncer
+    pebble_services = pgb_container.get_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/model.py", line 2195, in get_services
+    services = self._pebble.get_services(names)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 2125, in get_services
+    resp = self._request('GET', '/v1/services', query)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1778, in _request
+    response = self._request_raw(method, path, query, headers, data)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-2/charm/venv/ops/pebble.py", line 1827, in _request_raw
+    raise ConnectionError(
+ops.pebble.ConnectionError: Could not connect to Pebble: socket not found at '/charm/containers/pgbouncer/pebble.socket' (container restarted?)
+unit-pgbouncer-k8s-1: 01:42:46 ERROR juju.worker.uniter.operation hook "backend-database-relation-changed" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-2: 01:42:46 ERROR juju.worker.uniter.operation hook "backend-database-relation-changed" (via hook dispatching script: dispatch) failed: exit status 1
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:947 Forgetting model main...

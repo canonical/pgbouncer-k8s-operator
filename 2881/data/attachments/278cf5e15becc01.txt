@@ -1,4 +1,0 @@
-[32mINFO    [0m root:helpers.py:120 running query: 
- DROP TABLE test;
-[32mINFO    [0m root:helpers.py:121 {'dbname': 'postgresql_test_app_database', 'query': 'DROP TABLE test;', 'relation-name': 'database', 'readonly': True}
-[32mINFO    [0m root:helpers.py:124 query results: {'return-code': 1, 'stderr': 'Uncaught OperationalError in charm code: connection to server at "pgbouncer-k8s-service.testing.svc.cluster.local" (10.152.183.58), port 6432 failed: FATAL:  no pg_hba.conf entry for host "10.1.98.9", user "relation_id_7", database "postgresql_test_app_database", no encryption\n\nUse `juju debug-log` to see the full traceback.\n'}

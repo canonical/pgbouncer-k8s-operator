@@ -1,0 +1,115 @@
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:98 Refresh the charm
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:101 Wait for upgrade to start
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:108 Wait for upgrade to complete on first upgrading unit
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  pgbouncer-k8s/0 [idle] waiting: other units upgrading first...
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  pgbouncer-k8s/0 [idle] waiting: other units upgrading first...
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:116 Resume upgrade
+[32mINFO    [0m integration.test_upgrade_data_integrator:test_upgrade_data_integrator.py:121 Wait for upgrade to complete
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  pgbouncer-k8s/0 [executing] maintenance: stopping charm software
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:model.py:2972 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:903 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.4.6    unsupported  01:51:36Z
+
+App              Version  Status  Scale  Charm            Channel      Rev  Address         Exposed  Message
+data-integrator           active      2  data-integrator  latest/edge   71  10.152.183.203  no       
+pgbouncer-k8s    1.21.0   active      2  pgbouncer-k8s                   0  10.152.183.48   no       
+postgresql-k8s   14.13    active      3  postgresql-k8s   14/edge      419  10.152.183.41   no       
+
+Unit                Workload  Agent  Address     Ports  Message
+data-integrator/0   active    idle   10.1.48.8          
+data-integrator/1*  active    idle   10.1.48.9          
+pgbouncer-k8s/0     active    idle   10.1.48.19         
+pgbouncer-k8s/1*    active    idle   10.1.48.18         
+postgresql-k8s/0    active    idle   10.1.48.15         
+postgresql-k8s/1    active    idle   10.1.48.17         
+postgresql-k8s/2*   active    idle   10.1.48.16         Primary
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:909 Juju error logs:
+
+unit-postgresql-k8s-1: 01:45:38 ERROR unit.postgresql-k8s/1.juju-log upgrade:3: Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/websocket/_socket.py", line 118, in recv
+    bytes_ = _recv()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/websocket/_socket.py", line 97, in _recv
+    return sock.recv(bufsize)
+TimeoutError: timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/ops/pebble.py", line 2906, in exec
+    control_ws = self._connect_websocket(task_id, 'control')
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/ops/pebble.py", line 2994, in _connect_websocket
+    ws.connect(url, socket=sock)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/websocket/_core.py", line 261, in connect
+    self.handshake_response = handshake(self.sock, url, *addrs, **options)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/websocket/_handshake.py", line 65, in handshake
+    status, resp = _get_resp_headers(sock)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/websocket/_handshake.py", line 141, in _get_resp_headers
+    status, resp_headers, status_message = read_headers(sock)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/websocket/_http.py", line 351, in read_headers
+    line = recv_line(sock)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/websocket/_socket.py", line 140, in recv_line
+    c = recv(sock, 1)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/websocket/_socket.py", line 120, in recv
+    raise WebSocketTimeoutException("Connection timed out")
+websocket._exceptions.WebSocketTimeoutException: Connection timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/./src/charm.py", line 2202, in <module>
+    main(PostgresqlOperatorCharm, use_juju_for_storage=True)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/ops/__init__.py", line 343, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/ops/_main.py", line 543, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/ops/_main.py", line 529, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/ops/_main.py", line 515, in _emit
+    self.framework.reemit()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/ops/framework.py", line 867, in reemit
+    self._reemit()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/ops/framework.py", line 947, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 734, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/./src/charm.py", line 914, in _on_postgresql_pebble_ready
+    self._create_pgdata(container)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 734, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/./src/charm.py", line 890, in _create_pgdata
+    container.exec([
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/ops/model.py", line 2996, in exec
+    return self._pebble.exec(
+  File "/var/lib/juju/agents/unit-postgresql-k8s-1/charm/venv/ops/pebble.py", line 2915, in exec
+    raise ChangeError(change.err, change) from e
+ops.pebble.ChangeError: cannot perform the following tasks:
+- exec command "chown" (exec 17: timeout waiting for websocket connections: context deadline exceeded)
+----- Logs from task 0 -----
+2024-10-14T01:45:38Z ERROR exec 17: timeout waiting for websocket connections: context deadline exceeded
+-----
+unit-postgresql-k8s-1: 01:45:38 ERROR juju.worker.uniter.operation hook "upgrade-relation-joined" (via hook dispatching script: dispatch) failed: exit status 1
+unit-postgresql-k8s-1: 01:47:51 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-pgbouncer-k8s-1: 01:49:42 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:49:44 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:49:45 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:50:36 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:50:38 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:50:39 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:50:40 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:991 Forgetting model main...

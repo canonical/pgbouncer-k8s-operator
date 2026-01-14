@@ -1,4 +1,0 @@
-[32mINFO    [0m root:helpers.py:123 running query: 
- DROP TABLE IF EXISTS test;CREATE TABLE test(data TEXT);INSERT INTO test(data) VALUES('some data');SELECT data FROM test;
-[32mINFO    [0m root:helpers.py:124 {'dbname': 'postgresql_test_app_first_database', 'query': "DROP TABLE IF EXISTS test;CREATE TABLE test(data TEXT);INSERT INTO test(data) VALUES('some data');SELECT data FROM test;", 'relation-id': 7, 'relation-name': 'first-database', 'readonly': False}
-[32mINFO    [0m root:helpers.py:127 query results: {'results': '[["some data"]]', 'return-code': 0}

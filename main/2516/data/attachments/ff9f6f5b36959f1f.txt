@@ -1,0 +1,76 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:787 Connecting to existing model microk8s-localhost:test on unspecified cloud
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/jammy/postgresql-test-app-358
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/jammy/postgresql-k8s-495
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/jammy/pgbouncer-k8s-410
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:79 Wait for applications to become active
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  postgresql-k8s/1 [allocating] waiting: installing agent
+  postgresql-k8s/2 [allocating] waiting: installing agent
+  pgbouncer-k8s/0 [allocating] waiting: installing agent
+  pgbouncer-k8s/1 [allocating] waiting: installing agent
+  pgbouncer-k8s/2 [allocating] waiting: installing agent
+  postgresql-test-app/0 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: agent initialising
+  postgresql-k8s/1 [allocating] waiting: agent initialising
+  postgresql-k8s/2 [allocating] waiting: agent initialising
+  pgbouncer-k8s/0 [allocating] waiting: agent initialising
+  pgbouncer-k8s/1 [allocating] waiting: agent initialising
+  pgbouncer-k8s/2 [allocating] waiting: agent initialising
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  postgresql-k8s/1 [executing] maintenance: installing charm software
+  postgresql-k8s/2 [executing] maintenance: installing charm software
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  postgresql-k8s/1 [executing] unknown: 
+  postgresql-k8s/2 [idle] unknown: 
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [executing] waiting: waiting for backend-database relation to connect
+  pgbouncer-k8s/2 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] waiting: awaiting for cluster to start
+  postgresql-k8s/1 [idle] unknown: 
+  postgresql-k8s/2 [executing] unknown: 
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [executing] waiting: waiting for backend-database relation to connect
+  pgbouncer-k8s/2 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] active: Primary
+  postgresql-k8s/1 [executing] waiting: awaiting for cluster to start
+  postgresql-k8s/2 [executing] waiting: awaiting for cluster to start
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [executing] maintenance: Initialising backend-database relation
+  pgbouncer-k8s/2 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  postgresql-k8s/1 [executing] waiting: awaiting for cluster to start
+  postgresql-k8s/2 [executing] waiting: awaiting for cluster to start
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+  postgresql-test-app/0 [idle] active: received database credentials of the first database
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] maintenance: reconfiguring cluster
+  postgresql-k8s/1 [idle] waiting: awaiting for cluster to start
+  postgresql-k8s/2 [idle] waiting: awaiting for cluster to start
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  postgresql-k8s/1 [idle] waiting: awaiting for member to start
+  postgresql-k8s/2 [idle] waiting: awaiting for cluster to start
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] waiting: awaiting for member to start
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] active: Primary
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] waiting: awaiting for member to start
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/2 [idle] active:

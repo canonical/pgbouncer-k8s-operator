@@ -1,4 +1,0 @@
-[32mINFO    [0m root:helpers.py:120 running query: 
- SELECT version();
-[32mINFO    [0m root:helpers.py:121 {'dbname': 'postgresql_test_app_first_database', 'query': 'SELECT version();', 'relation-id': 7, 'relation-name': 'first-database', 'readonly': False}
-[32mINFO    [0m root:helpers.py:124 query results: {'results': '[["PostgreSQL 14.11 (Ubuntu 14.11-0ubuntu0.22.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, 64-bit"]]', 'return-code': 0}

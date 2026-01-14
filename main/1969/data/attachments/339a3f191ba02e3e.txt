@@ -1,0 +1,19 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:862 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.1.8    unsupported  01:45:05Z
+
+App            Version  Status   Scale  Charm            Channel  Rev  Address         Exposed  Message
+finos-waltz             waiting    0/1  finos-waltz-k8s  edge      33                  no       installing agent
+pgbouncer-k8s  1.21.0   waiting      3  pgbouncer-k8s               0  10.152.183.124  no       installing agent
+
+Unit              Workload  Agent       Address      Ports  Message
+finos-waltz/0     waiting   allocating                      installing agent
+pgbouncer-k8s/0   blocked   idle        10.1.32.136         waiting for backend database relation to initialise
+pgbouncer-k8s/1   blocked   idle        10.1.32.138         waiting for backend database relation to initialise
+pgbouncer-k8s/2*  blocked   idle        10.1.32.137         waiting for backend database relation to initialise
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:868 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:947 Forgetting model main...

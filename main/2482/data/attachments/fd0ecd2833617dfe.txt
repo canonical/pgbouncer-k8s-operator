@@ -1,0 +1,221 @@
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:162 starting continuous writes to the database
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:166 checking whether writes are increasing
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-1 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-1 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-1 "HTTP/1.1 200 OK"
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:169 Get leader unit
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:175 Run pre-upgrade-check action
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:183 Inject dependency fault
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:188 Refresh the charm
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:191 Get first upgrading unit
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:195 Wait for upgrade to fail on first upgrading unit
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:202 Ensure continuous_writes while in failure state on remaining units
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-1 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-1 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-1 "HTTP/1.1 200 OK"
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:205 Re-run pre-upgrade-check action
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:209 Re-refresh the charm
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] blocked: ready to rollback application
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] blocked: ready to rollback application
+  pgbouncer-k8s/1 [idle] waiting: other units upgrading first...
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:216 Resume upgrade
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:220 Wait for application to recover
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] blocked: ready to rollback application
+  pgbouncer-k8s/1 [executing] maintenance: 
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] maintenance: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:224 Ensure continuous_writes after rollback procedure
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-1 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-1 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-1 "HTTP/1.1 200 OK"
+[32mINFO    [0m integration.test_upgrade:test_upgrade.py:229 Checking whether no writes were lost
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m httpx:_client.py:1025 HTTP Request: GET https://10.1.0.143:16443/api/v1/namespaces/test/pods/postgresql-k8s-1 "HTTP/1.1 200 OK"
+[32mINFO    [0m pytest_operator.plugin:plugin.py:929 Model status:
+
+Model  Controller          Cloud/Region        Version  SLA          Timestamp
+test   microk8s-localhost  microk8s/localhost  3.6.2    unsupported  01:42:24Z
+
+App                  Version  Status  Scale  Charm                Channel      Rev  Address         Exposed  Message
+pgbouncer-k8s        1.21.0   active      3  pgbouncer-k8s                       2  10.152.183.37   no       
+postgresql-k8s       14.15    active      3  postgresql-k8s       14/edge      493  10.152.183.107  no       
+postgresql-test-app           active      1  postgresql-test-app  latest/edge  344  10.152.183.22   no       received database credentials of the first database
+
+Unit                    Workload  Agent  Address      Ports  Message
+pgbouncer-k8s/0*        active    idle   10.1.208.88         
+pgbouncer-k8s/1         active    idle   10.1.208.87         
+pgbouncer-k8s/2         active    idle   10.1.208.86         
+postgresql-k8s/0        active    idle   10.1.208.79         
+postgresql-k8s/1*       active    idle   10.1.208.81         Primary
+postgresql-k8s/2        active    idle   10.1.208.80         
+postgresql-test-app/0*  active    idle   10.1.208.72         received database credentials of the first database
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:935 Juju error logs:
+
+unit-postgresql-k8s-0: 01:31:01 ERROR unit.postgresql-k8s/0.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3320, in _run
+    result = subprocess.run(args, **kwargs)  # type: ignore
+  File "/usr/lib/python3.10/subprocess.py", line 526, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '('/var/lib/juju/tools/unit-postgresql-k8s-0/secret-get', '--label', 'database-peers.postgresql-k8s.app', '--format=json')' returned non-zero exit status 1.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/src/charm.py", line 2252, in <module>
+    main(PostgresqlOperatorCharm, use_juju_for_storage=True)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 343, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 543, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 529, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 518, in _emit
+    _emit_charm_event(self.charm, self.dispatcher.event_name, self._juju_context)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 134, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 347, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 857, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 947, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 1064, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/src/charm.py", line 937, in _on_postgresql_pebble_ready
+    self.unit.set_workload_version(self._patroni.rock_postgresql_version)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/src/charm.py", line 1571, in _patroni
+    self.get_secret(APP_SCOPE, USER_PASSWORD_KEY),
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 1064, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/src/charm.py", line 353, in get_secret
+    if result := self.peer_relation_data(scope).fetch_my_relation_field(peers.id, key):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1397, in fetch_my_relation_field
+    if relation_data := self.fetch_my_relation_data([relation_id], [field], relation_name):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1386, in fetch_my_relation_data
+    data[relation.id] = self._fetch_my_specific_relation_data(relation, fields)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 536, in wrapper
+    return f(self, *args, **kwargs)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 2344, in _fetch_my_specific_relation_data
+    self.component, self.secret_fields, relation, fields
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1981, in secret_fields
+    self.static_secret_fields if self.static_secret_fields else self.current_secret_fields
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 2000, in current_secret_fields
+    if content := self._get_group_secret_contents(relation, group):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 2331, in _get_group_secret_contents
+    result = super()._get_group_secret_contents(relation, group, secret_fields)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1123, in _get_group_secret_contents
+    if (secret := self._get_relation_secret(relation.id, group)) and (
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 508, in wrapper
+    return f(self, *args, **kwargs)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 2318, in _get_relation_secret
+    return self.secrets.get(
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 812, in get
+    if secret.meta:
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 642, in meta
+    self._secret_meta = self._model.get_secret(label=self.label)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 308, in get_secret
+    content = self._backend.secret_get(id=id, label=label)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3692, in secret_get
+    result = self._run('secret-get', *args, return_output=True, use_json=True)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3322, in _run
+    raise ModelError(e.stderr) from e
+ops.model.ModelError: ERROR permission denied
+
+unit-postgresql-k8s-0: 01:31:01 ERROR juju.worker.uniter.operation hook "postgresql-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-postgresql-k8s-0: 01:31:01 ERROR juju.worker.uniter pebble poll failed for container "postgresql": failed to send pebble-ready event: hook failed
+unit-postgresql-k8s-0: 01:33:20 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-2: 01:33:21 ERROR unit.postgresql-k8s/2.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-0: 01:33:53 ERROR unit.postgresql-k8s/0.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-2: 01:33:53 ERROR unit.postgresql-k8s/2.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-pgbouncer-k8s-2: 01:36:40 ERROR unit.pgbouncer-k8s/2.juju-log pgbouncer not running
+unit-pgbouncer-k8s-2: 01:36:42 ERROR unit.pgbouncer-k8s/2.juju-log pgbouncer not running
+unit-pgbouncer-k8s-2: 01:36:43 ERROR unit.pgbouncer-k8s/2.juju-log pgbouncer not running
+unit-pgbouncer-k8s-2: 01:36:45 ERROR unit.pgbouncer-k8s/2.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:37:40 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:37:42 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:37:43 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:37:45 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:38:04 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:38:06 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:38:07 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+unit-pgbouncer-k8s-2: 01:39:39 ERROR unit.pgbouncer-k8s/2.juju-log charms.data_platform_libs.v0.upgrade.VersionError - {'message': 'Versions incompatible, charm 1 can not be upgraded to 15.0', 'cause': 'Upgrades only supported for specific versions, charm versions satisfying requirement ^15', 'resolution': ''}
+unit-pgbouncer-k8s-2: 01:39:41 ERROR unit.pgbouncer-k8s/2.juju-log pgbouncer not running
+unit-pgbouncer-k8s-2: 01:39:44 ERROR unit.pgbouncer-k8s/2.juju-log pgbouncer not running
+unit-pgbouncer-k8s-2: 01:39:45 ERROR unit.pgbouncer-k8s/2.juju-log pgbouncer not running
+unit-pgbouncer-k8s-2: 01:39:47 ERROR unit.pgbouncer-k8s/2.juju-log pgbouncer not running
+unit-pgbouncer-k8s-2: 01:40:12 ERROR unit.pgbouncer-k8s/2.juju-log pgbouncer not running
+unit-pgbouncer-k8s-2: 01:40:14 ERROR unit.pgbouncer-k8s/2.juju-log pgbouncer not running
+unit-pgbouncer-k8s-2: 01:40:15 ERROR unit.pgbouncer-k8s/2.juju-log pgbouncer not running
+unit-pgbouncer-k8s-2: 01:40:16 ERROR unit.pgbouncer-k8s/2.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:41:11 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:41:14 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:41:15 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:41:17 ERROR unit.pgbouncer-k8s/1.juju-log pgbouncer not running
+unit-pgbouncer-k8s-1: 01:41:18 ERROR unit.pgbouncer-k8s/1.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/charm.py", line 1071, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 343, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 543, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 529, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 518, in _emit
+    _emit_charm_event(self.charm, self.dispatcher.event_name, self._juju_context)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 134, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 347, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 857, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 947, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/lib/charms/tempo_coordinator_k8s/v0/charm_tracing.py", line 1064, in wrapped_function
+    return callable(*args, **kwargs)  # type: ignore
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/charm.py", line 400, in _on_pgbouncer_pebble_ready
+    container.replan()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/model.py", line 2381, in replan
+    self._pebble.replan_services()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2144, in replan_services
+    return self._services_action('replan', [], timeout, delay)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2244, in _services_action
+    raise ChangeError(change.err, change)
+ops.pebble.ChangeError: cannot perform the following tasks:
+- Start service "metrics_server" (service start attempt: exited quickly with code 1, will restart)
+----- Logs from task 5 -----
+2025-01-30T01:41:17Z INFO Most recent service output:
+    ts=2025-01-30T01:41:17.507Z caller=collector.go:138 level=error msg="error setting up DB connection" err="error pinging pgbouncer: dial tcp [::1]:6432: connect: connection refused"
+2025-01-30T01:41:17Z ERROR service start attempt: exited quickly with code 1, will restart
+-----
+unit-pgbouncer-k8s-1: 01:41:18 ERROR juju.worker.uniter.operation hook "pgbouncer-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-1: 01:41:18 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: hook failed
+unit-pgbouncer-k8s-0: 01:41:36 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:41:38 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+unit-pgbouncer-k8s-0: 01:41:40 ERROR unit.pgbouncer-k8s/0.juju-log pgbouncer not running
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1017 Forgetting model main...

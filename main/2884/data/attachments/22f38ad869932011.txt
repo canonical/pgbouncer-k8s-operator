@@ -1,0 +1,26 @@
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/jammy/postgresql-test-app-392
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  secondary-application/0 [allocating] waiting: installing agent
+  postgresql-test-app/0 [idle] active: received database credentials of the first database
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  secondary-application/0 [idle] active: 
+  postgresql-test-app/0 [idle] active: received database credentials of the first database
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m root:helpers.py:120 running query: 
+ DROP TABLE IF EXISTS smoke_test;CREATE TABLE smoke_test(data TEXT);INSERT INTO smoke_test(data) VALUES('some data');SELECT data FROM smoke_test;
+[32mINFO    [0m root:helpers.py:121 {'dbname': 'postgresql_test_app_database', 'query': "DROP TABLE IF EXISTS smoke_test;CREATE TABLE smoke_test(data TEXT);INSERT INTO smoke_test(data) VALUES('some data');SELECT data FROM smoke_test;", 'relation-name': 'database', 'readonly': False}
+[32mINFO    [0m root:helpers.py:124 query results: {'results': '[["some data"]]', 'return-code': 0}
+[32mINFO    [0m root:helpers.py:120 running query: 
+ DROP TABLE IF EXISTS check_multiple_apps_connected_to_one_cluster;CREATE TABLE check_multiple_apps_connected_to_one_cluster(data TEXT);INSERT INTO check_multiple_apps_connected_to_one_cluster(data) VALUES('some data');SELECT data FROM check_multiple_apps_connected_to_one_cluster;
+[32mINFO    [0m root:helpers.py:121 {'dbname': 'secondary_application_database', 'query': "DROP TABLE IF EXISTS check_multiple_apps_connected_to_one_cluster;CREATE TABLE check_multiple_apps_connected_to_one_cluster(data TEXT);INSERT INTO check_multiple_apps_connected_to_one_cluster(data) VALUES('some data');SELECT data FROM check_multiple_apps_connected_to_one_cluster;", 'relation-name': 'database', 'readonly': False}
+[32mINFO    [0m root:helpers.py:124 query results: {'results': '[["some data"]]', 'return-code': 0}
+[32mINFO    [0m integration.relations.pgbouncer_provider.test_pgbouncer_provider:test_pgbouncer_provider.py:328 dbname='postgresql_test_app_database' user='relation_id_7' host='pgbouncer-k8s-service.testing.svc.cluster.local' port=6432 password='XCOUj93ltXQfMsKlz0Xolp7k' connect_timeout=10
+[32mINFO    [0m integration.relations.pgbouncer_provider.test_pgbouncer_provider:test_pgbouncer_provider.py:329 dbname='secondary_application_database' user='relation_id_9' host='pgbouncer-k8s-service.testing.svc.cluster.local' port=6432 password='4IyU4xGyFc6xVRrVT0JfCkVd' connect_timeout=10
