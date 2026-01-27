@@ -12,6 +12,7 @@ on:
     branches:
       - main
 
+permissions: {}
 jobs:
   check-pr:
     name: Check pull request
