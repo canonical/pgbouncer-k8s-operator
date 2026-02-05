@@ -1,0 +1,156 @@
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/focal/mattermost-k8s-27
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [executing] maintenance: Setting pod spec
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [executing] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.14   unsupported  01:47:16Z
+
+App                       Version  Status  Scale  Charm                     Channel      Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   active      2  pgbouncer-k8s                            0  10.152.183.221  no       
+postgresql-k8s            14.20    active      3  postgresql-k8s            14/edge      732  10.152.183.150  no       
+postgresql-test-app                active      1  postgresql-test-app       latest/edge  434  10.152.183.103  no       received database credentials of the first database
+self-signed-certificates           active      1  self-signed-certificates  1/stable     317  10.152.183.158  no       
+
+Unit                         Workload  Agent      Address       Ports  Message
+pgbouncer-k8s/0*             active    executing  10.1.100.201         
+pgbouncer-k8s/1              active    executing  10.1.100.202         
+postgresql-k8s/0             active    idle       10.1.100.207         
+postgresql-k8s/1             active    idle       10.1.100.208         
+postgresql-k8s/2*            active    idle       10.1.100.209         Primary
+postgresql-test-app/0*       active    idle       10.1.100.203         received database credentials of the first database
+self-signed-certificates/0*  active    idle       10.1.100.210         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-self-signed-certificates-0: 01:35:57 ERROR unit.self-signed-certificates/0.juju-log certificates:8: At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:36:03 ERROR unit.self-signed-certificates/0.juju-log certificates:8: At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:36:06 ERROR unit.self-signed-certificates/0.juju-log certificates:9: At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:36:10 ERROR unit.self-signed-certificates/0.juju-log certificates:9: At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:36:15 ERROR unit.self-signed-certificates/0.juju-log certificates:9: At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:36:18 ERROR unit.self-signed-certificates/0.juju-log certificates:9: At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:36:20 ERROR unit.self-signed-certificates/0.juju-log certificates:9: At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-postgresql-k8s-0: 01:36:20 ERROR unit.postgresql-k8s/0.juju-log certificates:9: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-self-signed-certificates-0: 01:36:22 ERROR unit.self-signed-certificates/0.juju-log certificates:9: At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-postgresql-k8s-0: 01:36:23 ERROR unit.postgresql-k8s/0.juju-log Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:36:25 ERROR unit.postgresql-k8s/1.juju-log certificates:9: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:36:26 ERROR unit.postgresql-k8s/0.juju-log Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-2: 01:36:26 ERROR unit.postgresql-k8s/2.juju-log certificates:9: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:36:27 ERROR unit.postgresql-k8s/1.juju-log Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:36:28 ERROR unit.postgresql-k8s/0.juju-log certificates:9: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-2: 01:36:28 ERROR unit.postgresql-k8s/2.juju-log Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:36:29 ERROR unit.postgresql-k8s/1.juju-log certificates:9: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:36:29 ERROR unit.postgresql-k8s/0.juju-log database:7: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:36:31 ERROR unit.postgresql-k8s/1.juju-log Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:36:31 ERROR unit.postgresql-k8s/0.juju-log database:7: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:36:33 ERROR unit.postgresql-k8s/1.juju-log database:7: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:36:33 ERROR unit.postgresql-k8s/0.juju-log database:7: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-self-signed-certificates-0: 01:36:33 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-postgresql-k8s-1: 01:36:34 ERROR unit.postgresql-k8s/1.juju-log database:7: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:36:34 ERROR unit.postgresql-k8s/0.juju-log database:7: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:36:36 ERROR unit.postgresql-k8s/1.juju-log database:7: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:36:36 ERROR unit.postgresql-k8s/0.juju-log database:7: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:36:37 ERROR unit.postgresql-k8s/1.juju-log database:7: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:36:37 ERROR unit.postgresql-k8s/0.juju-log database-peers:4: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:36:39 ERROR unit.postgresql-k8s/1.juju-log restart:5: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:36:39 ERROR unit.postgresql-k8s/0.juju-log upgrade:6: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-2: 01:36:40 ERROR unit.postgresql-k8s/2.juju-log Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:36:40 ERROR unit.postgresql-k8s/1.juju-log restart:5: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:36:42 ERROR unit.postgresql-k8s/1.juju-log database-peers:4: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:36:43 ERROR unit.postgresql-k8s/1.juju-log database-peers:4: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:36:45 ERROR unit.postgresql-k8s/1.juju-log restart:5: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-self-signed-certificates-0: 01:36:45 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-postgresql-k8s-1: 01:36:46 ERROR unit.postgresql-k8s/1.juju-log upgrade:6: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-2: 01:36:53 ERROR unit.postgresql-k8s/2.juju-log database:7: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:36:55 ERROR unit.postgresql-k8s/0.juju-log upgrade:6: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-self-signed-certificates-0: 01:36:56 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-postgresql-k8s-0: 01:36:57 ERROR unit.postgresql-k8s/0.juju-log restart:5: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:36:58 ERROR unit.postgresql-k8s/0.juju-log database-peers:4: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:36:59 ERROR unit.postgresql-k8s/0.juju-log database-peers:4: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:37:01 ERROR unit.postgresql-k8s/0.juju-log database-peers:4: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:37:02 ERROR unit.postgresql-k8s/0.juju-log upgrade:6: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:37:03 ERROR unit.postgresql-k8s/1.juju-log database-peers:4: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:37:04 ERROR unit.postgresql-k8s/1.juju-log restart:5: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-2: 01:37:04 ERROR unit.postgresql-k8s/2.juju-log database:7: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:37:05 ERROR unit.postgresql-k8s/1.juju-log database-peers:4: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:37:07 ERROR unit.postgresql-k8s/1.juju-log upgrade:6: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-self-signed-certificates-0: 01:37:08 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-postgresql-k8s-1: 01:37:08 ERROR unit.postgresql-k8s/1.juju-log database-peers:4: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:37:10 ERROR unit.postgresql-k8s/1.juju-log upgrade:6: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-2: 01:37:16 ERROR unit.postgresql-k8s/2.juju-log database:7: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-self-signed-certificates-0: 01:37:19 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-postgresql-k8s-0: 01:37:19 ERROR unit.postgresql-k8s/0.juju-log database-peers:4: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:37:21 ERROR unit.postgresql-k8s/0.juju-log upgrade:6: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:37:22 ERROR unit.postgresql-k8s/0.juju-log restart:5: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:37:24 ERROR unit.postgresql-k8s/0.juju-log upgrade:6: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:37:26 ERROR unit.postgresql-k8s/1.juju-log upgrade:6: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-1: 01:37:28 ERROR unit.postgresql-k8s/1.juju-log upgrade:6: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-self-signed-certificates-0: 01:37:29 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:37:37 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:37:49 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:37:58 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:38:08 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:38:20 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:38:28 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:38:41 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:38:53 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:39:02 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:39:12 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:39:21 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-postgresql-k8s-1: 01:39:26 ERROR unit.postgresql-k8s/1.juju-log database-peers:4: Failed to list PostgreSQL database users: connection to server at "postgresql-k8s-1.postgresql-k8s-endpoints.testing.svc.cluster.local" (10.1.100.208), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+unit-self-signed-certificates-0: 01:39:30 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:39:40 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:39:51 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:40:01 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:40:12 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:40:30 ERROR unit.self-signed-certificates/0.juju-log certificates:8: At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:40:37 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:40:44 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:40:54 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:41:02 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:41:10 ERROR unit.self-signed-certificates/0.juju-log certificates:8: At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:41:14 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:41:25 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:41:33 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:41:42 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:41:55 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:42:05 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:42:20 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:42:28 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:43:12 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 01:43:12 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-1: 01:43:12 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-test-app-0: 01:43:17 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-0: 01:44:24 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-1: 01:44:25 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-postgresql-k8s-2: 01:44:25 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 01:44:41 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-self-signed-certificates-0: 01:44:42 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-self-signed-certificates-0: 01:44:43 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-pgbouncer-k8s-1: 01:44:51 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-pgbouncer-k8s-0: 01:45:50 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-self-signed-certificates-0: 01:45:54 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+unit-self-signed-certificates-0: 01:45:55 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:46:05 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:46:14 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:46:23 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:46:34 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:46:45 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:46:55 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-self-signed-certificates-0: 01:47:04 ERROR unit.self-signed-certificates/0.juju-log At least 1 matching relation ID not found with the relation name 'send-ca-cert'
+unit-pgbouncer-k8s-0: 01:47:07 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1005 (no status): websocket: close sent
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
