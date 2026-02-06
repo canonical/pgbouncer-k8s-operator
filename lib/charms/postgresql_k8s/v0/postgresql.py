@@ -306,7 +306,7 @@ class PostgreSQL:
                     privilege for privilege in privileges if privilege not in valid_privileges
                 ]
                 if "relation_access" in invalid_privileges:
-                    logger.warning("Extra user role relation_acces not available. Skipping role.")
+                    logger.warning("Extra user role relation_access not available. Skipping role.")
                     invalid_privileges.remove("relation_access")
                     privileges.remove("relation_access")
                 if len(invalid_privileges) > 0:
