@@ -7,7 +7,7 @@ requires-poetry = ">=2.0.0"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-ops = "^3.5.1"
+ops = "^3.5.2"
 tenacity = "^9.1.4"
 lightkube = "^0.19.1"
 lightkube-models = "^1.29.0.6"
@@ -37,7 +37,7 @@ jsonschema = "*"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.15.0"
+ruff = "^0.15.1"
 
 [tool.poetry.group.lint]
 optional = true
