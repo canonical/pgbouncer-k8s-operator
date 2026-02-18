@@ -1,0 +1,162 @@
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[32mINFO    [0m pytest_operator.plugin:plugin.py:806 Connecting to existing model concierge-microk8s:testing on unspecified cloud
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHSession received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHTunneler received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/focal/finos-waltz-k8s-33
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/jammy/postgresql-k8s-745
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying local:jammy/pgbouncer-k8s-0
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  postgresql-k8s/1 [allocating] waiting: installing agent
+  postgresql-k8s/2 [allocating] waiting: installing agent
+  pgbouncer-k8s/0 [allocating] waiting: installing agent
+  pgbouncer-k8s/1 [allocating] waiting: installing agent
+  pgbouncer-k8s/2 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [allocating] waiting: installing agent
+  postgresql-k8s/1 [allocating] waiting: installing agent
+  postgresql-k8s/2 [allocating] waiting: installing agent
+  pgbouncer-k8s/0 [allocating] waiting: agent initialising
+  pgbouncer-k8s/1 [allocating] waiting: agent initialising
+  pgbouncer-k8s/2 [allocating] waiting: agent initialising
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+  postgresql-k8s/1 [executing] maintenance: installing charm software
+  postgresql-k8s/2 [executing] maintenance: installing charm software
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+  postgresql-k8s/1 [executing] unknown: 
+  postgresql-k8s/2 [executing] unknown: 
+  pgbouncer-k8s/0 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [executing] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [executing] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+  postgresql-k8s/1 [executing] waiting: awaiting for primary endpoint to be ready
+  postgresql-k8s/2 [executing] unknown: 
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] unknown: 
+  postgresql-k8s/1 [executing] waiting: awaiting for primary endpoint to be ready
+  postgresql-k8s/2 [executing] unknown: 
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] unknown: 
+  postgresql-k8s/1 [idle] waiting: awaiting for primary endpoint to be ready
+  postgresql-k8s/2 [idle] unknown: 
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] unknown: 
+  postgresql-k8s/1 [idle] maintenance: reconfiguring cluster
+  postgresql-k8s/2 [idle] unknown: 
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] maintenance: reconfiguring cluster
+  postgresql-k8s/2 [executing] waiting: awaiting for cluster to start
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] waiting: Awaiting restart operation
+  postgresql-k8s/1 [executing] active: Primary
+  postgresql-k8s/2 [idle] waiting: Awaiting restart operation
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/1 [idle] blocked: waiting for backend database relation to initialise
+  pgbouncer-k8s/2 [idle] blocked: waiting for backend database relation to initialise
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [executing] active: 
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+  finos-waltz/0 [idle] blocked: Waiting for database configuration.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+  finos-waltz/0 [idle] blocked: Waiting for database configuration.
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/focal/finos-waltz-k8s-33
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  another-finos-waltz/0 [allocating] waiting: installing agent
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+  finos-waltz/0 [idle] active: 
+  another-finos-waltz/0 [executing] blocked: Waiting for database configuration.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/1 [idle] active: Primary
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+  another-finos-waltz/0 [idle] blocked: Waiting for database configuration.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  another-finos-waltz/0 [idle] active: 
+[32mINFO    [0m integration.relations.test_db:test_db.py:108 ['pgbouncer_k8s_user_6_testing', 'pgbouncer_k8s_user_7_testing']
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+  finos-waltz/0 [idle] active: 
+  another-finos-waltz/0 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [executing] active: 
+[32mINFO    [0m integration.relations.test_db:test_db.py:127 {'allowed-subnets': '10.152.183.116/32', 'allowed-units': 'finos-waltz/0', 'database': 'waltz', 'host': 'pgbouncer-k8s-service.testing.svc.cluster.local', 'master': 'host=pgbouncer-k8s-service.testing.svc.cluster.local dbname=waltz port=6464 user=pgbouncer_k8s_user_6_testing password=KPAAeeQXVY08JhYPJmEywwD8 fallback_application_name=finos-waltz', 'password': 'KPAAeeQXVY08JhYPJmEywwD8', 'port': '6464', 'standbys': 'host=pgbouncer-k8s-service.testing.svc.cluster.local dbname=waltz_standby port=6464 user=pgbouncer_k8s_user_6_testing password=KPAAeeQXVY08JhYPJmEywwD8 fallback_application_name=finos-waltz', 'state': 'master', 'user': 'pgbouncer_k8s_user_6_testing', 'version': '14.20'}
+[32mINFO    [0m integration.relations.test_db:test_db.py:134 {'allowed-subnets': '10.152.183.34/32', 'allowed-units': 'another-finos-waltz/0', 'database': 'waltz', 'host': 'pgbouncer-k8s-service.testing.svc.cluster.local', 'master': 'host=pgbouncer-k8s-service.testing.svc.cluster.local dbname=waltz port=6464 user=pgbouncer_k8s_user_7_testing password=SKnsTbqUyZpCSVnXvRunDkVr fallback_application_name=another-finos-waltz', 'password': 'SKnsTbqUyZpCSVnXvRunDkVr', 'port': '6464', 'standbys': 'host=pgbouncer-k8s-service.testing.svc.cluster.local dbname=waltz_standby port=6464 user=pgbouncer_k8s_user_7_testing password=SKnsTbqUyZpCSVnXvRunDkVr fallback_application_name=another-finos-waltz', 'state': 'master', 'user': 'pgbouncer_k8s_user_7_testing', 'version': '14.20'}
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [idle] active: 
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+  finos-waltz/0 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  postgresql-k8s/2 [executing] active: 
+  pgbouncer-k8s/0 [idle] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active:
