@@ -52,4 +52,4 @@ SECRET_KEY_OVERRIDES = {
 }
 
 TRACING_RELATION_NAME = "tracing"
-TLS_TRANSFER_RELATION = "receive-ca-cert"
+TLS_TRANSFER_RELATION = "tracing-receive-ca-cert"
