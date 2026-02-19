@@ -67,6 +67,7 @@ requires:
     optional: true
   tracing-receive-ca-cert:
     interface: certificate_transfer
+    limit: 1
     optional: true
 
 peers:
