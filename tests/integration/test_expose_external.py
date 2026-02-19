@@ -197,7 +197,7 @@ async def test_expose_external_with_tls(ops_test: OpsTest) -> None:
         )
 
         logger.info("Relating pgbouncer-k8s with TLS operator")
-        await ops_test.model.relate(PGB, TLS_APP_NAME)
+        await ops_test.model.relate(f"{PGB}:certificates", TLS_APP_NAME)
 
         time.sleep(TLS_SETUP_SLEEP_TIME)
 
