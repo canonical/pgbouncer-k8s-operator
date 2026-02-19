@@ -65,6 +65,9 @@ requires:
     interface: tracing
     limit: 1
     optional: true
+  receive-ca-cert:
+    interface: certificate_transfer
+    optional: true
 
 peers:
   pgb-peers:

@@ -52,4 +52,4 @@ SECRET_KEY_OVERRIDES = {
 }
 
 TRACING_RELATION_NAME = "tracing"
-TRACING_PROTOCOL = "otlp_http"
+TLS_TRANSFER_RELATION = "receive-ca-cert"
