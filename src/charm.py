@@ -68,7 +68,6 @@ from constants import (
     TLS_CA_FILE,
     TLS_CERT_FILE,
     TLS_KEY_FILE,
-    TLS_TRANSFER_RELATION,
     TRACING_RELATION_NAME,
     UNIT_SCOPE,
     WAITING_FOR_K8S_SERVICE_MESSAGE,
@@ -190,11 +189,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             relation_name="upgrade",
             substrate="k8s",
         )
-        self.tracing = Tracing(
-            self,
-            tracing_relation_name=TRACING_RELATION_NAME,
-            ca_relation_name=TLS_TRANSFER_RELATION,
-        )
+        self.tracing = Tracing(self, tracing_relation_name=TRACING_RELATION_NAME)
 
         self.lightkube_client = lightkube.Client()
         self.INSUFFICIENT_PERMISSIONS_MESSAGE = (
