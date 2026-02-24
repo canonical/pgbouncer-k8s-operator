@@ -13,7 +13,7 @@ lightkube = "^0.19.1"
 lightkube-models = "^1.29.0.6"
 pydantic = "^1.10.26"
 psycopg2 = "^2.9.11"
-psycopg = {extras = ["c"], version = "^3.3.2"}  # Used by data_interfaces.py
+psycopg = {extras = ["c"], version = "^3.3.3"}  # Used by data_interfaces.py
 jinja2 = "^3.1.6"
 postgresql-charms-single-kernel = "16.1.7"
 
@@ -37,7 +37,7 @@ jsonschema = "*"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.15.1"
+ruff = "^0.15.2"
 
 [tool.poetry.group.lint]
 optional = true
