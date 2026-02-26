@@ -82,7 +82,7 @@ async def test_build_and_deploy(ops_test: OpsTest, charm):
             tls_certificates_app_name, config=tls_config, channel=tls_channel
         )
         # Relate it to the PgBouncer to enable TLS.
-        await ops_test.model.relate(PGB, tls_certificates_app_name)
+        await ops_test.model.relate(f"{PGB}:certificates", tls_certificates_app_name)
         if os.environ["POSTGRESQL_CHARM_CHANNEL"].startswith("16"):
             await ops_test.model.relate(
                 tls_certificates_app_name, f"{POSTGRESQL_APP_NAME}:client-certificates"
@@ -160,7 +160,7 @@ async def test_add_tls(ops_test: OpsTest) -> None:
     Args:
         ops_test: The ops test framework
     """
-    await ops_test.model.relate(PGB, tls_certificates_app_name)
+    await ops_test.model.relate(f"{PGB}:certificates", tls_certificates_app_name)
     await ops_test.model.wait_for_idle(status="active", timeout=1000)
     assert await check_tls(ops_test, True)
     tls_flag, tls_ca = await get_tls_flags(
