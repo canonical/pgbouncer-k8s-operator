@@ -11,14 +11,8 @@ from tenacity import Retrying, stop_after_delay, wait_fixed
 
 from constants import BACKEND_RELATION_NAME
 
-from .helpers.helpers import (
-    PG,
-    PGB,
-)
-from .helpers.postgresql_helpers import (
-    get_leader_unit,
-    get_unit_by_index,
-)
+from .helpers.helpers import PG, PGB
+from .helpers.postgresql_helpers import get_leader_unit, get_unit_by_index
 from .relations.pgbouncer_provider.helpers import (
     check_exposed_connection,
     fetch_action_get_credentials,
