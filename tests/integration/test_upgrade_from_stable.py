@@ -25,10 +25,7 @@ from .helpers.helpers import (
     PGB,
     PGB_METADATA,
 )
-from .helpers.postgresql_helpers import (
-    get_leader_unit,
-    get_unit_by_index,
-)
+from .helpers.postgresql_helpers import get_leader_unit, get_unit_by_index
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +44,7 @@ async def test_deploy_stable(ops_test: OpsTest, charm) -> None:
             CLIENT_APP_NAME,
             application_name=CLIENT_APP_NAME,
             series=CHARM_SERIES,
-            channel="edge",
+            channel="latest/edge",
         ),
         ops_test.model.deploy(
             PGB,

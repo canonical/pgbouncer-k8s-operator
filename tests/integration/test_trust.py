@@ -48,7 +48,7 @@ async def test_trust(ops_test: OpsTest, charm):
                 CLIENT_APP_NAME,
                 application_name=CLIENT_APP_NAME,
                 series=CHARM_SERIES,
-                channel="edge",
+                channel="latest/edge",
             ),
             ops_test.model.deploy(
                 PG,

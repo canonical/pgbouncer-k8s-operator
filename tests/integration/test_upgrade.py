@@ -52,7 +52,7 @@ async def test_deploy_latest(ops_test: OpsTest, charm) -> None:
             CLIENT_APP_NAME,
             application_name=CLIENT_APP_NAME,
             series=CHARM_SERIES,
-            channel="edge",
+            channel="latest/edge",
         ),
         ops_test.model.deploy(
             PGB,
