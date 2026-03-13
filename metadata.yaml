@@ -20,9 +20,12 @@ website:
 maintainers:
   - Canonical Data Platform <data-platform@lists.launchpad.net>
 
+charm-user: non-root
 containers:
   pgbouncer:
     resource: pgbouncer-image
+    uid: 584788
+    gid: 584788
 
 resources:
   pgbouncer-image:
