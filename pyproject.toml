@@ -34,7 +34,7 @@ jsonschema = "*"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.15.5"
+ruff = "^0.15.6"
 
 [tool.poetry.group.lint]
 optional = true
