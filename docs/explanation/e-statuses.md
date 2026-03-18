@@ -1,7 +1,5 @@
 # Charm Statuses
 
-> :warning: **WARNING** : it is an work-in-progress article. Do NOT use it in production! Contact [Canonical Data Platform team](https://chat.charmhub.io/charmhub/channels/data-platform) if you are interested in the topic.
-
 The charm follows [standard Juju applications statuses](https://juju.is/docs/olm/status-values#heading--application-status). Here you can find the expected end-users reaction on different statuses:
 
 | Juju Status | Message | Expectations | Actions |
