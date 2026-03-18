@@ -15,6 +15,7 @@ For each release, this table shows:
 
 | Revision | PgBouncer version | Juju version | [TLS encryption](/t/12259) | [COS monitoring](/t/12279) |  [Minor version upgrades](/t/12270) |
 |:---:|:---:|:---:|:---:|:---:|:---:|
+|[519], [520]| `1.21.0` | `3.6.14+` | ![check] | ![check] | ![check]
 |[407], [408]| `1.21.0` | `3.6.1+` | ![check] | ![check] | ![check]
 |[359], [360]| `1.21.0` | `3.4.5+` | ![check] | ![check] | ![check]
 |[268], [269]| `1.21.0` | `3.4.5+` | ![check] | ![check] | ![check]
@@ -32,7 +33,14 @@ Several [revisions](https://juju.is/docs/sdk/revision) are released simultaneous
 
 > If you deploy a specific revision, **you must make sure it matches your base and architecture** via the tables below or with [`juju info`](https://juju.is/docs/juju/juju-info).
 
-### Release 407, 408 (`candidate`)
+### Release 407, 408
+| Revision | `amd64` | `arm64` |  Ubuntu 22.04 (jammy)
+|:-----:|:--------:|:--------:|:-----:|
+| [519] |          | ![check] | ![check] |
+| [520] | ![check] |          | ![check] |
+
+[details=Older releases]
+### Release 407, 408
 | Revision | `amd64` | `arm64` |  Ubuntu 22.04 (jammy)
 |:-----:|:--------:|:--------:|:-----:|
 | [407] |          | ![check] | ![check] |
@@ -89,6 +97,8 @@ Several [revisions](https://juju.is/docs/sdk/revision) are released simultaneous
 
 
 <!--LINKS-->
+[520]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev519
+[519]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev519
 
 [407]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev407
 [408]: https://github.com/canonical/pgbouncer-k8s-operator/releases/tag/rev407
