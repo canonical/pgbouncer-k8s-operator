@@ -525,14 +525,14 @@ files = [
 
 [[package]]
 name = "cosl"
-version = "1.8.0"
+version = "1.9.0"
 description = "Utils for COS Lite charms"
 optional = false
 python-versions = ">=3.8"
 groups = ["charm-libs"]
 files = [
-    {file = "cosl-1.8.0-py3-none-any.whl", hash = "sha256:f4fef3561fd72187e2067c06a1e7368bdd9865b2a74b9ece105a732eb5438b7e"},
-    {file = "cosl-1.8.0.tar.gz", hash = "sha256:282214f5ce167a287cee9de0d7865324bb5f7defb7e4c891df3d4c1a101a84a4"},
+    {file = "cosl-1.9.0-py3-none-any.whl", hash = "sha256:026700e712cae75a5db038710997b0ffa27612fddc736a5a23d94111dec1f533"},
+    {file = "cosl-1.9.0.tar.gz", hash = "sha256:360491aa2b6d37be36cefbeb31855aea19bf61ce36d6078dc1d09a51b5eefa92"},
 ]
 
 [package.dependencies]
