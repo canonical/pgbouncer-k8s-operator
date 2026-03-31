@@ -65,7 +65,7 @@ psycopg2-binary = "^2.9.11"
 allure-pytest = "^2.15.3"
 
 [build-system]
-requires = ["poetry-core>=1.9.1"]
+requires = ["poetry-core>=2.3.2"]
 build-backend = "poetry.core.masonry.api"
 
 # Testing tools configuration
