@@ -6,7 +6,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions: {}
 on:
   pull_request:
     paths-ignore:
@@ -26,9 +25,28 @@ on:
         value: ${{ jobs.build.outputs.artifact-prefix }}
 
 jobs:
+  lint-workflows:
+    name: Lint .github/workflows/
+    uses: canonical/data-platform-workflows/.github/workflows/lint_workflows.yaml@v48.0.4
+    permissions:
+      contents: read
+
   lint:
     name: Lint
-    uses: canonical/data-platform-workflows/.github/workflows/lint.yaml@v42.1.0
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install tox & poetry
+        run: |
+          pipx install tox
+          pipx install poetry
+      - name: tox run -e lint
+        run: tox run -e lint
+    permissions: {}
 
   unit-test:
     name: Unit test charm
@@ -37,24 +55,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Install tox & poetry
         run: |
           pipx install tox
           pipx install poetry
       - name: Run tests
         run: tox run -e unit
-      - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v6
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    permissions: {}
 
   build:
     name: Build charm
-    uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v42.1.0
+    uses: canonical/data-platform-workflows/.github/workflows/build_charm.yaml@v48.0.4
+    permissions:
+      actions: read  # Needed for GitHub API call to get workflow version
+      contents: read
 
   integration-test:
     name: Integration test charm
     needs:
+      - lint-workflows
       - lint
       - unit-test
       - build
