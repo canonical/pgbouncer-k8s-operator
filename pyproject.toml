@@ -34,7 +34,7 @@ jsonschema = "*"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.15.8"
+ruff = "^0.15.9"
 
 [tool.poetry.group.lint]
 optional = true
@@ -57,7 +57,7 @@ optional = true
 lightkube = "*"
 pytest = "^9.0.2"
 pytest-operator = "^0.43.2"
-allure-pytest-default-results = "^0.1.3"
+allure-pytest-default-results = "^0.1.4"
 # renovate caret doesn't work: https://github.com/renovatebot/renovate/issues/26940
 juju = "<=3.6.1.3"
 tenacity = "*"
