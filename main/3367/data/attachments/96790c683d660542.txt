@@ -1,0 +1,43 @@
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/focal/mattermost-k8s-27
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [executing] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.21   unsupported  02:14:19Z
+
+App                       Version  Status  Scale  Charm                     Channel      Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   active      2  pgbouncer-k8s                            0  10.152.183.96   no       
+postgresql-k8s            14.22    active      3  postgresql-k8s            14/edge      869  10.152.183.55   no       
+postgresql-test-app                active      1  postgresql-test-app       latest/edge  480  10.152.183.230  no       received database credentials of the first database
+self-signed-certificates           active      1  self-signed-certificates  1/stable     586  10.152.183.91   no       
+
+Unit                         Workload  Agent  Address     Ports  Message
+pgbouncer-k8s/0*             active    idle   10.1.97.74         
+pgbouncer-k8s/1              active    idle   10.1.97.75         
+postgresql-k8s/0             active    idle   10.1.97.81         
+postgresql-k8s/1             active    idle   10.1.97.82         
+postgresql-k8s/2*            active    idle   10.1.97.83         Primary
+postgresql-test-app/0*       active    idle   10.1.97.76         received database credentials of the first database
+self-signed-certificates/0*  active    idle   10.1.97.77         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-postgresql-test-app-0: 02:02:06 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-postgresql-k8s-1: 02:06:04 ERROR unit.postgresql-k8s/1.juju-log upgrade:5: Failed to list PostgreSQL database users: connection to server at "postgresql-k8s-1.postgresql-k8s-endpoints.testing.svc.cluster.local" (10.1.97.82), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+controller-0: 02:14:17 ERROR juju.worker.caasunitprovisioner stopping application worker for mattermost-k8s: Operation cannot be fulfilled on deployments.apps "mattermost-k8s": the object has been modified; please apply your changes to the latest version and try again
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
