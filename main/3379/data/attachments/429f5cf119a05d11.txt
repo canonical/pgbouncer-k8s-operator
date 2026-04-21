@@ -1,0 +1,42 @@
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/focal/mattermost-k8s-27
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [idle] waiting: Waiting for database relation
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  mattermost-k8s/0 [idle] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.21   unsupported  01:48:43Z
+
+App                       Version  Status  Scale  Charm                     Channel      Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   active      2  pgbouncer-k8s                            0  10.152.183.248  no       
+postgresql-k8s            14.22    active      3  postgresql-k8s            14/edge      869  10.152.183.169  no       
+postgresql-test-app                active      1  postgresql-test-app       latest/edge  480  10.152.183.176  no       received database credentials of the first database
+self-signed-certificates           active      1  self-signed-certificates  1/stable     586  10.152.183.103  no       
+
+Unit                         Workload  Agent      Address       Ports  Message
+pgbouncer-k8s/0*             active    executing  10.1.100.202         
+pgbouncer-k8s/1              active    idle       10.1.100.203         
+postgresql-k8s/0             active    idle       10.1.100.209         
+postgresql-k8s/1             active    idle       10.1.100.211         
+postgresql-k8s/2*            active    idle       10.1.100.210         Primary
+postgresql-test-app/0*       active    idle       10.1.100.204         received database credentials of the first database
+self-signed-certificates/0*  active    idle       10.1.100.208         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-postgresql-test-app-0: 01:36:30 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+controller-0: 01:48:42 ERROR juju.worker.caasunitprovisioner stopping application worker for mattermost-k8s: failed to get charm info for application "mattermost-k8s": application "mattermost-k8s" not found (not found)
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
