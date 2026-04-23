@@ -1,0 +1,22 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.21   unsupported  01:41:22Z
+
+App             Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+pgbouncer-k8s   1.21.0   active      1  pgbouncer-k8s              0  10.152.183.94   no       
+postgresql-k8s  14.22    active      3  postgresql-k8s  14/edge  896  10.152.183.174  no       
+
+Unit               Workload  Agent  Address       Ports  Message
+pgbouncer-k8s/0*   active    idle   10.1.231.137         
+postgresql-k8s/0   active    idle   10.1.231.142         
+postgresql-k8s/1   active    idle   10.1.231.143         
+postgresql-k8s/2*  active    idle   10.1.231.144         Primary
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-postgresql-k8s-1: 01:39:37 ERROR unit.postgresql-k8s/1.juju-log database-peers:3: Failed to list PostgreSQL database users: connection to server at "postgresql-k8s-1.postgresql-k8s-endpoints.testing.svc.cluster.local" (10.1.231.143), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
