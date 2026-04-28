@@ -34,7 +34,7 @@ jsonschema = "*"
 optional = true
 
 [tool.poetry.group.format.dependencies]
-ruff = "^0.15.11"
+ruff = "^0.15.12"
 
 [tool.poetry.group.lint]
 optional = true
@@ -62,7 +62,7 @@ allure-pytest-default-results = "^0.1.4"
 juju = "<=3.6.1.3"
 tenacity = "*"
 psycopg2-binary = "^2.9.12"
-allure-pytest = "^2.15.3"
+allure-pytest = "^2.16.0"
 
 [build-system]
 requires = ["poetry-core>=2.3.2"]
