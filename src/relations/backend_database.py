@@ -59,7 +59,6 @@ from ops.model import (
 )
 from ops.pebble import ConnectionError as PebbleConnectionError
 from ops.pebble import PathError
-from single_kernel_postgresql.config.literals import Substrates
 from single_kernel_postgresql.utils.postgresql import PostgreSQL as PostgreSQLv1
 from tenacity import RetryError, Retrying, stop_after_delay, wait_fixed
 
@@ -146,7 +145,6 @@ class BackendDatabaseRequires(Object):
                 database=database,
             )
         return PostgreSQLv1(
-            substrate=Substrates.K8S,
             primary_host=endpoint.split(":")[0],
             current_host=endpoint.split(":")[0],
             user=user,
