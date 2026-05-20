@@ -1598,7 +1598,7 @@ optional = false
 python-versions = ">=3.8,<4.0"
 groups = ["main"]
 files = [
-    {file = "de197ce17333b6a3aad5d52b19d0a737ab89e612.zip", hash = "sha256:403b9ff53a2fdf5d7ae8303facb976107b13c0ba9fb9011ead1defd2a1e2340b"},
+    {file = "cfcdd2baafb118e7bafc1c52041a3c2d0f2bbfa3.zip", hash = "sha256:b32c43f88f0e97a6db08fc387cff8395da8dd971dca58d30afd16c24ef293ddd"},
 ]
 
 [package.dependencies]
@@ -1608,7 +1608,7 @@ tenacity = ">=9.0.0"
 
 [package.source]
 type = "url"
-url = "https://github.com/canonical/postgresql-single-kernel-library/archive/de197ce17333b6a3aad5d52b19d0a737ab89e612.zip"
+url = "https://github.com/canonical/postgresql-single-kernel-library/archive/cfcdd2baafb118e7bafc1c52041a3c2d0f2bbfa3.zip"
 
 [[package]]
 name = "prompt-toolkit"
@@ -2700,4 +2700,4 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "262c48f8223ab4475043bbdc9d59773f812409a46c6c79d3c0262c7ae9169b7f"
+content-hash = "5497d809adedf47e2f5394aa940c440721bb6e70f2a9d44756354af5e618657a"
