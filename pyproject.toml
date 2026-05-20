@@ -15,7 +15,7 @@ pydantic = "^1.10.26"
 psycopg2 = "^2.9.12"
 psycopg = {extras = ["c"], version = "^3.3.4"}  # Used by data_interfaces.py
 jinja2 = "^3.1.6"
-postgresql-charms-single-kernel = {url = "https://github.com/canonical/postgresql-single-kernel-library/archive/f1af4a4575616348aa89b321754f419972454113.zip"}
+postgresql-charms-single-kernel = {url = "https://github.com/canonical/postgresql-single-kernel-library/archive/de197ce17333b6a3aad5d52b19d0a737ab89e612.zip"}
 
 [tool.poetry.group.charm-libs.dependencies]
 # data_platform_libs/v0/data_interfaces.py

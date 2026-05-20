@@ -45,7 +45,7 @@ from charms.postgresql_k8s.v0.postgresql import PostgreSQL as PostgreSQLv0
 from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
 from ops.framework import Object
 from ops.model import Application, BlockedStatus
-from single_kernel_postgresql.utils.postgresql import (
+from single_kernel_postgresql.compat.postgresql import (
     ACCESS_GROUP_RELATION,
     PostgreSQLCreateDatabaseError,
     PostgreSQLCreateUserError,
