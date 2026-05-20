@@ -82,7 +82,7 @@ from ops.model import (
     Relation,
     Unit,
 )
-from single_kernel_postgresql.utils.postgresql import PostgreSQL as PostgreSQLv1
+from single_kernel_postgresql.compat.postgresql import PostgreSQLBase as PostgreSQLv1
 
 from constants import EXTENSIONS_BLOCKING_MESSAGE
 
