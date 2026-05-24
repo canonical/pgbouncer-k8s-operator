@@ -1,0 +1,29 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller          Cloud/Region        Version  SLA          Timestamp
+testing  concierge-microk8s  microk8s/localhost  3.6.23   unsupported  01:52:23Z
+
+App             Version  Status   Scale  Charm            Channel      Rev  Address         Exposed  Message
+finos-waltz              blocked      1  finos-waltz-k8s  latest/edge   33  10.152.183.108  no       Waiting for database configuration.
+pgbouncer-k8s   1.21.0   error        3  pgbouncer-k8s                   0  10.152.183.247  no       hook failed: "pgb-peers-relation-changed"
+postgresql-k8s  14.22    active       3  postgresql-k8s   14/edge      908  10.152.183.228  no       
+
+Unit               Workload  Agent      Address      Ports  Message
+finos-waltz/0*     blocked   idle       10.1.124.15         Waiting for database configuration.
+pgbouncer-k8s/0    error     idle       10.1.124.9          hook failed: "pgb-peers-relation-changed"
+pgbouncer-k8s/1*   active    executing  10.1.124.10         
+pgbouncer-k8s/2    blocked   idle       10.1.124.11         backend database relation not ready
+postgresql-k8s/0   active    executing  10.1.124.16         
+postgresql-k8s/1   active    executing  10.1.124.18         
+postgresql-k8s/2*  active    executing  10.1.124.17         Primary
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-postgresql-k8s-0: 01:51:28 ERROR unit.postgresql-k8s/0.juju-log database:5: Failed to list PostgreSQL database users: connection to server at "postgresql-k8s-0.postgresql-k8s-endpoints.testing.svc.cluster.local" (10.1.124.16), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+unit-postgresql-k8s-1: 01:51:44 ERROR unit.postgresql-k8s/1.juju-log database-peers:3: Failed to list PostgreSQL database users: connection to server at "postgresql-k8s-1.postgresql-k8s-endpoints.testing.svc.cluster.local" (10.1.124.18), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
