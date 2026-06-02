@@ -14,31 +14,11 @@
       allowedVersions: '<2.0.0',
     },
     {
-      matchManagers: [
-        'custom.regex',
-      ],
-      matchDepNames: [
-        'juju',
-      ],
-      matchDatasources: [
-        'pypi',
-      ],
-      allowedVersions: '<3',
-      groupName: 'Juju agents',
+      matchPackageNames: ['postgresql-charms-single-kernel'],
+      schedule: ['* * * * *'],
+      minimumReleaseAge: '0',
+      groupName: "Single kernel"
     },
   ],
-  customManagers: [
-    {
-      customType: 'regex',
-      managerFilePatterns: [
-        '/^\\.github/workflows/[^/]+\\.ya?ml$/',
-      ],
-      matchStrings: [
-        '(libjuju: )==(?<currentValue>.*?) +# renovate: latest libjuju 2',
-      ],
-      depNameTemplate: 'juju',
-      datasourceTemplate: 'pypi',
-      versioningTemplate: 'loose',
-    },
-  ],
+  customManagers: [],
 }
