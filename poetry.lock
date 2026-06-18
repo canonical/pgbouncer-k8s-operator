@@ -1564,23 +1564,22 @@ files = [
 
 [[package]]
 name = "postgresql-charms-single-kernel"
-version = "16.2.2"
+version = "16.3.0"
 description = "Shared and reusable code for PostgreSQL-related charms"
 optional = false
 python-versions = "<4.0,>=3.8"
 groups = ["main"]
 files = [
-    {file = "postgresql_charms_single_kernel-16.2.2-py3-none-any.whl", hash = "sha256:53b485f34aa1159e9875fd8e4d73870bc92e855eeec5175aa76a33829f4446b2"},
-    {file = "postgresql_charms_single_kernel-16.2.2.tar.gz", hash = "sha256:95d027d1d52a4eb0237b2fd7cc6b548b279d7a99f82835659d9553f208dc2f81"},
+    {file = "postgresql_charms_single_kernel-16.3.0-py3-none-any.whl", hash = "sha256:3f0a392b3f26ce3676ac365b49f25baa6ac812f82143c517689935f42114efbd"},
+    {file = "postgresql_charms_single_kernel-16.3.0.tar.gz", hash = "sha256:7e0d7db80d0b1a5a97baf002809c101d55e4ffe5b9f26a3ae20b9b150c6ae51e"},
 ]
 
 [package.dependencies]
 ops = ">=2.0.0"
-psycopg2 = ">=2.9.10"
 tenacity = ">=9.0.0"
 
 [package.extras]
-postgresql = ["httpx ; python_full_version >= \"3.12.0\""]
+postgresql = ["charm-refresh ; python_full_version >= \"3.12.0\"", "charmlibs-interfaces-tls-certificates (>=1.8.3) ; python_full_version >= \"3.12.0\"", "charmlibs-pathops (>=1.0.1) ; python_full_version >= \"3.12.0\"", "charmlibs-rollingops (>=1.1.1) ; python_full_version >= \"3.12.0\"", "charmlibs-snap (>=1.0.1) ; python_full_version >= \"3.12.0\"", "data-platform-helpers (>=0.1.7) ; python_full_version >= \"3.12.0\"", "httpx ; python_full_version >= \"3.12.0\"", "jinja2 (>=3.1.6) ; python_full_version >= \"3.12.0\"", "psycopg2 (>=2.9.10)", "pydantic (>=2.0) ; python_full_version >= \"3.12.0\"", "requests ; python_full_version >= \"3.12.0\"", "tomli ; python_full_version >= \"3.12.0\""]
 
 [[package]]
 name = "prompt-toolkit"
@@ -2652,4 +2651,4 @@ h11 = ">=0.16.0,<1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "393a43bf401d54dde0a94e0ab5d0fffd41021bdf9627f7f35d9b38942c0ea595"
+content-hash = "75add692f9ff50b33a3f3559e17233c62dae3982bac670f815012cac36a48223"
