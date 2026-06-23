@@ -1,0 +1,63 @@
+[32mINFO    [0m integration.relations.test_db:test_db.py:173 Deploying test app
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/jammy/postgresql-test-app-549
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m integration.relations.test_db:test_db.py:177 Wait for PGB to block due to extensions
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] blocked: bad relation request - remote app requested extensions, which are unsupported. Please remove this relation.
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+[32mINFO    [0m integration.relations.test_db:test_db.py:185 Rerelate with extensions enabled
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [executing] active: 
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: Primary
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: Primary
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: Primary
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+  pgbouncer-k8s/2 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [idle] active: 
+  pgbouncer-k8s/2 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: 
+  postgresql-k8s/2 [idle] active: Primary
+  pgbouncer-k8s/0 [executing] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller     Cloud/Region  Version  SLA          Timestamp
+testing  concierge-k8s  k8s           3.6.24   unsupported  03:21:55Z
+
+App                  Version  Status   Scale  Charm                Channel      Rev  Address         Exposed  Message
+pgbouncer-k8s        1.21.0   active       3  pgbouncer-k8s                       0  10.152.183.28   no       
+postgresql-k8s       14.23    active       3  postgresql-k8s       14/edge      925  10.152.183.249  no       
+postgresql-test-app           blocked      1  postgresql-test-app  latest/edge  549  10.152.183.95   no       No database integration available
+
+Unit                    Workload  Agent  Address     Ports  Message
+pgbouncer-k8s/0*        active    idle   10.1.0.241         
+pgbouncer-k8s/1         active    idle   10.1.0.53          
+pgbouncer-k8s/2         active    idle   10.1.0.178         
+postgresql-k8s/0        active    idle   10.1.0.149         
+postgresql-k8s/1        active    idle   10.1.0.15          
+postgresql-k8s/2*       active    idle   10.1.0.155         Primary
+postgresql-test-app/0*  blocked   idle   10.1.0.174         No database integration available
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-pgbouncer-k8s-0: 03:12:35 ERROR unit.pgbouncer-k8s/0.juju-log backend-database:5: deferring database-created hook - Unable to initialise auth function: connection to server at "postgresql-k8s-primary.testing.svc.cluster.local" (10.152.183.130), port 5432 failed: FATAL:  no pg_hba.conf entry for host "10.1.0.241", user "relation_id_5", database "postgres", no encryption
+
+unit-pgbouncer-k8s-0: 03:12:40 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - Unable to initialise auth function: connection to server at "postgresql-k8s-primary.testing.svc.cluster.local" (10.152.183.130), port 5432 failed: FATAL:  no pg_hba.conf entry for host "10.1.0.241", user "relation_id_5", database "postgres", no encryption
+
+unit-postgresql-test-app-0: 03:19:32 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-pgbouncer-k8s-0: 03:19:38 ERROR unit.pgbouncer-k8s/0.juju-log db:9: ERROR - `extensions` (pg_trgm:public, unaccent:public) cannot be requested through relations - Please enable extensions through `juju config` and add the relation again.
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
