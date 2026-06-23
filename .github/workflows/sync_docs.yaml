@@ -10,7 +10,7 @@ on:
 jobs:
   sync-docs:
     name: Sync docs from Discourse
-    uses: canonical/data-platform-workflows/.github/workflows/sync_docs.yaml@v49.0.3
+    uses: canonical/data-platform-workflows/.github/workflows/sync_docs.yaml@v49.0.4
     with:
       reviewers: a-velasco
     permissions:
