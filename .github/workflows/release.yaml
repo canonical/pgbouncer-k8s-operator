@@ -20,7 +20,6 @@ jobs:
     name: Tests
     uses: ./.github/workflows/ci.yaml
     permissions:
-      actions: read  # Needed for GitHub API call to get workflow version
       contents: write  # Needed for Allure Report
 
   release-libraries:
@@ -50,12 +49,11 @@ jobs:
     name: Release charm
     needs:
       - ci-tests
-    uses: canonical/data-platform-workflows/.github/workflows/release_charm_edge.yaml@v49.0.4
+    uses: canonical/data-platform-workflows/.github/workflows/release_charm_edge.yaml@v50.0.0
     with:
       track: '1'
       artifact-prefix: ${{ needs.ci-tests.outputs.artifact-prefix }}
     secrets:
       charmhub-token: ${{ secrets.CHARMHUB_TOKEN }}
     permissions:
-      actions: read  # Needed for GitHub API call to get workflow version
       contents: write  # Needed to create git tags
