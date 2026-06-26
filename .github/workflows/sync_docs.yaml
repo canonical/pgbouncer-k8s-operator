@@ -14,6 +14,5 @@ jobs:
     with:
       reviewers: a-velasco
     permissions:
-      actions: read  # Needed for GitHub API call to get workflow version
       contents: write  # Needed to push branch & tag
       pull-requests: write  # Needed to create PR
