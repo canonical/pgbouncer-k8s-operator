@@ -1,0 +1,24 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller     Cloud/Region  Version  SLA          Timestamp
+testing  concierge-k8s  k8s           3.6.24   unsupported  01:52:22Z
+
+App                  Version  Status   Scale  Charm                Channel      Rev  Address        Exposed  Message
+pgbouncer-k8s        1.21.0   error      2/3  pgbouncer-k8s        1/edge       564  10.152.183.53  no       crash loop backoff: back-off 1m20s restarting failed container=charm pod=pgbouncer-k8s-1_testing(f14230b9-c10a-4535-9...
+postgresql-k8s       14.23    active       3  postgresql-k8s       14/edge      925  10.152.183.18  no       
+postgresql-test-app           blocked      1  postgresql-test-app  latest/edge  555  10.152.183.54  no       No database integration available
+
+Unit                    Workload  Agent  Address     Ports  Message
+pgbouncer-k8s/0*        active    idle   10.1.0.120         
+pgbouncer-k8s/1         error     lost   10.1.0.1           crash loop backoff: back-off 1m20s restarting failed container=charm pod=pgbouncer-k8s-1_testing(f14230b9-c10a-4535-9...
+pgbouncer-k8s/2         active    idle   10.1.0.223         
+postgresql-k8s/0        active    idle   10.1.0.220         
+postgresql-k8s/1*       active    idle   10.1.0.58          Primary
+postgresql-k8s/2        active    idle   10.1.0.100         
+postgresql-test-app/0*  blocked   idle   10.1.0.92          No database integration available
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-postgresql-test-app-0: 01:47:10 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
