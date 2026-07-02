@@ -1549,14 +1549,14 @@ files = [
 
 [[package]]
 name = "postgresql-charms-single-kernel"
-version = "16.3.0"
+version = "16.3.1"
 description = "Shared and reusable code for PostgreSQL-related charms"
 optional = false
 python-versions = "<4.0,>=3.8"
 groups = ["main"]
 files = [
-    {file = "postgresql_charms_single_kernel-16.3.0-py3-none-any.whl", hash = "sha256:3f0a392b3f26ce3676ac365b49f25baa6ac812f82143c517689935f42114efbd"},
-    {file = "postgresql_charms_single_kernel-16.3.0.tar.gz", hash = "sha256:7e0d7db80d0b1a5a97baf002809c101d55e4ffe5b9f26a3ae20b9b150c6ae51e"},
+    {file = "postgresql_charms_single_kernel-16.3.1-py3-none-any.whl", hash = "sha256:a1c3f32fb396e69421471d64f54a43968f134fe5538708fabe37139a9fae832e"},
+    {file = "postgresql_charms_single_kernel-16.3.1.tar.gz", hash = "sha256:48e028e873b00c877fd36a25ff6c1913a40d559cb4124aae888edd1262cdce3a"},
 ]
 
 [package.dependencies]
@@ -1564,7 +1564,9 @@ ops = ">=2.0.0"
 tenacity = ">=9.0.0"
 
 [package.extras]
-postgresql = ["charm-refresh ; python_full_version >= \"3.12.0\"", "charmlibs-interfaces-tls-certificates (>=1.8.3) ; python_full_version >= \"3.12.0\"", "charmlibs-pathops (>=1.0.1) ; python_full_version >= \"3.12.0\"", "charmlibs-rollingops (>=1.1.1) ; python_full_version >= \"3.12.0\"", "charmlibs-snap (>=1.0.1) ; python_full_version >= \"3.12.0\"", "data-platform-helpers (>=0.1.7) ; python_full_version >= \"3.12.0\"", "httpx ; python_full_version >= \"3.12.0\"", "jinja2 (>=3.1.6) ; python_full_version >= \"3.12.0\"", "psycopg2 (>=2.9.10)", "pydantic (>=2.0) ; python_full_version >= \"3.12.0\"", "requests ; python_full_version >= \"3.12.0\"", "tomli ; python_full_version >= \"3.12.0\""]
+db-driver = ["psycopg2 (>=2.9.10)"]
+postgresql = ["charm-refresh ; python_full_version >= \"3.12.0\"", "charmlibs-interfaces-tls-certificates (>=1.8.3) ; python_full_version >= \"3.12.0\"", "charmlibs-pathops (>=1.0.1) ; python_full_version >= \"3.12.0\"", "charmlibs-rollingops (>=1.1.1) ; python_full_version >= \"3.12.0\"", "data-platform-helpers (>=0.1.7) ; python_full_version >= \"3.12.0\"", "httpx ; python_full_version >= \"3.12.0\"", "jinja2 (>=3.1.6) ; python_full_version >= \"3.12.0\"", "pydantic (>=2.0) ; python_full_version >= \"3.12.0\"", "requests ; python_full_version >= \"3.12.0\"", "tomli ; python_full_version >= \"3.12.0\""]
+vm = ["charmlibs-snap (>=1.0.1) ; python_full_version >= \"3.12.0\"", "psutil (>=7.2.2) ; python_full_version >= \"3.12.0\"", "pysyncobj (>=0.3.15) ; python_full_version >= \"3.12.0\""]
 
 [[package]]
 name = "prompt-toolkit"
@@ -2636,4 +2638,4 @@ h11 = ">=0.16.0,<1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "0ed7d2f08a81a3613d2ac8b9fffe0524d2d70021a4b6d09d8ed165897d1b5bfa"
+content-hash = "90a2059da72dd9883b826e9bf8444f62201ea1598e2823d7cfb3b84eb961583e"
