@@ -989,14 +989,16 @@ class PgBouncerK8sCharm(TypedCharmBase):
                 "port": port,
                 "auth_user": self.backend.auth_user,
             }
-            pgb_dbs[f"{name}_readonly"] = {
+            ro_db = {
                 "host": r_hosts,
                 "dbname": name,
                 "port": r_port,
                 "auth_user": self.backend.auth_user,
             }
-            if database["legacy"]:
-                pgb_dbs[f"{name}_standby"] = pgb_dbs[f"{name}_readonly"]
+            if len(f"{name}_readonly") < 64:
+                pgb_dbs[f"{name}_readonly"] = ro_db
+            if database["legacy"] and len(f"{name}_standby") < 64:
+                pgb_dbs[f"{name}_standby"] = ro_db
         if "*" in databases:
             pgb_dbs["*"] = {
                 "host": host,
