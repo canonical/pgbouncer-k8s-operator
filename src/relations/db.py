@@ -400,8 +400,10 @@ class DbProvides(Object):
         if len(read_only_hosts) > 0:
             standby_ip = read_only_hosts.pop()
             standby_dbconnstr = dict(master_dbconnstr)
-            if len(f"{database}_standby") < 64:
-                standby_dbconnstr.update({"host": standby_ip, "dbname": f"{database}_standby"})
+            standby_dbconnstr.update({
+                "host": standby_ip,
+                "dbname": f"{database}_standby" if len(f"{database}_standby") < 64 else database,
+            })
             connection_updates["standbys"] = pgb.parse_dict_to_kv_string(standby_dbconnstr)
 
         self.update_databags(relation, connection_updates)
