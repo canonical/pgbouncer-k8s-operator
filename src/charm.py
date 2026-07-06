@@ -1060,6 +1060,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
                         listen_port=self.config.listen_port,
                         pool_mode=self.config.pool_mode,
                         max_db_connections=max_db_connections,
+                        max_prepared_statements=self.config.max_prepared_statements,
                         default_pool_size=default_pool_size,
                         min_pool_size=min_pool_size,
                         reserve_pool_size=reserve_pool_size,
