@@ -47,14 +47,17 @@ from charms.data_platform_libs.v0.data_interfaces import (
 )
 from charms.pgbouncer_k8s.v0.pgb import generate_password, get_md5_password, get_scram_password
 from charms.postgresql_k8s.v0.postgresql import PostgreSQL as PostgreSQLv0
-from ops.charm import CharmBase, RelationBrokenEvent, RelationDepartedEvent
-from ops.framework import Object
-from ops.model import (
+from ops import (
+    ActiveStatus,
     Application,
     BlockedStatus,
+    CharmBase,
     MaintenanceStatus,
     ModelError,
+    Object,
     Relation,
+    RelationBrokenEvent,
+    RelationDepartedEvent,
     WaitingStatus,
 )
 from ops.pebble import ConnectionError as PebbleConnectionError
@@ -515,10 +518,16 @@ class BackendDatabaseRequires(Object):
         with open("src/relations/sql/pgbouncer-uninstall.sql") as f:
             uninstall_script = f.read()
         for dbname in dbs:
-            with self.postgres._connect_to_database(dbname) as conn, conn.cursor() as cursor:
-                cursor.execute("RESET ROLE;")
-                cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
-            conn.close()
+            if isinstance(self.postgres, PostgreSQLv0) or len(dbname) < 50:
+                with self.postgres._connect_to_database(dbname) as conn, conn.cursor() as cursor:
+                    cursor.execute("RESET ROLE;")
+                    cursor.execute(uninstall_script.replace("auth_user", self.auth_user))
+                conn.close()
+            elif (
+                self.charm._has_blocked_status
+                and self.charm.unit.status.message == "invalid database name"
+            ):
+                self.charm.unit.status = ActiveStatus()
         logger.info("auth function removed")
 
     def get_read_only_endpoints(self) -> set[str]:

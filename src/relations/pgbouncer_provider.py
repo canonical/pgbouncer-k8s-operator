@@ -306,7 +306,9 @@ class PgBouncerProvider(Object):
             ) and "read-only-uris" in secret_fields:
                 self.database_provides.set_read_only_uris(
                     relation.id,
-                    f"postgresql://{user}:{password}@{self.charm.read_write_endpoints}/{database}_readonly",
+                    f"postgresql://{user}:{password}@{self.charm.read_write_endpoints}/{database}_readonly"
+                    if len(f"{database}_readonly") < 64
+                    else f"postgresql://{user}:{password}@{self.charm.read_write_endpoints}/{database}",
                 )
 
     def get_database(self, relation):
