@@ -79,4 +79,6 @@ options:
     default: 0
     description: |
       Number of prepared statements kept alive on backend connections.
+
+      Default: 0 (Disabled)
     type: int
