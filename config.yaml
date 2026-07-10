@@ -74,3 +74,12 @@ options:
       created and managed by the charm.
     type: string
     default: "{}"
+
+  max_prepared_statements:
+    default: 100
+    description: |
+      Number of prepared statements kept alive on backend connections. Possible values are between 0 and 1000.
+      A value of 0 disables prepared statements.
+
+      Default: 100
+    type: int
