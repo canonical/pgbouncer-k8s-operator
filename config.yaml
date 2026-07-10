@@ -76,9 +76,10 @@ options:
     default: "{}"
 
   max_prepared_statements:
-    default: 0
+    default: 100
     description: |
-      Number of prepared statements kept alive on backend connections.
+      Number of prepared statements kept alive on backend connections. Possible values are between 0 and 1000.
+      A value of 0 disables prepared statements.
 
-      Default: 0 (Disabled)
+      Default: 100
     type: int
