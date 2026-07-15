@@ -1,0 +1,127 @@
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[32mINFO    [0m pytest_operator.plugin:plugin.py:806 Connecting to existing model concierge-k8s:testing on unspecified cloud
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHSession received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHTunneler received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SecretsRevoker received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[33mWARNING [0m juju.client.connection:connection.py:858 unexpected facade SSHServer received from the controller
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/jammy/postgresql-k8s-935
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying local:jammy/pgbouncer-k8s-0
+[33mWARNING [0m juju.model:__init__.py:1683 relate is deprecated and will be removed. Use integrate instead.
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [allocating] waiting: installing agent
+  postgresql-k8s/0 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] maintenance: installing charm software
+  postgresql-k8s/0 [executing] maintenance: installing charm software
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] blocked: waiting for backend database relation to initialise
+  postgresql-k8s/0 [executing] active: Primary
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-k8s/0 [idle] active: Primary
+[32mINFO    [0m integration.test_config:test_config.py:60 listen_port
+[32mINFO    [0m integration.test_config:test_config.py:60 pool_mode
+[32mINFO    [0m integration.test_config:test_config.py:60 max_db_connections
+[32mINFO    [0m integration.test_config:test_config.py:60 max_prepared_statements
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller     Cloud/Region  Version  SLA          Timestamp
+testing  concierge-k8s  k8s           3.6.25   unsupported  01:44:32Z
+
+App             Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+pgbouncer-k8s   1.21.0   active      1  pgbouncer-k8s              0  10.152.183.250  no       
+postgresql-k8s  14.23    active      1  postgresql-k8s  14/edge  935  10.152.183.179  no       
+
+Unit               Workload  Agent      Address     Ports  Message
+pgbouncer-k8s/0*   active    executing  10.1.0.141         (config-changed) 
+postgresql-k8s/0*  active    idle       10.1.0.80          Primary
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-postgresql-k8s-0: 01:43:28 ERROR unit.postgresql-k8s/0.juju-log failed to change plugins: 
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 442, in enable_disable_extensions
+    with self._connect_to_database() as connection, connection.cursor() as cursor:
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 184, in _connect_to_database
+    connection = psycopg2.connect(
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "postgresql-k8s-primary.testing.svc.cluster.local" (10.152.183.92), port 5432 failed: Operation not permitted
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/src/charm.py", line 757, in _handle_enable_disable_extensions
+    self.postgresql.enable_disable_extensions(extensions, database)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 471, in enable_disable_extensions
+    raise PostgreSQLEnableDisableExtensionError() from e
+charms.postgresql_k8s.v0.postgresql.PostgreSQLEnableDisableExtensionError
+unit-postgresql-k8s-0: 01:43:30 ERROR unit.postgresql-k8s/0.juju-log failed to change plugins: 
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 442, in enable_disable_extensions
+    with self._connect_to_database() as connection, connection.cursor() as cursor:
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 184, in _connect_to_database
+    connection = psycopg2.connect(
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/venv/lib/python3.10/site-packages/psycopg2/__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "postgresql-k8s-primary.testing.svc.cluster.local" (10.152.183.92), port 5432 failed: Operation not permitted
+	Is the server running on that host and accepting TCP/IP connections?
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/src/charm.py", line 757, in _handle_enable_disable_extensions
+    self.postgresql.enable_disable_extensions(extensions, database)
+  File "/var/lib/juju/agents/unit-postgresql-k8s-0/charm/lib/charms/postgresql_k8s/v0/postgresql.py", line 471, in enable_disable_extensions
+    raise PostgreSQLEnableDisableExtensionError() from e
+charms.postgresql_k8s.v0.postgresql.PostgreSQLEnableDisableExtensionError
+unit-pgbouncer-k8s-0: 01:44:20 ERROR unit.pgbouncer-k8s/0.juju-log Invalid configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/src/charm.py", line 528, in configuration_check
+    _ = self.config
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/lib/charms/data_platform_libs/v0/data_models.py", line 200, in config
+    return self.config_type(**translated_keys)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/pydantic/main.py", line 364, in __init__
+    raise validation_error
+pydantic.error_wrappers.ValidationError: 1 validation error for CharmConfig
+listen_port
+  ensure this value is greater than 0 (type=value_error.number.not_gt; limit_value=0)
+unit-pgbouncer-k8s-0: 01:44:23 ERROR unit.pgbouncer-k8s/0.juju-log Invalid configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/src/charm.py", line 528, in configuration_check
+    _ = self.config
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/lib/charms/data_platform_libs/v0/data_models.py", line 200, in config
+    return self.config_type(**translated_keys)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/pydantic/main.py", line 364, in __init__
+    raise validation_error
+pydantic.error_wrappers.ValidationError: 1 validation error for CharmConfig
+pool_mode
+  unexpected value; permitted: 'session', 'transaction', 'statement' (type=value_error.const; given=abcXYZ123; permitted=('session', 'transaction', 'statement'))
+unit-pgbouncer-k8s-0: 01:44:26 ERROR unit.pgbouncer-k8s/0.juju-log Invalid configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/src/charm.py", line 528, in configuration_check
+    _ = self.config
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/lib/charms/data_platform_libs/v0/data_models.py", line 200, in config
+    return self.config_type(**translated_keys)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/pydantic/main.py", line 364, in __init__
+    raise validation_error
+pydantic.error_wrappers.ValidationError: 1 validation error for CharmConfig
+max_db_connections
+  ensure this value is greater than or equal to 0 (type=value_error.number.not_ge; limit_value=0)
+unit-pgbouncer-k8s-0: 01:44:29 ERROR unit.pgbouncer-k8s/0.juju-log Invalid configuration
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/src/charm.py", line 528, in configuration_check
+    _ = self.config
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/lib/charms/data_platform_libs/v0/data_models.py", line 200, in config
+    return self.config_type(**translated_keys)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-0/charm/venv/lib/python3.10/site-packages/pydantic/main.py", line 364, in __init__
+    raise validation_error
+pydantic.error_wrappers.ValidationError: 1 validation error for CharmConfig
+max_prepared_statements
+  ensure this value is less than or equal to 1000 (type=value_error.number.not_le; limit_value=1000)
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
