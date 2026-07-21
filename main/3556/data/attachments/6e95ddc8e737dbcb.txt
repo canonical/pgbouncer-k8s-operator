@@ -1,0 +1,31 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller     Cloud/Region  Version  SLA          Timestamp
+testing  concierge-k8s  k8s           3.6.25   unsupported  02:47:06Z
+
+App              Version  Status  Scale  Charm            Channel      Rev  Address        Exposed  Message
+data-integrator           active      2  data-integrator  latest/edge  440  10.152.183.58  no       
+pgbouncer-k8s    1.21.0   active      2  pgbouncer-k8s    1/stable     562  10.152.183.31  no       
+postgresql-k8s   14.23    active      3  postgresql-k8s   14/edge      937  10.152.183.95  no       
+
+Unit                Workload  Agent  Address     Ports  Message
+data-integrator/0   active    idle   10.1.0.21          
+data-integrator/1*  active    idle   10.1.0.107         
+pgbouncer-k8s/0*    active    idle   10.1.0.136         
+pgbouncer-k8s/1     active    idle   10.1.0.78          
+postgresql-k8s/0*   active    idle   10.1.0.5           Primary (degraded)
+postgresql-k8s/1    active    idle   10.1.0.22          
+postgresql-k8s/2    error     idle   10.1.0.1           hook failed: "stop"
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-postgresql-k8s-2: 02:44:34 ERROR juju.worker.uniter pebble poll failed for container "postgresql": failed to send pebble-ready event: terminated
+unit-pgbouncer-k8s-0: 02:45:21 ERROR unit.pgbouncer-k8s/0.juju-log backend-database:6: deferring database-created hook - Unable to initialise auth function: connection to server at "postgresql-k8s-primary.testing.svc.cluster.local" (10.152.183.36), port 5432 failed: FATAL:  no pg_hba.conf entry for host "10.1.0.136", user "relation_id_6", database "postgres", no encryption
+
+unit-pgbouncer-k8s-0: 02:45:24 ERROR unit.pgbouncer-k8s/0.juju-log deferring database-created hook - Unable to initialise auth function: connection to server at "postgresql-k8s-primary.testing.svc.cluster.local" (10.152.183.36), port 5432 failed: FATAL:  no pg_hba.conf entry for host "10.1.0.136", user "relation_id_6", database "postgres", no encryption
+
+unit-pgbouncer-k8s-0: 02:45:26 ERROR unit.pgbouncer-k8s/0.juju-log pgb-peers:1: deferring database-created hook - Unable to initialise auth function: connection to server at "postgresql-k8s-primary.testing.svc.cluster.local" (10.152.183.36), port 5432 failed: FATAL:  no pg_hba.conf entry for host "10.1.0.136", user "relation_id_6", database "postgres", no encryption
+
+unit-postgresql-k8s-2: 02:45:40 ERROR juju.worker.uniter pebble poll failed for container "postgresql": failed to send pebble-ready event: terminated
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
