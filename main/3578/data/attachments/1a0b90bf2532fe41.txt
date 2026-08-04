@@ -1,0 +1,19 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller     Cloud/Region  Version  SLA          Timestamp
+testing  concierge-k8s  k8s           3.6.27   unsupported  01:56:39Z
+
+App             Version  Status  Scale  Charm           Channel  Rev  Address         Exposed  Message
+pgbouncer-k8s   1.21.0   active      1  pgbouncer-k8s              0  10.152.183.117  no       
+postgresql-k8s  14.23    active      3  postgresql-k8s  14/edge  946  10.152.183.192  no       
+
+Unit               Workload  Agent      Address     Ports  Message
+pgbouncer-k8s/0*   active    idle       10.1.0.243         
+postgresql-k8s/0   active    idle       10.1.0.211         
+postgresql-k8s/1*  active    executing  10.1.0.251         Primary
+postgresql-k8s/2   active    idle       10.1.0.30          
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
