@@ -1075,6 +1075,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
                         key_file=f"{PGB_DIR}/{TLS_KEY_FILE}",
                         ca_file=f"{PGB_DIR}/{TLS_CA_FILE}",
                         cert_file=f"{PGB_DIR}/{TLS_CERT_FILE}",
+                        backend_version=self.backend.backend_major_version,
                     ),
                     perm,
                 )
