@@ -243,6 +243,7 @@ class TestCharm(unittest.TestCase):
                 auth_query="SELECT username, password FROM pgbouncer_auth_BACKNEND_USER.get_auth($1)",
                 auth_file="/dev/shm/pgbouncer-k8s_test",
                 enable_tls=False,
+                backend_version=16,
             )
             _push_file.assert_any_call(
                 f"/var/lib/pgbouncer/instance_{i}/pgbouncer.ini", expected_content, 0o400
@@ -295,6 +296,7 @@ class TestCharm(unittest.TestCase):
                 auth_query="SELECT username, password FROM pgbouncer_auth_BACKNEND_USER.get_auth($1)",
                 auth_file="/dev/shm/pgbouncer-k8s_test",
                 enable_tls=False,
+                backend_version=16,
             )
             _push_file.assert_any_call(
                 f"/var/lib/pgbouncer/instance_{i}/pgbouncer.ini", expected_content, 0o400

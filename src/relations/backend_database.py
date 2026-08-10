@@ -155,7 +155,7 @@ class BackendDatabaseRequires(Object):
             database=database,
         )
 
-    @property
+    @cached_property
     def backend_version(self) -> str:
         """Backend Oostgresql version."""
         if not self.relation:
@@ -164,6 +164,17 @@ class BackendDatabaseRequires(Object):
         if version := self.database.fetch_relation_field(self.relation.id, "version"):
             return version
         return ""
+
+    @cached_property
+    def backend_major_version(self) -> int:
+        """Backend Postgresql version."""
+        if not self.relation or self.backend_version:
+            return 0
+
+        try:
+            return int(self.backend_version.split(".")[0])
+        except ValueError:
+            return 0
 
     @property
     def auth_user(self) -> str | None:
