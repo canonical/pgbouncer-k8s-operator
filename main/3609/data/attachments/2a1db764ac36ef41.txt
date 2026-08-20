@@ -1,0 +1,31 @@
+[32mINFO    [0m integration.test_expose_external:test_expose_external.py:177 Resetting expose-external=false
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+[32mINFO    [0m integration.test_expose_external:test_expose_external.py:185 Deploying TLS operator
+[32mINFO    [0m juju.model:__init__.py:2301 Deploying ch:amd64/noble/self-signed-certificates-586
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  self-signed-certificates/0 [allocating] waiting: installing agent
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  self-signed-certificates/0 [executing] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller     Cloud/Region  Version  SLA          Timestamp
+testing  concierge-k8s  k8s           3.6.27   unsupported  02:00:44Z
+
+App                       Version  Status  Scale  Charm                     Channel      Rev  Address         Exposed  Message
+data-integrator                    active      1  data-integrator           latest/edge  472  10.152.183.55   no       
+pgbouncer-k8s             1.21.0   active      1  pgbouncer-k8s                            0  10.152.183.211  no       
+postgresql-k8s            14.23    active      1  postgresql-k8s            14/edge      946  10.152.183.249  no       
+self-signed-certificates           error       1  self-signed-certificates  1/stable     586  10.152.183.29   no       hook failed: "config-changed"
+
+Unit                         Workload  Agent  Address     Ports  Message
+data-integrator/0*           active    idle   10.1.0.90          
+pgbouncer-k8s/0*             active    idle   10.1.0.111         
+postgresql-k8s/0*            active    idle   10.1.0.232         Primary
+self-signed-certificates/0*  error     idle   10.1.0.1           hook failed: "config-changed"
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-self-signed-certificates-0: 02:00:42 ERROR juju.worker.uniter.operation hook "config-changed" (via hook dispatching script: dispatch) failed: saving content for secret "q7ufbqauunc615ippfn0": Patch "https://10.152.183.1:443/api/v1/namespaces/testing/secrets/q7ufbqauunc615ippfn0-1?fieldManager=juju": dial tcp 10.152.183.1:443: i/o timeout
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
