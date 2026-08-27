@@ -42,6 +42,7 @@ jobs:
         with:
           mode: qserver
           project: pgbouncer-k8s-operator
+          branchname: main
           viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=default
           branchdir: ${{ env.GITHUB_WORKSPACE }}
           ticsAuthToken: ${{ secrets.TICSAUTHTOKEN }}  # zizmor: ignore[secrets-outside-env] Organization secret (does not support environments: https://github.com/orgs/community/discussions/15379)
