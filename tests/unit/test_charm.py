@@ -138,6 +138,11 @@ class TestCharm(unittest.TestCase):
     @patch("charm.PgBouncerK8sCharm.check_pgb_running")
     @patch("ops.model.Container.send_signal")
     @patch(
+        "charm.BackendDatabaseRequires.backend_major_version",
+        new_callable=PropertyMock,
+        return_value=16,
+    )
+    @patch(
         "charm.PgBouncerK8sCharm.auth_file",
         new_callable=PropertyMock,
         return_value="/dev/shm/pgbouncer-k8s_test",
@@ -164,6 +169,7 @@ class TestCharm(unittest.TestCase):
         _backend_rel,
         _,
         __,
+        ___,
         _send_signal,
         _check_pgb_running,
     ):

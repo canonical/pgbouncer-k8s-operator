@@ -168,7 +168,7 @@ class BackendDatabaseRequires(Object):
     @cached_property
     def backend_major_version(self) -> int:
         """Backend Postgresql version."""
-        if not self.relation or self.backend_version:
+        if not self.relation or not self.backend_version:
             return 0
 
         try:
