@@ -144,7 +144,7 @@ class TestCharm(unittest.TestCase):
     )
     @patch(
         "relations.backend_database.DatabaseRequires.fetch_relation_field",
-        return_value="BACKNEND_USER",
+        side_effect=lambda relation_id, field: "16.14" if field == "version" else "BACKNEND_USER",
     )
     @patch(
         "charm.BackendDatabaseRequires.relation", new_callable=PropertyMock, return_value=Mock()
@@ -248,6 +248,11 @@ class TestCharm(unittest.TestCase):
             _push_file.assert_any_call(
                 f"/var/lib/pgbouncer/instance_{i}/pgbouncer.ini", expected_content, 0o400
             )
+            assert (
+                "server_reset_query = CLOSE ALL; RESET ALL; DEALLOCATE ALL; UNLISTEN *; SELECT pg_advisory_unlock_all(); DISCARD PLANS; DISCARD TEMP; DISCARD SEQUENCES;"
+                in expected_content
+            )
+
         _check_pgb_running.assert_called_once_with()
         _send_signal.assert_has_calls([
             call(SIGHUP, service["name"]) for service in self.charm._services

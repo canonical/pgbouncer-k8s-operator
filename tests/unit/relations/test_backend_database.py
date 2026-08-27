@@ -235,3 +235,22 @@ class TestBackendDatabaseRelation(unittest.TestCase):
         _ready.return_value = False
         assert not self.charm.backend.check_backend()
         assert isinstance(self.charm.unit.status, WaitingStatus)
+
+    def test_backend_major_version(self):
+        with patch.object(
+            type(self.backend), "relation", new_callable=PropertyMock
+        ) as mock_relation:
+            mock_relation.return_value = None
+            assert self.backend.backend_major_version == 0
+
+        with patch.object(
+            type(self.backend), "backend_version", new_callable=PropertyMock
+        ) as mock_version:
+            mock_version.return_value = ""
+            assert self.backend.backend_major_version == 0
+
+            mock_version.return_value = "14.16"
+            assert self.backend.backend_major_version == 14
+
+            mock_version.return_value = "16.14"
+            assert self.backend.backend_major_version == 16
