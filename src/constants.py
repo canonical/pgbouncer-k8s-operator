@@ -7,6 +7,10 @@
 from typing import Literal
 
 PGB = "pgbouncer"
+
+# PgBouncer is single-threaded: one process per provisioned CPU, within these bounds
+MIN_INSTANCES = 2
+MAX_INSTANCES = 4
 PG = PG_USER = PG_GROUP = "postgres"
 
 PGB_DIR = "/var/lib/pgbouncer"

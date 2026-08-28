@@ -16,9 +16,10 @@ import pytest
 from jinja2 import Template
 from ops import BlockedStatus, JujuVersion
 from ops.model import RelationDataTypeError
-from ops.testing import Harness
+from ops.testing import ExecResult, Harness
 from parameterized import parameterized
 
+import cpu
 from charm import PgBouncerK8sCharm
 from constants import (
     BACKEND_RELATION_NAME,
@@ -956,3 +957,43 @@ class TestCharm(unittest.TestCase):
             self.harness.charm._on_secret_remove(event)
             assert not event.remove_revision.called
             event = Mock()
+
+
+class TestInstanceCount(unittest.TestCase):
+    """The number of pgbouncer processes follows the CPU provisioned by Kubernetes."""
+
+    def _services_for(self, cpu_max=None):
+        harness = Harness(PgBouncerK8sCharm)
+        self.addCleanup(harness.cleanup)
+        harness.set_can_connect(PGB, True)
+        harness.handle_exec(PGB, ["cat"], result=ExecResult(exit_code=1, stderr="No such file"))
+        if cpu_max is not None:
+            harness.handle_exec(PGB, ["cat", cpu.CGROUP_V2_CPU_MAX], result=cpu_max)
+        harness.begin()
+        return harness.charm._services
+
+    @parameterized.expand([
+        ("50000 100000", 2),
+        ("100000 100000", 2),
+        ("200000 100000", 2),
+        ("250000 100000", 3),
+        ("400000 100000", 4),
+        ("1600000 100000", 4),
+    ])
+    def test_rounds_the_cgroup_quota_up_and_clamps_it(self, cpu_max, expected):
+        self.assertEqual(len(self._services_for(cpu_max)), expected)
+
+    @parameterized.expand([(1, 2), (3, 3), (16, 4)])
+    def test_falls_back_to_the_host_cpu_count_when_no_quota_is_enforced(self, host_cpus, expected):
+        with patch("charm.os.cpu_count", return_value=host_cpus):
+            self.assertEqual(len(self._services_for("max 100000")), expected)
+
+    def test_falls_back_to_the_host_cpu_count_when_the_cgroup_is_unreadable(self):
+        with patch("charm.os.cpu_count", return_value=3):
+            self.assertEqual(len(self._services_for()), 3)
+
+    def test_does_not_read_the_kubernetes_api(self):
+        """Reading the pod spec here would put a blocking API call in every hook."""
+        with patch("charm.get_pod") as get_pod:
+            self._services_for("200000 100000")
+        get_pod.assert_not_called()
