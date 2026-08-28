@@ -16,7 +16,7 @@ import pytest
 from jinja2 import Template
 from ops import BlockedStatus, JujuVersion
 from ops.model import RelationDataTypeError
-from ops.testing import Harness
+from ops.testing import ExecResult, Harness
 from parameterized import parameterized
 
 import cpu
@@ -27,22 +27,6 @@ from constants import (
     PGB,
     SECRET_INTERNAL_LABEL,
 )
-from tests.unit.helpers import _FakeApiError
-
-
-def _pod_with_cpu(limit: str | None = None, request: str | None = None):
-    """Build a pod whose pgbouncer container has the given CPU limit and/or request."""
-    resources = None
-    if limit or request:
-        resources = lightkube.models.core_v1.ResourceRequirements(
-            limits={"cpu": limit} if limit else None,
-            requests={"cpu": request} if request else None,
-        )
-    return lightkube.resources.core_v1.Pod(
-        spec=lightkube.models.core_v1.PodSpec(
-            containers=[lightkube.models.core_v1.Container(name=PGB, resources=resources)]
-        )
-    )
 
 
 class TestCharm(unittest.TestCase):
@@ -972,48 +956,38 @@ class TestCharm(unittest.TestCase):
 class TestInstanceCount(unittest.TestCase):
     """The number of pgbouncer processes follows the CPU provisioned by Kubernetes."""
 
-    def _services_for(self, get_pod, **exec_results):
+    def _services_for(self, cpu_max=None):
         harness = Harness(PgBouncerK8sCharm)
         self.addCleanup(harness.cleanup)
         harness.set_can_connect(PGB, True)
-        for path, result in exec_results.items():
-            harness.handle_exec(PGB, ["cat", path], result=result)
-        with patch("charm.get_pod", get_pod):
-            harness.begin()
+        harness.handle_exec(PGB, ["cat"], result=ExecResult(exit_code=1, stderr="No such file"))
+        if cpu_max is not None:
+            harness.handle_exec(PGB, ["cat", cpu.CGROUP_V2_CPU_MAX], result=cpu_max)
+        harness.begin()
         return harness.charm._services
 
     @parameterized.expand([
-        ("500m", 2),
-        ("1", 2),
-        ("2", 2),
-        ("2500m", 3),
-        ("4", 4),
-        ("16", 4),
+        ("50000 100000", 2),
+        ("100000 100000", 2),
+        ("200000 100000", 2),
+        ("250000 100000", 3),
+        ("400000 100000", 4),
+        ("1600000 100000", 4),
     ])
-    def test_rounds_the_pod_cpu_limit_up_and_clamps_it(self, quantity, expected):
-        services = self._services_for(Mock(return_value=_pod_with_cpu(limit=quantity)))
-        self.assertEqual(len(services), expected)
-
-    def test_falls_back_to_the_cpu_request_when_no_limit_is_set(self):
-        services = self._services_for(Mock(return_value=_pod_with_cpu(request="3")))
-        self.assertEqual(len(services), 3)
-
-    def test_falls_back_to_the_cgroup_quota_when_the_pod_cannot_be_read(self):
-        services = self._services_for(
-            Mock(side_effect=_FakeApiError(403)),
-            **{cpu.CGROUP_V2_CPU_MAX: "300000 100000\n"},
-        )
-        self.assertEqual(len(services), 3)
+    def test_rounds_the_cgroup_quota_up_and_clamps_it(self, cpu_max, expected):
+        self.assertEqual(len(self._services_for(cpu_max)), expected)
 
     @parameterized.expand([(1, 2), (3, 3), (16, 4)])
-    def test_falls_back_to_the_host_cpu_count_when_no_limit_is_provisioned(
-        self, host_cpus, expected
-    ):
+    def test_falls_back_to_the_host_cpu_count_when_no_quota_is_enforced(self, host_cpus, expected):
         with patch("charm.os.cpu_count", return_value=host_cpus):
-            services = self._services_for(Mock(return_value=_pod_with_cpu()))
-        self.assertEqual(len(services), expected)
+            self.assertEqual(len(self._services_for("max 100000")), expected)
 
-    def test_falls_back_to_the_minimum_when_the_host_cpu_count_is_unavailable(self):
-        with patch("charm.os.cpu_count", return_value=None):
-            services = self._services_for(Mock(return_value=_pod_with_cpu()))
-        self.assertEqual(len(services), cpu.MIN_INSTANCES)
+    def test_falls_back_to_the_host_cpu_count_when_the_cgroup_is_unreadable(self):
+        with patch("charm.os.cpu_count", return_value=3):
+            self.assertEqual(len(self._services_for()), 3)
+
+    def test_does_not_read_the_kubernetes_api(self):
+        """Reading the pod spec here would put a blocking API call in every hook."""
+        with patch("charm.get_pod") as get_pod:
+            self._services_for("200000 100000")
+        get_pod.assert_not_called()

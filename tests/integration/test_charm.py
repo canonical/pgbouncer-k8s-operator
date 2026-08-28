@@ -7,8 +7,6 @@ import logging
 import pytest
 from pytest_operator.plugin import OpsTest
 
-from cpu import MAX_INSTANCES, MIN_INSTANCES
-
 from .helpers.helpers import CHARM_SERIES, PGB, PGB_METADATA, get_cfg, run_command_on_unit
 
 logger = logging.getLogger(__name__)
@@ -26,6 +24,7 @@ async def test_build_and_deploy(ops_test: OpsTest, charm):
             resources=resources,
             application_name=PGB,
             series=CHARM_SERIES,
+            constraints={"cpu-power": 2000},
             trust=True,
         )
         await ops_test.model.wait_for_idle(apps=[PGB], status="blocked", timeout=1000)
@@ -48,14 +47,12 @@ async def test_config_updates(ops_test: OpsTest):
 async def test_multiple_pebble_services(ops_test: OpsTest):
     """Test we have the correct pebble services."""
     unit = ops_test.model.applications[PGB].units[0]
-    core_count = await run_command_on_unit(ops_test, unit.name, "nproc --all")
     get_services = await run_command_on_unit(ops_test, unit.name, "/charm/bin/pebble services")
 
     services = get_services.splitlines()[1:]
-    # No CPU limit is provisioned in this deployment, so the charm falls back to the host
-    # CPU count, clamped to the supported range. Plus the monitoring and logrotate services.
-    expected_instances = max(min(int(core_count), MAX_INSTANCES), MIN_INSTANCES)
-    assert len(services) == expected_instances + 2
+    # The app is deployed with cpu-power=2000, which Juju turns into a 2 CPU limit on the
+    # pgbouncer container, so 2 pgbouncer services run, plus monitoring and logrotate.
+    assert len(services) == 4
 
     for service in services:
         service = service.split()

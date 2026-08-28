@@ -1,12 +1,12 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Detection of the CPU allocation provisioned for the pgbouncer container.
+"""Detection of the CPU quota Kubernetes enforces on the pgbouncer container.
 
-PgBouncer is single-threaded, so the charm runs one process per provisioned CPU. The
-helpers here read a single source each; `PgBouncerK8sCharm._instance_count` is where they
-are tried in order. Note that `os.cpu_count()`, the last resort there, reports the CPUs of
-the whole node, ignoring both cgroup quotas and affinity.
+Juju turns a `cores`/`cpu-power` constraint into a CPU *limit* on the workload container,
+which the kernel enforces as a cgroup quota. Reading that quota from inside the container
+needs no Kubernetes API call and no `juju trust`. The charm container has no CPU limit of
+its own, so `os.cpu_count()` there reports the whole node.
 """
 
 import logging
@@ -19,37 +19,6 @@ logger = logging.getLogger(__name__)
 CGROUP_V2_CPU_MAX = "/sys/fs/cgroup/cpu.max"
 CGROUP_V1_QUOTA = "/sys/fs/cgroup/cpu/cpu.cfs_quota_us"
 CGROUP_V1_PERIOD = "/sys/fs/cgroup/cpu/cpu.cfs_period_us"
-
-MIN_INSTANCES = 2
-MAX_INSTANCES = 4
-
-
-def parse_quantity(value: str | None) -> float | None:
-    """Convert a Kubernetes CPU quantity ("2", "0.5", "1500m") into a number of cores."""
-    if not value:
-        return None
-    try:
-        if value.endswith("m"):
-            return float(value[:-1]) / 1000
-        return float(value)
-    except ValueError:
-        logger.warning("Unable to parse CPU quantity %r", value)
-        return None
-
-
-def container_cpu_limit(pod, container_name: str) -> float | None:
-    """Cores provisioned for a container in the pod spec, or None if it is unconstrained."""
-    spec = getattr(pod, "spec", None)
-    for container in getattr(spec, "containers", None) or []:
-        if container.name != container_name:
-            continue
-        resources = container.resources
-        if resources is None:
-            return None
-        for quantities in (resources.limits, resources.requests):
-            if quantities and (cores := parse_quantity(quantities.get("cpu"))):
-                return cores
-    return None
 
 
 def cgroup_cpu_limit(container: Container) -> float | None:
