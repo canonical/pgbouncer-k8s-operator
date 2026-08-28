@@ -7,6 +7,8 @@ import logging
 import pytest
 from pytest_operator.plugin import OpsTest
 
+from cpu import MAX_INSTANCES, MIN_INSTANCES
+
 from .helpers.helpers import CHARM_SERIES, PGB, PGB_METADATA, get_cfg, run_command_on_unit
 
 logger = logging.getLogger(__name__)
@@ -50,8 +52,10 @@ async def test_multiple_pebble_services(ops_test: OpsTest):
     get_services = await run_command_on_unit(ops_test, unit.name, "/charm/bin/pebble services")
 
     services = get_services.splitlines()[1:]
-    # PGB services per core plus one monitoring service
-    assert len(services) == int(core_count) + 2
+    # No CPU limit is provisioned in this deployment, so the charm falls back to the host
+    # CPU count, clamped to the supported range. Plus the monitoring and logrotate services.
+    expected_instances = max(min(int(core_count), MAX_INSTANCES), MIN_INSTANCES)
+    assert len(services) == expected_instances + 2
 
     for service in services:
         service = service.split()
