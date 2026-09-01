@@ -44,8 +44,8 @@ options:
       which are documented in the pgbouncer config docs here:
       https://www.pgbouncer.org/config.html.
 
-      - Firstly, the number of pgbouncer instances is calculated based on the
-        number of CPU cores in the current deployment.
+      - Firstly, the number of pgbouncer instances is calculated from the CPU
+        provisioned for the pgbouncer container, clamped to between 2 and 4.
       - effective DB connections = max_db_connections / pgbouncer instances
       - default_pool_size = effective connections / 2
       - min_pool_size = effective connections / 4

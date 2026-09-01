@@ -45,6 +45,7 @@ from single_kernel_postgresql.compat.postgresql import (
     INVALID_EXTRA_USER_ROLE_BLOCKING_MESSAGE,
 )
 
+import cpu
 from config import CharmConfig, ServiceType
 from constants import (
     APP_SCOPE,
@@ -54,7 +55,9 @@ from constants import (
     CONTAINER_UNAVAILABLE_MESSAGE,
     EXTENSIONS_BLOCKING_MESSAGE,
     K8S_SERVICE_CONNECT_TIMEOUT,
+    MAX_INSTANCES,
     METRICS_PORT,
+    MIN_INSTANCES,
     MONITORING_PASSWORD_KEY,
     PEER_RELATION_NAME,
     PG_GROUP,
@@ -159,7 +162,7 @@ class PgBouncerK8sCharm(TypedCharmBase):
             ],
         )
 
-        self._cores = max(min(os.cpu_count(), 4), 2)
+        self._cores = self._instance_count()
         self._services = [
             {
                 "name": f"{PGB}_{service_id}",
@@ -195,6 +198,24 @@ class PgBouncerK8sCharm(TypedCharmBase):
         self.INSUFFICIENT_PERMISSIONS_MESSAGE = (
             f"Insufficient permissions, try: `juju trust {self.app.name} --scope=cluster`"
         )
+
+    def _instance_count(self) -> int:
+        """Number of pgbouncer processes to run on this unit.
+
+        PgBouncer is single-threaded, so one process is run per CPU that Kubernetes has
+        provisioned for the pgbouncer container, read from the cgroup quota enforced inside
+        it. When no quota is enforced the host CPU count is used instead. The result is
+        rounded up and clamped to between MIN_INSTANCES and MAX_INSTANCES.
+
+        Deliberately avoids the Kubernetes API: this runs on every hook, and a blocking
+        call to the API server here delays or kills hooks when it is slow or unreachable.
+        """
+        cores = cpu.cgroup_cpu_limit(self.unit.get_container(PGB))
+        if cores is None:
+            logger.info("No CPU quota readable for %s, using the host CPU count", PGB)
+            cores = os.cpu_count() or MIN_INSTANCES
+
+        return max(min(math.ceil(cores), MAX_INSTANCES), MIN_INSTANCES)
 
     def get_service(self) -> lightkube.resources.core_v1.Service | None:
         """Get the managed k8s service."""
