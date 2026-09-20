@@ -1,0 +1,31 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller     Cloud/Region  Version  SLA          Timestamp
+testing  concierge-k8s  k8s           3.6.28   unsupported  01:46:06Z
+
+App                       Version  Status   Scale  Charm                     Channel      Rev  Address         Exposed  Message
+pgbouncer-k8s             1.21.0   blocked      2  pgbouncer-k8s                            0  10.152.183.203  no       waiting for backend database relation to initialise
+postgresql-k8s                     waiting      3  postgresql-k8s            14/edge      962  10.152.183.47   no       awaiting for primary endpoint to be ready
+postgresql-test-app                error      0/1  postgresql-test-app       latest/edge  591  10.152.183.208  no       crash loop backoff: back-off 40s restarting failed container=charm pod=postgresql-test-app-0_testing(5af42f02-372b-47...
+self-signed-certificates           active       1  self-signed-certificates  1/stable     586  10.152.183.65   no       
+
+Unit                         Workload  Agent      Address     Ports  Message
+pgbouncer-k8s/0              blocked   idle       10.1.0.175         waiting for backend database relation to initialise
+pgbouncer-k8s/1*             blocked   idle       10.1.0.225         waiting for backend database relation to initialise
+postgresql-k8s/0             unknown   executing  10.1.0.184         
+postgresql-k8s/1*            waiting   executing  10.1.0.2           awaiting for primary endpoint to be ready
+postgresql-k8s/2             unknown   executing  10.1.0.133         
+postgresql-test-app/0*       error     lost       10.1.0.1           crash loop backoff: back-off 40s restarting failed container=charm pod=postgresql-test-app-0_testing(5af42f02-372b-47...
+self-signed-certificates/0*  active    idle       10.1.0.115         
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-postgresql-test-app-0: 01:43:21 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-postgresql-test-app-0: 01:43:54 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-postgresql-test-app-0: 01:44:28 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-postgresql-k8s-2: 01:44:58 ERROR unit.postgresql-k8s/2.juju-log certificates:9: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-k8s-0: 01:44:58 ERROR unit.postgresql-k8s/0.juju-log certificates:9: Cannot push TLS certificates: <ops.pebble.ConnectionError ("Could not connect to Pebble: socket not found at '/charm/containers/postgresql/pebble.socket' (container restarted?)",)>
+unit-postgresql-test-app-0: 01:44:59 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-postgresql-test-app-0: 01:45:31 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
