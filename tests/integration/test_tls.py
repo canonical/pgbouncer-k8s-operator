@@ -140,18 +140,19 @@ async def test_remove_tls(ops_test: OpsTest) -> None:
     Args:
         ops_test: The ops test framework
     """
-    await ops_test.model.applications[PGB].remove_relation(
-        f"{PGB}:certificates", f"{tls_certificates_app_name}:certificates"
-    )
-    await ops_test.model.wait_for_idle(status="active", timeout=1000)
-    assert await check_tls(ops_test, False)
-    tls_flag, tls_ca = await get_tls_flags(
-        ops_test,
-        CLIENT_APP_NAME,
-        FIRST_DATABASE_RELATION_NAME,
-    )
-    assert tls_flag == "False"
-    assert not tls_ca
+    async with ops_test.fast_forward():
+        await ops_test.model.applications[PGB].remove_relation(
+            f"{PGB}:certificates", f"{tls_certificates_app_name}:certificates"
+        )
+        await ops_test.model.wait_for_idle(status="active", timeout=1000)
+        assert await check_tls(ops_test, False)
+        tls_flag, tls_ca = await get_tls_flags(
+            ops_test,
+            CLIENT_APP_NAME,
+            FIRST_DATABASE_RELATION_NAME,
+        )
+        assert tls_flag == "False"
+        assert not tls_ca
 
 
 async def test_add_tls(ops_test: OpsTest) -> None:
@@ -160,16 +161,17 @@ async def test_add_tls(ops_test: OpsTest) -> None:
     Args:
         ops_test: The ops test framework
     """
-    await ops_test.model.relate(f"{PGB}:certificates", tls_certificates_app_name)
-    await ops_test.model.wait_for_idle(status="active", timeout=1000)
-    assert await check_tls(ops_test, True)
-    tls_flag, tls_ca = await get_tls_flags(
-        ops_test,
-        CLIENT_APP_NAME,
-        FIRST_DATABASE_RELATION_NAME,
-    )
-    assert tls_flag == "True"
-    assert tls_ca
+    async with ops_test.fast_forward():
+        await ops_test.model.relate(f"{PGB}:certificates", tls_certificates_app_name)
+        await ops_test.model.wait_for_idle(status="active", timeout=1000)
+        assert await check_tls(ops_test, True)
+        tls_flag, tls_ca = await get_tls_flags(
+            ops_test,
+            CLIENT_APP_NAME,
+            FIRST_DATABASE_RELATION_NAME,
+        )
+        assert tls_flag == "True"
+        assert tls_ca
 
 
 @markers.amd64_only  # mattermost-k8s charm not available for arm64
