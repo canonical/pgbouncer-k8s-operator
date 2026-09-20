@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
+import asyncio
 import os
 
 import pytest
@@ -192,4 +193,10 @@ async def test_mattermost_db(ops_test: OpsTest) -> None:
         await deploy_and_relate_application_with_pgbouncer(
             ops_test, MATTERMOST_APP_NAME, MATTERMOST_APP_NAME, 1, status="waiting"
         )
-        await ops_test.model.remove_application(MATTERMOST_APP_NAME, block_until_done=True)
+        # libjuju's block_until_done path has no default timeout; under Juju 2.9
+        # the removal can hang indefinitely, burning the whole CI job. Bound it so
+        # a stuck hook surfaces as a test failure with a traceback instead.
+        await asyncio.wait_for(
+            ops_test.model.remove_application(MATTERMOST_APP_NAME, block_until_done=True),
+            timeout=1800,
+        )
