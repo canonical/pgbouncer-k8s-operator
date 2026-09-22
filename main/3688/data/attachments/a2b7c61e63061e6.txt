@@ -1,0 +1,142 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller     Cloud/Region  Version  SLA          Timestamp
+testing  concierge-k8s  k8s           3.6.28   unsupported  02:24:15Z
+
+App                      Version  Status   Scale  Charm                Channel        Rev  Address         Exposed  Message
+data-integrator                   blocked      1  data-integrator      latest/edge    518  10.152.183.120  no       Please relate the data-integrator with the desired product
+finos-waltz-k8s                   active       1  finos-waltz-k8s      latest/edge     33  10.152.183.217  no       
+indico                            waiting      1  indico               latest/stable  330  10.152.183.141  no       Waiting for database availability
+pgbouncer-k8s                     error      1/2  pgbouncer-k8s                         0  10.152.183.175  no       crash loop backoff: back-off 5m0s restarting failed container=charm pod=pgbouncer-k8s-1_testing(9f1426e3-fe4d-437b-b1...
+pgbouncer-k8s-secondary  1.21.0   active       1  pgbouncer-k8s                         1  10.152.183.23   no       
+postgresql-k8s           14.24    active       2  postgresql-k8s       14/edge        962  10.152.183.135  no       
+postgresql-test-app               active       1  postgresql-test-app  latest/edge    591  10.152.183.100  no       received database credentials of the second database
+redis-broker             7.2.5    active       1  redis-k8s            latest/edge     42  10.152.183.79   no       
+redis-cache              7.2.5    active       1  redis-k8s            latest/edge     42  10.152.183.201  no       
+secondary-application             active       1  postgresql-test-app  latest/edge    591  10.152.183.53   no       received database credentials of the second database
+
+Unit                        Workload  Agent      Address     Ports  Message
+data-integrator/0*          blocked   idle       10.1.0.129         Please relate the data-integrator with the desired product
+finos-waltz-k8s/0*          active    idle       10.1.0.52          
+indico/0*                   waiting   idle       10.1.0.187         Waiting for database availability
+pgbouncer-k8s-secondary/0*  active    idle       10.1.0.92          
+pgbouncer-k8s/0*            active    executing  10.1.0.114         (config-changed) 
+pgbouncer-k8s/1             error     lost       10.1.0.1           crash loop backoff: back-off 5m0s restarting failed container=charm pod=pgbouncer-k8s-1_testing(9f1426e3-fe4d-437b-b1...
+postgresql-k8s/0            active    idle       10.1.0.186         
+postgresql-k8s/1*           active    idle       10.1.0.175         Primary
+postgresql-test-app/0*      active    idle       10.1.0.208         received database credentials of the second database
+redis-broker/0*             active    idle       10.1.0.82          
+redis-cache/0*              active    idle       10.1.0.54          
+secondary-application/0*    active    idle       10.1.0.131         received database credentials of the second database
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-postgresql-test-app-0: 01:22:01 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-postgresql-k8s-1: 01:26:48 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-k8s-0: 01:27:48 ERROR unit.postgresql-k8s/0.juju-log database:6: Failed to list PostgreSQL database users: connection to server at "postgresql-k8s-0.postgresql-k8s-endpoints.testing.svc.cluster.local" (10.1.0.186), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+
+unit-postgresql-test-app-0: 01:29:40 ERROR unit.postgresql-test-app/0.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/src/charm.py", line 598, in <module>
+    main(ApplicationCharm)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 360, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 522, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 506, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 439, in _emit
+    self._emit_charm_event(self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 483, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 336, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 914, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 1034, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/src/charm.py", line 527, in _on_run_sql_action
+    cursor.execute(query)
+psycopg2.errors.ReadOnlySqlTransaction: cannot execute DROP TABLE in a read-only transaction
+
+unit-secondary-application-0: 01:32:39 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-pgbouncer-k8s-1: 01:43:25 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: terminated
+unit-pgbouncer-k8s-1: 01:48:23 ERROR unit.pgbouncer-k8s/1.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/charm.py", line 1178, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 360, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 522, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 506, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 439, in _emit
+    self._emit_charm_event(self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 483, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 336, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 914, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 1034, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/charm.py", line 362, in _on_pgbouncer_pebble_ready
+    if not self.peers.relation or not self._init_config(container):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/charm.py", line 321, in _init_config
+    if not container.exists(service["dir"]):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3122, in exists
+    self._pebble.list_files(path, itself=True)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2962, in list_files
+    resp = self._request('GET', '/v1/files', query)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2307, in _request
+    response = self._request_raw(method, path, query, headers, data)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2361, in _request_raw
+    raise ConnectionError(
+ops.pebble.ConnectionError: Could not connect to Pebble: socket not found at '/charm/containers/pgbouncer/pebble.socket' (container restarted?)
+unit-pgbouncer-k8s-1: 01:48:23 ERROR juju.worker.uniter.operation hook "pgbouncer-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-1: 01:48:23 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: hook failed
+unit-redis-broker-0: 01:49:56 ERROR unit.redis-broker/0.juju-log redis-peers:19: Error when connecting to sentinel: Error 111 connecting to 0.0.0.0:26379. Connection refused.
+unit-redis-broker-0: 01:49:56 ERROR unit.redis-broker/0.juju-log redis-peers:19: Unit redis-broker/0 doesn't agree on tracked master
+unit-redis-broker-0: 01:49:56 ERROR unit.redis-broker/0.juju-log redis-peers:19: Error when connecting to sentinel: Error 111 connecting to localhost:26379. Connection refused.
+unit-redis-cache-0: 01:50:02 ERROR unit.redis-cache/0.juju-log redis-peers:20: Error when connecting to sentinel: Error 111 connecting to 0.0.0.0:26379. Connection refused.
+unit-redis-cache-0: 01:50:02 ERROR unit.redis-cache/0.juju-log redis-peers:20: Unit redis-cache/0 doesn't agree on tracked master
+unit-redis-cache-0: 01:50:02 ERROR unit.redis-cache/0.juju-log redis-peers:20: Error when connecting to sentinel: Error 111 connecting to localhost:26379. Connection refused.
+unit-pgbouncer-k8s-1: 01:50:35 ERROR unit.pgbouncer-k8s/1.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/charm.py", line 1178, in <module>
+    main(PgBouncerK8sCharm)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 360, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 522, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 506, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 439, in _emit
+    self._emit_charm_event(self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 483, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 336, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 914, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 1034, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/charm.py", line 362, in _on_pgbouncer_pebble_ready
+    if not self.peers.relation or not self._init_config(container):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/src/charm.py", line 321, in _init_config
+    if not container.exists(service["dir"]):
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3122, in exists
+    self._pebble.list_files(path, itself=True)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2962, in list_files
+    resp = self._request('GET', '/v1/files', query)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2307, in _request
+    response = self._request_raw(method, path, query, headers, data)
+  File "/var/lib/juju/agents/unit-pgbouncer-k8s-1/charm/venv/lib/python3.10/site-packages/ops/pebble.py", line 2361, in _request_raw
+    raise ConnectionError(
+ops.pebble.ConnectionError: Could not connect to Pebble: socket not found at '/charm/containers/pgbouncer/pebble.socket' (container restarted?)
+unit-pgbouncer-k8s-1: 01:50:35 ERROR juju.worker.uniter.operation hook "pgbouncer-pebble-ready" (via hook dispatching script: dispatch) failed: exit status 1
+unit-pgbouncer-k8s-1: 01:50:35 ERROR juju.worker.uniter pebble poll failed for container "pgbouncer": failed to send pebble-ready event: hook failed
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
