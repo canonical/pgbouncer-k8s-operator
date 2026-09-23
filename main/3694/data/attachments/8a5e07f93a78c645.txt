@@ -1,0 +1,239 @@
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [executing] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [executing] active: 
+  pgbouncer-k8s/1 [idle] active: 
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  pgbouncer-k8s/0 [idle] active: 
+[32mINFO    [0m httpx:_client.py:1740 HTTP Request: DELETE https://127.0.0.1:6443/api/v1/namespaces/testing/pods/pgbouncer-k8s-0 "HTTP/1.1 200 OK"
+[32mINFO    [0m juju.model:__init__.py:3254 Waiting for model:
+  postgresql-test-app/0 [idle] active: received database credentials of the second database
+  postgresql-k8s/0 [idle] active: 
+  postgresql-k8s/1 [idle] active: Primary
+  pgbouncer-k8s/0 [executing] maintenance: stopping charm software
+  pgbouncer-k8s/1 [idle] active: 
+  secondary-application/0 [executing] blocked: No database integration available
+  finos-waltz-k8s/0 [idle] active: 
+  pgbouncer-k8s-secondary/0 [idle] active: 
+  data-integrator/0 [idle] active: 
+  redis-broker/0 [idle] active: 
+  redis-cache/0 [idle] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller     Cloud/Region  Version  SLA          Timestamp
+testing  concierge-k8s  k8s           3.6.28   unsupported  02:12:01Z
+
+App                      Version  Status  Scale  Charm                Channel      Rev  Address         Exposed  Message
+data-integrator                   active      1  data-integrator      latest/edge  518  10.152.183.28   no       
+finos-waltz-k8s                   active      1  finos-waltz-k8s      latest/edge   33  10.152.183.174  no       
+pgbouncer-k8s            1.21.0   active      2  pgbouncer-k8s                       0  10.152.183.111  no       
+pgbouncer-k8s-secondary  1.21.0   active      1  pgbouncer-k8s                       1  10.152.183.146  no       
+postgresql-k8s           14.24    active      2  postgresql-k8s       14/edge      962  10.152.183.131  no       
+postgresql-test-app               active      1  postgresql-test-app  latest/edge  599  10.152.183.208  no       received database credentials of the second database
+redis-broker             7.2.5    active      1  redis-k8s            latest/edge   42  10.152.183.120  no       
+redis-cache              7.2.5    active      1  redis-k8s            latest/edge   42  10.152.183.198  no       
+secondary-application             error     0/1  postgresql-test-app  latest/edge  599  10.152.183.100  no       crash loop backoff: back-off 5m0s restarting failed container=charm pod=secondary-application-0_testing(d0cfd5b3-476a...
+
+Unit                        Workload  Agent      Address     Ports  Message
+data-integrator/0*          active    idle       10.1.0.173         
+finos-waltz-k8s/0*          active    idle       10.1.0.164         
+pgbouncer-k8s-secondary/0*  active    idle       10.1.0.175         
+pgbouncer-k8s/0*            active    idle       10.1.0.181         
+pgbouncer-k8s/1             active    executing  10.1.0.51          
+postgresql-k8s/0            active    idle       10.1.0.78          
+postgresql-k8s/1*           active    idle       10.1.0.81          Primary
+postgresql-test-app/0*      active    idle       10.1.0.69          received database credentials of the second database
+redis-broker/0*             active    idle       10.1.0.249         
+redis-cache/0*              active    idle       10.1.0.138         
+secondary-application/0*    error     lost       10.1.0.1           crash loop backoff: back-off 5m0s restarting failed container=charm pod=secondary-application-0_testing(d0cfd5b3-476a...
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+unit-postgresql-test-app-0: 01:38:42 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-postgresql-k8s-1: 01:43:24 ERROR unit.postgresql-k8s/1.juju-log pgdata folder not found in /var/lib/postgresql/data/pgdata
+unit-postgresql-test-app-0: 01:46:49 ERROR unit.postgresql-test-app/0.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/src/charm.py", line 598, in <module>
+    main(ApplicationCharm)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 360, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 522, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 506, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 439, in _emit
+    self._emit_charm_event(self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 483, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 336, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 914, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 1034, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-postgresql-test-app-0/charm/src/charm.py", line 527, in _on_run_sql_action
+    cursor.execute(query)
+psycopg2.errors.ReadOnlySqlTransaction: cannot execute DROP TABLE in a read-only transaction
+
+unit-secondary-application-0: 01:49:47 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-secondary-application-0: 01:50:19 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-secondary-application-0: 01:50:50 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-secondary-application-0: 01:51:37 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-secondary-application-0: 01:52:07 ERROR unit.secondary-application/0.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3591, in _wrap_hookcmd
+    yield
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3982, in secret_get
+    return hookcmds.secret_get(
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/hookcmds/_secret.py", line 153, in secret_get
+    stdout = run('secret-get', '--format=json', *args)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/hookcmds/_utils.py", line 53, in run
+    raise Error(returncode=e.returncode, cmd=e.cmd, stdout=e.stdout, stderr=e.stderr) from None
+ops.hookcmds._utils.Error: command ('secret-get', '--format=json', '--label', 'database.9.user.secret') exited with status 1
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/src/charm.py", line 598, in <module>
+    main(ApplicationCharm)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 360, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 522, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 506, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 439, in _emit
+    self._emit_charm_event(self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 483, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 336, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 914, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 1034, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/src/charm.py", line 198, in _on_start
+    if any(
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/src/charm.py", line 199, in <genexpr>
+    relation_data.fetch_relation_field(relation.id, "username")
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1736, in fetch_relation_field
+    self.fetch_relation_data([relation_id], [field], relation_name)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1728, in fetch_relation_data
+    data[relation.id] = self._fetch_specific_relation_data(relation, fields)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1237, in _fetch_specific_relation_data
+    return self._fetch_relation_data_with_secrets(
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1621, in _fetch_relation_data_with_secrets
+    result, normal_fields = self._process_secret_fields(
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1565, in _process_secret_fields
+    if group_result := operation(relation, group, secret_fields, *args, **kwargs):
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1499, in _get_group_secret_contents
+    if (secret := self._get_relation_secret(relation.id, group)) and (
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 636, in wrapper
+    return f(self, *args, **kwargs)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1208, in _get_relation_secret
+    if secret := self.secrets.get(label):
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 981, in get
+    if secret.meta:
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 804, in meta
+    self._secret_meta = self._model.get_secret(label=self.label)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 309, in get_secret
+    content = self._backend.secret_get(id=id, label=label)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3981, in secret_get
+    with self._wrap_hookcmd('secret-get', id=id, label=label, refresh=refresh, peek=peek):
+  File "/usr/lib/python3.10/contextlib.py", line 153, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3601, in _wrap_hookcmd
+    raise ModelError(e.stderr) from e
+ops.model.ModelError: ERROR Get "https://10.152.183.1:443/api/v1/namespaces/testing/secrets/b2dpudjb98rn88a55om0-1": dial tcp 10.152.183.1:443: i/o timeout
+
+unit-secondary-application-0: 01:52:08 ERROR juju.worker.uniter.operation hook "start" (via hook dispatching script: dispatch) failed: exit status 1
+unit-secondary-application-0: 01:52:08 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-secondary-application-0: 01:53:31 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-secondary-application-0: 01:55:37 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-secondary-application-0: 01:58:55 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-redis-broker-0: 02:01:30 ERROR unit.redis-broker/0.juju-log redis-peers:19: Error when connecting to sentinel: Error 111 connecting to 0.0.0.0:26379. Connection refused.
+unit-redis-broker-0: 02:01:30 ERROR unit.redis-broker/0.juju-log redis-peers:19: Unit redis-broker/0 doesn't agree on tracked master
+unit-redis-broker-0: 02:01:30 ERROR unit.redis-broker/0.juju-log redis-peers:19: Error when connecting to sentinel: Error 111 connecting to localhost:26379. Connection refused.
+unit-redis-cache-0: 02:01:31 ERROR unit.redis-cache/0.juju-log redis-peers:20: Error when connecting to sentinel: Error 111 connecting to 0.0.0.0:26379. Connection refused.
+unit-redis-cache-0: 02:01:31 ERROR unit.redis-cache/0.juju-log redis-peers:20: Unit redis-cache/0 doesn't agree on tracked master
+unit-redis-cache-0: 02:01:31 ERROR unit.redis-cache/0.juju-log redis-peers:20: Error when connecting to sentinel: Error 111 connecting to localhost:26379. Connection refused.
+unit-redis-broker-0: 02:01:50 ERROR unit.redis-broker/0.juju-log Error when connecting to sentinel: Error 111 connecting to 0.0.0.0:26379. Connection refused.
+unit-redis-broker-0: 02:01:50 ERROR unit.redis-broker/0.juju-log Unit redis-broker/0 doesn't agree on tracked master
+unit-redis-broker-0: 02:01:50 ERROR unit.redis-broker/0.juju-log Error when connecting to sentinel: Error 111 connecting to localhost:26379. Connection refused.
+unit-redis-broker-0: 02:01:50 ERROR unit.redis-broker/0.juju-log Error when connecting to sentinel: Error 111 connecting to 0.0.0.0:26379. Connection refused.
+unit-secondary-application-0: 02:04:32 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-secondary-application-0: 02:05:08 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-secondary-application-0: 02:05:39 ERROR unit.secondary-application/0.juju-log Uncaught exception while in charm code:
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3591, in _wrap_hookcmd
+    yield
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3982, in secret_get
+    return hookcmds.secret_get(
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/hookcmds/_secret.py", line 153, in secret_get
+    stdout = run('secret-get', '--format=json', *args)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/hookcmds/_utils.py", line 53, in run
+    raise Error(returncode=e.returncode, cmd=e.cmd, stdout=e.stdout, stderr=e.stderr) from None
+ops.hookcmds._utils.Error: command ('secret-get', '--format=json', '--label', 'database.9.user.secret') exited with status 1
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/src/charm.py", line 598, in <module>
+    main(ApplicationCharm)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/__init__.py", line 360, in __call__
+    return _main.main(charm_class=charm_class, use_juju_for_storage=use_juju_for_storage)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 522, in main
+    manager.run()
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 506, in run
+    self._emit()
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 439, in _emit
+    self._emit_charm_event(self.dispatcher.event_name)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/_main.py", line 483, in _emit_charm_event
+    event_to_emit.emit(*args, **kwargs)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 336, in emit
+    framework._emit(event)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 914, in _emit
+    self._reemit(event_path)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/framework.py", line 1034, in _reemit
+    custom_handler(event)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/src/charm.py", line 198, in _on_start
+    if any(
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/src/charm.py", line 199, in <genexpr>
+    relation_data.fetch_relation_field(relation.id, "username")
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1736, in fetch_relation_field
+    self.fetch_relation_data([relation_id], [field], relation_name)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1728, in fetch_relation_data
+    data[relation.id] = self._fetch_specific_relation_data(relation, fields)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1237, in _fetch_specific_relation_data
+    return self._fetch_relation_data_with_secrets(
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1621, in _fetch_relation_data_with_secrets
+    result, normal_fields = self._process_secret_fields(
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1565, in _process_secret_fields
+    if group_result := operation(relation, group, secret_fields, *args, **kwargs):
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1499, in _get_group_secret_contents
+    if (secret := self._get_relation_secret(relation.id, group)) and (
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 636, in wrapper
+    return f(self, *args, **kwargs)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 1208, in _get_relation_secret
+    if secret := self.secrets.get(label):
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 981, in get
+    if secret.meta:
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/lib/charms/data_platform_libs/v0/data_interfaces.py", line 804, in meta
+    self._secret_meta = self._model.get_secret(label=self.label)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 309, in get_secret
+    content = self._backend.secret_get(id=id, label=label)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3981, in secret_get
+    with self._wrap_hookcmd('secret-get', id=id, label=label, refresh=refresh, peek=peek):
+  File "/usr/lib/python3.10/contextlib.py", line 153, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/var/lib/juju/agents/unit-secondary-application-0/charm/venv/lib/python3.10/site-packages/ops/model.py", line 3601, in _wrap_hookcmd
+    raise ModelError(e.stderr) from e
+ops.model.ModelError: ERROR Get "https://10.152.183.1:443/api/v1/namespaces/testing/secrets/b2dpudjb98rn88a55om0-1": dial tcp 10.152.183.1:443: i/o timeout
+
+unit-secondary-application-0: 02:05:39 ERROR juju.worker.uniter.operation hook "start" (via hook dispatching script: dispatch) failed: exit status 1
+unit-secondary-application-0: 02:10:50 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-secondary-application-0: 02:11:26 ERROR juju.worker.proxyupdater error writing apt proxy config file: open /etc/apt/apt.conf.d/95-juju-proxy-settings: permission denied
+unit-pgbouncer-k8s-0: 02:11:47 ERROR unit.pgbouncer-k8s/0.juju-log Cluster upgrade failed, ensure pre-upgrade checks are ran first.
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
