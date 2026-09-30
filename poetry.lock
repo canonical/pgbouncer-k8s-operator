@@ -582,14 +582,14 @@ files = [
 
 [[package]]
 name = "cosl"
-version = "1.10.3"
+version = "1.11.0"
 description = "Utils for COS Lite charms"
 optional = false
 python-versions = ">=3.8"
 groups = ["charm-libs"]
 files = [
-    {file = "cosl-1.10.3-py3-none-any.whl", hash = "sha256:7e514b161ca3d227a23c88377138176e16f23aff92bf218837bc3551dba1ebf7"},
-    {file = "cosl-1.10.3.tar.gz", hash = "sha256:95ac498d3820a7d1f4096e6662b22de639911d7f77e1a25b0cfad963f83836bc"},
+    {file = "cosl-1.11.0-py3-none-any.whl", hash = "sha256:54b60c30273a75cb7be73fa2a75357f4c35cd9a4c2fb43630f5984e8539681e9"},
+    {file = "cosl-1.11.0.tar.gz", hash = "sha256:eb0da1a001b97c2737dc2f10f57d39de9d55fd99cdf06dafe1b36af8e197accf"},
 ]
 
 [package.dependencies]
@@ -601,7 +601,7 @@ tenacity = "*"
 typing-extensions = "*"
 
 [package.extras]
-dev = ["black", "codespell", "deepdiff", "fs", "ops[testing]", "orderly-set (==5.3.0)", "pyright", "pytest", "pytest-cov", "ruff", "setuptools (<82)"]
+dev = ["black", "codespell", "deepdiff", "fs", "ops[testing]", "orderly-set (==5.3.0)", "pyright", "pytest", "pytest-bdd (<8)", "pytest-cov", "ruff", "setuptools (<82)"]
 
 [[package]]
 name = "coverage"
@@ -3184,4 +3184,4 @@ h11 = ">=0.16.0,<1"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "1c30c82b28c8426b53fcb7cbe065524fe52577b5b7b0f83dff5dc6c50b9cd74d"
+content-hash = "b2520eec4dfd18d34f48d610db2eb038a38b9c287fac7bf9af6f3000c7f99874"
