@@ -1,0 +1,23 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller     Cloud/Region  Version  SLA          Timestamp
+testing  concierge-k8s  k8s           3.6.29   unsupported  01:38:11Z
+
+App             Version  Status   Scale  Charm            Channel      Rev  Address         Exposed  Message
+finos-waltz              waiting      1  finos-waltz-k8s  latest/edge   33  10.152.183.161  no       Waiting for Pebble to be ready
+pgbouncer-k8s   1.21.0   blocked      3  pgbouncer-k8s                   0  10.152.183.28   no       waiting for backend database relation to initialise
+postgresql-k8s           error        3  postgresql-k8s   14/edge      971  10.152.183.198  no       hook failed: "upgrade-relation-changed"
+
+Unit               Workload  Agent      Address     Ports  Message
+finos-waltz/0*     waiting   idle       10.1.0.218         Waiting for Pebble to be ready
+pgbouncer-k8s/0*   blocked   idle       10.1.0.222         waiting for backend database relation to initialise
+pgbouncer-k8s/1    blocked   idle       10.1.0.79          waiting for backend database relation to initialise
+pgbouncer-k8s/2    blocked   idle       10.1.0.71          waiting for backend database relation to initialise
+postgresql-k8s/0*  waiting   executing  10.1.0.249         awaiting for primary endpoint to be ready
+postgresql-k8s/1   unknown   executing  10.1.0.53          
+postgresql-k8s/2   error     idle       10.1.0.1           hook failed: "upgrade-relation-changed"
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
