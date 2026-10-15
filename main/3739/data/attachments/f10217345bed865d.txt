@@ -1,0 +1,19 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:951 Model status:
+
+Model    Controller     Cloud/Region  Version  SLA          Timestamp
+testing  concierge-k8s  k8s           3.6.29   unsupported  01:43:50Z
+
+App             Version  Status       Scale  Charm           Channel  Rev  Address         Exposed  Message
+pgbouncer-k8s   1.21.0   blocked          1  pgbouncer-k8s              0  10.152.183.253  no       waiting for backend database relation to initialise
+postgresql-k8s  14.24    maintenance      3  postgresql-k8s  14/edge  971  10.152.183.119  no       Beginning rolling restart
+
+Unit               Workload     Agent  Address     Ports  Message
+pgbouncer-k8s/0*   blocked      idle   10.1.0.180         waiting for backend database relation to initialise
+postgresql-k8s/0   error        idle   10.1.0.1           hook failed: "upgrade-relation-changed"
+postgresql-k8s/1   unknown      idle   10.1.0.34          
+postgresql-k8s/2*  maintenance  idle   10.1.0.32          Executing restart operation
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:957 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1039 Forgetting model main...
