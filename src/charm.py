@@ -853,6 +853,15 @@ class PgBouncerK8sCharm(TypedCharmBase):
         """Updates PgBouncer config file based on the existence of the TLS files."""
         self.render_pgb_config()
 
+        # On Juju 2.9 the post-certificate peer-relation-changed does not reliably
+        # reach the leader, so client-facing relation data (the tls/tls-ca flags and
+        # endpoints) could stay stale for up to one update-status interval (5 minutes
+        # by default). Refresh it as soon as the TLS files change: update_config()
+        # runs both when certificates are delivered and when TLS is removed.
+        # No-op on non-leaders and while the backend is not ready (internal checks).
+        if self.unit.is_leader() and self.configuration_check():
+            self.update_client_connection_info()
+
         return True
 
     # =============================

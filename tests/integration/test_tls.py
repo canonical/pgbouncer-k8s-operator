@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
+import asyncio
 import os
 
 import pytest
@@ -140,18 +141,19 @@ async def test_remove_tls(ops_test: OpsTest) -> None:
     Args:
         ops_test: The ops test framework
     """
-    await ops_test.model.applications[PGB].remove_relation(
-        f"{PGB}:certificates", f"{tls_certificates_app_name}:certificates"
-    )
-    await ops_test.model.wait_for_idle(status="active", timeout=1000)
-    assert await check_tls(ops_test, False)
-    tls_flag, tls_ca = await get_tls_flags(
-        ops_test,
-        CLIENT_APP_NAME,
-        FIRST_DATABASE_RELATION_NAME,
-    )
-    assert tls_flag == "False"
-    assert not tls_ca
+    async with ops_test.fast_forward():
+        await ops_test.model.applications[PGB].remove_relation(
+            f"{PGB}:certificates", f"{tls_certificates_app_name}:certificates"
+        )
+        await ops_test.model.wait_for_idle(status="active", timeout=1000)
+        assert await check_tls(ops_test, False)
+        tls_flag, tls_ca = await get_tls_flags(
+            ops_test,
+            CLIENT_APP_NAME,
+            FIRST_DATABASE_RELATION_NAME,
+        )
+        assert tls_flag == "False"
+        assert not tls_ca
 
 
 async def test_add_tls(ops_test: OpsTest) -> None:
@@ -160,16 +162,17 @@ async def test_add_tls(ops_test: OpsTest) -> None:
     Args:
         ops_test: The ops test framework
     """
-    await ops_test.model.relate(f"{PGB}:certificates", tls_certificates_app_name)
-    await ops_test.model.wait_for_idle(status="active", timeout=1000)
-    assert await check_tls(ops_test, True)
-    tls_flag, tls_ca = await get_tls_flags(
-        ops_test,
-        CLIENT_APP_NAME,
-        FIRST_DATABASE_RELATION_NAME,
-    )
-    assert tls_flag == "True"
-    assert tls_ca
+    async with ops_test.fast_forward():
+        await ops_test.model.relate(f"{PGB}:certificates", tls_certificates_app_name)
+        await ops_test.model.wait_for_idle(status="active", timeout=1000)
+        assert await check_tls(ops_test, True)
+        tls_flag, tls_ca = await get_tls_flags(
+            ops_test,
+            CLIENT_APP_NAME,
+            FIRST_DATABASE_RELATION_NAME,
+        )
+        assert tls_flag == "True"
+        assert tls_ca
 
 
 @markers.amd64_only  # mattermost-k8s charm not available for arm64
@@ -190,4 +193,10 @@ async def test_mattermost_db(ops_test: OpsTest) -> None:
         await deploy_and_relate_application_with_pgbouncer(
             ops_test, MATTERMOST_APP_NAME, MATTERMOST_APP_NAME, 1, status="waiting"
         )
-        await ops_test.model.remove_application(MATTERMOST_APP_NAME, block_until_done=True)
+        # libjuju's block_until_done path has no default timeout; under Juju 2.9
+        # the removal can hang indefinitely, burning the whole CI job. Bound it so
+        # a stuck hook surfaces as a test failure with a traceback instead.
+        await asyncio.wait_for(
+            ops_test.model.remove_application(MATTERMOST_APP_NAME, block_until_done=True),
+            timeout=1800,
+        )

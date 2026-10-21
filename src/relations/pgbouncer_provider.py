@@ -286,7 +286,7 @@ class PgBouncerProvider(Object):
             database = self.database_provides.fetch_relation_field(relation.id, "database")
             password = self.database_provides.fetch_my_relation_field(relation.id, "password")
             if not database or not password:
-                return
+                continue
 
             self.database_provides.set_tls(relation.id, tls_flag)
             self.database_provides.set_tls_ca(relation.id, tls_ca)
