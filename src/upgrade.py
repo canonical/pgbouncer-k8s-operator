@@ -7,11 +7,12 @@ import json
 import logging
 
 import psycopg2
-from charms.data_platform_libs.v0.upgrade import (
+from charms.data_platform_libs.v1.upgrade import (
     ClusterNotReadyError,
     DataUpgrade,
     DependencyModel,
     KubernetesClientError,
+    UpgradeState,
 )
 from lightkube.core.client import Client
 from lightkube.core.exceptions import ApiError
@@ -151,7 +152,7 @@ class PgbouncerUpgrade(DataUpgrade):
             event.defer()
             return
 
-        if self.state not in ["upgrading", "recovery"]:
+        if self.state not in [UpgradeState.UPGRADING, UpgradeState.RECOVERY]:
             return
 
         if self.charm.unit.is_leader():
