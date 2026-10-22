@@ -11,7 +11,7 @@ ops = {extras = ["tracing"], version = "^3.9.0"}
 tenacity = "^9.2.1"
 lightkube = "^0.22.0"
 lightkube-models = "^1.29.0.6"
-pydantic = "^1.10.26"
+pydantic = "^2.0"
 psycopg2 = "^2.9.13"
 psycopg = {extras = ["c"], version = "^3.3.6"}  # Used by data_interfaces.py
 jinja2 = "^3.1.6"
@@ -20,10 +20,11 @@ postgresql-charms-single-kernel = "16.3.16"
 [tool.poetry.group.charm-libs.dependencies]
 # data_platform_libs/v0/data_interfaces.py
 ops = ">=2.0.0"
-# data_platform_libs/v0/upgrade.py
+# data_platform_libs/v1/upgrade.py
 poetry-core = "*"
-# data_platform_libs/v0/upgrade.py requires pydantic ^1.10
-pydantic = "^1.10"
+# data_platform_libs v1/upgrade.py requires pydantic >=2; v0/data_models.py
+# is compatible with both v1 and v2.
+pydantic = "^2.0"
 # loki_k8s/v0/loki_push_api.py and prometheus_k8s/v0/prometheus_scrape.py
 cosl = "*"
 # tls_certificates_interface/v2/tls_certificates.py
