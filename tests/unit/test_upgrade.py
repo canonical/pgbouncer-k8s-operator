@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import Mock, PropertyMock, patch
 
 import pytest
-from charms.data_platform_libs.v0.upgrade import ClusterNotReadyError, KubernetesClientError
+from charms.data_platform_libs.v1.upgrade import ClusterNotReadyError, KubernetesClientError
 from lightkube.resources.apps_v1 import StatefulSet
 from ops.testing import Harness
 
