@@ -190,4 +190,16 @@ async def test_mattermost_db(ops_test: OpsTest) -> None:
         await deploy_and_relate_application_with_pgbouncer(
             ops_test, MATTERMOST_APP_NAME, MATTERMOST_APP_NAME, 1, status="waiting"
         )
-        await ops_test.model.remove_application(MATTERMOST_APP_NAME, block_until_done=True)
+        mattermost = ops_test.model.applications[MATTERMOST_APP_NAME]
+        status = await ops_test.model.get_status()
+        charm = status["applications"][MATTERMOST_APP_NAME]["charm"]
+        # Mattermost rev. 18 restarts its service on relation-broken. If PgBouncer has already
+        # dropped the user, the hook fails and the application never goes away.
+        known_bug = charm.endswith("mattermost-k8s-18")
+        await mattermost.remove()
+        await ops_test.model.block_until(
+            lambda: (
+                MATTERMOST_APP_NAME not in ops_test.model.applications
+                or (known_bug and any(u.workload_status == "error" for u in mattermost.units))
+            )
+        )
